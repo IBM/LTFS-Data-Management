@@ -13,26 +13,27 @@
 int LTFSDmD::LTFSDmC::send(int fd)
 
 {
-	unsigned long size, rsize;
+	unsigned long MessageSize;
+	unsigned long rsize;
 	char *buffer;
 
-	size = this->ByteSize();
+	MessageSize = this->ByteSize();
 
-	printf("Size: %ld\n", size);
+	printf("Size: %ld\n", MessageSize);
 
-	buffer = (char *) malloc(size + sizeof(long));
-	memset(buffer, 0, size + sizeof(long));
-	memcpy(buffer, &size, sizeof(long));
+	buffer = (char *) malloc(MessageSize + sizeof(long));
+	memset(buffer, 0, MessageSize + sizeof(long));
+	memcpy(buffer, &MessageSize, sizeof(long));
 
-	if ( this->SerializeToArray(buffer + sizeof(long), size) == false ) {
+	if ( this->SerializeToArray(buffer + sizeof(long), MessageSize) == false ) {
 		free(buffer);
 		printf("error serializing message\n");
 		return -1;
 	}
 
-	rsize = write(fd, buffer, size + sizeof(long));
+	rsize = write(fd, buffer, MessageSize + sizeof(long));
 
-	if ( rsize != size + sizeof(long) ) {
+	if ( rsize != MessageSize + sizeof(long) ) {
 		free(buffer);
 		printf("error writing message to fd\n");
 		return -1;
@@ -64,30 +65,30 @@ unsigned long readx(int fd, char *buffer, unsigned long size)
 int LTFSDmD::LTFSDmC::recv(int fd)
 
 {
-	unsigned long size;
-	unsigned rsize;
+	unsigned long MessageSize;
+	unsigned long rsize;
 	char *buffer;
 	int rc = 0;
 
-	rsize = readx(fd, (char *) &size, sizeof(long));
+	rsize = readx(fd, (char *) &MessageSize, sizeof(long));
 
 	if (rsize != sizeof(long)) {
 		printf("error reading size from fd, requested %lu, response: %ld, errno: %d\n", sizeof(long), rsize, errno);
 		return -1;
 	}
 
-	buffer = (char *) malloc(size);
-	memset(buffer, 0, size);
+	buffer = (char *) malloc(MessageSize);
+	memset(buffer, 0, MessageSize);
 
-	rsize = readx(fd, buffer, size);
+	rsize = readx(fd, buffer, MessageSize);
 
-	if (rsize != size) {
+	if (rsize != MessageSize) {
 		printf("error writing message from fd\n");
 		free(buffer);
 		return -1;
 	}
 
-	this->ParseFromArray(buffer, size);
+	this->ParseFromArray(buffer, MessageSize);
 	free(buffer);
 
 	return rc;
