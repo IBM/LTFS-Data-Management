@@ -8,7 +8,7 @@
 
 #include "ltfsdm.pb.h"
 
-#include "comm.h"
+#include "LTFSDmC.h"
 
 int LTFSDmD::LTFSDmC::send(int fd)
 
