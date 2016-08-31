@@ -1,0 +1,58 @@
+syntax = "proto2";
+
+package LTFSDmD;
+
+message LTFSDmMigRequest {
+	required uint64 key = 1;
+	required uint64 token = 2;
+
+	enum State {
+		PREMIGRATED = 0;
+		MIGRATED = 1;
+	}
+	required State state = 3;
+
+	message FileName {
+		required string filename = 1;
+	}
+
+	repeated FileName filenames = 4;
+}
+
+message LTFSDmSelRecRequest {
+	required uint64 key = 1;
+	required uint64 token = 2;
+	enum State {
+		PREMIGRATED = 0;
+		MIGRATED = 1;
+	}
+	required State state = 3;
+
+	message FileName {
+		required string filename = 1;
+	}
+
+	repeated FileName filenames = 4;
+}
+
+message LTFSDmTransRecRequest {
+	required uint64 key = 1;
+	required uint64 token = 2;
+	enum State {
+		PREMIGRATED = 0;
+		MIGRATED = 1;
+	}
+	required State state = 3;
+	required uint64 fsid = 4;
+	required uint64 igen = 5;
+	required uint64 inum = 6;
+}
+
+
+message LTFSDmCommand {
+	oneof commands {
+		LTFSDmMigRequest migrequest = 1;
+		LTFSDmSelRecRequest selrecrequest = 2;
+		LTFSDmTransRecRequest transrecrequest = 3;
+	}
+}
