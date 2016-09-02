@@ -1,8 +1,6 @@
-#include <stdio.h>
-#include <stdlib.h>
-
 #include <string>
 #include <fstream>
+#include <iostream>
 #include <vector>
 
 using namespace std;
@@ -15,11 +13,32 @@ typedef struct {
 int main(int argc, char **argv)
 
 {
-	ifstream infile(argv[1]);
-	ofstream outfile(argv[2]);
-	string first, second, line;
+	string first;
+	string second;
+	string line;
 	vector<message_t> messages;
 	vector<message_t>::iterator it;
+	ifstream infile;
+	ofstream outfile;
+
+	if ( argc != 3 ) {
+		cout << "usage: " << argv[0] << "< message text file name> <compiled message header>" << endl;
+		return -1;
+	}
+
+	try {
+		infile.open(argv[1]);
+	}
+	catch(...) {
+		cout << "unable to open input file " << argv[1] << "." << endl;
+	}
+
+	try {
+		outfile.open(argv[2]);
+	}
+	catch(...) {
+		cout << "unable to open outout file " << argv[2] << "." << endl;
+	}
 
 	while (std::getline(infile, line))
 	{
