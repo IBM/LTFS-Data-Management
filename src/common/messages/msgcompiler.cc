@@ -28,8 +28,11 @@ int main(int argc, char **argv)
 
 		// if line starts with '"' append the message
 		if ( line[0] == '"' ) {
-			messages.back().msgtxt += string(" + std::string(") + line + ")";
+			messages.back().msgtxt += '\n';
+			messages.back().msgtxt += "                      ";
+			messages.back().msgtxt += string("+std::string(") + line + ")";
 		}
+		// new message
 		else {
 			first = line.substr(0, line.find(' '));
 			second = line.substr(line.find('"'), string::npos - 1);
