@@ -12,7 +12,7 @@ void msg_out(msg_id msg, int linenr, Args ... args )
 	std::string format = msgname[msg].c_str() + std::string("(%d): ") + messages[msg].c_str();
 	memset(msgstr, 0, sizeof(msgstr));
 	snprintf(msgstr, sizeof(msgstr) -1, format.c_str(), linenr, args ...);
-	printf("%s\n", msgstr);
+	printf("%s", msgstr);
 }
 
 #define MSG_OUT(msg, args...) msg_out(msg, __LINE__, ##args)
