@@ -1,0 +1,4 @@
+OLTFS000001 "die 1. Nachricht"
+OLTFS000002  "die 2. Nachricht"
+OLTFS000003 "die 3. Nachricht"
+OLTFS000004 "die 4. Nachricht"
