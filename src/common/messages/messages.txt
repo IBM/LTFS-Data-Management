@@ -1,5 +1,20 @@
- OLTFS000001 "the first message prints out one integer parameter: %d.\n"
-OLTFS000002  "the second message contains several lines:\n"
+# ======================== sample messages ========================
+
+# client messages
+# message that uses more than one line
+OLTFSC0001X  "the second message contains several lines:\n"
 " within the second line a string is printed out: %s.\n"
 " within the third a integer value is printed out: %d.\n"
-OLTFS000003 "no value is printed out for the third message.\n"
+# help message (to be used with MSG_INFO)
+OLTFSC0002X "usage: progname <file name>\n"
+
+# server messages
+# initial space is skipped
+  OLTFSS0001X "the first message prints out one integer parameter: %d.\n"
+# message without any parameter)
+OLTFSS0002X "no value is printed out for the third message.\n"
+
+
+# ======================== client messages ========================
+
+# ======================== server messages ========================

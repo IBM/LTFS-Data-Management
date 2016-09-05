@@ -44,15 +44,25 @@ int main(int argc, char **argv)
 	{
 		// remove leading white space
 		line = line.erase(0, line.find_first_not_of(' '));
-
+		// if line is empty or a comment continue with next line
+		if ( line [0] == 0 || line [0] == '#' ) {
+			continue;
+		}
 		// if line starts with '"' append the message
-		if ( line[0] == '"' ) {
+		else if ( line[0] == '"' ) {
 			messages.back().msgtxt += '\n';
 			messages.back().msgtxt += "                      ";
 			messages.back().msgtxt += string("+std::string(") + line + ")";
 		}
 		// new message
 		else {
+			if ( line[0] != 'O' ) {
+				cout << "Line:" << endl;
+				cout << ">>" << line << "<< " << endl;
+				cout << "does not look correctly formatted." << endl;
+				cout << "Message compilation stopped." << endl;
+				return -1;
+			}
 			first = line.substr(0, line.find(' '));
 			second = line.substr(line.find('"'), string::npos - 1);
 			messages.push_back((message_t) {first, "std::string(" + second + ")"});
