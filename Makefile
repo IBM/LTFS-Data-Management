@@ -1,4 +1,8 @@
 include components.mk
+include common.mk
+
+export HOME = $(CURDIR)
+export HELLO = "Hello World!"
 
 .PHONY: build
 
@@ -10,6 +14,13 @@ BUILDDIRS = $(call addtgtprefix, build, $(CLIENTDIRS) $(SERVERDIRS) $(COMMONDIRS
 build: $(BUILDDIRS)
 $(BUILDDIRS):
 	$(MAKE) -C $(call remtgtprefix, build, $@) build
+
+
+CLEANDIRS = $(call addtgtprefix, clean, $(CLIENTDIRS) $(SERVERDIRS) $(COMMONDIRS))
+clean: $(CLEANDIRS)
+$(CLEANDIRS):
+	$(MAKE) -C $(call remtgtprefix, clean, $@) clean
+
 
 
 all: build
