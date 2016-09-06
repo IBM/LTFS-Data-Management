@@ -1,4 +1,4 @@
-include components.make
+include components.mk
 
 .PHONY: build
 
