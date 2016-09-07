@@ -2,3 +2,5 @@ msgdefs.h
 *~
 *.o
 src/common/comm/test
+src/common/messages/msgcompiler
+src/common/messages/msgtest

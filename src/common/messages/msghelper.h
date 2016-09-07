@@ -1,9 +1,9 @@
 #ifndef _MESSAGE_HELPER_H
 #define _MESSAGE_HELPER_H
 
-#include <stdio.h>
 #include <string.h>
 #include <string>
+#include <iostream>
 
 template<typename ... Args>
 void msg_out(msg_id msg, int linenr, Args ... args )
@@ -12,7 +12,7 @@ void msg_out(msg_id msg, int linenr, Args ... args )
 	std::string format = msgname[msg] + std::string("(%d): ") + messages[msg];
 	memset(msgstr, 0, sizeof(msgstr));
 	snprintf(msgstr, sizeof(msgstr) -1, format.c_str(), linenr, args ...);
-	printf("%s", msgstr);
+	std::cout << msgstr;
 }
 
 template<typename ... Args>
@@ -22,7 +22,7 @@ void msg_info(msg_id msg, int linenr, Args ... args )
 	std::string format = messages[msg];
 	memset(msgstr, 0, sizeof(msgstr));
 	snprintf(msgstr, sizeof(msgstr) -1, format.c_str(), linenr, args ...);
-	printf("%s", msgstr);
+	std::cout << msgstr;
 }
 
 #define MSG_OUT(msg, args...) msg_out(msg, __LINE__, ##args)
