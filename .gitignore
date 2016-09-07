@@ -4,3 +4,4 @@ msgdefs.h
 src/common/comm/test
 src/common/messages/msgcompiler
 src/common/messages/msgtest
+lib/*
