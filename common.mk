@@ -1,6 +1,6 @@
 CC = g++
 CXX = g++
-CXXFLAGS  = -std=c++11 -g2 -ggdb -Wall -Werror $(CLARGEFILES) -D_GNU_SOURCE -fPIC
+CXXFLAGS  = -std=c++11 -g2 -ggdb -Wall -Werror $(CLARGEFILES) -D_GNU_SOURCE -fPIC -lprotobuf
 
 objfiles = $(patsubst %.cc,%.o, $(1))
 
