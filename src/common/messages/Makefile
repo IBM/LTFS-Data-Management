@@ -1,19 +1,13 @@
-export objfiles = $(patsubst %.cc,%.o, $(1))
+include $(BUILD_ROOT)/common.mk
 
-msgdefs.h: $(call objfiles, msgcompiler.cc) messages.cfg
-	$(CXX) $(CPPFLAGS) -o msgcompiler msgcompiler.o
+TARGET := messages
+SOURCE_FILES := msgcompiler.cc msgdefs.h messages.cc msgtest.cc
+FILES_CLEANUP := msgcompiler msgtest msgdefs.h
+
+msgdefs.h: msgcompiler
 	./msgcompiler messages.cfg msgdefs.h
 
-
-$(call objfiles, messages.cc ): msgdefs.h
-
-msgs: $(call objfiles, messages.cc )
-
-msgtest: $(call objfiles, msgtest.cc )
-	$(CXX) $(CPPFLAGS) -o msgtest msgtest.o
+test: msgtest
 	./msgtest
 
-build: msgs msgtest
-
-clean:
-	rm -f *.o msgcompiler msgtest msgdefs.h
+include $(BUILD_ROOT)/targets.mk

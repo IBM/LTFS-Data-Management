@@ -1,8 +1,6 @@
 include components.mk
-include common.mk
 
-export HOME = $(CURDIR)
-export HELLO = "Hello World!"
+export BUILD_ROOT := $(CURDIR)
 
 .PHONY: build
 

@@ -1,2 +1,4 @@
 msgdefs.h
 *~
+*.o
+src/common/comm/test
