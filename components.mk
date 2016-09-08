@@ -1,3 +1,5 @@
-CLIENTDIRS := $(dir $(shell find src/client -name Makefile))
-SERVERDIRS := $(dir $(shell find src/server -name Makefile))
-COMMONDIRS := $(dir $(shell find src/common -name Makefile))
+COMMONDIRS := src/common/messages
+COMMONDIRS += src/common/tracing
+COMMONDIRS += src/common/comm
+
+CLIENTDIRS := src/client

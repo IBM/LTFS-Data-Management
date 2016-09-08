@@ -19,10 +19,11 @@ int main(int argc, char **argv)
 	vector<message_t> messages;
 	vector<message_t>::iterator it;
 	ifstream infile;
-	ofstream outfile;
+	ofstream hdrfile;
+	ofstream srcfile;
 
-	if ( argc != 3 ) {
-		cout << "usage: " << argv[0] << "< message text file name> <compiled message header>" << endl;
+	if ( argc != 4 ) {
+		cout << "usage: " << argv[0] << "< message text file name> <compiled message header> <compiled message source>" << endl;
 		return -1;
 	}
 
@@ -34,11 +35,19 @@ int main(int argc, char **argv)
 	}
 
 	try {
-		outfile.open(argv[2]);
+		hdrfile.open(argv[2]);
 	}
 	catch(...) {
-		cout << "unable to open outout file " << argv[2] << "." << endl;
+		cout << "unable to open message header file " << argv[2] << "." << endl;
 	}
+
+	try {
+		srcfile.open(argv[3]);
+	}
+	catch(...) {
+		cout << "unable to open message source file " << argv[3] << "." << endl;
+	}
+
 
 	while (std::getline(infile, line))
 	{
@@ -72,45 +81,54 @@ int main(int argc, char **argv)
 	infile.close();
 
 	// create the header file
-	outfile << "#ifndef _MESSAGE_DEFINITION_H" << endl;
-	outfile << "#define _MESSAGE_DEFINITION_H" << endl;
-	outfile << endl;
-	outfile << "typedef std::string message_t[];" << endl;
-	outfile << "typedef std::string msgname_t[];" << endl;
-	outfile << endl;
-	outfile << "enum msg_id {" << endl;
+	hdrfile << "#ifndef _MESSAGE_DEFINITION_H" << endl;
+	hdrfile << "#define _MESSAGE_DEFINITION_H" << endl;
+	hdrfile << endl;
+	hdrfile << "typedef std::string message_t[];" << endl;
+	hdrfile << "typedef std::string msgname_t[];" << endl;
+	hdrfile << endl;
+	hdrfile << "enum msg_id {" << endl;
 	for (it = messages.begin(); it != messages.end(); ++it) {
 		if ( it + 1 != messages.end() )
-			outfile << "    " << it->msgname << "," << endl;
+			hdrfile << "    " << it->msgname << "," << endl;
 		else
-			outfile << "    " << it->msgname<< endl;
+			hdrfile << "    " << it->msgname<< endl;
 	}
-	outfile << "};" << endl;
-	outfile << endl;
+	hdrfile << "};" << endl;
+	hdrfile << endl;
 
-	outfile << "const message_t messages = {" << endl;
+	hdrfile << "extern const message_t messages;" << endl;
+	hdrfile << endl;
+
+	hdrfile << "const msgname_t msgname = {" << endl;
 	for (it = messages.begin(); it != messages.end(); ++it) {
 		if ( it + 1 != messages.end() )
-			outfile << "    " << "/* " << it->msgname << " */  " << it->msgtxt << "," << endl;
+			hdrfile << "    " << "\"" << it->msgname << "\"," << endl;
 		else
-			outfile << "    " << "/* " << it->msgname << " */  " << it->msgtxt << endl;
+			hdrfile << "    " << "\"" << it->msgname << "\"" << endl;
 	}
-	outfile << "};" << endl;
-	outfile << endl;
+	hdrfile << "};" << endl;
+	hdrfile << endl;
 
-	outfile << "const msgname_t msgname = {" << endl;
+	hdrfile << "#endif /* _MESSAGE_DEFINITION_H */" << endl;
+
+	hdrfile.close();
+
+	srcfile << "#include <string>" << endl;
+	srcfile << "#include \"" << argv[2] << "\"" << endl;
+	srcfile << endl;
+
+	srcfile << "const message_t messages = {" << endl;
 	for (it = messages.begin(); it != messages.end(); ++it) {
 		if ( it + 1 != messages.end() )
-			outfile << "    " << "\"" << it->msgname << "\"," << endl;
+			srcfile << "    " << "/* " << it->msgname << " */  " << it->msgtxt << "," << endl;
 		else
-			outfile << "    " << "\"" << it->msgname << "\"" << endl;
+			srcfile << "    " << "/* " << it->msgname << " */  " << it->msgtxt << endl;
 	}
-	outfile << "};" << endl;
-	outfile << endl;
+	srcfile << "};" << endl;
+	srcfile << endl;
 
-	outfile << "#endif /* _MESSAGE_DEFINITION_H */" << endl;
-
-	outfile.close();
+	srcfile.close();
 
 	return 0;
 }
