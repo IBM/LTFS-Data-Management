@@ -47,8 +47,9 @@ int main(int argc, char *argv[])
         operation = new List();
     }
 	else {
-		MSG_OUT(OLTFSC0005E);
+		MSG_OUT(OLTFSC0005E, command);
 		printUsage();
+		return -1;
 	}
 
 	operation->doOperation(argc, argv);
