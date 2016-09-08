@@ -1,13 +1,12 @@
 default: build
 
-COMPONENT := $(firstword $(subst /, , $(patsubst $(BUILD_ROOT)/src/%,%, $(CURDIR))))
+#TARGETLIB := $(BUILD_ROOT)/lib/$(firstword $(subst /, , $(patsubst $(BUILD_ROOT)/src/%,%, $(CURDIR)))).a
 
 test:
 
-addarch: $(call objfiles, $(ARCH_FILES))
-	ar rv $(BUILD_ROOT)/lib/$(COMPONENT).a $^
+$(TARGETLIB): $(TARGETLIB)($(call objfiles, $(TARGET_FILES)))
 
-build:  $(call objfiles, $(SOURCE_FILES)) test addarch
+build:  $(call objfiles, $(SOURCE_FILES)) test $(TARGETLIB)
 
 clean:
-	rm -f *.o $(FILES_CLEANUP)
+	rm -f $(BUILD_ROOT)/lib/* *.o $(CLEANUP_FILES)

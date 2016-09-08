@@ -1,11 +1,12 @@
-include $(BUILD_ROOT)/common.mk
+RELPATH = ../../..
 
-TARGET := comm
-ARCH_FILES := ltfsdm.pb.cc LTFSDmC.cc
+include $(RELPATH)/common.mk
+
+TARGET_FILES := ltfsdm.pb.cc LTFSDmC.cc
 SOURCE_FILES := ltfsdm.pb.cc LTFSDmC.cc
-FILES_CLEANUP := ltfsdm.pb.cc ltfsdm.pb.h
+CLEANUP_FILES := ltfsdm.pb.cc ltfsdm.pb.h
 
 ltfsdm.pb.cc: ltfsdm.proto
 	protoc --proto_path=$(CURDIR) --cpp_out=$(CURDIR) $(CURDIR)/ltfsdm.proto
 
-include $(BUILD_ROOT)/targets.mk
+include $(RELPATH)/targets.mk

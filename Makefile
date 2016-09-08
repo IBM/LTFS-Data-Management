@@ -1,6 +1,8 @@
 include components.mk
 
 export BUILD_ROOT := $(CURDIR)
+#export getrelpath = $(shell echo $(1) |sed -e s/.*$(PROJECT)\\///g -e s/[^/]*/../g)
+
 
 .PHONY: build
 
