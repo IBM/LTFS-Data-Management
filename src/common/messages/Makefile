@@ -7,7 +7,7 @@ FILES_CLEANUP := msgcompiler msgtest msgdefs.h
 
 # $(info =============== $(firstword $(subst /, , $(patsubst $(BUILD_ROOT)/src/%,%, $(CURDIR)))) ===============)
 
-msgdefs.h: msgcompiler
+msgdefs.h: messages.cfg msgcompiler
 	./msgcompiler messages.cfg msgdefs.h
 
 test: msgtest
