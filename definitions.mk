@@ -34,12 +34,13 @@ $(EXECUTABLE): $(LDLIBS)
 $(BINDIR)/$(EXECUTABLE): $(EXECUTABLE)
 	cp $^ $@
 
-build: .depend $(call objfiles, $(SOURCE_FILES)) $(TARGETLIB) $(BINDIR)/$(EXECUTABLE)
-
 clean:
-	rm -f $(RELPATH)/lib/* *.o $(CLEANUP_FILES) $(EXECUTABLE) $(BINDIR)/* .depend
+	rm -fr $(RELPATH)/lib/* *.o $(CLEANUP_FILES) $(EXECUTABLE) $(BINDIR)/* .d
 
-.depend: $(SOURCE_FILES)
-	$(CXX) $(CXXFLAGS) -MM $(CFLAGS) $^ > $@
+build: .d $(call objfiles, $(SOURCE_FILES)) $(TARGETLIB) $(BINDIR)/$(EXECUTABLE)
 
--include .depend
+.d: $(SOURCE_FILES)
+	@mkdir .d
+	$(CXX) $(CXXFLAGS) -MM $(CFLAGS) $^ > .d/deps.mk
+
+-include .d/deps.mk
