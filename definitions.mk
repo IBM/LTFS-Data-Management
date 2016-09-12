@@ -26,6 +26,7 @@ BINDIR := $(RELPATH)/bin
 LDLIBS = $(RELPATH)/lib/$(TARGETCOMP).a $(RELPATH)/lib/common.a
 
 # targets
+default: build
 
 $(TARGETLIB): $(TARGETLIB)($(call objfiles, $(TARGET_FILES)))
 
@@ -40,7 +41,7 @@ clean:
 build: .d $(call objfiles, $(SOURCE_FILES)) $(TARGETLIB) $(BINDIR)/$(EXECUTABLE)
 
 .d: $(SOURCE_FILES)
-	@mkdir .d
+	@mkdir -p .d
 	$(CXX) $(CXXFLAGS) -MM $(CFLAGS) $^ > .d/deps.mk
 
 -include .d/deps.mk
