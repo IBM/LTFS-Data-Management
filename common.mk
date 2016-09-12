@@ -14,7 +14,7 @@ COMMON_LIB = src/common/lib
 CLIENT_LIB = src/client/lib
 SERVER_LIB = src/server/lib
 
-TARGETCOMP := $(shell echo $(CURDIR) |sed s/.*$(PROJECT).//g |awk -F / '{print $$2}')
+TARGETCOMP := $(shell perl -e "print '$(CURDIR)' =~ /.*$(PROJECT)\/src\/([^\/]+)/")
 
 ifdef TARGET_FILES
 TARGETLIB := $(RELPATH)/lib/$(TARGETCOMP).a
