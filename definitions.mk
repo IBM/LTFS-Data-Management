@@ -41,7 +41,7 @@ clean:
 build: .d $(call objfiles, $(SOURCE_FILES)) $(TARGETLIB) $(BINDIR)/$(EXECUTABLE)
 
 .d: $(SOURCE_FILES)
-	@mkdir -p .d
+	@rm -fr .d && mkdir .d
 	$(CXX) $(CXXFLAGS) -MM $(CFLAGS) $^ > .d/deps.mk
 
 -include .d/deps.mk
