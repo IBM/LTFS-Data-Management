@@ -17,8 +17,5 @@ clean: $(CLEANDIRS)
 $(CLEANDIRS):
 	$(MAKE) -C $(call remtgtprefix, clean, $@) clean
 
-client:
-server:
-
-default: build client server
-all: build client server
+default: build
+all: build

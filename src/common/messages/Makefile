@@ -12,6 +12,4 @@ msgdefs.h: messages.cfg msgcompiler
 
 build: msgdefs.h
 
-include $(RELPATH)/common.mk
-
-include $(RELPATH)/targets.mk
+include $(RELPATH)/definitions.mk

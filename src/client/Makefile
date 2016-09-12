@@ -5,6 +5,4 @@ SOURCE_FILES := ltfsdm.cc Migration.cc Recall.cc List.cc
 CLEANUP_FILES :=
 EXECUTABLE := ltfsdm
 
-include $(RELPATH)/common.mk
-
-include $(RELPATH)/targets.mk
+include $(RELPATH)/definitions.mk
