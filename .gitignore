@@ -8,3 +8,5 @@ lib/*
 ltfsdm
 msgdefs.cc
 runtest
+ltfsdm.pb.cc
+ltfsdm.pb.h
