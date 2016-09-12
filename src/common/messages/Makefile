@@ -1,20 +1,16 @@
 RELPATH = ../../..
 
-TARGET_FILES := msgdefs.cc
-SOURCE_FILES := msgcompiler.cc msgdefs.cc  msgtest.cc
-CLEANUP_FILES := msgcompiler msgtest msgdefs.cc runtest
+TARGET_FILES :=
+SOURCE_FILES := msgcompiler.cc
+CLEANUP_FILES := msgcompiler msgdefs.h
 
 msgcompiler: msgcompiler.cc
 	$(CXX) -o $@ $^
 
-msgdefs.h msgdefs.cc: messages.cfg msgcompiler
-	./msgcompiler messages.cfg msgdefs.h msgdefs.cc
+msgdefs.h: messages.cfg msgcompiler
+	./msgcompiler messages.cfg msgdefs.h
 
-runtest: msgdefs.h
-	@touch runtest
-	@./msgtest && echo "===== message test successful ====="
-
-test: msgtest runtest
+build: msgdefs.h
 
 include $(RELPATH)/common.mk
 

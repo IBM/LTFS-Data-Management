@@ -10,3 +10,4 @@ msgdefs.cc
 runtest
 ltfsdm.pb.cc
 ltfsdm.pb.h
+.depend
