@@ -3,8 +3,10 @@ PROJECT := OpenLTFS
 CC = g++
 CXX = g++
 
-CXXFLAGS  := -std=c++11 -g2 -ggdb -Wall -Werror -D_GNU_SOURCE -lprotobuf
+CXXFLAGS  := -std=c++11 -g2 -ggdb -Wall -Werror -D_GNU_SOURCE
 CXXFLAGS  += -I$(RELPATH)
+
+LDFLAGS := -lprotobuf
 
 objfiles = $(patsubst %.cc,%.o, $(1))
 
@@ -12,7 +14,7 @@ COMMON_LIB = src/common/lib
 CLIENT_LIB = src/client/lib
 SERVER_LIB = src/server/lib
 
-TARGETCOMP := $(shell echo $(CURDIR) |sed s/.*OpenLTFS.//g |awk -F / '{print $$2}')
+TARGETCOMP := $(shell echo $(CURDIR) |sed s/.*$(PROJECT).//g |awk -F / '{print $$2}')
 
 ifdef TARGET_FILES
 TARGETLIB := $(RELPATH)/lib/$(TARGETCOMP).a
