@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
 
 	char *command = (char *) argv[1];
 
-	TRACE(0, "program started for command: %s.\n", argv[1]);
+	TRACE(0, argv[1]);
 
 	if( compareParameter("migrate", command) ) {
         operation = new Migration();

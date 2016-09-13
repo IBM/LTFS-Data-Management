@@ -22,8 +22,7 @@ LDFLAGS := -lprotobuf
 # client, common, or server
 TARGETCOMP := $(shell perl -e "print '$(CURDIR)' =~ /.*$(PROJECT)\/src\/([^\/]+)/")
 
-LDLIBS := $(RELPATH)/lib/common.a
-LDLIBS += $(RELPATH)/lib/$(TARGETCOMP).a
+ARCHIVES ?= $(RELPATH)/lib/common.a $(RELPATH)/lib/$(TARGETCOMP).a
 
 # binary source files contain the main routine
 # library source files will be added to the archives
@@ -51,10 +50,12 @@ default: build
 # auto dependencies
 $(DEPDIR): $(SOURCE_FILES)
 	@rm -fr $(DEPDIR) && mkdir $(DEPDIR)
-	$(CXX) $(CXXFLAGS) -MM $(CFLAGS) $^ > .d/deps.mk
+	$(CXX) $(CXXFLAGS) -MM $^ > .d/deps.mk
 
 # client.a, common.a, and server.a archive files
 $(TARGETLIB): $(TARGETLIB)($(call objfiles, $(LIB_SRC_FILES)))
+
+$(BINARY): $(ARCHIVES)
 
 # copy binary to bin directory
 $(TARGETBIN): $(BINARY)
