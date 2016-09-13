@@ -1,8 +1,9 @@
 RELPATH = ../..
 
-TARGET_FILES := Migration.cc Recall.cc List.cc
-SOURCE_FILES := ltfsdm.cc Migration.cc Recall.cc List.cc
-CLEANUP_FILES :=
-EXECUTABLE := ltfsdm
+LIB_SRC_FILES := Migration.cc Recall.cc List.cc
+BIN_SRC_FILES := ltfsdm.cc
+CLEANUP_FILES := ltfsdm
+BINARY := ltfsdm
+POSTTARGET :=
 
 include $(RELPATH)/definitions.mk

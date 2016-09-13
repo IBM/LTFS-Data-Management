@@ -1,47 +1,68 @@
 # common definitions
 
+.PHONY: clean build
+
+# to be used below
 PROJECT := OpenLTFS
 
+# for executing code
+export PATH := $(PATH):$(RELPATH)/bin
+
+# for linking - no standard C required
 CC = g++
+
 CXX = g++
 
+# use c++11 to build the code
 CXXFLAGS  := -std=c++11 -g2 -ggdb -Wall -Werror -D_GNU_SOURCE -I$(RELPATH)
 
+# for protocol buffers
 LDFLAGS := -lprotobuf
 
-objfiles = $(patsubst %.cc,%.o, $(1))
-
-COMMON_LIB = src/common/lib
-CLIENT_LIB = src/client/lib
-SERVER_LIB = src/server/lib
-
+# client, common, or server
 TARGETCOMP := $(shell perl -e "print '$(CURDIR)' =~ /.*$(PROJECT)\/src\/([^\/]+)/")
 
-ifdef TARGET_FILES
+LDLIBS := $(RELPATH)/lib/common.a
+LDLIBS += $(RELPATH)/lib/$(TARGETCOMP).a
+
+# binary source files contain the main routine
+# library source files will be added to the archives
+SOURCE_FILES := $(LIB_SRC_FILES) $(BIN_SRC_FILES)
+
+ifneq ($(strip $(SOURCE_FILES)),)
+DEPDIR := .d
+endif
+
+ifneq ($(strip $(LIB_SRC_FILES)),)
 TARGETLIB := $(RELPATH)/lib/$(TARGETCOMP).a
 endif
 
 BINDIR := $(RELPATH)/bin
 
-LDLIBS = $(RELPATH)/lib/$(TARGETCOMP).a $(RELPATH)/lib/common.a
+ifneq ($(strip $(BINARY)),)
+TARGETBIN := $(BINDIR)/$(BINARY)
+endif
 
-# targets
+objfiles = $(patsubst %.cc,%.o, $(1))
+
+# build rules
 default: build
 
-$(TARGETLIB): $(TARGETLIB)($(call objfiles, $(TARGET_FILES)))
+# auto dependencies
+$(DEPDIR): $(SOURCE_FILES)
+	@rm -fr $(DEPDIR) && mkdir $(DEPDIR)
+	$(CXX) $(CXXFLAGS) -MM $(CFLAGS) $^ > .d/deps.mk
 
-$(EXECUTABLE): $(LDLIBS)
+# client.a, common.a, and server.a archive files
+$(TARGETLIB): $(TARGETLIB)($(call objfiles, $(LIB_SRC_FILES)))
 
-$(BINDIR)/$(EXECUTABLE): $(EXECUTABLE)
+# copy binary to bin directory
+$(TARGETBIN): $(BINARY)
 	cp $^ $@
 
 clean:
-	rm -fr $(RELPATH)/lib/* *.o $(CLEANUP_FILES) $(EXECUTABLE) $(BINDIR)/* .d
+	rm -fr $(RELPATH)/lib/* *.o $(CLEANUP_FILES) $(BINARY) $(TARGETBIN) $(DEPDIR)
 
-build: .d $(call objfiles, $(SOURCE_FILES)) $(TARGETLIB) $(BINDIR)/$(EXECUTABLE)
-
-.d: $(SOURCE_FILES)
-	@rm -fr .d && mkdir .d
-	$(CXX) $(CXXFLAGS) -MM $(CFLAGS) $^ > .d/deps.mk
+build: $(DEPDIR) $(call objfiles, $(SOURCE_FILES)) $(TARGETLIB) $(TARGETBIN) $(POSTTARGET)
 
 -include .d/deps.mk

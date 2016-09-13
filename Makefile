@@ -2,6 +2,8 @@ include components.mk
 
 .PHONY: build clean
 
+default: build
+
 SEP = >
 addtgtprefix = $(addprefix $(1)$(SEP), $(2))
 remtgtprefix = $(subst $(1)$(SEP),,$(2))
@@ -16,6 +18,3 @@ CLEANDIRS := $(call addtgtprefix, clean, $(COMMONDIRS) $(CLIENTDIRS) $(SERVERDIR
 clean: $(CLEANDIRS)
 $(CLEANDIRS):
 	$(MAKE) -C $(call remtgtprefix, clean, $@) clean
-
-default: build
-all: build

@@ -1,5 +1,9 @@
-default: build
+RELPATH = ../../..
 
-build:
+LIB_SRC_FILES :=
+BIN_SRC_FILES :=
+CLEANUP_FILES :=
+BINARYE :=
+POSTTARGET :=
 
-clean:
+include $(RELPATH)/definitions.mk
