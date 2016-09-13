@@ -22,6 +22,7 @@ LDFLAGS := -lprotobuf
 # client, common, or server
 TARGETCOMP := $(shell perl -e "print '$(CURDIR)' =~ /.*$(PROJECT)\/src\/([^\/]+)/")
 
+# to not set ARCHIVES (e.g. link w/o) set 'ARCHIVES :=' before
 ARCHIVES ?= $(RELPATH)/lib/common.a $(RELPATH)/lib/$(TARGETCOMP).a
 
 # binary source files contain the main routine

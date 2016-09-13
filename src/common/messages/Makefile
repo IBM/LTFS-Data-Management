@@ -7,8 +7,8 @@ BINARY := msgcompiler
 POSTTARGET := msgdefs.h
 
 # to build the message compiler do not use any libs
-ARCHIVES =
-LDFLAGS =
+ARCHIVES :=
+LDFLAGS :=
 
 include $(RELPATH)/definitions.mk
 
