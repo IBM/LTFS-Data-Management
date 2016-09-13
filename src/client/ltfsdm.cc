@@ -39,6 +39,7 @@ int main(int argc, char *argv[])
 	char *command = (char *) argv[1];
 
 	TRACE(0, argv[1]);
+	TRACE(0, argc);
 
 	if( compareParameter("migrate", command) ) {
         operation = new Migration();
@@ -54,6 +55,8 @@ int main(int argc, char *argv[])
 		printUsage();
 		return -1;
 	}
+
+	TRACE(0,  operation);
 
 	operation->doOperation(argc, argv);
 
