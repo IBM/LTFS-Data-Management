@@ -11,3 +11,4 @@ runtest
 ltfsdm.pb.cc
 ltfsdm.pb.h
 .d
+.DS_Store
