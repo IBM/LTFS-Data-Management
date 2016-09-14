@@ -40,6 +40,7 @@ int main(int argc, char *argv[])
 
 	TRACE(0, argv[1]);
 	TRACE(0, argc);
+	TRACE(0, "Hello World!");
 
 	if( compareParameter("migrate", command) ) {
         operation = new Migration();
