@@ -4,6 +4,9 @@
 class InfoRequests : public Operation
 
 {
+private:
+	bool waitForCompletion;
+	long requestNumber;
 public:
 	InfoRequests();
     ~InfoRequests() {};

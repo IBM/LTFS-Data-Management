@@ -4,6 +4,9 @@
 class InfoFiles : public Operation
 
 {
+private:
+	std::string fileList;
+	std::string directoryName;
 public:
 	InfoFiles();
     ~InfoFiles() {};
