@@ -8,6 +8,7 @@ private:
 	bool waitForCompletion;
 	bool preMigrate;
 	long requestNumber;
+	unsigned long collocationFactor;
 	std::string fileList;
 	std::string directoryName;
 public:

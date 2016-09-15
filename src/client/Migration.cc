@@ -9,7 +9,7 @@
 #include "Migration.h"
 
 Migration::Migration() :
-	waitForCompletion(false), preMigrate(false), requestNumber(-1), fileList(""), directoryName("")
+	waitForCompletion(false), preMigrate(false), requestNumber(-1), collocationFactor(1), fileList(""), directoryName("")
 
 {
 }
@@ -30,7 +30,7 @@ void Migration::doOperation(int argc, char **argv)
 		goto error;
 	}
 
-	while (( opt = getopt(argc, argv, ":hwpr:f:d:")) != -1 ) {
+	while (( opt = getopt(argc, argv, ":hwpc:r:f:d:")) != -1 ) {
 		switch( opt ) {
 			case 'h':
 				printUsage();
@@ -43,6 +43,9 @@ void Migration::doOperation(int argc, char **argv)
 				break;
 			case 'r':
 				requestNumber = strtoul(optarg, NULL, 0);;
+				break;
+			case 'c':
+				collocationFactor = strtoul(optarg, NULL, 0);;
 				break;
 			case 'f':
 				fileList = std::string(optarg);
@@ -79,6 +82,7 @@ void Migration::doOperation(int argc, char **argv)
 	TRACE(0, waitForCompletion);
 	TRACE(0, preMigrate);
 	TRACE(0, requestNumber);
+	TRACE(0, collocationFactor);
 	TRACE(0, fileList);
 	TRACE(0, directoryName);
 
