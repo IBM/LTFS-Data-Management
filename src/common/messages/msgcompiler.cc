@@ -42,7 +42,7 @@ int main(int argc, char **argv)
 
 	while (std::getline(infile, line))
 	{
-		// remove leading white space
+		// remove leading white spaces and tabs
 		line = line.erase(0, line.find_first_not_of(" \t"));
 		// if line is empty or a comment continue with next line
 		if ( line [0] == 0 || line [0] == '#' ) {
