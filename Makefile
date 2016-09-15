@@ -1,5 +1,8 @@
 include components.mk
 
+# for executing code
+export PATH := $(PATH):$(CURDIR)/bin
+
 .PHONY: build clean
 
 default: build

@@ -5,9 +5,6 @@
 # to be used below
 PROJECT := OpenLTFS
 
-# for executing code
-export PATH := $(PATH):$(RELPATH)/bin
-
 # for linking - no standard C required
 CC = g++
 
