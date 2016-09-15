@@ -10,10 +10,10 @@ Help::Help()
 
 void Help::printUsage()
 {
-	MSG_INFO(OLTFSC0008I);
+	MSG_INFO(OLTFSC0003I);
 }
 
 void Help::doOperation(int argc, char **argv)
 {
-	printUsage();
+	MSG_INFO(OLTFSC0008I);
 }
