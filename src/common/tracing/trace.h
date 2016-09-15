@@ -21,10 +21,10 @@ void trace(const char *filename, int linenr, int dbglvl, const char *varname, T 
 		ctime_r(&current, curctime);
 		curctime[strlen(curctime) - 1] = 0;
 
-		std::cout << curctime << ": ";
-		std::cout << std::setw(15) << filename;
-		std::cout << "(" << linenr << "): ";
-		std::cout << varname << "(" << s << ")" << std::endl;
+		std::cerr << curctime << ": ";
+		std::cerr << std::setw(15) << filename;
+		std::cerr << "(" << linenr << "): ";
+		std::cerr << varname << "(" << s << ")" << std::endl;
 	}
 }
 
