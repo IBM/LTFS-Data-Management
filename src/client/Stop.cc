@@ -1,5 +1,7 @@
 #include <string>
 #include "src/common/messages/messages.h"
+#include "src/common/errors/errors.h"
+
 #include "Operation.h"
 #include "Stop.h"
 
@@ -15,5 +17,8 @@ void Stop::printUsage()
 
 void Stop::doOperation(int argc, char **argv)
 {
-	printUsage();
+	if ( argc > 1 ) {
+		printUsage();
+		throw OLTFSErr::OLTFS_GENERAL_ERROR;
+	}
 }
