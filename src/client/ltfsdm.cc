@@ -12,15 +12,6 @@
 #include "InfoRequests.h"
 #include "InfoFiles.h"
 
-bool checkParam(const char *tocomparewith, const char *parameter)
-
-{
-	if ( std::string(parameter).compare(tocomparewith) )
-		return false;
-	else
-		return true;
-}
-
 int main(int argc, char *argv[])
 
 {
@@ -37,12 +28,12 @@ int main(int argc, char *argv[])
 	TRACE(0, argc);
 	TRACE(0, command);
 
- 	if (      checkParam("start",   command) ) { operation = new Start(); }
-	else if ( checkParam("stop",    command) ) { operation = new Stop(); }
- 	else if ( checkParam("migrate", command) ) { operation = new Migration(); }
-    else if ( checkParam("recall",  command) ) { operation = new Recall(); }
-    else if ( checkParam("help",    command) ) { operation = new Help(); }
-	else if ( checkParam("info",    command) ) {
+ 	if      ( !std::string("help").compare(command)    ) { operation = new Start(); }
+	else if ( !std::string("stop").compare(command)    ) { operation = new Stop(); }
+ 	else if ( !std::string("migrate").compare(command) ) { operation = new Migration(); }
+    else if ( !std::string("recall").compare(command)  ) { operation = new Recall(); }
+    else if ( !std::string("help").compare(command)    ) { operation = new Help(); }
+	else if ( !std::string("info").compare(command)    ) {
 		if ( argc < 3 ) {
 			MSG_OUT(OLTFSC0011E);
 			return (int) OLTFSErr::OLTFS_GENERAL_ERROR;
@@ -51,8 +42,8 @@ int main(int argc, char *argv[])
 		argv++;
 		command = (char *) argv[1];
 		TRACE(0, command);
-		if(       checkParam("requests", command) ) { operation = new InfoRequests(); }
-		else if ( checkParam("files",    command) ) { operation = new InfoFiles(); }
+		if      ( !std::string("requests").compare(command) ) { operation = new InfoRequests(); }
+		else if ( !std::string("files").compare(command)    ) { operation = new InfoFiles(); }
 		else {
 			MSG_OUT(OLTFSC0012E, command);
 			operation = new Help();
