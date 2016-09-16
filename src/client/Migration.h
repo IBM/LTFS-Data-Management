@@ -5,14 +5,8 @@ class Migration : public Operation
 
 {
 private:
-	bool waitForCompletion;
-	bool preMigrate;
-	long requestNumber;
-	unsigned long collocationFactor;
-	std::string fileList;
-	std::string directoryName;
 public:
-	Migration();
+	Migration() {};
     ~Migration() {};
     void printUsage();
     void doOperation(int argc, char **argv);

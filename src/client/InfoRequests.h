@@ -5,10 +5,8 @@ class InfoRequests : public Operation
 
 {
 private:
-	bool waitForCompletion;
-	long requestNumber;
 public:
-	InfoRequests();
+	InfoRequests() {};
     ~InfoRequests() {};
     void printUsage();
     void doOperation(int argc, char **argv);

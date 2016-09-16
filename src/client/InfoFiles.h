@@ -5,10 +5,8 @@ class InfoFiles : public Operation
 
 {
 private:
-	std::string fileList;
-	std::string directoryName;
 public:
-	InfoFiles();
+	InfoFiles() {};
     ~InfoFiles() {};
     void printUsage();
     void doOperation(int argc, char **argv);

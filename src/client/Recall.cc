@@ -8,12 +8,6 @@
 #include "Operation.h"
 #include "Recall.h"
 
-Recall::Recall() :
-	waitForCompletion(false), preMigrate(false), requestNumber(-1), fileList(""), directoryName("")
-
-{
-}
-
 void Recall::printUsage()
 {
 	MSG_INFO(OLTFSC0002I);
@@ -74,6 +68,11 @@ void Recall::doOperation(int argc, char **argv)
 			MSG_INFO(OLTFSC0017E);
 			goto error;
 		}
+	}
+	else if ( !fileList.compare("") && !directoryName.compare("") ) {
+		// a least a file or directory needs to be specified
+		MSG_INFO(OLTFSC0019E);
+		goto error;
 	}
 
 	TRACE(0, waitForCompletion);

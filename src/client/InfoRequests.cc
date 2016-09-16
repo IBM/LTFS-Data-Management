@@ -8,12 +8,6 @@
 #include "Operation.h"
 #include "InfoRequests.h"
 
-InfoRequests::InfoRequests() :
-	waitForCompletion(false), requestNumber(-1)
-
-{
-}
-
 void InfoRequests::printUsage()
 {
 	MSG_INFO(OLTFSC0009I);

@@ -4,7 +4,19 @@
 class Operation
 {
 protected:
-	Operation() {};
+    Operation() : waitForCompletion(false),
+		preMigrate(false),
+		requestNumber(-1),
+		collocationFactor(1),
+		fileList(""),
+		directoryName("") {};
+	bool waitForCompletion;
+	bool preMigrate;
+	long requestNumber;
+	unsigned long collocationFactor;
+	std::string fileList;
+	std::string directoryName;
+
 public:
     virtual ~Operation() {};
     virtual void printUsage() = 0;

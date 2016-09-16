@@ -8,12 +8,6 @@
 #include "Operation.h"
 #include "InfoFiles.h"
 
-InfoFiles::InfoFiles() :
-	fileList(""), directoryName("")
-
-{
-}
-
 void InfoFiles::printUsage()
 {
 	MSG_INFO(OLTFSC0010I);
@@ -65,6 +59,11 @@ void InfoFiles::doOperation(int argc, char **argv)
 			MSG_INFO(OLTFSC0017E);
 			goto error;
 		}
+	}
+	else if ( !fileList.compare("") && !directoryName.compare("") ) {
+		// a least a file or directory needs to be specified
+		MSG_INFO(OLTFSC0019E);
+		goto error;
 	}
 
 	TRACE(0, fileList);

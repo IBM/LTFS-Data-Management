@@ -5,13 +5,8 @@ class Recall : public Operation
 
 {
 private:
-	bool waitForCompletion;
-	bool preMigrate;
-	long requestNumber;
-	std::string fileList;
-	std::string directoryName;
 public:
-	Recall();
+	Recall() {};
     ~Recall() {};
     void printUsage();
     void doOperation(int argc, char **argv);

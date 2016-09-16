@@ -8,12 +8,6 @@
 #include "Operation.h"
 #include "Migration.h"
 
-Migration::Migration() :
-	waitForCompletion(false), preMigrate(false), requestNumber(-1), collocationFactor(1), fileList(""), directoryName("")
-
-{
-}
-
 void Migration::printUsage()
 {
 	MSG_INFO(OLTFSC0001I);
@@ -78,6 +72,14 @@ void Migration::doOperation(int argc, char **argv)
 			goto error;
 		}
 	}
+	else if ( !fileList.compare("") && !directoryName.compare("") ) {
+		// a least a file or directory needs to be specified
+		MSG_INFO(OLTFSC0019E);
+		goto error;
+	}
+
+	TRACE(0, argc);
+	TRACE(0, optind);
 
 	TRACE(0, waitForCompletion);
 	TRACE(0, preMigrate);
