@@ -15,35 +15,12 @@ void InfoFiles::printUsage()
 
 void InfoFiles::doOperation(int argc, char **argv)
 {
-	int opt;
-
-	opterr = 0;
-
 	if ( argc == 1 ) {
 		MSG_INFO(OLTFSC0018E);
 		goto error;
 	}
 
-	while (( opt = getopt(argc, argv, ":hf:d:")) != -1 ) {
-		switch( opt ) {
-			case 'h':
-				printUsage();
-				return;
-			case 'f':
-				fileList = std::string(optarg);
-				break;
-			case 'd':
-				directoryName = std::string(optarg);
-				break;
-			case ':':
-				MSG_INFO(OLTFSC0014E);
-				printUsage();
-				throw(OLTFSErr::OLTFS_GENERAL_ERROR);
-			default:
-				MSG_INFO(OLTFSC0013E);
-				goto error;
-		}
-	}
+	processOptions(argc, argv);
 
 	if ( fileList.compare("") && directoryName.compare("") ) {
 		MSG_INFO(OLTFSC0015E);

@@ -5,11 +5,6 @@
 #include "Operation.h"
 #include "Stop.h"
 
-Stop::Stop()
-
-{
-}
-
 void Stop::printUsage()
 {
 	MSG_INFO(OLTFSC0007I);

@@ -6,7 +6,7 @@ class Migration : public Operation
 {
 private:
 public:
-	Migration() {};
+    Migration() : Operation("+hwpc:n:f:R:") {};
     ~Migration() {};
     void printUsage();
     void doOperation(int argc, char **argv);

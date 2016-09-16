@@ -6,7 +6,7 @@ class InfoRequests : public Operation
 {
 private:
 public:
-	InfoRequests() {};
+    InfoRequests() : Operation("+hwn:") {};
     ~InfoRequests() {};
     void printUsage();
     void doOperation(int argc, char **argv);

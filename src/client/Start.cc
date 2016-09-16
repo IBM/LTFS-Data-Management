@@ -5,11 +5,6 @@
 #include "Operation.h"
 #include "Start.h"
 
-Start::Start()
-
-{
-}
-
 void Start::printUsage()
 {
 	MSG_INFO(OLTFSC0006I);

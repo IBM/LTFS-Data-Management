@@ -5,7 +5,7 @@ class Help : public Operation
 
 {
 public:
-	Help();
+    Help() : Operation("") {};
     ~Help() {};
     void printUsage();
     void doOperation(int argc, char **argv);

@@ -5,7 +5,7 @@ class Stop : public Operation
 
 {
 public:
-	Stop();
+    Stop() : Operation("") {};
     ~Stop() {};
     void printUsage();
     void doOperation(int argc, char **argv);

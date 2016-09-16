@@ -3,11 +3,6 @@
 #include "Operation.h"
 #include "Help.h"
 
-Help::Help()
-
-{
-}
-
 void Help::printUsage()
 {
 	MSG_INFO(OLTFSC0003I);

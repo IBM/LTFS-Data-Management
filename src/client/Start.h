@@ -5,7 +5,7 @@ class Start : public Operation
 
 {
 public:
-	Start();
+    Start() : Operation("") {};
     ~Start() {};
     void printUsage();
     void doOperation(int argc, char **argv);

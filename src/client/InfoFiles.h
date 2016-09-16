@@ -6,7 +6,7 @@ class InfoFiles : public Operation
 {
 private:
 public:
-	InfoFiles() {};
+    InfoFiles() : Operation("+hf:R:") {};
     ~InfoFiles() {};
     void printUsage();
     void doOperation(int argc, char **argv);

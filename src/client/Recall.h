@@ -6,7 +6,7 @@ class Recall : public Operation
 {
 private:
 public:
-	Recall() {};
+    Recall() : Operation("+hwrn:f:R:") {};
     ~Recall() {};
     void printUsage();
     void doOperation(int argc, char **argv);
