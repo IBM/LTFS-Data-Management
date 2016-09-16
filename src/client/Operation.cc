@@ -28,6 +28,7 @@ void Operation::processOptions(int argc, char **argv)
 				break;
 			case 'r':
 				recToResident = true;
+				break;
 			case 'n':
 				requestNumber = strtoul(optarg, NULL, 0);;
 				break;
