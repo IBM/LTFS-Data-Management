@@ -32,22 +32,22 @@ int main(int argc, char *argv[])
 	TRACE(0, argc);
 	TRACE(0, command.c_str());
 
- 	if  ( !command.compare(StartCommand().cmd()) ) {
+ 	if  ( !command.compare(StartCommand().getcmd()) ) {
 		openLTFSCommand = new StartCommand();
 	}
-	else if ( !command.compare(StopCommand().cmd()) ) {
+	else if ( !command.compare(StopCommand().getcmd()) ) {
 		openLTFSCommand = new StopCommand();
 	}
-	else if ( !command.compare(MigrationCommand().cmd()) ) {
+	else if ( !command.compare(MigrationCommand().getcmd()) ) {
 		openLTFSCommand = new MigrationCommand();
 	}
-	else if ( !command.compare(RecallCommand().cmd()) ) {
+	else if ( !command.compare(RecallCommand().getcmd()) ) {
 		openLTFSCommand = new RecallCommand();
 	}
-	else if ( !command.compare(HelpCommand().cmd()) ) {
+	else if ( !command.compare(HelpCommand().getcmd()) ) {
 		openLTFSCommand = new HelpCommand();
 	}
-	else if ( !command.compare(InfoCommand().cmd()) ) {
+	else if ( !command.compare(InfoCommand().getcmd()) ) {
 		if ( argc < 3 ) {
 			MSG_OUT(OLTFSC0011E);
 			rc =  OLTFSErr::OLTFS_GENERAL_ERROR;
@@ -57,10 +57,10 @@ int main(int argc, char *argv[])
 		argv++;
 		command = std::string(argv[1]);
 		TRACE(0, command.c_str());
-		if      ( !command.compare(InfoRequestsCommand().cmd()) ) {
+		if      ( !command.compare(InfoRequestsCommand().getcmd()) ) {
 			openLTFSCommand = new InfoRequestsCommand();
 		}
-		else if ( !command.compare(InfoFilesCommand().cmd()) ) {
+		else if ( !command.compare(InfoFilesCommand().getcmd()) ) {
 			openLTFSCommand = new InfoFilesCommand();
 		}
 		else {
