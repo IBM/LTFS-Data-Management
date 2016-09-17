@@ -10,8 +10,7 @@ public:
     ~RecallCommand() {};
     void printUsage();
     void doCommand(int argc, char **argv);
-    static constexpr const char *cmd1 = "recall";
-    static constexpr const char *cmd2 = "";
+    static constexpr const char *command = "recall";
 };
 
 #endif /* _RECALL_H */

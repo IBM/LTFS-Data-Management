@@ -9,8 +9,7 @@ public:
     ~StopCommand() {};
     void printUsage();
     void doCommand(int argc, char **argv);
- 	static constexpr const char *cmd1 = "stop";
-	static constexpr const char *cmd2 = "";
+ 	static constexpr const char *command = "stop";
 };
 
 #endif /* _STOP_H */

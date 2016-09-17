@@ -30,22 +30,22 @@ int main(int argc, char *argv[])
 	TRACE(0, argc);
 	TRACE(0, command.c_str());
 
- 	if  ( !command.compare(StartCommand::cmd1) ) {
+ 	if  ( !command.compare(StartCommand::command) ) {
 		operation = new StartCommand();
 	}
-	else if ( !command.compare(StopCommand::cmd1) ) {
+	else if ( !command.compare(StopCommand::command) ) {
 		operation = new StopCommand();
 	}
-	else if ( !command.compare(MigrationCommand::cmd1) ) {
+	else if ( !command.compare(MigrationCommand::command) ) {
 		operation = new MigrationCommand();
 	}
-	else if ( !command.compare(RecallCommand::cmd1) ) {
+	else if ( !command.compare(RecallCommand::command) ) {
 		operation = new RecallCommand();
 	}
-	else if ( !command.compare(HelpCommand::cmd1) ) {
+	else if ( !command.compare(HelpCommand::command) ) {
 		operation = new HelpCommand();
 	}
-	else if ( !command.compare(InfoCommand::cmd1) ) {
+	else if ( !command.compare(InfoCommand::command) ) {
 		if ( argc < 3 ) {
 			MSG_OUT(OLTFSC0011E);
 			return (int) OLTFSErr::OLTFS_GENERAL_ERROR;
@@ -54,10 +54,10 @@ int main(int argc, char *argv[])
 		argv++;
 		command = std::string(argv[1]);
 		TRACE(0, command.c_str());
-		if      ( !command.compare(InfoRequestsCommand::cmd2) ) {
+		if      ( !command.compare(InfoRequestsCommand::command) ) {
 			operation = new InfoRequestsCommand();
 		}
-		else if ( !command.compare(InfoFilesCommand::cmd2) ) {
+		else if ( !command.compare(InfoFilesCommand::command) ) {
 			operation = new InfoFilesCommand();
 		}
 		else {

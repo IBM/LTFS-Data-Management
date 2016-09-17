@@ -6,8 +6,7 @@ class InfoCommand : public OpenLTFSCommand
 {
 private:
 public:
-    static constexpr const char *cmd1 = "info";
-    static constexpr const char *cmd2 = "";
+    static constexpr const char *command = "info";
 };
 
 #endif /* _INFO_H */

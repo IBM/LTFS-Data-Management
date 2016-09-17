@@ -9,8 +9,7 @@ public:
     ~StartCommand() {};
     void printUsage();
     void doCommand(int argc, char **argv);
-	static constexpr const char *cmd1 = "start";
-	static constexpr const char *cmd2 = "";
+	static constexpr const char *command = "start";
 };
 
 #endif /* _START_H */
