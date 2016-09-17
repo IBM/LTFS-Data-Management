@@ -16,12 +16,12 @@
 int main(int argc, char *argv[])
 
 {
-	OpenLTFSCommand *operation = NULL;
+	OpenLTFSCommand *openLTFSCommand = NULL;
 	std::string command;
 
 	if ( argc < 2 ) {
-		operation = new HelpCommand();
-		operation->doCommand(argc, argv);
+		openLTFSCommand = new HelpCommand();
+		openLTFSCommand->doCommand(argc, argv);
 		return (int) OLTFSErr::OLTFS_GENERAL_ERROR;
 	}
 
@@ -31,19 +31,19 @@ int main(int argc, char *argv[])
 	TRACE(0, command.c_str());
 
  	if  ( !command.compare(StartCommand::command) ) {
-		operation = new StartCommand();
+		openLTFSCommand = new StartCommand();
 	}
 	else if ( !command.compare(StopCommand::command) ) {
-		operation = new StopCommand();
+		openLTFSCommand = new StopCommand();
 	}
 	else if ( !command.compare(MigrationCommand::command) ) {
-		operation = new MigrationCommand();
+		openLTFSCommand = new MigrationCommand();
 	}
 	else if ( !command.compare(RecallCommand::command) ) {
-		operation = new RecallCommand();
+		openLTFSCommand = new RecallCommand();
 	}
 	else if ( !command.compare(HelpCommand::command) ) {
-		operation = new HelpCommand();
+		openLTFSCommand = new HelpCommand();
 	}
 	else if ( !command.compare(InfoCommand::command) ) {
 		if ( argc < 3 ) {
@@ -55,24 +55,24 @@ int main(int argc, char *argv[])
 		command = std::string(argv[1]);
 		TRACE(0, command.c_str());
 		if      ( !command.compare(InfoRequestsCommand::command) ) {
-			operation = new InfoRequestsCommand();
+			openLTFSCommand = new InfoRequestsCommand();
 		}
 		else if ( !command.compare(InfoFilesCommand::command) ) {
-			operation = new InfoFilesCommand();
+			openLTFSCommand = new InfoFilesCommand();
 		}
 		else {
 			MSG_OUT(OLTFSC0012E, command.c_str());
-			operation = new HelpCommand();
+			openLTFSCommand = new HelpCommand();
 			return (int) OLTFSErr::OLTFS_GENERAL_ERROR;
 		}
 	}
 	else {
 		MSG_OUT(OLTFSC0005E, command.c_str());
-		operation = new HelpCommand();
+		openLTFSCommand = new HelpCommand();
 		return (int) OLTFSErr::OLTFS_GENERAL_ERROR;
 	}
 
-	TRACE(0, operation);
+	TRACE(0, openLTFSCommand);
 
 	argc--;
 	argv++;
@@ -83,7 +83,7 @@ int main(int argc, char *argv[])
 	}
 
 	try {
-		operation->doCommand(argc, argv);
+		openLTFSCommand->doCommand(argc, argv);
 	}
 	catch(OLTFSErr err) {
 		return (int) err;
