@@ -32,15 +32,20 @@ int main(int argc, char *argv[])
 
  	if  ( !command.compare(Start::cmd1) ) {
 		operation = new Start();
-	} else if ( !command.compare(Stop::cmd1) ) {
+	}
+	else if ( !command.compare(Stop::cmd1) ) {
 		operation = new Stop();
-	} else if ( !command.compare(Migration::cmd1) ) {
+	}
+	else if ( !command.compare(Migration::cmd1) ) {
 		operation = new Migration();
-	} else if ( !command.compare(Recall::cmd1) ) {
+	}
+	else if ( !command.compare(Recall::cmd1) ) {
 		operation = new Recall();
-	} else if ( !command.compare(Help::cmd1) ) {
+	}
+	else if ( !command.compare(Help::cmd1) ) {
 		operation = new Help();
-	} else if ( !command.compare(Info::cmd1) ) {
+	}
+	else if ( !command.compare(Info::cmd1) ) {
 		if ( argc < 3 ) {
 			MSG_OUT(OLTFSC0011E);
 			return (int) OLTFSErr::OLTFS_GENERAL_ERROR;
@@ -51,9 +56,11 @@ int main(int argc, char *argv[])
 		TRACE(0, command.c_str());
 		if      ( !command.compare(InfoRequests::cmd2) ) {
 			operation = new InfoRequests();
-		} else if ( !command.compare(InfoFiles::cmd2) ) {
+		}
+		else if ( !command.compare(InfoFiles::cmd2) ) {
 			operation = new InfoFiles();
-		} else {
+		}
+		else {
 			MSG_OUT(OLTFSC0012E, command.c_str());
 			operation = new Help();
 			return (int) OLTFSErr::OLTFS_GENERAL_ERROR;
