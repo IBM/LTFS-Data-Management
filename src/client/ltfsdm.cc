@@ -49,7 +49,8 @@ int main(int argc, char *argv[])
 	}
 	else if ( InfoCommand().compare(command) ) {
 		if ( argc < 3 ) {
-			MSG_OUT(OLTFSC0011E);
+			MSG_INFO(OLTFSC0011E);
+			InfoCommand().printUsage();
 			rc =  OLTFSErr::OLTFS_GENERAL_ERROR;
 			goto cleanup;
 		}
