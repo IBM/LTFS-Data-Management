@@ -9,6 +9,8 @@ public:
     ~Help() {};
     void printUsage();
     void doOperation(int argc, char **argv);
+ 	static constexpr const char *cmd1 = "help";
+	static constexpr const char *cmd2 = "";
 };
 
 #endif /* _HELP_H */

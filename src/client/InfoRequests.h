@@ -10,6 +10,8 @@ public:
     ~InfoRequests() {};
     void printUsage();
     void doOperation(int argc, char **argv);
+    static constexpr const char *cmd1 = "info";
+    static constexpr const char *cmd2 = "requests";
 };
 
 #endif /* _INFOREQUESTS_H */

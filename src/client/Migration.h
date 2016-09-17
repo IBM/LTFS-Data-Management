@@ -10,6 +10,8 @@ public:
     ~Migration() {};
     void printUsage();
     void doOperation(int argc, char **argv);
+    static constexpr const char *cmd1 = "migrate";
+    static constexpr const char *cmd2 = "";
 };
 
 #endif /* _MIGRATION_H */

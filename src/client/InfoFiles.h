@@ -10,6 +10,8 @@ public:
     ~InfoFiles() {};
     void printUsage();
     void doOperation(int argc, char **argv);
+    static constexpr const char *cmd1 = "info";
+    static constexpr const char *cmd2 = "files";
 };
 
 #endif /* _INFOFILES_H */
