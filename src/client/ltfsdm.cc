@@ -18,11 +18,13 @@ int main(int argc, char *argv[])
 {
 	OpenLTFSCommand *openLTFSCommand = NULL;
 	std::string command;
+	OLTFSErr rc = OLTFSErr::OLTFS_OK ;
 
 	if ( argc < 2 ) {
 		openLTFSCommand = new HelpCommand();
 		openLTFSCommand->doCommand(argc, argv);
-		return (int) OLTFSErr::OLTFS_GENERAL_ERROR;
+		rc = OLTFSErr::OLTFS_GENERAL_ERROR;
+		goto cleanup;
 	}
 
 	command = std::string(argv[1]);
@@ -30,46 +32,49 @@ int main(int argc, char *argv[])
 	TRACE(0, argc);
 	TRACE(0, command.c_str());
 
- 	if  ( !command.compare(StartCommand::command) ) {
+ 	if  ( !command.compare(StartCommand().cmd()) ) {
 		openLTFSCommand = new StartCommand();
 	}
-	else if ( !command.compare(StopCommand::command) ) {
+	else if ( !command.compare(StopCommand().cmd()) ) {
 		openLTFSCommand = new StopCommand();
 	}
-	else if ( !command.compare(MigrationCommand::command) ) {
+	else if ( !command.compare(MigrationCommand().cmd()) ) {
 		openLTFSCommand = new MigrationCommand();
 	}
-	else if ( !command.compare(RecallCommand::command) ) {
+	else if ( !command.compare(RecallCommand().cmd()) ) {
 		openLTFSCommand = new RecallCommand();
 	}
-	else if ( !command.compare(HelpCommand::command) ) {
+	else if ( !command.compare(HelpCommand().cmd()) ) {
 		openLTFSCommand = new HelpCommand();
 	}
-	else if ( !command.compare(InfoCommand::command) ) {
+	else if ( !command.compare(InfoCommand().cmd()) ) {
 		if ( argc < 3 ) {
 			MSG_OUT(OLTFSC0011E);
-			return (int) OLTFSErr::OLTFS_GENERAL_ERROR;
+			rc =  OLTFSErr::OLTFS_GENERAL_ERROR;
+			goto cleanup;
 		}
 		argc--;
 		argv++;
 		command = std::string(argv[1]);
 		TRACE(0, command.c_str());
-		if      ( !command.compare(InfoRequestsCommand::command) ) {
+		if      ( !command.compare(InfoRequestsCommand().cmd()) ) {
 			openLTFSCommand = new InfoRequestsCommand();
 		}
-		else if ( !command.compare(InfoFilesCommand::command) ) {
+		else if ( !command.compare(InfoFilesCommand().cmd()) ) {
 			openLTFSCommand = new InfoFilesCommand();
 		}
 		else {
 			MSG_OUT(OLTFSC0012E, command.c_str());
 			openLTFSCommand = new HelpCommand();
-			return (int) OLTFSErr::OLTFS_GENERAL_ERROR;
+			rc = OLTFSErr::OLTFS_GENERAL_ERROR;
+			goto cleanup;
 		}
 	}
 	else {
 		MSG_OUT(OLTFSC0005E, command.c_str());
 		openLTFSCommand = new HelpCommand();
-		return (int) OLTFSErr::OLTFS_GENERAL_ERROR;
+		rc = OLTFSErr::OLTFS_GENERAL_ERROR;
+		goto cleanup;
 	}
 
 	TRACE(0, openLTFSCommand);
@@ -86,8 +91,13 @@ int main(int argc, char *argv[])
 		openLTFSCommand->doCommand(argc, argv);
 	}
 	catch(OLTFSErr err) {
-		return (int) err;
+		rc = err;
+		goto cleanup;
 	}
 
-	return (int) OLTFSErr::OLTFS_OK;
+cleanup:
+	if (openLTFSCommand)
+		delete(openLTFSCommand);
+
+	return (int) rc;
 }

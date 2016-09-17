@@ -15,19 +15,10 @@ void InfoRequestsCommand::printUsage()
 
 void InfoRequestsCommand::doCommand(int argc, char **argv)
 {
-	if ( argc == 1 ) {
-		MSG_INFO(OLTFSC0018E);
-		goto error;
-	}
-
 	processOptions(argc, argv);
 
 	TRACE(0, waitForCompletion);
 	TRACE(0, requestNumber);
 
 	return;
-
-error:
-	printUsage();
-	throw(OLTFSErr::OLTFS_GENERAL_ERROR);
 }

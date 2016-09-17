@@ -6,11 +6,10 @@ class InfoRequestsCommand : public OpenLTFSCommand
 {
 private:
 public:
-    InfoRequestsCommand() : OpenLTFSCommand("+hwn:") {};
+    InfoRequestsCommand() : OpenLTFSCommand("requests", "+hwn:") {};
     ~InfoRequestsCommand() {};
     void printUsage();
     void doCommand(int argc, char **argv);
-    static constexpr const char *command = "requests";
 };
 
 #endif /* _INFOREQUESTS_H */

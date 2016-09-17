@@ -5,11 +5,10 @@ class StopCommand : public OpenLTFSCommand
 
 {
 public:
-    StopCommand() : OpenLTFSCommand("") {};
+    StopCommand() : OpenLTFSCommand("stop", "") {};
     ~StopCommand() {};
     void printUsage();
     void doCommand(int argc, char **argv);
- 	static constexpr const char *command = "stop";
 };
 
 #endif /* _STOP_H */

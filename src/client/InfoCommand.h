@@ -6,7 +6,9 @@ class InfoCommand : public OpenLTFSCommand
 {
 private:
 public:
-    static constexpr const char *command = "info";
+	InfoCommand() : OpenLTFSCommand("info", "") {};
+	void printUsage() { MSG_INFO(OLTFSC0020I); };
+    void doCommand(int argc, char **argv) {};
 };
 
 #endif /* _INFO_H */

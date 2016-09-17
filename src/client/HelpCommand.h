@@ -5,11 +5,10 @@ class HelpCommand : public OpenLTFSCommand
 
 {
 public:
-    HelpCommand() : OpenLTFSCommand("") {};
+    HelpCommand() : OpenLTFSCommand("help", "") {};
     ~HelpCommand() {};
     void printUsage();
     void doCommand(int argc, char **argv);
- 	static constexpr const char *command = "help";
 };
 
 #endif /* _HELP_H */

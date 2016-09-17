@@ -4,7 +4,7 @@
 class OpenLTFSCommand
 {
 protected:
-    OpenLTFSCommand(std::string optionStr_) :
+    OpenLTFSCommand(std::string command_, std::string optionStr_) :
         waitForCompletion(false),
 		preMigrate(false),
 		recToResident(false),
@@ -12,6 +12,7 @@ protected:
 		collocationFactor(1),
 		fileList(""),
 		directoryName(""),
+	    command(command_),
 		optionStr(optionStr_) {};
 	bool waitForCompletion;
 	bool preMigrate;
@@ -20,6 +21,7 @@ protected:
 	unsigned long collocationFactor;
 	std::string fileList;
 	std::string directoryName;
+	std::string command;
 	std::string optionStr;
 
 public:
@@ -29,6 +31,7 @@ public:
 
 	// non-virtual functions
 	void processOptions(int argc, char **argv);
+	std::string cmd() { return command; }
 };
 
 #endif /* _OPERATION_H */
