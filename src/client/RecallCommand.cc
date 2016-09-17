@@ -5,15 +5,15 @@
 #include "src/common/tracing/trace.h"
 #include "src/common/errors/errors.h"
 
-#include "Operation.h"
-#include "Migration.h"
+#include "OpenLTFSCommand.h"
+#include "RecallCommand.h"
 
-void Migration::printUsage()
+void RecallCommand::printUsage()
 {
-	MSG_INFO(OLTFSC0001I);
+	MSG_INFO(OLTFSC0002I);
 }
 
-void Migration::doOperation(int argc, char **argv)
+void RecallCommand::doCommand(int argc, char **argv)
 {
 	if ( argc == 1 ) {
 		MSG_INFO(OLTFSC0018E);
@@ -43,13 +43,9 @@ void Migration::doOperation(int argc, char **argv)
 		goto error;
 	}
 
-	TRACE(0, argc);
-	TRACE(0, optind);
-
 	TRACE(0, waitForCompletion);
 	TRACE(0, preMigrate);
 	TRACE(0, requestNumber);
-	TRACE(0, collocationFactor);
 	TRACE(0, fileList);
 	TRACE(0, directoryName);
 

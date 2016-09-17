@@ -1,14 +1,14 @@
 #ifndef _HELP_H
 #define _HELP_H
 
-class Help : public Operation
+class HelpCommand : public OpenLTFSCommand
 
 {
 public:
-    Help() : Operation("") {};
-    ~Help() {};
+    HelpCommand() : OpenLTFSCommand("") {};
+    ~HelpCommand() {};
     void printUsage();
-    void doOperation(int argc, char **argv);
+    void doCommand(int argc, char **argv);
  	static constexpr const char *cmd1 = "help";
 	static constexpr const char *cmd2 = "";
 };

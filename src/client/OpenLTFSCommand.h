@@ -1,10 +1,10 @@
 #ifndef _OPERATION_H
 #define _OPERATION_H
 
-class Operation
+class OpenLTFSCommand
 {
 protected:
-    Operation(std::string optionStr_) :
+    OpenLTFSCommand(std::string optionStr_) :
         waitForCompletion(false),
 		preMigrate(false),
 		recToResident(false),
@@ -23,9 +23,9 @@ protected:
 	std::string optionStr;
 
 public:
-    virtual ~Operation() {};
+    virtual ~OpenLTFSCommand() {};
     virtual void printUsage() = 0;
-    virtual void doOperation(int argc, char **argv) = 0;
+    virtual void doCommand(int argc, char **argv) = 0;
 
 	// non-virtual functions
 	void processOptions(int argc, char **argv);

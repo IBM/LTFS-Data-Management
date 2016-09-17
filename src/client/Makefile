@@ -1,6 +1,6 @@
 RELPATH = ../..
 
-LIB_SRC_FILES := Operation.cc Start.cc Stop.cc Migration.cc Recall.cc Help.cc InfoRequests.cc InfoFiles.cc
+LIB_SRC_FILES := OpenLTFSCommand.cc StartCommand.cc StopCommand.cc MigrationCommand.cc RecallCommand.cc HelpCommand.cc InfoRequestsCommand.cc InfoFilesCommand.cc
 BIN_SRC_FILES := ltfsdm.cc
 CLEANUP_FILES := ltfsdm
 BINARY := ltfsdm

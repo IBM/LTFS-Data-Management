@@ -5,15 +5,15 @@
 #include "src/common/tracing/trace.h"
 #include "src/common/errors/errors.h"
 
-#include "Operation.h"
-#include "InfoRequests.h"
+#include "OpenLTFSCommand.h"
+#include "InfoRequestsCommand.h"
 
-void InfoRequests::printUsage()
+void InfoRequestsCommand::printUsage()
 {
 	MSG_INFO(OLTFSC0009I);
 }
 
-void InfoRequests::doOperation(int argc, char **argv)
+void InfoRequestsCommand::doCommand(int argc, char **argv)
 {
 	if ( argc == 1 ) {
 		MSG_INFO(OLTFSC0018E);

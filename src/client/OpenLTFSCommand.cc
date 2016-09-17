@@ -5,10 +5,10 @@
 #include "src/common/tracing/trace.h"
 #include "src/common/errors/errors.h"
 
-#include "Operation.h"
+#include "OpenLTFSCommand.h"
 
 
-void Operation::processOptions(int argc, char **argv)
+void OpenLTFSCommand::processOptions(int argc, char **argv)
 
 {
 	int opt;

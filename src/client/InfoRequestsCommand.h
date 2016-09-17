@@ -1,15 +1,15 @@
 #ifndef _INFOREQUESTS_H
 #define _INFOREQUESTS_H
 
-class InfoRequests : public Operation
+class InfoRequestsCommand : public OpenLTFSCommand
 
 {
 private:
 public:
-    InfoRequests() : Operation("+hwn:") {};
-    ~InfoRequests() {};
+    InfoRequestsCommand() : OpenLTFSCommand("+hwn:") {};
+    ~InfoRequestsCommand() {};
     void printUsage();
-    void doOperation(int argc, char **argv);
+    void doCommand(int argc, char **argv);
     static constexpr const char *cmd1 = "info";
     static constexpr const char *cmd2 = "requests";
 };

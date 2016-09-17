@@ -1,14 +1,14 @@
 #ifndef _STOP_H
 #define _STOP_H
 
-class Stop : public Operation
+class StopCommand : public OpenLTFSCommand
 
 {
 public:
-    Stop() : Operation("") {};
-    ~Stop() {};
+    StopCommand() : OpenLTFSCommand("") {};
+    ~StopCommand() {};
     void printUsage();
-    void doOperation(int argc, char **argv);
+    void doCommand(int argc, char **argv);
  	static constexpr const char *cmd1 = "stop";
 	static constexpr const char *cmd2 = "";
 };

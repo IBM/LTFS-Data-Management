@@ -3,25 +3,25 @@
 #include "src/common/tracing/trace.h"
 #include "src/common/errors/errors.h"
 
-#include "Operation.h"
-#include "Start.h"
-#include "Stop.h"
-#include "Migration.h"
-#include "Recall.h"
-#include "Help.h"
-#include "Info.h"
-#include "InfoRequests.h"
-#include "InfoFiles.h"
+#include "OpenLTFSCommand.h"
+#include "StartCommand.h"
+#include "StopCommand.h"
+#include "MigrationCommand.h"
+#include "RecallCommand.h"
+#include "HelpCommand.h"
+#include "InfoCommand.h"
+#include "InfoRequestsCommand.h"
+#include "InfoFilesCommand.h"
 
 int main(int argc, char *argv[])
 
 {
-	Operation *operation = NULL;
+	OpenLTFSCommand *operation = NULL;
 	std::string command;
 
 	if ( argc < 2 ) {
-		operation = new Help();
-		operation->doOperation(argc, argv);
+		operation = new HelpCommand();
+		operation->doCommand(argc, argv);
 		return (int) OLTFSErr::OLTFS_GENERAL_ERROR;
 	}
 
@@ -30,22 +30,22 @@ int main(int argc, char *argv[])
 	TRACE(0, argc);
 	TRACE(0, command.c_str());
 
- 	if  ( !command.compare(Start::cmd1) ) {
-		operation = new Start();
+ 	if  ( !command.compare(StartCommand::cmd1) ) {
+		operation = new StartCommand();
 	}
-	else if ( !command.compare(Stop::cmd1) ) {
-		operation = new Stop();
+	else if ( !command.compare(StopCommand::cmd1) ) {
+		operation = new StopCommand();
 	}
-	else if ( !command.compare(Migration::cmd1) ) {
-		operation = new Migration();
+	else if ( !command.compare(MigrationCommand::cmd1) ) {
+		operation = new MigrationCommand();
 	}
-	else if ( !command.compare(Recall::cmd1) ) {
-		operation = new Recall();
+	else if ( !command.compare(RecallCommand::cmd1) ) {
+		operation = new RecallCommand();
 	}
-	else if ( !command.compare(Help::cmd1) ) {
-		operation = new Help();
+	else if ( !command.compare(HelpCommand::cmd1) ) {
+		operation = new HelpCommand();
 	}
-	else if ( !command.compare(Info::cmd1) ) {
+	else if ( !command.compare(InfoCommand::cmd1) ) {
 		if ( argc < 3 ) {
 			MSG_OUT(OLTFSC0011E);
 			return (int) OLTFSErr::OLTFS_GENERAL_ERROR;
@@ -54,21 +54,21 @@ int main(int argc, char *argv[])
 		argv++;
 		command = std::string(argv[1]);
 		TRACE(0, command.c_str());
-		if      ( !command.compare(InfoRequests::cmd2) ) {
-			operation = new InfoRequests();
+		if      ( !command.compare(InfoRequestsCommand::cmd2) ) {
+			operation = new InfoRequestsCommand();
 		}
-		else if ( !command.compare(InfoFiles::cmd2) ) {
-			operation = new InfoFiles();
+		else if ( !command.compare(InfoFilesCommand::cmd2) ) {
+			operation = new InfoFilesCommand();
 		}
 		else {
 			MSG_OUT(OLTFSC0012E, command.c_str());
-			operation = new Help();
+			operation = new HelpCommand();
 			return (int) OLTFSErr::OLTFS_GENERAL_ERROR;
 		}
 	}
 	else {
 		MSG_OUT(OLTFSC0005E, command.c_str());
-		operation = new Help();
+		operation = new HelpCommand();
 		return (int) OLTFSErr::OLTFS_GENERAL_ERROR;
 	}
 
@@ -83,7 +83,7 @@ int main(int argc, char *argv[])
 	}
 
 	try {
-		operation->doOperation(argc, argv);
+		operation->doCommand(argc, argv);
 	}
 	catch(OLTFSErr err) {
 		return (int) err;

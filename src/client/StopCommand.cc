@@ -2,15 +2,15 @@
 #include "src/common/messages/messages.h"
 #include "src/common/errors/errors.h"
 
-#include "Operation.h"
-#include "Stop.h"
+#include "OpenLTFSCommand.h"
+#include "StopCommand.h"
 
-void Stop::printUsage()
+void StopCommand::printUsage()
 {
 	MSG_INFO(OLTFSC0007I);
 }
 
-void Stop::doOperation(int argc, char **argv)
+void StopCommand::doCommand(int argc, char **argv)
 {
 	if ( argc > 1 ) {
 		printUsage();

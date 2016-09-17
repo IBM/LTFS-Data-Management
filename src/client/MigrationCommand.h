@@ -1,15 +1,15 @@
 #ifndef _MIGRATION_H
 #define _MIGRATION_H
 
-class Migration : public Operation
+class MigrationCommand : public OpenLTFSCommand
 
 {
 private:
 public:
-    Migration() : Operation("+hwpc:n:f:R:") {};
-    ~Migration() {};
+    MigrationCommand() : OpenLTFSCommand("+hwpc:n:f:R:") {};
+    ~MigrationCommand() {};
     void printUsage();
-    void doOperation(int argc, char **argv);
+    void doCommand(int argc, char **argv);
     static constexpr const char *cmd1 = "migrate";
     static constexpr const char *cmd2 = "";
 };

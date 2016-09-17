@@ -1,15 +1,15 @@
 #ifndef _RECALL_H
 #define _RECALL_H
 
-class Recall : public Operation
+class RecallCommand : public OpenLTFSCommand
 
 {
 private:
 public:
-    Recall() : Operation("+hwrn:f:R:") {};
-    ~Recall() {};
+    RecallCommand() : OpenLTFSCommand("+hwrn:f:R:") {};
+    ~RecallCommand() {};
     void printUsage();
-    void doOperation(int argc, char **argv);
+    void doCommand(int argc, char **argv);
     static constexpr const char *cmd1 = "recall";
     static constexpr const char *cmd2 = "";
 };

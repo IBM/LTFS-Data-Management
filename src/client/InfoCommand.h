@@ -1,7 +1,7 @@
 #ifndef _INFO_H
 #define _INFO_H
 
-class Info : public Operation
+class InfoCommand : public OpenLTFSCommand
 
 {
 private:

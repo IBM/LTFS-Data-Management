@@ -1,15 +1,15 @@
 #ifndef _INFOFILES_H
 #define _INFOFILES_H
 
-class InfoFiles : public Operation
+class InfoFilesCommand : public OpenLTFSCommand
 
 {
 private:
 public:
-    InfoFiles() : Operation("+hf:R:") {};
-    ~InfoFiles() {};
+    InfoFilesCommand() : OpenLTFSCommand("+hf:R:") {};
+    ~InfoFilesCommand() {};
     void printUsage();
-    void doOperation(int argc, char **argv);
+    void doCommand(int argc, char **argv);
     static constexpr const char *cmd1 = "info";
     static constexpr const char *cmd2 = "files";
 };
