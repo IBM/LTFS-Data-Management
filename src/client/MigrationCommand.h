@@ -6,7 +6,7 @@ class MigrationCommand : public OpenLTFSCommand
 {
 private:
 public:
-    MigrationCommand() : OpenLTFSCommand("migrate", "+hwpc:n:f:R:") {};
+    MigrationCommand() : OpenLTFSCommand("migrate", ":+hwpc:n:f:R:") {};
     ~MigrationCommand() {};
     void printUsage();
     void doCommand(int argc, char **argv);

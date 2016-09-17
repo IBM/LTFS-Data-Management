@@ -36,32 +36,32 @@ void HelpCommand::doCommand(int argc, char **argv)
 
 	command = std::string(argv[1]);
 
- 	if  ( !command.compare(StartCommand().getcmd()) ) {
+ 	if  ( StartCommand().compare(command) ) {
 		openLTFSCommand = new StartCommand();
 	}
-	else if ( !command.compare(StopCommand().getcmd()) ) {
+	else if ( StopCommand().compare(command) ) {
 		openLTFSCommand = new StopCommand();
 	}
-	else if ( !command.compare(MigrationCommand().getcmd()) ) {
+	else if ( MigrationCommand().compare(command) ) {
 		openLTFSCommand = new MigrationCommand();
 	}
-	else if ( !command.compare(RecallCommand().getcmd()) ) {
+	else if ( RecallCommand().compare(command) ) {
 		openLTFSCommand = new RecallCommand();
 	}
-	else if ( !command.compare(HelpCommand().getcmd()) ) {
+	else if ( HelpCommand().compare(command) ) {
 		openLTFSCommand = new HelpCommand();
 	}
-	else if ( !command.compare(InfoCommand().getcmd()) ) {
+	else if ( InfoCommand().compare(command) ) {
 		if ( argc < 3 ) {
 			openLTFSCommand = new InfoCommand();
 		}
 		else {
 			command = std::string(argv[2]);
 			TRACE(0, command.c_str());
-			if      ( !command.compare(InfoRequestsCommand().getcmd()) ) {
+			if      ( InfoRequestsCommand().compare(command) ) {
 				openLTFSCommand = new InfoRequestsCommand();
 			}
-			else if ( !command.compare(InfoFilesCommand().getcmd()) ) {
+			else if ( InfoFilesCommand().compare(command) ) {
 				openLTFSCommand = new InfoFilesCommand();
 			}
 			else {

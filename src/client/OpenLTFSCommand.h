@@ -31,7 +31,7 @@ public:
 
 	// non-virtual functions
 	void processOptions(int argc, char **argv);
-	std::string getcmd() { return command; }
+	bool compare(std::string name) { return !command.compare(name); }
 };
 
 #endif /* _OPERATION_H */

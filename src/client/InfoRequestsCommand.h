@@ -6,7 +6,7 @@ class InfoRequestsCommand : public OpenLTFSCommand
 {
 private:
 public:
-    InfoRequestsCommand() : OpenLTFSCommand("requests", "+hwn:") {};
+    InfoRequestsCommand() : OpenLTFSCommand("requests", ":+hwn:") {};
     ~InfoRequestsCommand() {};
     void printUsage();
     void doCommand(int argc, char **argv);

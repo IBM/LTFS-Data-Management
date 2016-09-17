@@ -17,8 +17,18 @@ void InfoRequestsCommand::doCommand(int argc, char **argv)
 {
 	processOptions(argc, argv);
 
-	TRACE(0, waitForCompletion);
-	TRACE(0, requestNumber);
+	TRACE(0, *argv);
+	TRACE(0, argc);
+	TRACE(0, optind);
+
+	if( argc != optind ) {
+		printUsage();
+		throw(OLTFSErr::OLTFS_GENERAL_ERROR);
+	}
+	else if (requestNumber < 0 && waitForCompletion) {
+		printUsage();
+		throw(OLTFSErr::OLTFS_GENERAL_ERROR);
+	}
 
 	return;
 }

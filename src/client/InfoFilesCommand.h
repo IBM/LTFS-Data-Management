@@ -6,7 +6,7 @@ class InfoFilesCommand : public OpenLTFSCommand
 {
 private:
 public:
-    InfoFilesCommand() : OpenLTFSCommand("files", "+hf:R:") {};
+    InfoFilesCommand() : OpenLTFSCommand("files", ":+hf:R:") {};
     ~InfoFilesCommand() {};
     void printUsage();
     void doCommand(int argc, char **argv);
