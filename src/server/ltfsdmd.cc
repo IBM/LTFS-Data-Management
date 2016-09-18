@@ -6,7 +6,7 @@
 #include <string>
 
 #include "src/common/messages/messages.h"
-#include "src/common/tracing/trace.h"
+#include "src/common/tracing/Trace.h"
 #include "src/common/errors/errors.h"
 #include "src/common/const/Const.h"
 

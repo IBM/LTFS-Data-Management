@@ -1,4 +1,4 @@
-#include "trace.h"
+#include "Trace.h"
 
 int trclevel = 0;
 
