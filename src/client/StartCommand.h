@@ -4,6 +4,10 @@
 class StartCommand : public OpenLTFSCommand
 
 {
+private:
+	std::stringstream serverPath;
+	void determineServerPath();
+	void startServer();
 public:
     StartCommand() : OpenLTFSCommand("start", "") {};
     ~StartCommand() {};

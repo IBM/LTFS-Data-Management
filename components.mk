@@ -3,3 +3,5 @@ COMMONDIRS += src/common/tracing
 COMMONDIRS += src/common/comm
 
 CLIENTDIRS := src/client
+
+SERVERDIRS := src/server

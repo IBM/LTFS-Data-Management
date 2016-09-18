@@ -6,6 +6,7 @@ msgcompiler
 msgtest
 lib/*
 ltfsdm
+ltfsdmd
 msgdefs.cc
 runtest
 ltfsdm.pb.cc

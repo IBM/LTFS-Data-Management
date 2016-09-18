@@ -1,4 +1,5 @@
 #include <string>
+#include <sstream>
 
 #include "src/common/messages/messages.h"
 #include "src/common/tracing/trace.h"
