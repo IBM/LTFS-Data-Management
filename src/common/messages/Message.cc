@@ -28,13 +28,13 @@ Message::~Message()
 	messagefile.close();
 }
 
-void Message::writeOut(char * msgstr)
+void Message::writeOut(std::string msgstr)
 
 {
 	std::cout << msgstr;
 }
 
-void Message::writeLog(char * msgstr)
+void Message::writeLog(std::string msgstr)
 
 {
 	try {
