@@ -66,8 +66,6 @@ public:
 
 extern Message messageObject;
 
-void redirectToFile();
-
 #define MSG_OUT(msg, args...) messageObject.msgOut(msg, __LINE__, ##args)
 #define MSG_INFO(msg, args...) messageObject.msgInfo(msg, __LINE__, ##args)
 

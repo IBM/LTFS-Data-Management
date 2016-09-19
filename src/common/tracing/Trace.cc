@@ -9,19 +9,6 @@
 
 Trace traceObject;
 
-void set_trclevel(int level)
-
-{
-	traceObject.setTrclevel(level);
-}
-
-int get_trclevel()
-
-{
-	return traceObject.getTrclevel();
-}
-
-
 void Trace::setTrclevel(int level)
 
 {

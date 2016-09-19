@@ -8,12 +8,6 @@
 
 Message messageObject;
 
-void redirectToFile()
-
-{
-	messageObject.redirectToFile();
-}
-
 void Message::redirectToFile()
 
 {

@@ -63,9 +63,6 @@ public:
 
 extern Trace traceObject;
 
-void set_trclevel(int level);
-int get_trclevel();
-
 #define TRACE(dbglvl, var) traceObject.trace(__FILE__, __LINE__, dbglvl, #var, var)
 
 #endif /*_TRACE_H */
