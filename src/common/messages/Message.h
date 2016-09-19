@@ -39,9 +39,9 @@ template<typename ... Args>
 void msgInfo(msg_id msg, Args ... args )
 {
 	char msgstr[32768];
-	std::string format = messages[msg];
+	std::string format = msgname[msg] + std::string("%s") + messages[msg];
 	memset(msgstr, 0, sizeof(msgstr));
-	snprintf(msgstr, sizeof(msgstr) -1, format.c_str(), args ...);
+	snprintf(msgstr, sizeof(msgstr) -1, format.c_str(), "", args ...);
 	messageObject.write(msgstr);
 }
 

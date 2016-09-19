@@ -22,8 +22,6 @@ int main(int argc, char *argv[])
 	std::string command;
 	OLTFSErr rc = OLTFSErr::OLTFS_OK ;
 
-	MSG_INFO(OLTFSC0003X);
-
 	if ( argc < 2 ) {
 		openLTFSCommand = new HelpCommand();
 		openLTFSCommand->doCommand(argc, argv);
