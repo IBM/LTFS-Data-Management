@@ -21,7 +21,7 @@ void msg_info(msg_id msg, int linenr, Args ... args )
 	char msgstr[32768];
 	std::string format = messages[msg];
 	memset(msgstr, 0, sizeof(msgstr));
-	snprintf(msgstr, sizeof(msgstr) -1, format.c_str(), linenr, args ...);
+	snprintf(msgstr, sizeof(msgstr) -1, format.c_str(), args ...);
 	std::cout << msgstr;
 }
 

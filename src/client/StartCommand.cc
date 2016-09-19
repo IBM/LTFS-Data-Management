@@ -81,7 +81,7 @@ void StartCommand::startServer()
 	}
 
     while( fgets(line, sizeof(line), ltfsdmd) ) {
-        TRACE(0, line);
+		MSG_INFO(OLTFSC0024I, line);
     }
 
 
