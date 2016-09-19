@@ -12,13 +12,13 @@
 #include <fstream>
 #include <iomanip>
 
-#include "src/common/messages/messages.h"
+#include "src/common/messages/Message.h"
 #include "src/common/errors/errors.h"
 
 class Trace {
 private:
 	std::ofstream tracefile;
-	int trclevel = 0;
+	int trclevel;
 public:
 	Trace();
 	~Trace();

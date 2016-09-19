@@ -4,7 +4,7 @@
 #include <sstream>
 #include <fstream>
 
-#include "messages.h"
+#include "Message.h"
 
 using namespace std;
 

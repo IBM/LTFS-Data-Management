@@ -1,7 +1,7 @@
 #include <unistd.h>
 #include <string>
 
-#include "src/common/messages/messages.h"
+#include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
 #include "src/common/errors/errors.h"
 

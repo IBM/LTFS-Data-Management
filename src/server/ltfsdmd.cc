@@ -5,7 +5,7 @@
 
 #include <string>
 
-#include "src/common/messages/messages.h"
+#include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
 #include "src/common/errors/errors.h"
 #include "src/common/const/Const.h"
@@ -31,7 +31,10 @@ int main(int argc, char **argv)
 		goto end;
 	}
 
-	while (true) {};
+	while (true) {
+		MSG_OUT(OLTFSS0003X);
+		sleep(1);
+	};
 
 end:
 	return (int) err;

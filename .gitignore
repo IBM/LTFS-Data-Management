@@ -2,7 +2,8 @@ msgdefs.h
 *~
 *.o
 src/common/comm/test
-msgcompiler
+bin/msgcompiler
+src/common/msgcompiler/msgcompiler
 msgtest
 lib/*
 ltfsdm

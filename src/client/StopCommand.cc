@@ -1,5 +1,5 @@
 #include <string>
-#include "src/common/messages/messages.h"
+#include "src/common/messages/Message.h"
 #include "src/common/errors/errors.h"
 
 #include "OpenLTFSCommand.h"

@@ -9,7 +9,7 @@
 
 #include <string>
 
-#include "src/common/messages/messages.h"
+#include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
 #include "src/common/errors/errors.h"
 #include "src/common/const/Const.h"
@@ -76,6 +76,8 @@ void Server::daemonize()
 	TRACE(0, "Server started");
 	TRACE(0, getpid());
 
+	redirectToFile();
+
 	close(STDIN_FILENO);
 	close(STDOUT_FILENO);
 	close(STDERR_FILENO);
@@ -87,6 +89,6 @@ void Server::daemonize()
 // 	close(log);
 
 	/* seting line buffers*/
-// 	setlinebuf(stdout);
-// 	setlinebuf(stderr);
+	setlinebuf(stdout);
+	setlinebuf(stderr);
 }

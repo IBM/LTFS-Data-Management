@@ -2,7 +2,7 @@
 #include <fstream>
 
 #include "src/common/const/Const.h"
-#include "src/common/messages/messages.h"
+#include "src/common/messages/Message.h"
 #include "src/common/errors/errors.h"
 
 #include "Trace.h"
@@ -34,7 +34,7 @@ int Trace::getTrclevel()
 	return trclevel;
 }
 
-Trace::Trace()
+Trace::Trace() : trclevel(0)
 
 {
 	tracefile.exceptions(std::ios::failbit | std::ios::badbit);
