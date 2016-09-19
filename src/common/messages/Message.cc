@@ -30,3 +30,21 @@ Message::~Message()
 	if (toFile)
 		messagefile.close();
 }
+
+void Message::write(char * msgstr)
+
+{
+	if (toFile) {
+		try {
+			messagefile << msgstr;
+			messagefile.flush();
+		}
+		catch(...) {
+			MSG_INTERN(OLTFSX0004E);
+			exit((int) OLTFSErr::OLTFS_GENERAL_ERROR);
+		}
+	}
+	else {
+		std::cout << msgstr;
+	}
+}
