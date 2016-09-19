@@ -57,7 +57,6 @@ template<typename ... Args>
 void msgOut(msg_id msg, int linenr, Args ... args )
 
 {
-	std::stringstream msgstr;
 	std::string fmtstr = msgname[msg] + std::string("(%d): ") + messages[msg];
 	boost::format fmter(fmtstr);
 	fmter.exceptions( boost::io::all_error_bits );
@@ -65,38 +64,33 @@ void msgOut(msg_id msg, int linenr, Args ... args )
 	try {
 		fmter % linenr;
 		recurse(&fmter, args ...);
-		msgstr << fmter;
+		messageObject.writeOut(fmter.str());
 	}
 	catch(...) {
 		std::cerr << OLTFSX0005E;
 		exit((int) OLTFSErr::OLTFS_GENERAL_ERROR);
 	}
-	messageObject.writeOut(msgstr.str());
 }
 
 template<typename ... Args>
-void MSG_INFO(msg_id msg, Args ... args )
+void msgOut(msg_id msg, Args ... args )
 {
-	std::stringstream msgstr;
 	boost::format fmter(messages[msg]);
 	fmter.exceptions( boost::io::all_error_bits );
 
 	try {
 		recurse(&fmter, args ...);
-		fmter.exceptions( boost::io::all_error_bits );
-		msgstr << fmter;
+		messageObject.writeOut(fmter.str());
 	}
 	catch(...) {
 		std::cerr << OLTFSX0005E;
 		exit((int) OLTFSErr::OLTFS_GENERAL_ERROR);
 	}
-	messageObject.writeOut(msgstr.str());
 }
 
 template<typename ... Args>
 void msgLog(msg_id msg, int linenr,  Args ... args )
 {
-	std::stringstream msgstr;
 	std::string fmtstr = msgname[msg] + std::string("(%d): ") + messages[msg];
 	boost::format fmter(fmtstr);
 	fmter.exceptions( boost::io::all_error_bits );
@@ -104,16 +98,16 @@ void msgLog(msg_id msg, int linenr,  Args ... args )
 	try {
 		fmter % linenr;
 		recurse(&fmter, args ...);
-		msgstr << fmter;
+		messageObject.writeLog(fmter.str());
 	}
 	catch(...) {
 		std::cerr << OLTFSX0005E;
 		exit((int) OLTFSErr::OLTFS_GENERAL_ERROR);
 	}
-	messageObject.writeLog(msgstr.str());
 }
 
 #define MSG_OUT(msg, args ...) msgOut(msg, __LINE__, ##args)
+#define MSG_INFO(msg, args ...) msgOut(msg, ##args)
 #define MSG_LOG(msg, args ...) msgLog(msg, __LINE__, ##args)
 
 #endif /* _MESSAGE_H */
