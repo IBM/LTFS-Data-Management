@@ -21,15 +21,9 @@ void Server::lockServer()
 {
 	int lockfd;
 
-	if ( (lockfd = open(Const::SERVER_LOCK_FILE.c_str(), O_RDWR | O_CREAT)) == -1 ) {
+	if ( (lockfd = open(Const::SERVER_LOCK_FILE.c_str(), O_RDWR | O_CREAT, 0600)) == -1 ) {
 		MSG_OUT(OLTFSS0001E);
 		TRACE(0, Const::SERVER_LOCK_FILE);
-		TRACE(0, errno);
-		throw(OLTFSErr::OLTFS_GENERAL_ERROR);
-	}
-
-	if ( fchmod(lockfd, 0600) == -1 ) {
-		MSG_OUT(OLTFSS0001E);
 		TRACE(0, errno);
 		throw(OLTFSErr::OLTFS_GENERAL_ERROR);
 	}
