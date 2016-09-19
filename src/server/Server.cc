@@ -2,6 +2,9 @@
 #include <signal.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#ifdef __linux__
+#include <sys/file.h>
+#endif
 #include <errno.h>
 
 #include <string>

@@ -4,6 +4,8 @@
 #include <time.h>
 #include <unistd.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/syscall.h>
 #include <pthread.h>
 #include <string>
 #include <iostream>
@@ -39,7 +41,7 @@ public:
 				tracefile << curctime << ":";
 				tracefile << std::setfill('0') << std::setw(6) << getpid() << ":";
 #ifdef __linux__
-				tracefile << std::setfill('0') << std::setw(6) << gettid() << ":";
+				tracefile << std::setfill('0') << std::setw(6) << syscall(SYS_gettid) << ":";
 #elif __APPLE__
 				uint64_t tid;
 				pthread_threadid_np(pthread_self(), &tid);
@@ -59,11 +61,11 @@ public:
 	}
 };
 
-extern Trace T;
+extern Trace traceObject;
 
 void set_trclevel(int level);
 int get_trclevel();
 
-#define TRACE(dbglvl, var) T.trace(__FILE__, __LINE__, dbglvl, #var, var)
+#define TRACE(dbglvl, var) traceObject.trace(__FILE__, __LINE__, dbglvl, #var, var)
 
 #endif /*_TRACE_H */

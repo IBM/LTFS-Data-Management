@@ -19,6 +19,9 @@ int main(int argc, char **argv)
  	Server ltfsdmd;
 	OLTFSErr err = OLTFSErr::OLTFS_OK;
 
+	/* necessary otherwise it will not link */
+	TRACE(0, getpid());
+
 	try {
 		ltfsdmd.initialize();
 		ltfsdmd.daemonize();

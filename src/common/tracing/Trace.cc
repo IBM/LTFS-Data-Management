@@ -7,18 +7,18 @@
 
 #include "Trace.h"
 
-Trace T;
+Trace traceObject;
 
 void set_trclevel(int level)
 
 {
-	T.setTrclevel(level);
+	traceObject.setTrclevel(level);
 }
 
 int get_trclevel()
 
 {
-	return T.getTrclevel();
+	return traceObject.getTrclevel();
 }
 
 

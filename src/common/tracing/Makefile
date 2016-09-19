@@ -1,6 +1,6 @@
 RELPATH = ../../..
 
-LIB_SRC_FILES := trace.cc
+LIB_SRC_FILES := Trace.cc
 BIN_SRC_FILES :=
 CLEANUP_FILES :=
 BINARYE :=

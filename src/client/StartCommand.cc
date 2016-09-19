@@ -16,7 +16,7 @@
 #include "src/common/messages/messages.h"
 #include "src/common/tracing/Trace.h"
 #include "src/common/errors/errors.h"
-#include "src/common/const/const.h"
+#include "src/common/const/Const.h"
 
 #include "OpenLTFSCommand.h"
 #include "StartCommand.h"

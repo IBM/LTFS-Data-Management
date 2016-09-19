@@ -1,6 +1,6 @@
 RELPATH = ../..
 
-LIB_SRC_FILES := ltfsdmd.cc Server.cc
+LIB_SRC_FILES := Server.cc
 BIN_SRC_FILES := ltfsdmd.cc
 CLEANUP_FILES := ltfsdmd
 BINARY := ltfsdmd
