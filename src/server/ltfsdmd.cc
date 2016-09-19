@@ -32,7 +32,7 @@ int main(int argc, char **argv)
 	}
 
 	while (true) {
-		MSG_OUT(OLTFSS0003X);
+		MSG_LOG(OLTFSS0003X);
 		sleep(1);
 	};
 

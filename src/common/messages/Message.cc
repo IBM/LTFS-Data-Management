@@ -8,7 +8,7 @@
 
 Message messageObject;
 
-void Message::redirectToFile()
+Message::Message()
 
 {
 	messagefile.exceptions(std::ios::failbit | std::ios::badbit);
@@ -17,34 +17,32 @@ void Message::redirectToFile()
 		messagefile.open(Const::LOG_FILE, std::fstream::out | std::fstream::app);
 	}
 	catch(...) {
-		MSG_OUT(OLTFSX0003E);
+		std::cerr << OLTFSX0003E;
 		exit((int) OLTFSErr::OLTFS_GENERAL_ERROR);
 	}
-
-	toFile = true;
 }
 
 Message::~Message()
 
 {
-	if (toFile)
-		messagefile.close();
+	messagefile.close();
 }
 
-void Message::write(char * msgstr)
+void Message::writeOut(char * msgstr)
 
 {
-	if (toFile) {
-		try {
-			messagefile << msgstr;
-			messagefile.flush();
-		}
-		catch(...) {
-			MSG_INTERN(OLTFSX0004E);
-			exit((int) OLTFSErr::OLTFS_GENERAL_ERROR);
-		}
+	std::cout << msgstr;
+}
+
+void Message::writeLog(char * msgstr)
+
+{
+	try {
+		messagefile << msgstr;
+		messagefile.flush();
 	}
-	else {
-		std::cout << msgstr;
+	catch(...) {
+		std::cerr << OLTFSX0004E;
+		exit((int) OLTFSErr::OLTFS_GENERAL_ERROR);
 	}
 }

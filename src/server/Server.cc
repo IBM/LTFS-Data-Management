@@ -70,8 +70,6 @@ void Server::daemonize()
 	TRACE(0, "Server started");
 	TRACE(0, getpid());
 
-	messageObject.redirectToFile();
-
 	close(STDIN_FILENO);
 	close(STDOUT_FILENO);
 	close(STDERR_FILENO);
