@@ -17,9 +17,9 @@ void InfoRequestsCommand::doCommand(int argc, char **argv)
 {
 	processOptions(argc, argv);
 
-	TRACE(0, *argv);
-	TRACE(0, argc);
-	TRACE(0, optind);
+	TRACE(Trace::little, *argv);
+	TRACE(Trace::little, argc);
+	TRACE(Trace::little, optind);
 
 	if( argc != optind ) {
 		printUsage();

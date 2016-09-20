@@ -43,15 +43,15 @@ void MigrationCommand::doCommand(int argc, char **argv)
 		goto error;
 	}
 
-	TRACE(0, argc);
-	TRACE(0, optind);
+	TRACE(Trace::little, argc);
+	TRACE(Trace::little, optind);
 
-	TRACE(0, waitForCompletion);
-	TRACE(0, preMigrate);
-	TRACE(0, requestNumber);
-	TRACE(0, collocationFactor);
-	TRACE(0, fileList);
-	TRACE(0, directoryName);
+	TRACE(Trace::little, waitForCompletion);
+	TRACE(Trace::little, preMigrate);
+	TRACE(Trace::little, requestNumber);
+	TRACE(Trace::little, collocationFactor);
+	TRACE(Trace::little, fileList);
+	TRACE(Trace::little, directoryName);
 
 	return;
 

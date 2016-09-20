@@ -43,8 +43,8 @@ void InfoFilesCommand::doCommand(int argc, char **argv)
 		goto error;
 	}
 
-	TRACE(0, fileList);
-	TRACE(0, directoryName);
+	TRACE(Trace::little, fileList);
+	TRACE(Trace::little, directoryName);
 
 	return;
 

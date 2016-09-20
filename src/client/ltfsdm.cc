@@ -22,6 +22,8 @@ int main(int argc, char *argv[])
 	std::string command;
 	OLTFSErr rc = OLTFSErr::OLTFS_OK ;
 
+	traceObject.setTrclevel(Trace::little);
+
 	if ( argc < 2 ) {
 		openLTFSCommand = new HelpCommand();
 		openLTFSCommand->doCommand(argc, argv);
@@ -31,8 +33,8 @@ int main(int argc, char *argv[])
 
 	command = std::string(argv[1]);
 
-	TRACE(0, argc);
-	TRACE(0, command.c_str());
+	TRACE(Trace::little, argc);
+	TRACE(Trace::little, command.c_str());
 
  	if  ( StartCommand().compare(command) ) {
 		openLTFSCommand = new StartCommand();
@@ -59,7 +61,7 @@ int main(int argc, char *argv[])
 		argc--;
 		argv++;
 		command = std::string(argv[1]);
-		TRACE(0, command.c_str());
+		TRACE(Trace::little, command.c_str());
 		if      ( InfoRequestsCommand().compare(command) ) {
 			openLTFSCommand = new InfoRequestsCommand();
 		}
@@ -80,14 +82,14 @@ int main(int argc, char *argv[])
 		goto cleanup;
 	}
 
-	TRACE(0, openLTFSCommand);
+	TRACE(Trace::little, openLTFSCommand);
 
 	argc--;
 	argv++;
 
 	if (argc > 1) {
-		TRACE(0, argc);
-		TRACE(0, argv[1]);
+		TRACE(Trace::little, argc);
+		TRACE(Trace::little, argv[1]);
 	}
 
 	try {

@@ -20,22 +20,30 @@ class Trace {
 private:
 	pthread_mutex_t mtx;
 	std::ofstream tracefile;
-	std::atomic_int trclevel;
+public:
+	enum traceLevel {
+		error,
+		little,
+		medium,
+		much
+	};
+private:
+	std::atomic<Trace::traceLevel> trclevel;
 public:
 	Trace();
 	~Trace();
 
-	void setTrclevel(int level);
+	void setTrclevel(traceLevel level);
 	int getTrclevel();
 
 	template<typename T>
-	void trace(const char *filename, int linenr, int dbglvl, const char *varname, T s)
+	void trace(const char *filename, int linenr, traceLevel tl, const char *varname, T s)
 
 	{
 		time_t current = time(NULL);
 		char curctime[25];
 
-		if ( dbglvl <= getTrclevel()) {
+		if ( tl <= getTrclevel()) {
 			ctime_r(&current, curctime);
 			curctime[strlen(curctime) - 1] = 0;
 
@@ -68,6 +76,6 @@ public:
 
 extern Trace traceObject;
 
-#define TRACE(dbglvl, var) traceObject.trace(__FILE__, __LINE__, dbglvl, #var, var)
+#define TRACE(tracelevel, var) traceObject.trace(__FILE__, __LINE__, tracelevel, #var, var)
 
 #endif /*_TRACE_H */

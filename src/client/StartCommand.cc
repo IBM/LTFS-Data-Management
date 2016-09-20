@@ -32,7 +32,7 @@ void StartCommand::determineServerPath()
 {
 	char exepath[PATH_MAX];
 
-	TRACE(0, Const::SERVER_COMMAND);
+	TRACE(Trace::little, Const::SERVER_COMMAND);
 
 #ifdef __linux__
 	char *exelnk = (char*) "/proc/self/exe";
@@ -45,7 +45,7 @@ void StartCommand::determineServerPath()
 	uint32_t size = PATH_MAX;
 	if ( _NSGetExecutablePath(exepath, &size) != 0 ) {
 		MSG_OUT(OLTFSC0021E);
-		TRACE(0, errno);
+		TRACE(Trace::error, errno);
 		throw OLTFSErr::OLTFS_GENERAL_ERROR;
 	}
 #else
@@ -54,7 +54,7 @@ void StartCommand::determineServerPath()
 
 	serverPath << dirname(exepath) << "/" << Const::SERVER_COMMAND;
 
-	TRACE(0, serverPath.str());
+	TRACE(Trace::little, serverPath.str());
 }
 
 void StartCommand::startServer()
@@ -67,8 +67,8 @@ void StartCommand::startServer()
 
 	if ( stat(serverPath.str().c_str(), &statbuf ) == -1 ) {
 		MSG_OUT(OLTFSC0021E);
-		TRACE(0, serverPath.str());
-		TRACE(0, errno);
+		TRACE(Trace::error, serverPath.str());
+		TRACE(Trace::error, errno);
 		throw OLTFSErr::OLTFS_GENERAL_ERROR;
 	}
 
@@ -76,7 +76,7 @@ void StartCommand::startServer()
 
 	if( !ltfsdmd ) {
 		MSG_OUT(OLTFSC0022E);
-		TRACE(0, errno);
+		TRACE(Trace::error, errno);
 		throw OLTFSErr::OLTFS_GENERAL_ERROR;
 	}
 
@@ -89,9 +89,9 @@ void StartCommand::startServer()
 
     if(  !WIFEXITED(ret) || WEXITSTATUS(ret) ) {
 		MSG_OUT(OLTFSC0023E, WEXITSTATUS(ret));
-		TRACE(0, ret);
-		TRACE(0, WIFEXITED(ret));
-		TRACE(0, WEXITSTATUS(ret));
+		TRACE(Trace::error, ret);
+		TRACE(Trace::error, WIFEXITED(ret));
+		TRACE(Trace::error, WEXITSTATUS(ret));
 		throw OLTFSErr::OLTFS_GENERAL_ERROR;
 	}
 }

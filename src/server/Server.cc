@@ -23,20 +23,20 @@ void Server::lockServer()
 
 	if ( (lockfd = open(Const::SERVER_LOCK_FILE.c_str(), O_RDWR | O_CREAT, 0600)) == -1 ) {
 		MSG_OUT(OLTFSS0001E);
-		TRACE(0, Const::SERVER_LOCK_FILE);
-		TRACE(0, errno);
+		TRACE(Trace::error, Const::SERVER_LOCK_FILE);
+		TRACE(Trace::error, errno);
 		throw(OLTFSErr::OLTFS_GENERAL_ERROR);
 	}
 
 	if ( flock(lockfd, LOCK_EX | LOCK_NB) == -1 ) {
-		TRACE(0, errno);
+		TRACE(Trace::error, errno);
 		if ( errno == EWOULDBLOCK ) {
 			MSG_OUT(OLTFSS0002I);
 			throw(OLTFSErr::OLTFS_OK);
 		}
 		else {
 			MSG_OUT(OLTFSS0001E);
-			TRACE(0, errno);
+			TRACE(Trace::error, errno);
 			throw(OLTFSErr::OLTFS_GENERAL_ERROR);
 		}
 	}
@@ -67,8 +67,8 @@ void Server::daemonize()
 		throw(OLTFSErr::OLTFS_GENERAL_ERROR);
 	}
 
-	TRACE(0, "Server started");
-	TRACE(0, getpid());
+	TRACE(Trace::little, "Server started");
+	TRACE(Trace::little, getpid());
 
 	close(STDIN_FILENO);
 	close(STDOUT_FILENO);

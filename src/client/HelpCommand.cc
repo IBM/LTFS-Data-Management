@@ -32,8 +32,8 @@ void HelpCommand::doCommand(int argc, char **argv)
 		return;
 	}
 
-	TRACE(0, argc);
-	TRACE(0, command.c_str());
+	TRACE(Trace::little, argc);
+	TRACE(Trace::little, command.c_str());
 
 	command = std::string(argv[1]);
 
@@ -58,7 +58,7 @@ void HelpCommand::doCommand(int argc, char **argv)
 		}
 		else {
 			command = std::string(argv[2]);
-			TRACE(0, command.c_str());
+			TRACE(Trace::little, command.c_str());
 			if      ( InfoRequestsCommand().compare(command) ) {
 				openLTFSCommand = new InfoRequestsCommand();
 			}

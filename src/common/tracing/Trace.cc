@@ -9,9 +9,12 @@
 
 Trace traceObject;
 
-void Trace::setTrclevel(int level)
+void Trace::setTrclevel(traceLevel level)
 
 {
+	traceLevel oldLevel = trclevel;
+	TRACE(Trace::error, oldLevel);
+	TRACE(Trace::error, level);
 	trclevel = level;
 }
 
@@ -21,7 +24,7 @@ int Trace::getTrclevel()
 	return trclevel;
 }
 
-Trace::Trace() : trclevel(0)
+Trace::Trace() : trclevel(error)
 
 {
 	tracefile.exceptions(std::ios::failbit | std::ios::badbit);
