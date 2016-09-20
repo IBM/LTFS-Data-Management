@@ -1,9 +1,11 @@
 RELPATH = ../../..
 
+MSGDIR := ../messages
+
 LIB_SRC_FILES :=
 CLEANUP_FILES := msgcompiler msgdefs.h
 BINARY := msgcompiler
-POSTTARGET := msgdefs.h
+POSTTARGET := $(MSGDIR)/msgdefs.h
 
 # to build the message compiler do not use any libs
 ARCHIVES :=
@@ -13,5 +15,5 @@ include $(RELPATH)/definitions.mk
 
 # for the message compiler do not use any library
 
-msgdefs.h: $(RELPATH)/messages.cfg msgcompiler
-	msgcompiler $(RELPATH)/messages.cfg ../messages/msgdefs.h
+$(MSGDIR)/msgdefs.h: $(RELPATH)/messages.cfg msgcompiler
+	msgcompiler $(RELPATH)/messages.cfg $(MSGDIR)/msgdefs.h
