@@ -1,7 +1,6 @@
 RELPATH = ../../..
 
 LIB_SRC_FILES :=
-BIN_SRC_FILES := msgcompiler.cc
 CLEANUP_FILES := msgcompiler msgdefs.h
 BINARY := msgcompiler
 POSTTARGET := msgdefs.h

@@ -1,7 +1,6 @@
 RELPATH = ../../..
 
 LIB_SRC_FILES := ltfsdm.pb.cc LTFSDmC.cc
-BIN_SRC_FILES :=
 CLEANUP_FILES := ltfsdm.pb.cc ltfsdm.pb.h
 BINARY :=
 POSTTARGET :=

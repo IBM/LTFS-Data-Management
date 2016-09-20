@@ -23,9 +23,8 @@ TARGETCOMP := $(shell perl -e "print '$(CURDIR)' =~ /.*$(PROJECT)\/src\/([^\/]+)
 # to not set ARCHIVES (e.g. link w/o) set 'ARCHIVES :=' before
 ARCHIVES ?= $(RELPATH)/lib/common.a $(RELPATH)/lib/$(TARGETCOMP).a
 
-# binary source files contain the main routine
 # library source files will be added to the archives
-SOURCE_FILES := $(LIB_SRC_FILES) $(BIN_SRC_FILES)
+SOURCE_FILES := $(LIB_SRC_FILES)
 
 ifneq ($(strip $(SOURCE_FILES)),)
 DEPDIR := .d
