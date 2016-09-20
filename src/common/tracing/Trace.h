@@ -17,8 +17,9 @@
 
 class Trace {
 private:
+	pthread_mutex_t mtx;
 	std::ofstream tracefile;
-	int trclevel;
+	std::atomic_int trclevel;
 public:
 	Trace();
 	~Trace();
@@ -38,6 +39,7 @@ public:
 			curctime[strlen(curctime) - 1] = 0;
 
 			try {
+				pthread_mutex_lock(&mtx);
 				tracefile << curctime << ":";
 				tracefile << std::setfill('0') << std::setw(6) << getpid() << ":";
 #ifdef __linux__
@@ -52,8 +54,10 @@ public:
 				tracefile << std::setfill('-') << std::setw(15) << filename;
 				tracefile << "(" << linenr << "):";
 				tracefile << varname << "(" << s << ")" << std::endl;
+				pthread_mutex_unlock(&mtx);
 			}
 			catch(...) {
+				pthread_mutex_unlock(&mtx);
 				MSG_OUT(OLTFSX0002E);
 				exit((int) OLTFSErr::OLTFS_GENERAL_ERROR);
 			}

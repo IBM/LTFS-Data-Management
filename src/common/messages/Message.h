@@ -15,6 +15,7 @@
 
 class Message {
 private:
+	pthread_mutex_t mtx;
 	std::ofstream messagefile;
 
 	inline void recurse(boost::format *fmter) {}
