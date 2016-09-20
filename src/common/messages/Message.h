@@ -22,24 +22,12 @@ private:
 	template<typename T>
 	void recurse(boost::format *fmter, T s)
 	{
-		try {
-			*fmter % s;
-		}
-		catch(...) {
-			std::cerr << OLTFSX0005E;
-			exit((int) OLTFSErr::OLTFS_GENERAL_ERROR);
-		}
+		*fmter % s;
 	}
 	template<typename T, typename ... Args>
 	void recurse(boost::format *fmter, T s, Args ... args )
 	{
-		try {
-			*fmter % s;
-		}
-		catch(...) {
-			std::cerr << OLTFSX0005E;
-			exit((int) OLTFSErr::OLTFS_GENERAL_ERROR);
-		}
+		*fmter % s;
 		recurse(fmter, args ...);
 	}
 
@@ -51,7 +39,7 @@ public:
 	~Message();
 
 	template<typename ... Args>
-	void msgOut(msg_id msg, int linenr, Args ... args )
+	void msgOut(msg_id msg, char *filename, int linenr, Args ... args )
 
 	{
 		std::string fmtstr = msgname[msg] + std::string("(%d): ") + messages[msg];
@@ -64,13 +52,13 @@ public:
 			writeOut(fmter.str());
 		}
 		catch(...) {
-			std::cerr << OLTFSX0005E;
+			std::cerr << messages[OLTFSX0005E] << " (" << filename << ":" << linenr << ")" << std::endl;
 			exit((int) OLTFSErr::OLTFS_GENERAL_ERROR);
 		}
 	}
 
 	template<typename ... Args>
-	void msgOut(msg_id msg, Args ... args )
+	void msgInfo(msg_id msg, char *filename, int linenr, Args ... args )
 	{
 		boost::format fmter(messages[msg]);
 		fmter.exceptions( boost::io::all_error_bits );
@@ -80,12 +68,12 @@ public:
 			writeOut(fmter.str());
 		}
 		catch(...) {
-			std::cerr << OLTFSX0005E;
+			std::cerr << messages[OLTFSX0005E] << " (" << filename << ":" << linenr << ")" << std::endl;
 			exit((int) OLTFSErr::OLTFS_GENERAL_ERROR);
 		}
 	}
 	template<typename ... Args>
-	void msgLog(msg_id msg, int linenr,  Args ... args )
+	void msgLog(msg_id msg, char *filename, int linenr,  Args ... args )
 	{
 		std::string fmtstr = msgname[msg] + std::string("(%d): ") + messages[msg];
 		boost::format fmter(fmtstr);
@@ -97,7 +85,7 @@ public:
 			writeLog(fmter.str());
 		}
 		catch(...) {
-			std::cerr << OLTFSX0005E;
+			std::cerr << messages[OLTFSX0005E] << " (" << filename << ":" << linenr << ")" << std::endl;
 			exit((int) OLTFSErr::OLTFS_GENERAL_ERROR);
 		}
 	}
@@ -105,8 +93,8 @@ public:
 
 extern Message messageObject;
 
-#define MSG_OUT(msg, args ...) messageObject.msgOut(msg, __LINE__, ##args)
-#define MSG_INFO(msg, args ...) messageObject.msgOut(msg, ##args)
-#define MSG_LOG(msg, args ...) messageObject.msgLog(msg, __LINE__, ##args)
+#define MSG_OUT(msg, args ...) messageObject.msgOut(msg, (char *) __FILE__, __LINE__, ##args)
+#define MSG_INFO(msg, args ...) messageObject.msgInfo(msg, (char *) __FILE__, __LINE__, ##args)
+#define MSG_LOG(msg, args ...) messageObject.msgLog(msg, (char *) __FILE__, __LINE__, ##args)
 
 #endif /* _MESSAGE_H */
