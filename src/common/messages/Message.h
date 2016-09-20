@@ -9,7 +9,7 @@
 
 #include "boost/format.hpp"
 
-#include "src/common/msgcompiler/msgdefs.h"
+#include "msgdefs.h"
 #include "src/common/errors/errors.h"
 #include "src/common/const/Const.h"
 
