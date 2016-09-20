@@ -14,3 +14,7 @@ ltfsdm.pb.cc
 ltfsdm.pb.h
 .d
 .DS_Store
+TAGS
+TAGS.func
+cscope.files
+cscope.out
