@@ -11,6 +11,7 @@
 #include <iostream>
 #include <fstream>
 #include <iomanip>
+#include <atomic>
 
 #include "src/common/messages/Message.h"
 #include "src/common/errors/errors.h"
