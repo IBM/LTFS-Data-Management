@@ -6,8 +6,8 @@ public:
 	LTFSDmComm() {}
 	~LTFSDmComm() {}
 	virtual void connect() {}
-	int send(int fd);
-	int recv(int fd);
+	void send(int fd);
+	void recv(int fd);
 };
 
 class LTFSDmCommClient : public LTFSDmComm {
@@ -17,8 +17,8 @@ public:
 	LTFSDmCommClient() : socRefFd(-1) {}
 	~LTFSDmCommClient() { if ( socRefFd != -1 ) close(socRefFd); }
 	void connect();
-	int send() { return LTFSDmComm::send(socRefFd); }
-	int recv() { return LTFSDmComm::recv(socRefFd); }
+	void send() { return LTFSDmComm::send(socRefFd); }
+	void recv() { return LTFSDmComm::recv(socRefFd); }
 };
 
 class LTFSDmCommServer : public LTFSDmComm {
@@ -30,8 +30,8 @@ public:
 	~LTFSDmCommServer() { if ( socAccFd != -1 ) close(socAccFd); if ( socRefFd != -1 ) close(socRefFd); }
 	void connect();
 	void accept();
-	int send() { return LTFSDmComm::send(socAccFd); }
-	int recv() { return LTFSDmComm::recv(socAccFd); }
+	void send() { return LTFSDmComm::send(socAccFd); }
+	void recv() { return LTFSDmComm::recv(socAccFd); }
 };
 
 

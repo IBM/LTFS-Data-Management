@@ -13,18 +13,29 @@ int main(int argc, char *argv[]) {
 	LTFSDmCommServer command;
 	unsigned long pid;
 
-	command.connect();
+	try {
+		command.connect();
+	}
+	catch(...) {
+		exit(-1);
+	}
 
 	while (1) {
 		try {
 			command.accept();
 		}
 		catch(...) {
-			continue;
+			exit(-1);
 		}
 
 		// command.ParseFromFileDescriptor(cl);
-		command.recv();
+		try {
+			command.recv();
+		}
+		catch(...) {
+			printf("receive error\n");
+			exit(-1);
+		}
 
 		printf("============================================================\n");
 
@@ -65,7 +76,13 @@ int main(int argc, char *argv[]) {
 			migreqresp->set_token(time(NULL));
 			migreqresp->set_pid(pid);
 
-			command.send();
+			try {
+				command.send();
+			}
+			catch(...) {
+				printf("send error\n");
+				exit(-1);
+			}
 		}
 
 		// SELECTIVE RECALL

@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -28,12 +27,11 @@ void LTFSDmCommClient::connect()
 	strncpy(addr.sun_path, Const::SOCKET_FILE.c_str(), sizeof(addr.sun_path)-1);
 
 	if (::connect(socRefFd, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
-        TRACE(Trace::error, errno);
+		TRACE(Trace::error, errno);
 		throw(OLTFSErr::OLTFS_COMM_ERROR);
 	}
 
 	GOOGLE_PROTOBUF_VERIFY_VERSION;
-
 }
 
 void LTFSDmCommServer::connect()
@@ -42,7 +40,7 @@ void LTFSDmCommServer::connect()
 	struct sockaddr_un addr;
 
 	if ( (socRefFd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
-        TRACE(Trace::error, errno);
+		TRACE(Trace::error, errno);
 		throw(OLTFSErr::OLTFS_COMM_ERROR);
 	}
 
@@ -53,12 +51,12 @@ void LTFSDmCommServer::connect()
 	unlink(Const::SOCKET_FILE.c_str());
 
 	if (bind(socRefFd, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
-        TRACE(Trace::error, errno);
+		TRACE(Trace::error, errno);
 		throw(OLTFSErr::OLTFS_COMM_ERROR);
 	}
 
 	if (listen(socRefFd, 5) == -1) {
-        TRACE(Trace::error, errno);
+		TRACE(Trace::error, errno);
 		throw(OLTFSErr::OLTFS_COMM_ERROR);
 	}
 }
@@ -66,12 +64,13 @@ void LTFSDmCommServer::connect()
 void LTFSDmCommServer::accept()
 
 {
-	if ( (socAccFd = ::accept(socRefFd, NULL, NULL)) == -1)
-        TRACE(Trace::error, errno);
+	if ( (socAccFd = ::accept(socRefFd, NULL, NULL)) == -1) {
+		TRACE(Trace::error, errno);
 		throw(OLTFSErr::OLTFS_COMM_ERROR);
+	}
 }
 
-int LTFSDmComm::send(int fd)
+void LTFSDmComm::send(int fd)
 
 {
 	unsigned long MessageSize;
@@ -80,29 +79,27 @@ int LTFSDmComm::send(int fd)
 
 	MessageSize = this->ByteSize();
 
-	printf("Size: %ld\n", MessageSize);
-
 	buffer = (char *) malloc(MessageSize + sizeof(long));
 	memset(buffer, 0, MessageSize + sizeof(long));
 	memcpy(buffer, &MessageSize, sizeof(long));
 
 	if ( this->SerializeToArray(buffer + sizeof(long), MessageSize) == false ) {
-		free(buffer);
-		printf("error serializing message\n");
-		return -1;
+		TRACE(Trace::error, buffer);
+		throw(OLTFSErr::OLTFS_COMM_ERROR);
 	}
 
 	rsize = write(fd, buffer, MessageSize + sizeof(long));
 
 	if ( rsize != MessageSize + sizeof(long) ) {
 		free(buffer);
+		TRACE(Trace::error, rsize);
+		TRACE(Trace::error, MessageSize);
+		TRACE(Trace::error, sizeof(long));
 		printf("error writing message to socketfd\n");
-		return -1;
+		throw(OLTFSErr::OLTFS_COMM_ERROR);
 	}
 
 	free(buffer);
-
-	return 0;
 }
 
 unsigned long readx(int fd, char *buffer, unsigned long size)
@@ -123,19 +120,19 @@ unsigned long readx(int fd, char *buffer, unsigned long size)
 }
 
 
-int LTFSDmComm::recv(int fd)
+void LTFSDmComm::recv(int fd)
 
 {
 	unsigned long MessageSize;
 	unsigned long rsize;
 	char *buffer;
-	int rc = 0;
 
 	rsize = readx(fd, (char *) &MessageSize, sizeof(long));
 
 	if (rsize != sizeof(long)) {
-		printf("error reading size from socketfd, requested %lu, response: %ld, errno: %d\n", sizeof(long), rsize, errno);
-		return -1;
+		TRACE(Trace::error, rsize);
+		TRACE(Trace::error, sizeof(long));
+		throw(OLTFSErr::OLTFS_COMM_ERROR);
 	}
 
 	buffer = (char *) malloc(MessageSize);
@@ -144,14 +141,12 @@ int LTFSDmComm::recv(int fd)
 	rsize = readx(fd, buffer, MessageSize);
 
 	if (rsize != MessageSize) {
-		printf("error writing message from socketfd\n");
+		TRACE(Trace::error, rsize);
+		TRACE(Trace::error, MessageSize);
 		free(buffer);
-		return -1;
+		throw(OLTFSErr::OLTFS_COMM_ERROR);
 	}
 
 	this->ParseFromArray(buffer, MessageSize);
 	free(buffer);
-
-	return rc;
-
 }

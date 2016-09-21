@@ -13,7 +13,12 @@
 int main(int argc, char *argv[]) {
 	LTFSDmCommClient command;
 
-	command.connect();
+	try {
+		command.connect();
+	}
+	catch(...) {
+		exit(-1);
+	}
 
 	/* COMMAND WILL BE MIGRATION */
 	LTFSDmProtocol::LTFSDmMigRequest *migreq = command.mutable_migrequest();
@@ -30,11 +35,23 @@ int main(int argc, char *argv[]) {
 		filenames->set_filename(st.str());
 	}
 
-	command.send();
+	try {
+		command.send();
+	}
+	catch(...) {
+		printf("send error\n");
+		exit(-1);
+	}
 
 	printf("waiting for an answer\n");
 
-	command.recv();
+	try {
+		command.recv();
+	}
+	catch(...) {
+		printf("receive error\n");
+		exit(-1);
+	}
 
 	const LTFSDmProtocol::LTFSDmMigRequestResp migreqresp = command.migrequestresp();
 
