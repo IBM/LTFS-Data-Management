@@ -5,23 +5,20 @@
 #include "src/server/ServerComponent/ServerComponent.h"
 #include "SubServer.h"
 
-SubServer::SubServer()
+SubServer::~SubServer()
 
 {
-}
+	std::vector<std::thread*>::iterator it;
 
-void SubServer::start(ServerComponent *component, std::string info)
-
-{
-	std::thread thread = component->start(info);
-	components.push_back(thrd);
+	for(it=components.begin() ; it < components.end(); ++it)
+		delete(*it);
 }
 
 void SubServer::wait()
 
 {
-	std::vector<std::thread>::iterator it;
+	std::vector<std::thread*>::iterator it;
 
 	for(it=components.begin() ; it < components.end(); ++it)
-		(*it).join();
+		(*it)->join();
 }

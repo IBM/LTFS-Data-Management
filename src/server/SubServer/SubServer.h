@@ -3,12 +3,16 @@
 
 class SubServer {
 private:
-	std::vector<std::thread> components;
+	std::vector<std::thread*> components;
 public:
-	SubServer();
-	~SubServer() {};
+	SubServer() {};
+	~SubServer();
 
-	void start(ServerComponent *component, std::string info);
+	template <typename T>
+	void add(T s)
+	{
+		components.push_back(s->startThread(s));
+	}
 	void wait();
 };
 

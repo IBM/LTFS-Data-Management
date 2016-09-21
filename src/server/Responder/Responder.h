@@ -5,10 +5,9 @@ class Responder : public ServerComponent
 
 {
 public:
-	Responder();
+	Responder(std::string _info)  { info = _info; }
 	~Responder() {};
 	void run(std::string info);
-	std::thread start(std::string info) {return std::thread(&Responder::run, info);}
 };
 
 #endif /* _RESPONDER_H */

@@ -6,11 +6,6 @@
 #include "src/server/ServerComponent/ServerComponent.h"
 #include "Responder.h"
 
-Responder::Responder()
-
-{
-}
-
 void Responder::run(std::string info)
 
 {

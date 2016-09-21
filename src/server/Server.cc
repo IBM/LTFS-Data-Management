@@ -93,10 +93,13 @@ void Server::daemonize()
 void Server::run()
 
 {
-	Receiver receiver;
-	subServer.start(&receiver, "Receiver");
-	Responder responder;
-	subServer.start(&responder, "Responder");
+	SubServer subs;
 
-	subServer.wait();
+	Receiver *recv = new Receiver("Receiver");
+	Responder *resp = new Responder("Responder");
+
+	subs.add(recv);
+	subs.add(resp);
+
+	subs.wait();
 }

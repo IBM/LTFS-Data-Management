@@ -5,10 +5,9 @@ class Receiver : public ServerComponent
 
 {
 public:
-	Receiver();
+	Receiver(std::string _info) { info = _info; }
 	~Receiver() {};
-	void run(std::string info);
-	std::thread start(std::string info) {return std::thread(&Receiver::run, info);}
+	void run(std::string _info);
 };
 
 #endif /* _RECEIVER_H */

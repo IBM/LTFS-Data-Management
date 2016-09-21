@@ -3,7 +3,4 @@
 
 #include "ServerComponent.h"
 
-ServerComponent::ServerComponent()
-
-{
-}
+ServerComponent::ServerComponent() : info("") {}
