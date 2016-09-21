@@ -11,18 +11,20 @@ char *socket_path = (char *) "/tmp/ltfsdmd";
 
 int main(int argc, char *argv[]) {
 	LTFSDmCommServer command;
-	int cl;
+	unsigned long pid;
 
 	command.connect();
 
 	while (1) {
-		if ( (cl = accept(fd, NULL, NULL)) == -1) {
-			perror("accept error");
+		try {
+			command.accept();
+		}
+		catch(...) {
 			continue;
 		}
 
 		// command.ParseFromFileDescriptor(cl);
-		command.recv(cl);
+		command.recv();
 
 		printf("============================================================\n");
 
@@ -30,8 +32,8 @@ int main(int argc, char *argv[]) {
 		if ( command.has_migrequest() ) {
 			printf("Migration Request\n");
 			const LTFSDmProtocol::LTFSDmMigRequest migreq = command.migrequest();
-			printf("key: %lu\n", migreq.key());
-			printf("token: %lu\n", migreq.token());
+			printf("key: %llu\n", migreq.key());
+			printf("token: %llu\n", migreq.token());
 			pid = migreq.pid();
 			printf("client pid: %lu\n", pid);
 			switch (migreq.state()) {
@@ -63,15 +65,15 @@ int main(int argc, char *argv[]) {
 			migreqresp->set_token(time(NULL));
 			migreqresp->set_pid(pid);
 
-			command.send(cl);
+			command.send();
 		}
 
 		// SELECTIVE RECALL
 		else if ( command.has_selrecrequest() ) {
 			printf("Selective Recall Request\n");
 			const LTFSDmProtocol::LTFSDmSelRecRequest selrecreq = command.selrecrequest();
-			printf("key: %lu\n", selrecreq.key());
-			printf("key: %lu\n", selrecreq.token());
+			printf("key: %llu\n", selrecreq.key());
+			printf("key: %llu\n", selrecreq.token());
 			switch (selrecreq.state()) {
 				case LTFSDmProtocol::LTFSDmSelRecRequest::MIGRATED:
 					printf("files to be migrated\n");
@@ -93,8 +95,8 @@ int main(int argc, char *argv[]) {
 		else if ( command.has_selrecrequest() ) {
 			printf("Transparent Recall Request\n");
 			const LTFSDmProtocol::LTFSDmTransRecRequest transrecreq = command.transrecrequest();
-			printf("key: %lu\n", transrecreq.key());
-			printf("key: %lu\n", transrecreq.token());
+			printf("key: %llu\n", transrecreq.key());
+			printf("key: %llu\n", transrecreq.token());
 			switch (transrecreq.state()) {
 				case LTFSDmProtocol::LTFSDmTransRecRequest::MIGRATED:
 					printf("files to be migrated\n");
@@ -106,7 +108,7 @@ int main(int argc, char *argv[]) {
 					printf("unkown target state\n");
 			}
 
-			printf("file with inode %lu will be recalled transparently\n", transrecreq.inum());
+			printf("file with inode %llu will be recalled transparently\n", transrecreq.inum());
 		}
 		else
 			printf("unkown command\n");

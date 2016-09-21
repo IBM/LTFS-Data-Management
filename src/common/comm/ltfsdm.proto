@@ -1,6 +1,6 @@
 syntax = "proto2";
 
-package LTFSDmD;
+package LTFSDmProtocol;
 
 message LTFSDmMigRequest {
 	required uint64 key = 1;

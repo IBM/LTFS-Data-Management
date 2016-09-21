@@ -20,7 +20,7 @@ public:
 	}
 
 	TD getInfo() { return info; }
-	void run(std::string info) {};
+	virtual void run(std::string info) {};
 };
 
 #endif /* _SERVERCOMPONENT_H */

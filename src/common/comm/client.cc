@@ -10,8 +10,6 @@
 #include "ltfsdm.pb.h"
 #include "LTFSDmComm.h"
 
-char *socket_path = (char *) "/tmp/ltfsdmd";
-
 int main(int argc, char *argv[]) {
 	LTFSDmCommClient command;
 
@@ -41,15 +39,13 @@ int main(int argc, char *argv[]) {
 	const LTFSDmProtocol::LTFSDmMigRequestResp migreqresp = command.migrequestresp();
 
 	if( migreqresp.success() == true ) {
-		printf("sending success, token: %lu\n", migreqresp.token());
+		printf("sending success, token: %llu\n", migreqresp.token());
 		if ( getpid() != migreqresp.pid() )
 			printf("WRONG RESPONSE -- WRONG RESPONSE -- WRONG RESPONSE -- WRONG RESPONSE\n");
 	}
 	else {
 		printf("error sending request\n");
 	}
-
-
 
 	google::protobuf::ShutdownProtobufLibrary();
 
