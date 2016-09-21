@@ -36,10 +36,6 @@ endif
 
 BINDIR := $(RELPATH)/bin
 
-ifneq ($(strip $(BINARY)),)
-TARGETBIN := $(BINDIR)/$(BINARY)
-endif
-
 objfiles = $(patsubst %.cc,%.o, $(1))
 
 # build rules
@@ -56,12 +52,12 @@ $(TARGETLIB): $(TARGETLIB)($(call objfiles, $(LIB_SRC_FILES)))
 $(BINARY): $(ARCHIVES)
 
 # copy binary to bin directory
-$(TARGETBIN): $(BINARY)
-	cp $^ $@
+$(BINDIR): $(BINARY)
+	cp $^ $@/
 
 clean:
-	rm -fr $(RELPATH)/lib/* *.o $(CLEANUP_FILES) $(BINARY) $(TARGETBIN) $(DEPDIR)
+	rm -fr $(RELPATH)/lib/* *.o $(CLEANUP_FILES) $(BINARY) $(BINDIR)/ $(DEPDIR)
 
-build: $(DEPDIR) $(call objfiles, $(SOURCE_FILES)) $(TARGETLIB) $(TARGETBIN) $(POSTTARGET)
+build: $(DEPDIR) $(call objfiles, $(SOURCE_FILES)) $(TARGETLIB) $(BINDIR) $(POSTTARGET)
 
 -include .d/deps.mk

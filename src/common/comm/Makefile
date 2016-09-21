@@ -2,7 +2,7 @@ RELPATH = ../../..
 
 LIB_SRC_FILES := ltfsdm.pb.cc LTFSDmComm.cc
 CLEANUP_FILES := ltfsdm.pb.cc ltfsdm.pb.h
-BINARY :=
+BINARY := client server
 POSTTARGET :=
 
 
