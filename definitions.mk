@@ -53,10 +53,11 @@ $(BINARY): $(ARCHIVES)
 
 # copy binary to bin directory
 $(BINDIR): $(BINARY)
+	if [ ! -d $(BINDIR) ]; then mkdir $(BINDIR); fi
 	cp $^ $@/
 
 clean:
-	rm -fr $(RELPATH)/lib/* *.o $(CLEANUP_FILES) $(BINARY) $(BINDIR)/ $(DEPDIR)
+	rm -fr $(RELPATH)/lib/* *.o $(CLEANUP_FILES) $(BINARY) $(BINDIR)/* $(DEPDIR)
 
 build: $(DEPDIR) $(call objfiles, $(SOURCE_FILES)) $(TARGETLIB) $(BINDIR) $(POSTTARGET)
 
