@@ -6,19 +6,19 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/syscall.h>
-#include <pthread.h>
 #include <string>
 #include <iostream>
 #include <fstream>
 #include <iomanip>
 #include <atomic>
+#include <mutex>
 
 #include "src/common/messages/Message.h"
 #include "src/common/errors/errors.h"
 
 class Trace {
 private:
-	pthread_mutex_t mtx;
+	std::mutex mtx;
 	std::ofstream tracefile;
 public:
 	enum traceLevel {
@@ -48,7 +48,7 @@ public:
 			curctime[strlen(curctime) - 1] = 0;
 
 			try {
-				pthread_mutex_lock(&mtx);
+				mtx.lock();
 				tracefile << curctime << ":";
 				tracefile << std::setfill('0') << std::setw(6) << getpid() << ":";
 #ifdef __linux__
@@ -63,10 +63,11 @@ public:
 				tracefile << std::setfill('-') << std::setw(15) << filename;
 				tracefile << "(" << linenr << "):";
 				tracefile << varname << "(" << s << ")" << std::endl;
-				pthread_mutex_unlock(&mtx);
+				tracefile.flush();
+				mtx.unlock();
 			}
 			catch(...) {
-				pthread_mutex_unlock(&mtx);
+				mtx.unlock();
 				MSG_OUT(OLTFSX0002E);
 				exit((int) OLTFSErr::OLTFS_GENERAL_ERROR);
 			}

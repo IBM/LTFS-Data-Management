@@ -1,7 +1,6 @@
-#include <pthread.h>
-
 #include <iostream>
 #include <fstream>
+#include <mutex>
 
 #include "src/common/const/Const.h"
 #include "src/common/errors/errors.h"
@@ -33,21 +32,22 @@ Message::~Message()
 void Message::writeOut(std::string msgstr)
 
 {
-	pthread_mutex_lock(&mtx);
+	mtx.lock();
 	std::cout << msgstr;
-	pthread_mutex_unlock(&mtx);
+	mtx.unlock();
 }
 
 void Message::writeLog(std::string msgstr)
 
 {
 	try {
-		pthread_mutex_lock(&mtx);
+		mtx.lock();
 		messagefile << msgstr;
 		messagefile.flush();
-		pthread_mutex_unlock(&mtx);
+		mtx.unlock();
 	}
 	catch(...) {
+		mtx.unlock();
 		std::cerr << OLTFSX0004E;
 		exit((int) OLTFSErr::OLTFS_GENERAL_ERROR);
 	}
