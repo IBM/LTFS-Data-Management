@@ -3,22 +3,23 @@
 
 #include <thread>
 
+template <typename TD>
 class ServerComponent
 
 {
 protected:
-	std::string info;
+	TD info;
 public:
-	ServerComponent();
+	ServerComponent() {};
 	~ServerComponent() {};
 
-	template <typename T>
-	std::thread *startThread(T *s)
+	template <typename TC>
+	std::thread *startThread(TC *s)
 	{
-		return new std::thread(&T::run, s, s->getInfo());
+		return new std::thread(&TC::run, s, s->getInfo());
 	}
 
-	std::string getInfo() { return info; }
+	TD getInfo() { return info; }
 	void run(std::string info) {};
 };
 

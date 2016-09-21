@@ -1,7 +1,7 @@
 #ifndef _RESPONDER_H
 #define _RESPONDER_H
 
-class Responder : public ServerComponent
+class Responder : public ServerComponent<std::string>
 
 {
 public:

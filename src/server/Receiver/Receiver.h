@@ -1,7 +1,7 @@
 #ifndef _RECEIVER_H
 #define _RECEIVER_H
 
-class Receiver : public ServerComponent
+class Receiver : public ServerComponent<std::string>
 
 {
 public:
