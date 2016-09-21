@@ -34,7 +34,7 @@ void LTFSDmCommClient::connect()
 	GOOGLE_PROTOBUF_VERIFY_VERSION;
 }
 
-void LTFSDmCommServer::connect()
+void LTFSDmCommServer::listen()
 
 {
 	struct sockaddr_un addr;
@@ -55,7 +55,7 @@ void LTFSDmCommServer::connect()
 		throw(OLTFSErr::OLTFS_COMM_ERROR);
 	}
 
-	if (listen(socRefFd, 5) == -1) {
+	if (::listen(socRefFd, 5) == -1) {
 		TRACE(Trace::error, errno);
 		throw(OLTFSErr::OLTFS_COMM_ERROR);
 	}

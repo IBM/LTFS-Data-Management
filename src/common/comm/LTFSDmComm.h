@@ -5,7 +5,6 @@ class LTFSDmComm : public LTFSDmProtocol::Command {
 public:
 	LTFSDmComm() {}
 	~LTFSDmComm() {}
-	virtual void connect() {}
 	void send(int fd);
 	void recv(int fd);
 };
@@ -28,7 +27,7 @@ private:
 public:
 	LTFSDmCommServer() : socRefFd(-1), socAccFd(-1) {}
 	~LTFSDmCommServer() { if ( socAccFd != -1 ) close(socAccFd); if ( socRefFd != -1 ) close(socRefFd); }
-	void connect();
+	void listen();
 	void accept();
 	void send() { return LTFSDmComm::send(socAccFd); }
 	void recv() { return LTFSDmComm::recv(socAccFd); }

@@ -14,7 +14,7 @@ int main(int argc, char *argv[]) {
 	unsigned long pid;
 
 	try {
-		command.connect();
+		command.listen();
 	}
 	catch(...) {
 		exit(-1);
