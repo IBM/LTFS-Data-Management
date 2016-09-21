@@ -10,6 +10,8 @@
 #include "src/common/errors/errors.h"
 #include "src/common/const/Const.h"
 
+#include "src/server/ServerComponent/ServerComponent.h"
+#include "src/server/SubServer/SubServer.h"
 #include "src/server/Server.h"
 
 
@@ -24,16 +26,12 @@ int main(int argc, char **argv)
 	try {
 		ltfsdmd.initialize();
 		ltfsdmd.daemonize();
+		ltfsdmd.run();
 	}
 	catch ( OLTFSErr initerr ) {
 		err = initerr;
 		goto end;
 	}
-
-	while (true) {
-		MSG_LOG(OLTFSS0003X);
-		sleep(1);
-	};
 
 end:
 	return (int) err;

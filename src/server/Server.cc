@@ -8,12 +8,17 @@
 #include <errno.h>
 
 #include <string>
+#include <thread>
 
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
 #include "src/common/errors/errors.h"
 #include "src/common/const/Const.h"
 
+#include "src/server/ServerComponent/ServerComponent.h"
+#include "src/server/Receiver/Receiver.h"
+#include "src/server/Responder/Responder.h"
+#include "src/server/SubServer/SubServer.h"
 #include "src/server/Server.h"
 
 void Server::lockServer()
@@ -83,4 +88,18 @@ void Server::daemonize()
 	/* seting line buffers*/
 	setlinebuf(stdout);
 	setlinebuf(stderr);
+}
+
+void Server::run()
+
+{
+	SubServer subs;
+
+	Receiver *recv = new Receiver("Receiver");
+	Responder *resp = new Responder("Responder");
+
+	subs.add(recv);
+	subs.add(resp);
+
+	subs.wait();
 }

@@ -12,10 +12,10 @@ CXX = g++
 
 # use c++11 to build the code
 # CXXFLAGS  := -std=c++11 -g2 -ggdb -Wall -Werror -Wno-format-security -D_GNU_SOURCE -I$(RELPATH)
-CXXFLAGS  := -std=c++11 -g2 -ggdb -Wall -Werror -D_GNU_SOURCE -I$(RELPATH) -I/opt/local/include
+CXXFLAGS  := -std=c++11 -g2 -ggdb -Wall -Werror -D_GNU_SOURCE -I$(RELPATH) -I/opt/local/include -I/usr/local/include
 
 # for protocol buffers
-LDFLAGS := -lprotobuf
+LDFLAGS := -lprotobuf -lpthread -L/usr/local/lib
 
 # client, common, or server
 TARGETCOMP := $(shell perl -e "print '$(CURDIR)' =~ /.*$(PROJECT)\/src\/([^\/]+)/")

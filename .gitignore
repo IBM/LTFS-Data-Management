@@ -18,3 +18,4 @@ TAGS
 TAGS.func
 cscope.files
 cscope.out
+*.dSYM/
