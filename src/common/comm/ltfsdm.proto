@@ -23,7 +23,7 @@ message LTFSDmMigRequest {
 message LTFSDmMigRequestResp {
 	required bool success = 1;
 	required uint64 token = 2;
-	required uint64 pid = 3;
+	required int64 pid = 3;
 }
 
 message LTFSDmSelRecRequest {
