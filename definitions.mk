@@ -72,5 +72,5 @@ clean:
 build: $(DEPS) $(call objfiles, $(SOURCE_FILES)) $(TARGETLIB) $(TARGET) $(POSTTARGET)
 
 ifeq ($(MAKECMDGOALS),build)
-	-include .d/deps.mk
+    -include .d/deps.mk
 endif
