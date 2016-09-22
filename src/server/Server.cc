@@ -27,22 +27,22 @@ void Server::lockServer()
 	int lockfd;
 
 	if ( (lockfd = open(Const::SERVER_LOCK_FILE.c_str(), O_RDWR | O_CREAT, 0600)) == -1 ) {
-		MSG_OUT(OLTFSS0001E);
+		MSG_OUT(LTFSDMS0001E);
 		TRACE(Trace::error, Const::SERVER_LOCK_FILE);
 		TRACE(Trace::error, errno);
-		throw(OLTFSErr::OLTFS_GENERAL_ERROR);
+		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
 	}
 
 	if ( flock(lockfd, LOCK_EX | LOCK_NB) == -1 ) {
 		TRACE(Trace::error, errno);
 		if ( errno == EWOULDBLOCK ) {
-			MSG_OUT(OLTFSS0002I);
-			throw(OLTFSErr::OLTFS_OK);
+			MSG_OUT(LTFSDMS0002I);
+			throw(LTFSDMErr::LTFSDM_OK);
 		}
 		else {
-			MSG_OUT(OLTFSS0001E);
+			MSG_OUT(LTFSDMS0001E);
 			TRACE(Trace::error, errno);
-			throw(OLTFSErr::OLTFS_GENERAL_ERROR);
+			throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
 		}
 	}
 }
@@ -64,12 +64,12 @@ void Server::daemonize()
 	}
 
 	if (pid > 0) {
-		throw(OLTFSErr::OLTFS_OK);
+		throw(LTFSDMErr::LTFSDM_OK);
 	}
 
 	sid = setsid();
 	if (sid < 0) {
-		throw(OLTFSErr::OLTFS_GENERAL_ERROR);
+		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
 	}
 
 	TRACE(Trace::little, "Server started");

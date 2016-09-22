@@ -24,7 +24,7 @@
 void StartCommand::printUsage()
 
 {
-	MSG_INFO(OLTFSC0006I);
+	MSG_INFO(LTFSDMC0006I);
 }
 
 void StartCommand::determineServerPath()
@@ -38,15 +38,15 @@ void StartCommand::determineServerPath()
 	char *exelnk = (char*) "/proc/self/exe";
 
 	if ( readlink(exelnk, exepath, PATH_MAX) == -1 ) {
-		MSG_OUT(OLTFSC0021E);
-		throw OLTFSErr::OLTFS_GENERAL_ERROR;
+		MSG_OUT(LTFSDMC0021E);
+		throw LTFSDMErr::LTFSDM_GENERAL_ERROR;
 	}
 #elif __APPLE__
 	uint32_t size = PATH_MAX;
 	if ( _NSGetExecutablePath(exepath, &size) != 0 ) {
-		MSG_OUT(OLTFSC0021E);
+		MSG_OUT(LTFSDMC0021E);
 		TRACE(Trace::error, errno);
-		throw OLTFSErr::OLTFS_GENERAL_ERROR;
+		throw LTFSDMErr::LTFSDM_GENERAL_ERROR;
 	}
 #else
 #error "unsupported platform"
@@ -66,33 +66,33 @@ void StartCommand::startServer()
 	int ret;
 
 	if ( stat(serverPath.str().c_str(), &statbuf ) == -1 ) {
-		MSG_OUT(OLTFSC0021E);
+		MSG_OUT(LTFSDMC0021E);
 		TRACE(Trace::error, serverPath.str());
 		TRACE(Trace::error, errno);
-		throw OLTFSErr::OLTFS_GENERAL_ERROR;
+		throw LTFSDMErr::LTFSDM_GENERAL_ERROR;
 	}
 
 	ltfsdmd = popen(serverPath.str().c_str(), "r");
 
 	if( !ltfsdmd ) {
-		MSG_OUT(OLTFSC0022E);
+		MSG_OUT(LTFSDMC0022E);
 		TRACE(Trace::error, errno);
-		throw OLTFSErr::OLTFS_GENERAL_ERROR;
+		throw LTFSDMErr::LTFSDM_GENERAL_ERROR;
 	}
 
     while( fgets(line, sizeof(line), ltfsdmd) ) {
-		MSG_INFO(OLTFSC0024I, line);
+		MSG_INFO(LTFSDMC0024I, line);
     }
 
 
 	ret = pclose(ltfsdmd);
 
     if(  !WIFEXITED(ret) || WEXITSTATUS(ret) ) {
-		MSG_OUT(OLTFSC0023E, WEXITSTATUS(ret));
+		MSG_OUT(LTFSDMC0023E, WEXITSTATUS(ret));
 		TRACE(Trace::error, ret);
 		TRACE(Trace::error, WIFEXITED(ret));
 		TRACE(Trace::error, WEXITSTATUS(ret));
-		throw OLTFSErr::OLTFS_GENERAL_ERROR;
+		throw LTFSDMErr::LTFSDM_GENERAL_ERROR;
 	}
 }
 
@@ -101,7 +101,7 @@ void StartCommand::doCommand(int argc, char **argv)
 {
 	if ( argc > 1 ) {
 		printUsage();
-		throw OLTFSErr::OLTFS_GENERAL_ERROR;
+		throw LTFSDMErr::LTFSDM_GENERAL_ERROR;
 	}
 
 	determineServerPath();

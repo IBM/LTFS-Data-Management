@@ -53,8 +53,8 @@ public:
 			writeOut(fmter.str());
 		}
 		catch(...) {
-			std::cerr << messages[OLTFSX0005E] << " (" << filename << ":" << linenr << ")" << std::endl;
-			exit((int) OLTFSErr::OLTFS_GENERAL_ERROR);
+			std::cerr << messages[LTFSDMX0005E] << " (" << filename << ":" << linenr << ")" << std::endl;
+			exit((int) LTFSDMErr::LTFSDM_GENERAL_ERROR);
 		}
 	}
 
@@ -69,8 +69,8 @@ public:
 			writeOut(fmter.str());
 		}
 		catch(...) {
-			std::cerr << messages[OLTFSX0005E] << " (" << filename << ":" << linenr << ")" << std::endl;
-			exit((int) OLTFSErr::OLTFS_GENERAL_ERROR);
+			std::cerr << messages[LTFSDMX0005E] << " (" << filename << ":" << linenr << ")" << std::endl;
+			exit((int) LTFSDMErr::LTFSDM_GENERAL_ERROR);
 		}
 	}
 	template<typename ... Args>
@@ -86,8 +86,8 @@ public:
 			writeLog(fmter.str());
 		}
 		catch(...) {
-			std::cerr << messages[OLTFSX0005E] << " (" << filename << ":" << linenr << ")" << std::endl;
-			exit((int) OLTFSErr::OLTFS_GENERAL_ERROR);
+			std::cerr << messages[LTFSDMX0005E] << " (" << filename << ":" << linenr << ")" << std::endl;
+			exit((int) LTFSDMErr::LTFSDM_GENERAL_ERROR);
 		}
 	}
 };

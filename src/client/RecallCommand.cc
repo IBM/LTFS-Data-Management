@@ -10,36 +10,36 @@
 
 void RecallCommand::printUsage()
 {
-	MSG_INFO(OLTFSC0002I);
+	MSG_INFO(LTFSDMC0002I);
 }
 
 void RecallCommand::doCommand(int argc, char **argv)
 {
 	if ( argc == 1 ) {
-		MSG_INFO(OLTFSC0018E);
+		MSG_INFO(LTFSDMC0018E);
 		goto error;
 	}
 
 	processOptions(argc, argv);
 
 	if ( fileList.compare("") && directoryName.compare("") ) {
-		MSG_INFO(OLTFSC0015E);
+		MSG_INFO(LTFSDMC0015E);
 		goto error;
 	}
 
 	if (optind != argc) {
 		if (fileList.compare("")) {
-			MSG_INFO(OLTFSC0016E);
+			MSG_INFO(LTFSDMC0016E);
 			goto error;
 		}
 		if (directoryName.compare("")) {
-			MSG_INFO(OLTFSC0017E);
+			MSG_INFO(LTFSDMC0017E);
 			goto error;
 		}
 	}
 	else if ( !fileList.compare("") && !directoryName.compare("") ) {
 		// a least a file or directory needs to be specified
-		MSG_INFO(OLTFSC0019E);
+		MSG_INFO(LTFSDMC0019E);
 		goto error;
 	}
 
@@ -53,5 +53,5 @@ void RecallCommand::doCommand(int argc, char **argv)
 
 error:
 	printUsage();
-	throw(OLTFSErr::OLTFS_GENERAL_ERROR);
+	throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
 }

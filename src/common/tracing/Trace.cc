@@ -33,8 +33,8 @@ Trace::Trace() : trclevel(error)
 		tracefile.open(Const::TRACE_FILE, std::fstream::out | std::fstream::app);
 	}
 	catch(...) {
-		MSG_OUT(OLTFSX0001E);
-		exit((int) OLTFSErr::OLTFS_GENERAL_ERROR);
+		MSG_OUT(LTFSDMX0001E);
+		exit((int) LTFSDMErr::LTFSDM_GENERAL_ERROR);
 	}
 }
 

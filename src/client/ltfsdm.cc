@@ -20,14 +20,14 @@ int main(int argc, char *argv[])
 {
 	OpenLTFSCommand *openLTFSCommand = NULL;
 	std::string command;
-	OLTFSErr rc = OLTFSErr::OLTFS_OK ;
+	LTFSDMErr rc = LTFSDMErr::LTFSDM_OK ;
 
 	traceObject.setTrclevel(Trace::little);
 
 	if ( argc < 2 ) {
 		openLTFSCommand = new HelpCommand();
 		openLTFSCommand->doCommand(argc, argv);
-		rc = OLTFSErr::OLTFS_GENERAL_ERROR;
+		rc = LTFSDMErr::LTFSDM_GENERAL_ERROR;
 		goto cleanup;
 	}
 
@@ -53,9 +53,9 @@ int main(int argc, char *argv[])
 	}
 	else if ( InfoCommand().compare(command) ) {
 		if ( argc < 3 ) {
-			MSG_INFO(OLTFSC0011E);
+			MSG_INFO(LTFSDMC0011E);
 			InfoCommand().printUsage();
-			rc =  OLTFSErr::OLTFS_GENERAL_ERROR;
+			rc =  LTFSDMErr::LTFSDM_GENERAL_ERROR;
 			goto cleanup;
 		}
 		argc--;
@@ -69,16 +69,16 @@ int main(int argc, char *argv[])
 			openLTFSCommand = new InfoFilesCommand();
 		}
 		else {
-			MSG_OUT(OLTFSC0012E, command.c_str());
+			MSG_OUT(LTFSDMC0012E, command.c_str());
 			openLTFSCommand = new HelpCommand();
-			rc = OLTFSErr::OLTFS_GENERAL_ERROR;
+			rc = LTFSDMErr::LTFSDM_GENERAL_ERROR;
 			goto cleanup;
 		}
 	}
 	else {
-		MSG_OUT(OLTFSC0005E, command.c_str());
+		MSG_OUT(LTFSDMC0005E, command.c_str());
 		openLTFSCommand = new HelpCommand();
-		rc = OLTFSErr::OLTFS_GENERAL_ERROR;
+		rc = LTFSDMErr::LTFSDM_GENERAL_ERROR;
 		goto cleanup;
 	}
 
@@ -95,7 +95,7 @@ int main(int argc, char *argv[])
 	try {
 		openLTFSCommand->doCommand(argc, argv);
 	}
-	catch(OLTFSErr err) {
+	catch(LTFSDMErr err) {
 		rc = err;
 		goto cleanup;
 	}

@@ -1,6 +1,6 @@
-OLTFSS0001X(21): the first message prints out one integer parameter: 4.
-OLTFSC0001X(22): the second message contains several lines:
+LTFSDMS0001X(21): the first message prints out one integer parameter: 4.
+LTFSDMC0001X(22): the second message contains several lines:
  within the second line a string is printed out: text.
  within the third a integer value is printed out: 6.
-OLTFSS0002X(23): no value is printed out for the third message.
+LTFSDMS0002X(23): no value is printed out for the third message.
 usage: progname <file name>

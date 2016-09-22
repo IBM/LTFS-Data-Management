@@ -10,6 +10,8 @@ typedef struct {
 	string msgtxt;
 } message_t;
 
+const std::string IDENTIFIER = "LTFSDM";
+
 int main(int argc, char **argv)
 
 {
@@ -56,7 +58,7 @@ int main(int argc, char **argv)
 		}
 		// new message
 		else {
-			if ( line[0] != 'O' ) {
+			if ( line.compare(0, IDENTIFIER.size(), IDENTIFIER) ) {
 				cout << "Line:" << endl;
 				cout << ">>" << line << "<< " << endl;
 				cout << "does not look correctly formatted." << endl;

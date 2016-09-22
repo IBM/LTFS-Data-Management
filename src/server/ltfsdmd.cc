@@ -19,7 +19,7 @@ int main(int argc, char **argv)
 
 {
  	Server ltfsdmd;
-	OLTFSErr err = OLTFSErr::OLTFS_OK;
+	LTFSDMErr err = LTFSDMErr::LTFSDM_OK;
 
 	TRACE(Trace::little, getpid());
 
@@ -28,7 +28,7 @@ int main(int argc, char **argv)
 		ltfsdmd.daemonize();
 		ltfsdmd.run();
 	}
-	catch ( OLTFSErr initerr ) {
+	catch ( LTFSDMErr initerr ) {
 		err = initerr;
 		goto end;
 	}

@@ -17,8 +17,8 @@
 
 void HelpCommand::printUsage()
 {
-	MSG_INFO(OLTFSC0008I);
-	MSG_INFO(OLTFSC0020I);
+	MSG_INFO(LTFSDMC0008I);
+	MSG_INFO(LTFSDMC0020I);
 }
 
 void HelpCommand::doCommand(int argc, char **argv)

@@ -10,7 +10,7 @@
 
 void InfoRequestsCommand::printUsage()
 {
-	MSG_INFO(OLTFSC0009I);
+	MSG_INFO(LTFSDMC0009I);
 }
 
 void InfoRequestsCommand::doCommand(int argc, char **argv)
@@ -23,11 +23,11 @@ void InfoRequestsCommand::doCommand(int argc, char **argv)
 
 	if( argc != optind ) {
 		printUsage();
-		throw(OLTFSErr::OLTFS_GENERAL_ERROR);
+		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
 	}
 	else if (requestNumber < 0 && waitForCompletion) {
 		printUsage();
-		throw(OLTFSErr::OLTFS_GENERAL_ERROR);
+		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
 	}
 
 	return;

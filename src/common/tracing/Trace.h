@@ -68,8 +68,8 @@ public:
 			}
 			catch(...) {
 				mtx.unlock();
-				MSG_OUT(OLTFSX0002E);
-				exit((int) OLTFSErr::OLTFS_GENERAL_ERROR);
+				MSG_OUT(LTFSDMX0002E);
+				exit((int) LTFSDMErr::LTFSDM_GENERAL_ERROR);
 			}
 		}
 	}

@@ -18,8 +18,8 @@ Message::Message()
 		messagefile.open(Const::LOG_FILE, std::fstream::out | std::fstream::app);
 	}
 	catch(...) {
-		std::cerr << OLTFSX0003E;
-		exit((int) OLTFSErr::OLTFS_GENERAL_ERROR);
+		std::cerr << LTFSDMX0003E;
+		exit((int) LTFSDMErr::LTFSDM_GENERAL_ERROR);
 	}
 }
 
@@ -48,7 +48,7 @@ void Message::writeLog(std::string msgstr)
 	}
 	catch(...) {
 		mtx.unlock();
-		std::cerr << OLTFSX0004E;
-		exit((int) OLTFSErr::OLTFS_GENERAL_ERROR);
+		std::cerr << LTFSDMX0004E;
+		exit((int) LTFSDMErr::LTFSDM_GENERAL_ERROR);
 	}
 }

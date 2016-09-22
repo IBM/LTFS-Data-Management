@@ -7,13 +7,13 @@
 
 void StopCommand::printUsage()
 {
-	MSG_INFO(OLTFSC0007I);
+	MSG_INFO(LTFSDMC0007I);
 }
 
 void StopCommand::doCommand(int argc, char **argv)
 {
 	if ( argc > 1 ) {
 		printUsage();
-		throw OLTFSErr::OLTFS_GENERAL_ERROR;
+		throw LTFSDMErr::LTFSDM_GENERAL_ERROR;
 	}
 }
