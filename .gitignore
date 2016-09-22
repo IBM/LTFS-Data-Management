@@ -19,3 +19,6 @@ TAGS.func
 cscope.files
 cscope.out
 *.dSYM/
+client
+server
+bin

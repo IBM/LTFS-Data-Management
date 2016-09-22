@@ -1,6 +1,6 @@
 # common definitions
 
-.PHONY: clean build
+.PHONY: clean build libdir
 
 # to be used below
 PROJECT := OpenLTFS
@@ -17,6 +17,9 @@ CXXFLAGS  := -std=c++11 -g2 -ggdb -Wall -Werror -D_GNU_SOURCE -I$(RELPATH) -I/op
 # for protocol buffers
 LDFLAGS := -lprotobuf -lpthread -L/usr/local/lib
 
+BINDIR := $(RELPATH)/bin
+LIBDIR := $(RELPATH)/lib
+
 # client, common, or server
 TARGETCOMP := $(shell perl -e "print '$(CURDIR)' =~ /.*$(PROJECT)\/src\/([^\/]+)/")
 
@@ -31,10 +34,10 @@ DEPDIR := .d
 endif
 
 ifneq ($(strip $(LIB_SRC_FILES)),)
-TARGETLIB := $(RELPATH)/lib/$(TARGETCOMP).a
+TARGETLIB := $(LIBDIR)/$(TARGETCOMP).a
 endif
 
-BINDIR := $(RELPATH)/bin
+TARGET := $(addprefix $(BINDIR)/, $(BINARY))
 
 objfiles = $(patsubst %.cc,%.o, $(1))
 
@@ -46,19 +49,27 @@ $(DEPDIR): $(SOURCE_FILES)
 	@rm -fr $(DEPDIR) && mkdir $(DEPDIR)
 	$(CXX) $(CXXFLAGS) -MM $^ > .d/deps.mk
 
-# client.a, common.a, and server.a archive files
-$(TARGETLIB): $(TARGETLIB)($(call objfiles, $(LIB_SRC_FILES)))
+# create lib directory if not exists
+$(LIBDIR):
+	mkdir $@
 
+# client.a, common.a, and server.a archive files
+$(TARGETLIB): | $(LIBDIR) $(TARGETLIB)($(call objfiles, $(LIB_SRC_FILES)))
+
+# link binaries
 $(BINARY): $(ARCHIVES)
 
+# create bin directory if not exists
+$(BINDIR):
+	mkdir $@
+
 # copy binary to bin directory
-$(BINDIR): $(BINARY)
-	if [ ! -d $(BINDIR) ]; then mkdir $(BINDIR); fi
-	cp $^ $@/
+$(TARGET): | $(BINDIR) $(BINARY)
+	cp $(BINARY) $(BINDIR)
 
 clean:
 	rm -fr $(RELPATH)/lib/* *.o $(CLEANUP_FILES) $(BINARY) $(BINDIR)/* $(DEPDIR)
 
-build: $(DEPDIR) $(call objfiles, $(SOURCE_FILES)) $(TARGETLIB) $(BINDIR) $(POSTTARGET)
+build: $(DEPDIR) $(call objfiles, $(SOURCE_FILES)) $(TARGETLIB) $(TARGET) $(POSTTARGET)
 
 -include .d/deps.mk
