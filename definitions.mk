@@ -29,8 +29,10 @@ ARCHIVES ?= $(RELPATH)/lib/common.a $(RELPATH)/lib/$(TARGETCOMP).a
 # library source files will be added to the archives
 SOURCE_FILES := $(LIB_SRC_FILES)
 
-ifneq ($(strip $(SOURCE_FILES)),)
 DEPDIR := .d
+
+ifneq ($(strip $(SOURCE_FILES)),)
+DEPS := $(DEPDIR)/deps.mk
 endif
 
 ifneq ($(strip $(LIB_SRC_FILES)),)
@@ -44,32 +46,29 @@ objfiles = $(patsubst %.cc,%.o, $(1))
 # build rules
 default: build
 
-# auto dependencies
-$(DEPDIR): $(SOURCE_FILES)
-	@rm -fr $(DEPDIR) && mkdir $(DEPDIR)
-	$(CXX) $(CXXFLAGS) -MM $^ > .d/deps.mk
-
-# create lib directory if not exists
-$(LIBDIR):
+# creating diretories if missing
+$(DEPDIR) $(LIBDIR) $(BINDIR):
 	mkdir $@
 
+# auto dependencies
+$(DEPS): $(SOURCE_FILES) | $(DEPDIR)
+	$(CXX) $(CXXFLAGS) -MM $(SOURCE_FILES) > $@
+
+libdir: | $(LIBDIR)
+
 # client.a, common.a, and server.a archive files
-$(TARGETLIB): | $(LIBDIR) $(TARGETLIB)($(call objfiles, $(LIB_SRC_FILES)))
+$(TARGETLIB): libdir $(TARGETLIB)($(call objfiles, $(LIB_SRC_FILES)))
 
 # link binaries
 $(BINARY): $(ARCHIVES)
 
-# create bin directory if not exists
-$(BINDIR):
-	mkdir $@
-
 # copy binary to bin directory
-$(TARGET): | $(BINDIR) $(BINARY)
+$(TARGET): $(BINARY) | $(BINDIR)
 	cp $(BINARY) $(BINDIR)
 
 clean:
 	rm -fr $(RELPATH)/lib/* *.o $(CLEANUP_FILES) $(BINARY) $(BINDIR)/* $(DEPDIR)
 
-build: $(DEPDIR) $(call objfiles, $(SOURCE_FILES)) $(TARGETLIB) $(TARGET) $(POSTTARGET)
+build: $(DEPS) $(call objfiles, $(SOURCE_FILES)) $(TARGETLIB) $(TARGET) $(POSTTARGET)
 
 -include .d/deps.mk
