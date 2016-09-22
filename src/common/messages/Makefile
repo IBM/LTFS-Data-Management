@@ -1,7 +1,7 @@
 RELPATH = ../../..
 
 LIB_SRC_FILES := Message.cc
-CLEANUP_FILES :=
+CLEANUP_FILES := msgdefs.h
 BINARY :=
 POSTTARGET :=
 
