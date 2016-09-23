@@ -21,6 +21,22 @@ int main(int argc, char **argv)
 {
  	Server ltfsdmd;
 	LTFSDMErr err = LTFSDMErr::LTFSDM_OK;
+	bool detach = true;
+	int opt;
+
+	opterr = 0;
+
+	while (( opt = getopt(argc, argv, "b")) != -1 ) {
+		switch( opt ) {
+			case 'b':
+				detach = false;
+				break;
+			default:
+				std::cerr << messages[LTFSDMC0013E] << std::endl;
+				err = LTFSDMErr::LTFSDM_GENERAL_ERROR;
+				goto end;
+		}
+	}
 
 	try {
 		LTFSDM::init();
@@ -35,7 +51,8 @@ int main(int argc, char **argv)
 
 	try {
 		ltfsdmd.initialize();
-		ltfsdmd.daemonize();
+		if ( detach )
+			ltfsdmd.daemonize();
 		ltfsdmd.run();
 	}
 	catch ( LTFSDMErr initerr ) {

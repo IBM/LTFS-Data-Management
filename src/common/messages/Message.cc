@@ -19,13 +19,13 @@ Message::~Message()
 void Message::init()
 
 {
-	messagefile.exceptions(std::fstream::failbit | std::fstream::badbit);
+	messagefile.exceptions(std::ofstream::failbit | std::ofstream::badbit);
 
 	try {
 		messagefile.open(Const::LOG_FILE, std::fstream::out | std::fstream::app);
 	}
 	catch(...) {
-		std::cerr << LTFSDMX0003E;
+		std::cerr << messages[LTFSDMX0003E];
 		exit((int) LTFSDMErr::LTFSDM_GENERAL_ERROR);
 	}
 }
@@ -49,7 +49,7 @@ void Message::writeLog(std::string msgstr)
 	}
 	catch(...) {
 		mtx.unlock();
-		std::cerr << LTFSDMX0004E;
+		std::cerr << messages[LTFSDMX0004E];
 		exit((int) LTFSDMErr::LTFSDM_GENERAL_ERROR);
 	}
 }
