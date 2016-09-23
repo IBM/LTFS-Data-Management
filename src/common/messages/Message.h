@@ -56,8 +56,7 @@ private:
 			writeOut(fmter.str());
 		}
 		catch(...) {
-			std::cerr << messages[LTFSDMX0005E] << " (" << filename << ":" << linenr << ")" << std::endl;
-			exit((int) LTFSDMErr::LTFSDM_GENERAL_ERROR);
+			std::cerr << messages[LTFSDMX0005E] << " (" << msgname[msg] << ":" << filename << ":" << linenr << ")" << std::endl;
 		}
 	}
 	template<typename ... Args>
@@ -73,14 +72,15 @@ private:
 			writeLog(fmter.str());
 		}
 		catch(...) {
-			std::cerr << messages[LTFSDMX0005E] << " (" << filename << ":" << linenr << ")" << std::endl;
-			exit((int) LTFSDMErr::LTFSDM_GENERAL_ERROR);
+			std::cerr << messages[LTFSDMX0005E] << " (" << msgname[msg] << ":" << filename << ":" << linenr << ")" << std::endl;
 		}
 	}
 
 public:
-    Message();
+	Message() : logType(Message::STDOUT) {}
 	~Message();
+
+	void init();
 
 	void setLogType(Message::LogType type) {logType = type;}
 

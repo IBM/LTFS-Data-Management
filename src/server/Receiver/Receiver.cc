@@ -12,5 +12,6 @@ void Receiver::run(std::string info)
 	while (true) {
 		sleep(1);
 		TRACE(Trace::error, info);
+		MSG(LTFSDMS0003X);
 	}
 }

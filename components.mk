@@ -1,4 +1,5 @@
 COMMONDIRS := src/common/msgcompiler
+COMMONDIRS += src/common/ltfsdm
 COMMONDIRS += src/common/messages
 COMMONDIRS += src/common/tracing
 COMMONDIRS += src/common/comm

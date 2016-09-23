@@ -1,6 +1,7 @@
 #include <string>
 #include <sstream>
 
+#include "src/common/ltfsdm/ltfsdm.h"
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
 #include "src/common/errors/errors.h"
@@ -21,6 +22,14 @@ int main(int argc, char *argv[])
 	OpenLTFSCommand *openLTFSCommand = NULL;
 	std::string command;
 	LTFSDMErr rc = LTFSDMErr::LTFSDM_OK ;
+
+	try {
+		LTFSDM::init();
+	}
+	catch(...) {
+		rc = LTFSDMErr::LTFSDM_GENERAL_ERROR;
+		goto cleanup;
+	}
 
 	traceObject.setTrclevel(Trace::little);
 
