@@ -10,7 +10,7 @@
 
 void InfoRequestsCommand::printUsage()
 {
-	MSG_INFO(LTFSDMC0009I);
+	INFO(LTFSDMC0009I);
 }
 
 void InfoRequestsCommand::doCommand(int argc, char **argv)

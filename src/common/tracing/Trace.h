@@ -68,7 +68,7 @@ public:
 			}
 			catch(...) {
 				mtx.unlock();
-				MSG_OUT(LTFSDMX0002E);
+				MSG(LTFSDMX0002E);
 				exit((int) LTFSDMErr::LTFSDM_GENERAL_ERROR);
 			}
 		}

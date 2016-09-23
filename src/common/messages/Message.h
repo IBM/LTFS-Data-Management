@@ -18,6 +18,13 @@ class Message {
 private:
 	std::mutex mtx;
 	std::ofstream messagefile;
+public:
+	enum LogType {
+		STDOUT,
+		LOGFILE
+	};
+private:
+	std::atomic<Message::LogType> logType;
 
 	inline void recurse(boost::format *fmter) {}
 	template<typename T>
@@ -35,10 +42,6 @@ private:
 	void writeOut(std::string msgstr);
 	void writeLog(std::string msgstr);
 
-public:
-    Message();
-	~Message();
-
 	template<typename ... Args>
 	void msgOut(msg_id msg, char *filename, int linenr, Args ... args )
 
@@ -49,22 +52,6 @@ public:
 
 		try {
 			fmter % linenr;
-			recurse(&fmter, args ...);
-			writeOut(fmter.str());
-		}
-		catch(...) {
-			std::cerr << messages[LTFSDMX0005E] << " (" << filename << ":" << linenr << ")" << std::endl;
-			exit((int) LTFSDMErr::LTFSDM_GENERAL_ERROR);
-		}
-	}
-
-	template<typename ... Args>
-	void msgInfo(msg_id msg, char *filename, int linenr, Args ... args )
-	{
-		boost::format fmter(messages[msg]);
-		fmter.exceptions( boost::io::all_error_bits );
-
-		try {
 			recurse(&fmter, args ...);
 			writeOut(fmter.str());
 		}
@@ -90,12 +77,42 @@ public:
 			exit((int) LTFSDMErr::LTFSDM_GENERAL_ERROR);
 		}
 	}
+
+public:
+    Message();
+	~Message();
+
+	void setLogType(Message::LogType type) {logType = type;}
+
+	template<typename ... Args>
+	void message(msg_id msg, char *filename, int linenr,  Args ... args )
+	{
+		if ( logType == Message::STDOUT )
+			msgOut( msg, filename, linenr, args ...);
+		else
+			msgLog( msg, filename, linenr, args ...);
+	}
+
+	template<typename ... Args>
+	void info(msg_id msg, char *filename, int linenr, Args ... args )
+	{
+		boost::format fmter(messages[msg]);
+		fmter.exceptions( boost::io::all_error_bits );
+
+		try {
+			recurse(&fmter, args ...);
+			writeOut(fmter.str());
+		}
+		catch(...) {
+			std::cerr << messages[LTFSDMX0005E] << " (" << filename << ":" << linenr << ")" << std::endl;
+			exit((int) LTFSDMErr::LTFSDM_GENERAL_ERROR);
+		}
+	}
 };
 
 extern Message messageObject;
 
-#define MSG_OUT(msg, args ...) messageObject.msgOut(msg, (char *) __FILE__, __LINE__, ##args)
-#define MSG_INFO(msg, args ...) messageObject.msgInfo(msg, (char *) __FILE__, __LINE__, ##args)
-#define MSG_LOG(msg, args ...) messageObject.msgLog(msg, (char *) __FILE__, __LINE__, ##args)
+#define MSG(msg, args ...) messageObject.message(msg, (char *) __FILE__, __LINE__, ##args)
+#define INFO(msg, args ...) messageObject.info(msg, (char *) __FILE__, __LINE__, ##args)
 
 #endif /* _MESSAGE_H */

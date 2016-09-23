@@ -24,7 +24,7 @@
 void StartCommand::printUsage()
 
 {
-	MSG_INFO(LTFSDMC0006I);
+	INFO(LTFSDMC0006I);
 }
 
 void StartCommand::determineServerPath()
@@ -38,13 +38,13 @@ void StartCommand::determineServerPath()
 	char *exelnk = (char*) "/proc/self/exe";
 
 	if ( readlink(exelnk, exepath, PATH_MAX) == -1 ) {
-		MSG_OUT(LTFSDMC0021E);
+		MSG(LTFSDMC0021E);
 		throw LTFSDMErr::LTFSDM_GENERAL_ERROR;
 	}
 #elif __APPLE__
 	uint32_t size = PATH_MAX;
 	if ( _NSGetExecutablePath(exepath, &size) != 0 ) {
-		MSG_OUT(LTFSDMC0021E);
+		MSG(LTFSDMC0021E);
 		TRACE(Trace::error, errno);
 		throw LTFSDMErr::LTFSDM_GENERAL_ERROR;
 	}
@@ -66,7 +66,7 @@ void StartCommand::startServer()
 	int ret;
 
 	if ( stat(serverPath.str().c_str(), &statbuf ) == -1 ) {
-		MSG_OUT(LTFSDMC0021E);
+		MSG(LTFSDMC0021E);
 		TRACE(Trace::error, serverPath.str());
 		TRACE(Trace::error, errno);
 		throw LTFSDMErr::LTFSDM_GENERAL_ERROR;
@@ -75,20 +75,20 @@ void StartCommand::startServer()
 	ltfsdmd = popen(serverPath.str().c_str(), "r");
 
 	if( !ltfsdmd ) {
-		MSG_OUT(LTFSDMC0022E);
+		MSG(LTFSDMC0022E);
 		TRACE(Trace::error, errno);
 		throw LTFSDMErr::LTFSDM_GENERAL_ERROR;
 	}
 
     while( fgets(line, sizeof(line), ltfsdmd) ) {
-		MSG_INFO(LTFSDMC0024I, line);
+		INFO(LTFSDMC0024I, line);
     }
 
 
 	ret = pclose(ltfsdmd);
 
     if(  !WIFEXITED(ret) || WEXITSTATUS(ret) ) {
-		MSG_OUT(LTFSDMC0023E, WEXITSTATUS(ret));
+		MSG(LTFSDMC0023E, WEXITSTATUS(ret));
 		TRACE(Trace::error, ret);
 		TRACE(Trace::error, WIFEXITED(ret));
 		TRACE(Trace::error, WEXITSTATUS(ret));

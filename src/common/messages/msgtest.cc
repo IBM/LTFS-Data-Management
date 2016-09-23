@@ -18,10 +18,10 @@ int main(int argc, char **argv)
 
 	cout.rdbuf(buffer.rdbuf());
 
-	MSG_OUT(LTFSDMS0001X, 4);
-	MSG_OUT(LTFSDMC0001X, "text", 6);
-	MSG_OUT(LTFSDMS0002X);
-	MSG_INFO(LTFSDMC0002X);
+	MSG(LTFSDMS0001X, 4);
+	MSG(LTFSDMC0001X, "text", 6);
+	MSG(LTFSDMS0002X);
+	INFO(LTFSDMC0002X);
 
 	messageOut = buffer.str();
 

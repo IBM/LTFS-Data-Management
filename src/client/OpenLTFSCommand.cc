@@ -42,11 +42,11 @@ void OpenLTFSCommand::processOptions(int argc, char **argv)
 				directoryName = std::string(optarg);
 				break;
 			case ':':
-				MSG_INFO(LTFSDMC0014E);
+				INFO(LTFSDMC0014E);
 				printUsage();
 				throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
 			default:
-				MSG_INFO(LTFSDMC0013E);
+				INFO(LTFSDMC0013E);
 				printUsage();
 				throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
 		}

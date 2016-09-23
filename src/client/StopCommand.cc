@@ -7,7 +7,7 @@
 
 void StopCommand::printUsage()
 {
-	MSG_INFO(LTFSDMC0007I);
+	INFO(LTFSDMC0007I);
 }
 
 void StopCommand::doCommand(int argc, char **argv)

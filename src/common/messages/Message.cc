@@ -9,7 +9,7 @@
 
 Message messageObject;
 
-Message::Message()
+Message::Message() : logType(Message::STDOUT)
 
 {
 	messagefile.exceptions(std::ios::failbit | std::ios::badbit);

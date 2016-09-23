@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
 	}
 	else if ( InfoCommand().compare(command) ) {
 		if ( argc < 3 ) {
-			MSG_INFO(LTFSDMC0011E);
+			INFO(LTFSDMC0011E);
 			InfoCommand().printUsage();
 			rc =  LTFSDMErr::LTFSDM_GENERAL_ERROR;
 			goto cleanup;
@@ -69,14 +69,14 @@ int main(int argc, char *argv[])
 			openLTFSCommand = new InfoFilesCommand();
 		}
 		else {
-			MSG_OUT(LTFSDMC0012E, command.c_str());
+			MSG(LTFSDMC0012E, command.c_str());
 			openLTFSCommand = new HelpCommand();
 			rc = LTFSDMErr::LTFSDM_GENERAL_ERROR;
 			goto cleanup;
 		}
 	}
 	else {
-		MSG_OUT(LTFSDMC0005E, command.c_str());
+		MSG(LTFSDMC0005E, command.c_str());
 		openLTFSCommand = new HelpCommand();
 		rc = LTFSDMErr::LTFSDM_GENERAL_ERROR;
 		goto cleanup;
