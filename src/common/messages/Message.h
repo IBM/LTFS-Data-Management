@@ -2,6 +2,7 @@
 #define _MESSAGE_H
 
 #include <string.h>
+#include <atomic>
 #include <string>
 #include <sstream>
 #include <fstream>
