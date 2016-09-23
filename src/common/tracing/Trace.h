@@ -30,8 +30,10 @@ public:
 private:
 	std::atomic<Trace::traceLevel> trclevel;
 public:
-	Trace();
+	Trace() : trclevel(error) {}
 	~Trace();
+
+	void init();
 
 	void setTrclevel(traceLevel level);
 	int getTrclevel();

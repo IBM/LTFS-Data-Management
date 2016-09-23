@@ -5,6 +5,7 @@
 
 #include <string>
 
+#include "src/common/ltfsdm/ltfsdm.h"
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
 #include "src/common/errors/errors.h"
@@ -20,6 +21,15 @@ int main(int argc, char **argv)
 {
  	Server ltfsdmd;
 	LTFSDMErr err = LTFSDMErr::LTFSDM_OK;
+
+	try {
+		LTFSDM::init();
+	}
+	catch(...) {
+		err = LTFSDMErr::LTFSDM_GENERAL_ERROR;
+		goto end;
+	}
+
 
 	TRACE(Trace::little, getpid());
 

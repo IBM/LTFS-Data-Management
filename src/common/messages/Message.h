@@ -79,8 +79,10 @@ private:
 	}
 
 public:
-    Message();
+	Message() : logType(Message::STDOUT) {}
 	~Message();
+
+	void init();
 
 	void setLogType(Message::LogType type) {logType = type;}
 

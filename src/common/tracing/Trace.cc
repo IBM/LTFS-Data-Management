@@ -9,6 +9,13 @@
 
 Trace traceObject;
 
+Trace::~Trace()
+
+{
+	if ( tracefile.is_open() )
+		tracefile.close();
+}
+
 void Trace::setTrclevel(traceLevel level)
 
 {
@@ -24,7 +31,7 @@ int Trace::getTrclevel()
 	return trclevel;
 }
 
-Trace::Trace() : trclevel(error)
+void Trace::init()
 
 {
 	tracefile.exceptions(std::ios::failbit | std::ios::badbit);
@@ -36,10 +43,4 @@ Trace::Trace() : trclevel(error)
 		MSG(LTFSDMX0001E);
 		exit((int) LTFSDMErr::LTFSDM_GENERAL_ERROR);
 	}
-}
-
-Trace::~Trace()
-
-{
-	tracefile.close();
 }

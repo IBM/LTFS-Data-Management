@@ -9,10 +9,17 @@
 
 Message messageObject;
 
-Message::Message() : logType(Message::STDOUT)
+Message::~Message()
 
 {
-	messagefile.exceptions(std::ios::failbit | std::ios::badbit);
+	if (messagefile.is_open())
+		messagefile.close();
+}
+
+void Message::init()
+
+{
+	messagefile.exceptions(std::fstream::failbit | std::fstream::badbit);
 
 	try {
 		messagefile.open(Const::LOG_FILE, std::fstream::out | std::fstream::app);
@@ -21,12 +28,6 @@ Message::Message() : logType(Message::STDOUT)
 		std::cerr << LTFSDMX0003E;
 		exit((int) LTFSDMErr::LTFSDM_GENERAL_ERROR);
 	}
-}
-
-Message::~Message()
-
-{
-	messagefile.close();
 }
 
 void Message::writeOut(std::string msgstr)
