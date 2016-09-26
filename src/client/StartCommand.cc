@@ -18,6 +18,9 @@
 #include "src/common/errors/errors.h"
 #include "src/common/const/Const.h"
 
+#include "src/common/comm/ltfsdm.pb.h"
+#include "src/common/comm/LTFSDmComm.h"
+
 #include "OpenLTFSCommand.h"
 #include "StartCommand.h"
 

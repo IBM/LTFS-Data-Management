@@ -2,6 +2,9 @@
 #include "src/common/messages/Message.h"
 #include "src/common/errors/errors.h"
 
+#include "src/common/comm/ltfsdm.pb.h"
+#include "src/common/comm/LTFSDmComm.h"
+
 #include "OpenLTFSCommand.h"
 #include "StopCommand.h"
 

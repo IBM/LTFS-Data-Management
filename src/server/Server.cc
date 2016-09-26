@@ -61,12 +61,13 @@ void Server::writeKey()
 		keyFile.open(Const::KEY_FILE, std::fstream::out | std::fstream::trunc);
 	}
 	catch(...) {
-		MSG(LTFSDMS0003I);
+		MSG(LTFSDMS0003E);
 		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
 	}
 
 	srandom(time(NULL));
-	keyFile << random() << std::endl;
+	key = random();
+	keyFile << key << std::endl;
 
 	keyFile.close();
 }
@@ -124,7 +125,7 @@ void Server::run()
 	SubServer subs;
 
 	Receiver *recv = new Receiver("Receiver");
-	Responder *resp = new Responder("Responder");
+	Responder *resp = new Responder(key);
 
 	subs.add(recv);
 	subs.add(resp);

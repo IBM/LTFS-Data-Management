@@ -7,6 +7,8 @@
 #include <string>
 #include <sstream>
 
+#include "src/common/const/Const.h"
+
 #include "ltfsdm.pb.h"
 #include "LTFSDmComm.h"
 
@@ -23,7 +25,7 @@ int main(int argc, char *argv[]) {
 	/* COMMAND WILL BE MIGRATION */
 	LTFSDmProtocol::LTFSDmMigRequest *migreq = command.mutable_migrequest();
 	migreq->set_key(1234);
-	migreq->set_token(4321);
+	migreq->set_reqnumber(4321);
 	migreq->set_pid(getpid());
 	migreq->set_state(LTFSDmProtocol::LTFSDmMigRequest::MIGRATED);
 
@@ -56,7 +58,7 @@ int main(int argc, char *argv[]) {
 	const LTFSDmProtocol::LTFSDmMigRequestResp migreqresp = command.migrequestresp();
 
 	if( migreqresp.success() == true ) {
-		printf("sending success, token: %llu\n", (unsigned long long) migreqresp.token());
+		printf("sending success, reqNumber: %llu\n", (unsigned long long) migreqresp.reqnumber());
 		if ( getpid() != migreqresp.pid() )
 			printf("WRONG RESPONSE -- WRONG RESPONSE -- WRONG RESPONSE -- WRONG RESPONSE\n");
 	}

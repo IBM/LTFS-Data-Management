@@ -1,9 +1,13 @@
 #include <unistd.h>
 #include <string>
+#include <fstream>
 
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
 #include "src/common/errors/errors.h"
+
+#include "src/common/comm/ltfsdm.pb.h"
+#include "src/common/comm/LTFSDmComm.h"
 
 #include "OpenLTFSCommand.h"
 
@@ -51,4 +55,74 @@ void OpenLTFSCommand::processOptions(int argc, char **argv)
 				throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
 		}
 	}
+}
+
+void OpenLTFSCommand::getRequestNumber()
+
+{
+	/* COMMAND WILL BE REQNUMBER */
+	LTFSDmProtocol::LTFSDmReqNumber *reqnum = commCommand.mutable_reqnum();
+	reqnum->set_key(key);
+
+	try {
+		commCommand.send();
+	}
+	catch(...) {
+		MSG(LTFSDMS0027E);
+		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+	}
+
+	try {
+		commCommand.recv();
+	}
+	catch(...) {
+		MSG(LTFSDMS0027E);
+		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+	}
+
+	const LTFSDmProtocol::LTFSDmReqNumberResp reqnumresp = commCommand.reqnumresp();
+
+	if( reqnumresp.success() == true ) {
+		requestNumber = reqnumresp.reqnumber();
+		TRACE(Trace::little, requestNumber);
+	}
+	else {
+		MSG(LTFSDMS0029E);
+		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+	}
+}
+
+void OpenLTFSCommand::connect()
+
+{
+	std::ifstream keyFile;
+	std::string line;
+
+    keyFile.exceptions(std::ofstream::failbit | std::ofstream::badbit);
+
+    try {
+        keyFile.open(Const::KEY_FILE);
+		std::getline(keyFile, line);
+		key = std::stol(line);
+    }
+    catch(...) {
+		TRACE(Trace::error, key);
+		MSG(LTFSDMS0025E);
+		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+    }
+
+	keyFile.close();
+
+	try {
+		commCommand.connect();
+	}
+	catch(...) {
+		MSG(LTFSDMS0026E);
+		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+	}
+
+	if ( requestNumber == Const::UNSET )
+		getRequestNumber();
+
+	TRACE(Trace::little, requestNumber);
 }

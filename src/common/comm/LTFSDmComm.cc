@@ -28,6 +28,8 @@ void LTFSDmCommClient::connect()
 
 	if (::connect(socRefFd, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
 		TRACE(Trace::error, errno);
+		close(socRefFd);
+		socRefFd = Const::UNSET;
 		throw(LTFSDMErr::LTFSDM_COMM_ERROR);
 	}
 
@@ -52,11 +54,15 @@ void LTFSDmCommServer::listen()
 
 	if (bind(socRefFd, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
 		TRACE(Trace::error, errno);
+		close(socRefFd);
+		socRefFd = Const::UNSET;
 		throw(LTFSDMErr::LTFSDM_COMM_ERROR);
 	}
 
 	if (::listen(socRefFd, 5) == -1) {
 		TRACE(Trace::error, errno);
+		close(socRefFd);
+		socRefFd = Const::UNSET;
 		throw(LTFSDMErr::LTFSDM_COMM_ERROR);
 	}
 }
@@ -66,6 +72,8 @@ void LTFSDmCommServer::accept()
 {
 	if ( (socAccFd = ::accept(socRefFd, NULL, NULL)) == -1) {
 		TRACE(Trace::error, errno);
+		close(socRefFd);
+		socRefFd = Const::UNSET;
 		throw(LTFSDMErr::LTFSDM_COMM_ERROR);
 	}
 }

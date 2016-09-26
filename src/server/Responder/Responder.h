@@ -1,13 +1,13 @@
 #ifndef _RESPONDER_H
 #define _RESPONDER_H
 
-class Responder : public ServerComponent<std::string>
+class Responder : public ServerComponent<long>
 
 {
 public:
-	Responder(std::string _info)  { info = _info; }
+	Responder(long _info)  { info = _info; }
 	~Responder() {};
-	void run(std::string info);
+	void run(long key);
 };
 
 #endif /* _RESPONDER_H */

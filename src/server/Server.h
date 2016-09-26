@@ -1,6 +1,7 @@
 class Server {
 private:
 	SubServer subServer;
+	long key;
 	void lockServer();
 	void writeKey();
 public:

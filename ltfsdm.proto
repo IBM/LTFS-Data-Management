@@ -2,9 +2,18 @@ syntax = "proto2";
 
 package LTFSDmProtocol;
 
+message LTFSDmReqNumber {
+	required uint64 key = 1;
+}
+
+message LTFSDmReqNumberResp {
+	required bool success = 1;
+	required int64 reqNumber = 2;
+}
+
 message LTFSDmMigRequest {
 	required uint64 key = 1;
-	required uint64 token = 2;
+	required uint64 reqNumber = 2;
 	required uint64 pid = 3;
 
 	enum State {
@@ -22,13 +31,13 @@ message LTFSDmMigRequest {
 
 message LTFSDmMigRequestResp {
 	required bool success = 1;
-	required uint64 token = 2;
+	required uint64 reqNumber = 2;
 	required int64 pid = 3;
 }
 
 message LTFSDmSelRecRequest {
 	required uint64 key = 1;
-	required uint64 token = 2;
+	required uint64 reqNumber = 2;
 	enum State {
 		PREMIGRATED = 0;
 		MIGRATED = 1;
@@ -44,7 +53,7 @@ message LTFSDmSelRecRequest {
 
 message LTFSDmTransRecRequest {
 	required uint64 key = 1;
-	required uint64 token = 2;
+	required uint64 reqNumber = 2;
 	enum State {
 		PREMIGRATED = 0;
 		MIGRATED = 1;
@@ -58,9 +67,11 @@ message LTFSDmTransRecRequest {
 
 message Command {
 	oneof commands {
-		LTFSDmMigRequest migrequest = 1;
-		LTFSDmMigRequestResp migrequestresp = 2;
-		LTFSDmSelRecRequest selrecrequest = 3;
-		LTFSDmTransRecRequest transrecrequest = 4;
+		LTFSDmReqNumber reqnum = 1;
+		LTFSDmReqNumberResp reqnumresp = 2;
+		LTFSDmMigRequest migrequest = 3;
+		LTFSDmMigRequestResp migrequestresp = 4;
+		LTFSDmSelRecRequest selrecrequest = 5;
+		LTFSDmTransRecRequest transrecrequest = 6;
 	}
 }

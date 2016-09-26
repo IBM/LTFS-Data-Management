@@ -4,6 +4,10 @@
 #include <sys/un.h>
 #include <stdlib.h>
 
+#include <string>
+
+#include "src/common/const/Const.h"
+
 #include "ltfsdm.pb.h"
 #include "LTFSDmComm.h"
 
@@ -44,7 +48,7 @@ int main(int argc, char *argv[]) {
 			printf("Migration Request\n");
 			const LTFSDmProtocol::LTFSDmMigRequest migreq = command.migrequest();
 			printf("key: %llu\n", (unsigned long long) migreq.key());
-			printf("token: %llu\n", (unsigned long long) migreq.token());
+			printf("reqNumber: %llu\n", (unsigned long long) migreq.reqnumber());
 			pid = migreq.pid();
 			printf("client pid: %lu\n", pid);
 			switch (migreq.state()) {
@@ -73,7 +77,7 @@ int main(int argc, char *argv[]) {
 			LTFSDmProtocol::LTFSDmMigRequestResp *migreqresp = command.mutable_migrequestresp();
 
 			migreqresp->set_success(true);
-			migreqresp->set_token(time(NULL));
+			migreqresp->set_reqnumber(time(NULL));
 			migreqresp->set_pid(pid);
 
 			try {
@@ -90,7 +94,7 @@ int main(int argc, char *argv[]) {
 			printf("Selective Recall Request\n");
 			const LTFSDmProtocol::LTFSDmSelRecRequest selrecreq = command.selrecrequest();
 			printf("key: %llu\n", (unsigned long long) selrecreq.key());
-			printf("key: %llu\n", (unsigned long long) selrecreq.token());
+			printf("key: %llu\n", (unsigned long long) selrecreq.reqnumber());
 			switch (selrecreq.state()) {
 				case LTFSDmProtocol::LTFSDmSelRecRequest::MIGRATED:
 					printf("files to be migrated\n");
@@ -113,7 +117,7 @@ int main(int argc, char *argv[]) {
 			printf("Transparent Recall Request\n");
 			const LTFSDmProtocol::LTFSDmTransRecRequest transrecreq = command.transrecrequest();
 			printf("key: %llu\n", (unsigned long long) transrecreq.key());
-			printf("key: %llu\n", (unsigned long long) transrecreq.token());
+			printf("key: %llu\n", (unsigned long long) transrecreq.reqnumber());
 			switch (transrecreq.state()) {
 				case LTFSDmProtocol::LTFSDmTransRecRequest::MIGRATED:
 					printf("files to be migrated\n");
