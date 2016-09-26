@@ -10,6 +10,7 @@ namespace Const {
 	const std::string TRACE_FILE = LTFSDM_TMP_DIR + DELIM + std::string("OpenLTFS.trc");
 	const std::string LOG_FILE = LTFSDM_TMP_DIR + DELIM + std::string("OpenLTFS.log");
 	const std::string SOCKET_FILE = LTFSDM_TMP_DIR + DELIM + std::string("OpenLTFS.soc");
+	const std::string KEY_FILE = LTFSDM_TMP_DIR + DELIM + std::string("OpenLTFS.key");
 }
 
 #endif /* _CONST_H */

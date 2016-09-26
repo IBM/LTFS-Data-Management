@@ -1,6 +1,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <fcntl.h>
+#include <stdlib.h>
 #include <sys/stat.h>
 #ifdef __linux__
 #include <sys/file.h>
@@ -8,6 +9,7 @@
 #include <errno.h>
 
 #include <string>
+#include <fstream>
 #include <thread>
 
 #include "src/common/util/util.h"
@@ -48,10 +50,33 @@ void Server::lockServer()
 	}
 }
 
+void Server::writeKey()
+
+{
+	std::ofstream keyFile;
+
+	keyFile.exceptions(std::ofstream::failbit | std::ofstream::badbit);
+
+	try {
+		keyFile.open(Const::KEY_FILE, std::fstream::out | std::fstream::trunc);
+	}
+	catch(...) {
+		MSG(LTFSDMS0003I);
+		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+	}
+
+	srandom(time(NULL));
+	keyFile << random() << std::endl;
+
+	keyFile.close();
+}
+
+
 void Server::initialize()
 
 {
 	lockServer();
+	writeKey();
 }
 
 void Server::daemonize()

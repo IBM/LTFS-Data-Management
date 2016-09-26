@@ -2,6 +2,7 @@ class Server {
 private:
 	SubServer subServer;
 	void lockServer();
+	void writeKey();
 public:
 	Server() {};
 	void initialize();
