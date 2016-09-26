@@ -102,8 +102,9 @@ void LTFSDmComm::send(int fd)
 		free(buffer);
 		TRACE(Trace::error, rsize);
 		TRACE(Trace::error, MessageSize);
+		TRACE(Trace::error, errno);
 		TRACE(Trace::error, sizeof(long));
-		printf("error writing message to socketfd\n");
+		MSG(LTFSDMX0008E);
 		throw(LTFSDMErr::LTFSDM_COMM_ERROR);
 	}
 

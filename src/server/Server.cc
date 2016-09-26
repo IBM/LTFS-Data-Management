@@ -124,8 +124,8 @@ void Server::run()
 {
 	SubServer subs;
 
-	Receiver *recv = new Receiver("Receiver");
-	Responder *resp = new Responder(key);
+	Receiver *recv = new Receiver(ReceiverData("Receiver", key));
+	Responder *resp = new Responder(ResponderData("Responder",key));
 
 	subs.add(recv);
 	subs.add(resp);

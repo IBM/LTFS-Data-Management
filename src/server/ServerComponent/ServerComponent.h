@@ -8,9 +8,9 @@ class ServerComponent
 
 {
 protected:
-	TD info;
+	TD data;
 public:
-	ServerComponent() {};
+	ServerComponent(TD _data) : data(_data) {}
 	~ServerComponent() {};
 
 	template <typename TC>
@@ -19,8 +19,8 @@ public:
 		return new std::thread(&TC::run, s, s->getInfo());
 	}
 
-	TD getInfo() { return info; }
-	virtual void run(TD _info) {};
+	TD getInfo() { return data; }
+	virtual void run(TD _data) {};
 };
 
 #endif /* _SERVERCOMPONENT_H */

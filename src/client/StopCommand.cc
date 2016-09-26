@@ -1,5 +1,6 @@
 #include <string>
 #include "src/common/messages/Message.h"
+#include "src/common/tracing/Trace.h"
 #include "src/common/errors/errors.h"
 
 #include "src/common/comm/ltfsdm.pb.h"
@@ -15,6 +16,10 @@ void StopCommand::printUsage()
 
 void StopCommand::doCommand(int argc, char **argv)
 {
+	connect();
+
+	TRACE(Trace::error, requestNumber);
+
 	if ( argc > 1 ) {
 		printUsage();
 		throw LTFSDMErr::LTFSDM_GENERAL_ERROR;

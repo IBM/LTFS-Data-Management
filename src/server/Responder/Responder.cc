@@ -6,11 +6,11 @@
 #include "src/server/ServerComponent/ServerComponent.h"
 #include "Responder.h"
 
-void Responder::run(long key)
+void Responder::run(ResponderData data)
 
 {
 	while (true) {
 		sleep(1);
-		TRACE(Trace::error, key);
+		TRACE(Trace::error, data.label);
 	}
 }
