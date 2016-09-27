@@ -1,6 +1,8 @@
 #ifndef _RECEIVER_H
 #define _RECEIVER_H
 
+extern std::atomic<long> reqNumber;
+
 struct ReceiverData {
 	ReceiverData(std::string _label, long _key) : label(_label), key(_key) {}
 	std::string label;

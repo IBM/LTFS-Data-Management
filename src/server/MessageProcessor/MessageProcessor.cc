@@ -11,12 +11,13 @@
 #include "src/common/comm/LTFSDmComm.h"
 
 #include "src/server/ServerComponent/ServerComponent.h"
+#include "src/server/Receiver/Receiver.h"
 #include "MessageProcessor.h"
 
-void MessageProcessor::migrationMessage(long key, LTFSDmCommServer command)
+void MessageProcessor::migrationMessage(long key, LTFSDmCommServer *command)
 
 {
-   	const LTFSDmProtocol::LTFSDmMigRequest migreq = command.migrequest();
+   	const LTFSDmProtocol::LTFSDmMigRequest migreq = command->migrequest();
 	unsigned long pid;
 	long keySent = 	migreq.key();
 
@@ -48,14 +49,14 @@ void MessageProcessor::migrationMessage(long key, LTFSDmCommServer command)
 
 	// RESPONSE
 
-	LTFSDmProtocol::LTFSDmMigRequestResp *migreqresp = command.mutable_migrequestresp();
+	LTFSDmProtocol::LTFSDmMigRequestResp *migreqresp = command->mutable_migrequestresp();
 
 	migreqresp->set_success(true);
 	migreqresp->set_reqnumber(time(NULL));
 	migreqresp->set_pid(pid);
 
 	try {
-		command.send();
+		command->send();
 	}
 	catch(...) {
 		MSG(LTFSDMS0007E);
@@ -63,10 +64,10 @@ void MessageProcessor::migrationMessage(long key, LTFSDmCommServer command)
 	}
 }
 
-void  MessageProcessor::selRecallMessage(long key, LTFSDmCommServer command)
+void  MessageProcessor::selRecallMessage(long key, LTFSDmCommServer *command)
 
 {
-	const LTFSDmProtocol::LTFSDmSelRecRequest selrecreq = command.selrecrequest();
+	const LTFSDmProtocol::LTFSDmSelRecRequest selrecreq = command->selrecrequest();
 	long keySent = 	selrecreq.key();
 
 	TRACE(Trace::little, keySent);
@@ -94,12 +95,10 @@ void  MessageProcessor::selRecallMessage(long key, LTFSDmCommServer command)
 	}
 }
 
-std::atomic<long> reqNumber(0);
-
-void MessageProcessor::requestNumber(long key, LTFSDmCommServer command)
+void MessageProcessor::requestNumber(long key, LTFSDmCommServer *command)
 
 {
-   	const LTFSDmProtocol::LTFSDmReqNumber reqnum = command.reqnum();
+   	const LTFSDmProtocol::LTFSDmReqNumber reqnum = command->reqnum();
 	long keySent = reqnum.key();
 
 	TRACE(Trace::little, keySent);
@@ -109,15 +108,16 @@ void MessageProcessor::requestNumber(long key, LTFSDmCommServer command)
 		return;
 	}
 
-	LTFSDmProtocol::LTFSDmReqNumberResp *reqnumresp = command.mutable_reqnumresp();
+	LTFSDmProtocol::LTFSDmReqNumberResp *reqnumresp = command->mutable_reqnumresp();
 
 	reqnumresp->set_success(true);
-	reqnumresp->set_reqnumber(++reqNumber);
+	reqNumber++;
+	reqnumresp->set_reqnumber(reqNumber);
 
 	TRACE(Trace::little, (long) reqNumber);
 
 	try {
-		command.send();
+		command->send();
 	}
 	catch(...) {
 		MSG(LTFSDMS0007E);
@@ -130,20 +130,22 @@ void MessageProcessor::requestNumber(long key, LTFSDmCommServer command)
 void MessageProcessor::run(MessageProcessorData data)
 
 {
-	LTFSDmCommServer command = data.command;
+	LTFSDmCommServer *command = data.command;
 
 	// MIGRATION
-	if ( command.has_migrequest() ) {
-		migrationMessage(data.key, data.command);
+	if ( command->has_migrequest() ) {
+		migrationMessage(data.key, command);
 	}
 	// SELECTIVE RECALL
-	else if ( command.has_selrecrequest() ) {
-		selRecallMessage(data.key, data.command);
+	else if ( command->has_selrecrequest() ) {
+		selRecallMessage(data.key, command);
 	}
-	else if ( command.has_reqnum() ) {
-		requestNumber(data.key, data.command);
+	else if ( command->has_reqnum() ) {
+		requestNumber(data.key, command);
 	}
 	else {
 			TRACE(Trace::error, "unkown command\n");
 	}
+
+	command->close();
 }

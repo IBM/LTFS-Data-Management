@@ -16,11 +16,15 @@
 
 #include "Receiver.h"
 
+std::atomic<long> reqNumber;
+
 void Receiver::run(ReceiverData data)
 
 {
 	LTFSDmCommServer command;
 	SubServer subs;
+
+	reqNumber = 0;
 
 	try {
 		command.listen();
@@ -39,7 +43,6 @@ void Receiver::run(ReceiverData data)
 			throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
 		}
 
-		// command.ParseFromFileDescriptor(cl);
 		try {
 			command.recv();
 		}
@@ -48,20 +51,10 @@ void Receiver::run(ReceiverData data)
 			throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
 		}
 
-		MessageProcessor *mproc = new MessageProcessor(MessageProcessorData("MessageProcessor", data.key, command));
+		MessageProcessor *mproc = new MessageProcessor(MessageProcessorData("MessageProcessor", data.key, &command));
 
 		subs.add(mproc);
-
-		sleep(1);
 	}
 
 	subs.wait();
-	/*
-	  while (true) {
-	  sleep(1);
-	  TRACE(Trace::error, data.label);
-	  TRACE(Trace::error, data.key);
-	  MSG(LTFSDMS0003X);
-	  }
-	*/
 }

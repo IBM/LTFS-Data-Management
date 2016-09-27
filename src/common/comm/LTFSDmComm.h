@@ -11,7 +11,7 @@ public:
 
 class LTFSDmCommClient : public LTFSDmComm {
 private:
-	int socRefFd;
+	std::atomic<int> socRefFd;
 public:
 	LTFSDmCommClient() : socRefFd(Const::UNSET) {}
 	~LTFSDmCommClient() { if ( socRefFd != Const::UNSET ) close(socRefFd); }
@@ -22,13 +22,14 @@ public:
 
 class LTFSDmCommServer : public LTFSDmComm {
 private:
-	int socRefFd;
-	int socAccFd;
+	std::atomic<int> socRefFd;
+	std::atomic<int> socAccFd;
 public:
 	LTFSDmCommServer() : socRefFd(Const::UNSET), socAccFd(Const::UNSET) {}
-	~LTFSDmCommServer() { if ( socAccFd != Const::UNSET ) close(socAccFd); if ( socRefFd != Const::UNSET ) close(socRefFd); }
+	~LTFSDmCommServer() { if ( socAccFd != Const::UNSET ) { ::close(socAccFd); socAccFd = Const::UNSET; }; if ( socRefFd != Const::UNSET ) { ::close(socRefFd); socRefFd = Const::UNSET;} }
 	void listen();
 	void accept();
+	void close() {::close(socAccFd); socAccFd = Const::UNSET;}
 	void send() { return LTFSDmComm::send(socAccFd); }
 	void recv() { return LTFSDmComm::recv(socAccFd); }
 };
