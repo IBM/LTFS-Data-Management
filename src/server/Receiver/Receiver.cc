@@ -1,4 +1,5 @@
 #include <string>
+#include <condition_variable>
 #include <thread>
 
 #include "src/common/messages/Message.h"

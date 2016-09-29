@@ -6,10 +6,12 @@
 #ifdef __linux__
 #include <sys/file.h>
 #endif
+#include <limits.h>
 #include <errno.h>
 
 #include <string>
 #include <fstream>
+#include <condition_variable>
 #include <thread>
 
 #include "src/common/util/util.h"

@@ -1,9 +1,11 @@
 #include <unistd.h>
 #include <signal.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <errno.h>
 
 #include <string>
+#include <condition_variable>
 #include <thread>
 
 #include "src/common/util/util.h"
