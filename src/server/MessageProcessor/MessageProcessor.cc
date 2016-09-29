@@ -129,6 +129,8 @@ void MessageProcessor::requestNumber(long key, LTFSDmCommServer *command)
 void MessageProcessor::run(std::string label, long key, LTFSDmCommServer *command)
 
 {
+	TRACE(Trace::much, __PRETTY_FUNCTION__);
+
 	// MIGRATION
 	if ( command->has_migrequest() ) {
 		migrationMessage(key, command);

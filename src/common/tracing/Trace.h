@@ -4,6 +4,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <string.h>
+#include <libgen.h>
 #include <sys/types.h>
 #include <sys/syscall.h>
 #include <string>
@@ -62,8 +63,8 @@ public:
 #else
 #error "unsupported platform"
 #endif
-				tracefile << std::setfill('-') << std::setw(20) << filename;
-				tracefile << "(" << linenr << "):";
+				tracefile << std::setfill('-') << std::setw(20) << basename((char *) filename);
+				tracefile << "(" << std::setfill('0') << std::setw(4) << linenr << "):";
 				tracefile << varname << "(" << s << ")" << std::endl;
 				tracefile.flush();
 				mtx.unlock();

@@ -24,6 +24,8 @@ void Receiver::run(std::string label, long key)
 	LTFSDmCommServer command;
 	SubServer subs(40);
 
+	TRACE(Trace::much, __PRETTY_FUNCTION__);
+
 	reqNumber = 0;
 
 	try {
