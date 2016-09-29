@@ -13,7 +13,7 @@ private:
 	void waitThread(std::thread *thrd, std::thread *thrdprev);
 public:
 	SubServer() : count(0), maxThreads(INT_MAX), thrdprev(nullptr) {}
-	SubServer(int _maxThreads) : count(0), maxThreads(_maxThreads) {}
+	SubServer(int _maxThreads) : count(0), maxThreads(_maxThreads), thrdprev(nullptr) {}
 
 	void waitAllRemaining();
 
