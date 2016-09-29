@@ -1,13 +1,15 @@
 #ifndef _RECEIVER_H
 #define _RECEIVER_H
 
-class Receiver : public ServerComponent<std::string>
+extern std::atomic<long> reqNumber;
+
+class Receiver
 
 {
 public:
-	Receiver(std::string _info) { info = _info; }
+	Receiver() {}
 	~Receiver() {};
-	void run(std::string _info);
+	void run(std::string label, long key);
 };
 
 #endif /* _RECEIVER_H */

@@ -24,7 +24,7 @@ LIBDIR := $(RELPATH)/lib
 TARGETCOMP := $(shell perl -e "print '$(CURDIR)' =~ /.*$(PROJECT)\/src\/([^\/]+)/")
 
 # to not set ARCHIVES (e.g. link w/o) set 'ARCHIVES :=' before
-ARCHIVES ?= $(RELPATH)/lib/common.a $(RELPATH)/lib/$(TARGETCOMP).a
+ARCHIVES ?= $(RELPATH)/lib/$(TARGETCOMP).a $(RELPATH)/lib/common.a
 
 # library source files will be added to the archives
 SOURCE_FILES := $(LIB_SRC_FILES)

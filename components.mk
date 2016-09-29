@@ -6,8 +6,8 @@ COMMONDIRS += src/common/comm
 
 CLIENTDIRS := src/client
 
-SERVERDIRS := src/server/ServerComponent
+SERVERDIRS += src/server/SubServer
+SERVERDIRS += src/server/MessageProcessor
 SERVERDIRS += src/server/Receiver
 SERVERDIRS += src/server/Responder
-SERVERDIRS += src/server/SubServer
 SERVERDIRS += src/server

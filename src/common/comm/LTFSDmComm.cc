@@ -52,16 +52,16 @@ void LTFSDmCommServer::listen()
 
 	unlink(Const::SOCKET_FILE.c_str());
 
-	if (bind(socRefFd, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
+	if (bind((int) socRefFd, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
 		TRACE(Trace::error, errno);
-		close(socRefFd);
+		::close(socRefFd);
 		socRefFd = Const::UNSET;
 		throw(LTFSDMErr::LTFSDM_COMM_ERROR);
 	}
 
 	if (::listen(socRefFd, 5) == -1) {
 		TRACE(Trace::error, errno);
-		close(socRefFd);
+		::close(socRefFd);
 		socRefFd = Const::UNSET;
 		throw(LTFSDMErr::LTFSDM_COMM_ERROR);
 	}
@@ -72,7 +72,7 @@ void LTFSDmCommServer::accept()
 {
 	if ( (socAccFd = ::accept(socRefFd, NULL, NULL)) == -1) {
 		TRACE(Trace::error, errno);
-		close(socRefFd);
+		::close(socRefFd);
 		socRefFd = Const::UNSET;
 		throw(LTFSDMErr::LTFSDM_COMM_ERROR);
 	}
@@ -102,8 +102,9 @@ void LTFSDmComm::send(int fd)
 		free(buffer);
 		TRACE(Trace::error, rsize);
 		TRACE(Trace::error, MessageSize);
+		TRACE(Trace::error, errno);
 		TRACE(Trace::error, sizeof(long));
-		printf("error writing message to socketfd\n");
+		MSG(LTFSDMX0008E);
 		throw(LTFSDMErr::LTFSDM_COMM_ERROR);
 	}
 

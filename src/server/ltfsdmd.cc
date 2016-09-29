@@ -1,9 +1,12 @@
 #include <unistd.h>
 #include <signal.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <errno.h>
 
 #include <string>
+#include <condition_variable>
+#include <thread>
 
 #include "src/common/util/util.h"
 #include "src/common/messages/Message.h"
@@ -11,7 +14,6 @@
 #include "src/common/errors/errors.h"
 #include "src/common/const/Const.h"
 
-#include "src/server/ServerComponent/ServerComponent.h"
 #include "src/server/SubServer/SubServer.h"
 #include "src/server/Server.h"
 
@@ -46,7 +48,7 @@ int main(int argc, char **argv)
 		goto end;
 	}
 
-
+	traceObject.setTrclevel(Trace::much);
 	TRACE(Trace::little, getpid());
 
 	try {

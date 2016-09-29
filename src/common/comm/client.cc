@@ -6,6 +6,7 @@
 
 #include <string>
 #include <sstream>
+#include <atomic>
 
 #include "src/common/const/Const.h"
 

@@ -1,24 +1,54 @@
-#include <string>
-#include <vector>
+#include <limits.h>
+
+#include <atomic>
+#include <condition_variable>
+#include <mutex>
 #include <thread>
 
-#include "src/server/ServerComponent/ServerComponent.h"
+#include "src/common/messages/Message.h"
+#include "src/common/tracing/Trace.h"
+#include "src/common/errors/errors.h"
+#include "src/common/const/Const.h"
+
 #include "SubServer.h"
 
-SubServer::~SubServer()
+void SubServer::waitThread(std::thread *thrd, std::thread *thrdprev)
 
 {
-	std::vector<std::thread*>::iterator it;
+	int countb;
+	std::thread::id id = thrd->get_id();
+	std::thread::id idprev;
 
-	for(it=components.begin() ; it < components.end(); ++it)
-		delete(*it);
+	if ( thrdprev != nullptr )
+		idprev = thrdprev->get_id();
+
+	thrd->join();
+	TRACE(Trace::much, id);
+	delete(thrd);
+	countb = --count;
+
+	if ( countb < maxThreads ) {
+		bcond.notify_one();
+	}
+
+	if ( ! countb ) {
+		econd.notify_one();
+	}
+
+	if ( thrdprev != nullptr) {
+		thrdprev->join();
+		TRACE(Trace::much, idprev);
+		delete(thrdprev);
+	}
 }
 
-void SubServer::wait()
-
+void SubServer::waitAllRemaining()
 {
-	std::vector<std::thread*>::iterator it;
+	if ( thrdprev ) {
+		thrdprev->join();
+		delete(thrdprev);
 
-	for(it=components.begin() ; it < components.end(); ++it)
-		(*it)->join();
+		std::unique_lock<std::mutex> lock(emtx);
+		econd.wait(lock, [this]{return count == 0;});
+	}
 }

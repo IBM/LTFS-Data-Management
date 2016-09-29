@@ -5,6 +5,7 @@
 #include <stdlib.h>
 
 #include <string>
+#include <atomic>
 
 #include "src/common/const/Const.h"
 
