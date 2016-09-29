@@ -62,7 +62,7 @@ public:
 #else
 #error "unsupported platform"
 #endif
-				tracefile << std::setfill('-') << std::setw(15) << filename;
+				tracefile << std::setfill('-') << std::setw(20) << filename;
 				tracefile << "(" << linenr << "):";
 				tracefile << varname << "(" << s << ")" << std::endl;
 				tracefile.flush();

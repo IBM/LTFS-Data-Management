@@ -4,6 +4,7 @@
 #include <errno.h>
 
 #include <string>
+#include <thread>
 
 #include "src/common/util/util.h"
 #include "src/common/messages/Message.h"
@@ -45,7 +46,7 @@ int main(int argc, char **argv)
 		goto end;
 	}
 
-
+	traceObject.setTrclevel(Trace::much);
 	TRACE(Trace::little, getpid());
 
 	try {
