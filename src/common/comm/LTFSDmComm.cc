@@ -96,6 +96,9 @@ void LTFSDmComm::send(int fd)
 		throw(LTFSDMErr::LTFSDM_COMM_ERROR);
 	}
 
+	TRACE(Trace::much, strlen(buffer));
+	TRACE(Trace::much, MessageSize);
+
 	rsize = write(fd, buffer, MessageSize + sizeof(long));
 
 	if ( rsize != MessageSize + sizeof(long) ) {

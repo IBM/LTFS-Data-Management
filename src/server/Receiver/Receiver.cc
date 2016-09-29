@@ -11,8 +11,8 @@
 #include "src/common/comm/LTFSDmComm.h"
 
 #include "src/server/SubServer/SubServer.h"
+#include "src/server/Server.h"
 #include "src/server/MessageProcessor/MessageProcessor.h"
-#include "src/server/SubServer/SubServer.h"
 
 #include "Receiver.h"
 
@@ -36,21 +36,14 @@ void Receiver::run(std::string label, long key)
 		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
 	}
 
-	while (true) {
+	while (terminate == false) {
 		try {
 			command.accept();
 		}
 		catch(...) {
 			MSG(LTFSDMS0005E);
-			throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
-		}
-
-		try {
-			command.recv();
-		}
-		catch(...) {
-			MSG(LTFSDMS0006E);
-			throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+			//throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+			break;
 		}
 
  		MessageProcessor *mproc = new MessageProcessor();

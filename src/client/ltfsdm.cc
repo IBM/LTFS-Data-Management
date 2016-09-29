@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
 		goto cleanup;
 	}
 
-	traceObject.setTrclevel(Trace::little);
+	traceObject.setTrclevel(Trace::much);
 
 	if ( argc < 2 ) {
 		openLTFSCommand = new HelpCommand();

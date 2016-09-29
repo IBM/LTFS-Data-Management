@@ -1,3 +1,5 @@
+extern std::atomic<bool> terminate;
+
 class Server {
 private:
 	SubServer subServer;

@@ -25,6 +25,8 @@
 #include "src/server/SubServer/SubServer.h"
 #include "src/server/Server.h"
 
+std::atomic<bool> terminate;
+
 void Server::lockServer()
 
 {
@@ -124,9 +126,10 @@ void Server::run()
 
 {
 	SubServer subs;
-
 	Receiver recv;
 	Responder resp;
+
+	terminate = false;
 
 	subs.enqueue(&Receiver::run, &recv, "Receiver", key);
 	subs.enqueue(&Responder::run, &resp, "Responder", key);

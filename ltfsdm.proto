@@ -64,6 +64,14 @@ message LTFSDmTransRecRequest {
 	required uint64 inum = 6;
 }
 
+message LTFSDmStopRequest {
+	required uint64 key = 1;
+	required int64 reqNumber = 2;
+}
+
+message LTFSDmStopResp {
+	required bool success = 1;
+}
 
 message Command {
 	oneof commands {
@@ -73,5 +81,7 @@ message Command {
 		LTFSDmMigRequestResp migrequestresp = 4;
 		LTFSDmSelRecRequest selrecrequest = 5;
 		LTFSDmTransRecRequest transrecrequest = 6;
+		LTFSDmStopRequest stoprequest = 7;
+		LTFSDmStopResp stopresp = 8;
 	}
 }

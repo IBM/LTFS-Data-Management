@@ -25,14 +25,14 @@ int main(int argc, char *argv[]) {
 		exit(-1);
 	}
 
-	while (1) {
-		try {
-			command.accept();
-		}
-		catch(...) {
-			exit(-1);
-		}
+	try {
+		command.accept();
+	}
+	catch(...) {
+		exit(-1);
+	}
 
+	while (1) {
 		// command.ParseFromFileDescriptor(cl);
 		try {
 			command.recv();

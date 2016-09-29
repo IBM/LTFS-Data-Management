@@ -8,6 +8,7 @@ private:
 	void migrationMessage(long key, LTFSDmCommServer *command);
 	void selRecallMessage(long key, LTFSDmCommServer *command);
 	void requestNumber(long key, LTFSDmCommServer *command);
+	void stop(long key, LTFSDmCommServer *command);
 
 public:
 	MessageProcessor() {}

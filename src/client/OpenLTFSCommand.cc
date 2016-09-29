@@ -68,7 +68,7 @@ void OpenLTFSCommand::getRequestNumber()
 		commCommand.send();
 	}
 	catch(...) {
-		MSG(LTFSDMS0027E);
+		MSG(LTFSDMC0027E);
 		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
 	}
 
@@ -76,7 +76,7 @@ void OpenLTFSCommand::getRequestNumber()
 		commCommand.recv();
 	}
 	catch(...) {
-		MSG(LTFSDMS0027E);
+		MSG(LTFSDMC0027E);
 		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
 	}
 
@@ -87,7 +87,7 @@ void OpenLTFSCommand::getRequestNumber()
 		TRACE(Trace::little, requestNumber);
 	}
 	else {
-		MSG(LTFSDMS0029E);
+		MSG(LTFSDMC0029E);
 		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
 	}
 }
@@ -107,7 +107,7 @@ void OpenLTFSCommand::connect()
     }
     catch(...) {
 		TRACE(Trace::error, key);
-		MSG(LTFSDMS0025E);
+		MSG(LTFSDMC0025E);
 		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
     }
 
@@ -117,7 +117,7 @@ void OpenLTFSCommand::connect()
 		commCommand.connect();
 	}
 	catch(...) {
-		MSG(LTFSDMS0026E);
+		MSG(LTFSDMC0026E);
 		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
 	}
 

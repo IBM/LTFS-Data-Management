@@ -29,7 +29,8 @@ public:
 	~LTFSDmCommServer() { if ( socAccFd != Const::UNSET ) { ::close(socAccFd); socAccFd = Const::UNSET; }; if ( socRefFd != Const::UNSET ) { ::close(socRefFd); socRefFd = Const::UNSET;} }
 	void listen();
 	void accept();
-	void close() {::close(socAccFd); socAccFd = Const::UNSET;}
+	void closeAcc() {::close(socAccFd); socAccFd = Const::UNSET;}
+	void closeRef() {::close(socRefFd); socRefFd = Const::UNSET;}
 	void send() { return LTFSDmComm::send(socAccFd); }
 	void recv() { return LTFSDmComm::recv(socAccFd); }
 };

@@ -10,6 +10,8 @@
 #include "src/common/comm/ltfsdm.pb.h"
 #include "src/common/comm/LTFSDmComm.h"
 
+#include "src/server/SubServer/SubServer.h"
+#include "src/server/Server.h"
 #include "src/server/Receiver/Receiver.h"
 #include "MessageProcessor.h"
 
@@ -126,25 +128,70 @@ void MessageProcessor::requestNumber(long key, LTFSDmCommServer *command)
 
 }
 
+void MessageProcessor::stop(long key, LTFSDmCommServer *command)
+
+{
+   	const LTFSDmProtocol::LTFSDmStopRequest stopreq = command->stoprequest();
+	long keySent = stopreq.key();
+
+	TRACE(Trace::little, keySent);
+
+	if ( key != keySent ) {
+		MSG(LTFSDMS0008E);
+		return;
+	}
+
+	MSG(LTFSDMS0009I);
+
+	LTFSDmProtocol::LTFSDmStopResp *stopresp = command->mutable_stopresp();
+
+	stopresp->set_success(true);
+
+	try {
+		command->send();
+	}
+	catch(...) {
+		MSG(LTFSDMS0007E);
+		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+	}
+
+	terminate = true;
+	command->closeRef();
+}
+
 void MessageProcessor::run(std::string label, long key, LTFSDmCommServer *command)
 
 {
 	TRACE(Trace::much, __PRETTY_FUNCTION__);
 
-	// MIGRATION
-	if ( command->has_migrequest() ) {
-		migrationMessage(key, command);
-	}
-	// SELECTIVE RECALL
-	else if ( command->has_selrecrequest() ) {
-		selRecallMessage(key, command);
-	}
-	else if ( command->has_reqnum() ) {
-		requestNumber(key, command);
-	}
-	else {
-			TRACE(Trace::error, "unkown command\n");
-	}
+	while (terminate == false) {
+		try {
+			command->recv();
+		}
+		catch(...) {
+			MSG(LTFSDMS0006E);
+			break;
+		}
 
-	command->close();
+		TRACE(Trace::much, "new message received");
+
+		// MIGRATION
+		if ( command->has_migrequest() ) {
+			migrationMessage(key, command);
+		}
+		// SELECTIVE RECALL
+		else if ( command->has_selrecrequest() ) {
+			selRecallMessage(key, command);
+		}
+		else if ( command->has_reqnum() ) {
+			requestNumber(key, command);
+		}
+		else if ( command->has_stoprequest() ) {
+			stop(key, command);
+		}
+		else {
+			TRACE(Trace::error, "unkown command\n");
+		}
+	}
+	command->closeAcc();
 }

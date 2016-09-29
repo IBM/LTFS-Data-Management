@@ -16,12 +16,40 @@ void StopCommand::printUsage()
 
 void StopCommand::doCommand(int argc, char **argv)
 {
-	connect();
-
-	TRACE(Trace::error, requestNumber);
 
 	if ( argc > 1 ) {
 		printUsage();
 		throw LTFSDMErr::LTFSDM_GENERAL_ERROR;
+	}
+
+	connect();
+
+	TRACE(Trace::error, requestNumber);
+
+	LTFSDmProtocol::LTFSDmStopRequest *stopreq = commCommand.mutable_stoprequest();
+	stopreq->set_key(key);
+	stopreq->set_reqnumber(requestNumber);
+
+	try {
+		commCommand.send();
+	}
+	catch(...) {
+		MSG(LTFSDMC0027E);
+		throw LTFSDMErr::LTFSDM_GENERAL_ERROR;
+	}
+
+	try {
+		commCommand.recv();
+	}
+	catch(...) {
+		MSG(LTFSDMC0027E);
+		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+	}
+
+	const LTFSDmProtocol::LTFSDmStopResp stopresp = commCommand.stopresp();
+
+	if( stopresp.success() != true ) {
+		MSG(LTFSDMC0029E);
+		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
 	}
 }
