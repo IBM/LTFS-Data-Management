@@ -9,7 +9,6 @@
 #include "src/common/comm/ltfsdm.pb.h"
 #include "src/common/comm/LTFSDmComm.h"
 
-#include "src/server/ServerComponent/ServerComponent.h"
 #include "src/server/SubServer/SubServer.h"
 #include "src/server/MessageProcessor/MessageProcessor.h"
 #include "src/server/SubServer/SubServer.h"
@@ -18,11 +17,11 @@
 
 std::atomic<long> reqNumber;
 
-void Receiver::run(ReceiverData data)
+void Receiver::run(std::string label, long key)
 
 {
 	LTFSDmCommServer command;
-	SubServer subs;
+	SubServer subs(40);
 
 	reqNumber = 0;
 
@@ -51,10 +50,9 @@ void Receiver::run(ReceiverData data)
 			throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
 		}
 
-		MessageProcessor *mproc = new MessageProcessor(MessageProcessorData("MessageProcessor", data.key, &command));
-
-		subs.add(mproc);
+ 		MessageProcessor *mproc = new MessageProcessor();
+ 		subs.enqueue(&MessageProcessor::run, mproc, "MessageProcessor", key, &command);
 	}
 
-	subs.wait();
+	subs.wait_all();
 }

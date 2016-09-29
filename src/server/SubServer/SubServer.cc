@@ -1,24 +1,30 @@
-#include <string>
-#include <vector>
+#include <atomic>
+#include <condition_variable>
+#include <mutex>
 #include <thread>
 
-#include "src/server/ServerComponent/ServerComponent.h"
+
 #include "SubServer.h"
 
-SubServer::~SubServer()
+void SubServer::wait_single(std::thread *thrd, std::thread *thrdprev)
 
 {
-	std::vector<std::thread*>::iterator it;
+	int countb;
 
-	for(it=components.begin() ; it < components.end(); ++it)
-		delete(*it);
-}
+	thrd->join();
+	delete(thrd);
+	countb = --count;
 
-void SubServer::wait()
+	if ( countb < maxThreads ) {
+		bcond.notify_one();
+	}
 
-{
-	std::vector<std::thread*>::iterator it;
+	if ( ! countb ) {
+		econd.notify_one();
+	}
 
-	for(it=components.begin() ; it < components.end(); ++it)
-		(*it)->join();
+	if ( thrdprev ) {
+		thrdprev->join();
+		delete(thrdprev);
+	}
 }

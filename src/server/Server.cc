@@ -18,7 +18,6 @@
 #include "src/common/errors/errors.h"
 #include "src/common/const/Const.h"
 
-#include "src/server/ServerComponent/ServerComponent.h"
 #include "src/server/Receiver/Receiver.h"
 #include "src/server/Responder/Responder.h"
 #include "src/server/SubServer/SubServer.h"
@@ -124,11 +123,11 @@ void Server::run()
 {
 	SubServer subs;
 
-	Receiver *recv = new Receiver(ReceiverData("Receiver", key));
-	Responder *resp = new Responder(ResponderData("Responder",key));
+	Receiver recv;
+	Responder resp;
 
-	subs.add(recv);
-	subs.add(resp);
+	subs.enqueue(&Receiver::run, &recv, "Receiver", key);
+	subs.enqueue(&Responder::run, &resp, "Responder", key);
 
-	subs.wait();
+	subs.wait_all();
 }

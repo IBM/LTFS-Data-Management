@@ -3,19 +3,13 @@
 
 extern std::atomic<long> reqNumber;
 
-struct ReceiverData {
-	ReceiverData(std::string _label, long _key) : label(_label), key(_key) {}
-	std::string label;
-	long key;
-};
-
-class Receiver : public ServerComponent<ReceiverData>
+class Receiver
 
 {
 public:
-	Receiver(ReceiverData _data) : ServerComponent(_data) {}
+	Receiver() {}
 	~Receiver() {};
-	void run(ReceiverData _data);
+	void run(std::string label, long key);
 };
 
 #endif /* _RECEIVER_H */

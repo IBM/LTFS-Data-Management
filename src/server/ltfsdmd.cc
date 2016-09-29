@@ -11,7 +11,6 @@
 #include "src/common/errors/errors.h"
 #include "src/common/const/Const.h"
 
-#include "src/server/ServerComponent/ServerComponent.h"
 #include "src/server/SubServer/SubServer.h"
 #include "src/server/Server.h"
 

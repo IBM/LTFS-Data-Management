@@ -10,7 +10,6 @@
 #include "src/common/comm/ltfsdm.pb.h"
 #include "src/common/comm/LTFSDmComm.h"
 
-#include "src/server/ServerComponent/ServerComponent.h"
 #include "src/server/Receiver/Receiver.h"
 #include "MessageProcessor.h"
 
@@ -127,21 +126,19 @@ void MessageProcessor::requestNumber(long key, LTFSDmCommServer *command)
 
 }
 
-void MessageProcessor::run(MessageProcessorData data)
+void MessageProcessor::run(std::string label, long key, LTFSDmCommServer *command)
 
 {
-	LTFSDmCommServer *command = data.command;
-
 	// MIGRATION
 	if ( command->has_migrequest() ) {
-		migrationMessage(data.key, command);
+		migrationMessage(key, command);
 	}
 	// SELECTIVE RECALL
 	else if ( command->has_selrecrequest() ) {
-		selRecallMessage(data.key, command);
+		selRecallMessage(key, command);
 	}
 	else if ( command->has_reqnum() ) {
-		requestNumber(data.key, command);
+		requestNumber(key, command);
 	}
 	else {
 			TRACE(Trace::error, "unkown command\n");
