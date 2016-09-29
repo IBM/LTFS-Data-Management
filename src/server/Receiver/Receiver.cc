@@ -54,5 +54,5 @@ void Receiver::run(std::string label, long key)
  		subs.enqueue(&MessageProcessor::run, mproc, "MessageProcessor", key, &command);
 	}
 
-	subs.wait_all();
+	subs.waitAllRemaining();
 }

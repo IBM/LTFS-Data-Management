@@ -12,22 +12,12 @@ private:
 	std::mutex bmtx;
 	std::condition_variable bcond;
 	std::thread *thrdprev = NULL;
+	void waitThread(std::thread *thrd, std::thread *thrdprev);
 public:
 	SubServer() : count(0), maxThreads(INT_MAX) {}
 	SubServer(int _maxThreads) : count(0), maxThreads(_maxThreads) {}
 
-	void wait_all()
-	{
-		if ( thrdprev ) {
-			thrdprev->join();
-			delete(thrdprev);
-
-			std::unique_lock<std::mutex> lock(emtx);
-			econd.wait(lock, [this]{return count == 0;});
-		}
-	}
-
-	void wait_single(std::thread *thrd, std::thread *thrdprev);
+	void waitAllRemaining();
 
 	template< typename Function, typename... Args >
 	void enqueue(Function&& f, Args... args)
@@ -42,7 +32,7 @@ public:
 		}
 
 		std::thread *thrd1 = new std::thread(f, args ...);
-		std::thread *thrd2 = new std::thread(&SubServer::wait_single, this, thrd1, thrdprev);
+		std::thread *thrd2 = new std::thread(&SubServer::waitThread, this, thrd1, thrdprev);
 		thrdprev = thrd2;
 	}
 };

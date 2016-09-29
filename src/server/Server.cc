@@ -129,5 +129,5 @@ void Server::run()
 	subs.enqueue(&Receiver::run, &recv, "Receiver", key);
 	subs.enqueue(&Responder::run, &resp, "Responder", key);
 
-	subs.wait_all();
+	subs.waitAllRemaining();
 }

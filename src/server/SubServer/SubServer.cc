@@ -6,7 +6,7 @@
 
 #include "SubServer.h"
 
-void SubServer::wait_single(std::thread *thrd, std::thread *thrdprev)
+void SubServer::waitThread(std::thread *thrd, std::thread *thrdprev)
 
 {
 	int countb;
@@ -26,5 +26,16 @@ void SubServer::wait_single(std::thread *thrd, std::thread *thrdprev)
 	if ( thrdprev ) {
 		thrdprev->join();
 		delete(thrdprev);
+	}
+}
+
+void SubServer::waitAllRemaining()
+{
+	if ( thrdprev ) {
+		thrdprev->join();
+		delete(thrdprev);
+
+		std::unique_lock<std::mutex> lock(emtx);
+		econd.wait(lock, [this]{return count == 0;});
 	}
 }
