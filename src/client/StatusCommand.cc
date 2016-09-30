@@ -7,15 +7,16 @@
 #include "src/common/comm/LTFSDmComm.h"
 
 #include "OpenLTFSCommand.h"
-#include "StopCommand.h"
+#include "StatusCommand.h"
 
-void StopCommand::printUsage()
+void StatusCommand::printUsage()
 {
-	INFO(LTFSDMC0007I);
+	INFO(LTFSDMC0030I);
 }
 
-void StopCommand::doCommand(int argc, char **argv)
+void StatusCommand::doCommand(int argc, char **argv)
 {
+	int pid;
 
 	if ( argc > 1 ) {
 		printUsage();
@@ -25,16 +26,16 @@ void StopCommand::doCommand(int argc, char **argv)
 	try {
 		connect();
 	}
-	catch(...) {
-		MSG(LTFSDMC0026E);
-		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+	catch (...) {
+		MSG(LTFSDMC0031I);
+		return;
 	}
 
 	TRACE(Trace::error, requestNumber);
 
-	LTFSDmProtocol::LTFSDmStopRequest *stopreq = commCommand.mutable_stoprequest();
-	stopreq->set_key(key);
-	stopreq->set_reqnumber(requestNumber);
+	LTFSDmProtocol::LTFSDmStatusRequest *statusreq = commCommand.mutable_statusrequest();
+	statusreq->set_key(key);
+	statusreq->set_reqnumber(requestNumber);
 
 	try {
 		commCommand.send();
@@ -52,9 +53,13 @@ void StopCommand::doCommand(int argc, char **argv)
 		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
 	}
 
-	const LTFSDmProtocol::LTFSDmStopResp stopresp = commCommand.stopresp();
+	const LTFSDmProtocol::LTFSDmStatusResp statusresp = commCommand.statusresp();
 
-	if( stopresp.success() != true ) {
+	if( statusresp.success() == true ) {
+		pid = statusresp.pid();
+		MSG(LTFSDMC0032I, pid);
+	}
+	else {
 		MSG(LTFSDMC0029E);
 		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
 	}

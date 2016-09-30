@@ -73,6 +73,16 @@ message LTFSDmStopResp {
 	required bool success = 1;
 }
 
+message LTFSDmStatusRequest {
+	required uint64 key = 1;
+	required int64 reqNumber = 2;
+}
+
+message LTFSDmStatusResp {
+	required bool success = 1;
+	required int64 pid = 2;
+}
+
 message Command {
 	oneof commands {
 		LTFSDmReqNumber reqnum = 1;
@@ -83,5 +93,7 @@ message Command {
 		LTFSDmTransRecRequest transrecrequest = 6;
 		LTFSDmStopRequest stoprequest = 7;
 		LTFSDmStopResp stopresp = 8;
+		LTFSDmStatusRequest statusrequest = 9;
+		LTFSDmStatusResp statusresp = 10;
 	}
 }

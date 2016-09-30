@@ -117,7 +117,6 @@ void OpenLTFSCommand::connect()
 		commCommand.connect();
 	}
 	catch(...) {
-		MSG(LTFSDMC0026E);
 		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
 	}
 

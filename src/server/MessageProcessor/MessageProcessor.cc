@@ -159,6 +159,35 @@ void MessageProcessor::stop(long key, LTFSDmCommServer *command)
 	command->closeRef();
 }
 
+void MessageProcessor::status(long key, LTFSDmCommServer *command)
+
+{
+   	const LTFSDmProtocol::LTFSDmStatusRequest statusreq = command->statusrequest();
+	long keySent = statusreq.key();
+
+	TRACE(Trace::little, keySent);
+
+	if ( key != keySent ) {
+		MSG(LTFSDMS0008E);
+		return;
+	}
+
+	MSG(LTFSDMS0009I);
+
+	LTFSDmProtocol::LTFSDmStatusResp *statusresp = command->mutable_statusresp();
+
+	statusresp->set_success(true);
+	statusresp->set_pid(getpid());
+
+	try {
+		command->send();
+	}
+	catch(...) {
+		MSG(LTFSDMS0007E);
+		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+	}
+}
+
 void MessageProcessor::run(std::string label, long key, LTFSDmCommServer *command)
 
 {
@@ -188,6 +217,9 @@ void MessageProcessor::run(std::string label, long key, LTFSDmCommServer *comman
 		}
 		else if ( command->has_stoprequest() ) {
 			stop(key, command);
+		}
+		else if ( command->has_statusrequest() ) {
+			status(key, command);
 		}
 		else {
 			TRACE(Trace::error, "unkown command\n");

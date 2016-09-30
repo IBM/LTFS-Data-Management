@@ -18,6 +18,7 @@
 #include "InfoCommand.h"
 #include "InfoRequestsCommand.h"
 #include "InfoFilesCommand.h"
+#include "StatusCommand.h"
 
 int main(int argc, char *argv[])
 
@@ -62,6 +63,9 @@ int main(int argc, char *argv[])
 	}
 	else if ( HelpCommand().compare(command) ) {
 		openLTFSCommand = new HelpCommand();
+	}
+	else if ( StatusCommand().compare(command) ) {
+		openLTFSCommand = new StatusCommand();
 	}
 	else if ( InfoCommand().compare(command) ) {
 		if ( argc < 3 ) {

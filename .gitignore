@@ -19,6 +19,6 @@ TAGS.func
 cscope.files
 cscope.out
 *.dSYM/
-client
-server
+src/common/comm/client
+src/common/comm/server
 bin

@@ -9,6 +9,7 @@ private:
 	void selRecallMessage(long key, LTFSDmCommServer *command);
 	void requestNumber(long key, LTFSDmCommServer *command);
 	void stop(long key, LTFSDmCommServer *command);
+	void status(long key, LTFSDmCommServer *command);
 
 public:
 	MessageProcessor() {}
