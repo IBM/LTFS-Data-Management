@@ -172,8 +172,6 @@ void MessageProcessor::status(long key, LTFSDmCommServer *command)
 		return;
 	}
 
-	MSG(LTFSDMS0009I);
-
 	LTFSDmProtocol::LTFSDmStatusResp *statusresp = command->mutable_statusresp();
 
 	statusresp->set_success(true);
