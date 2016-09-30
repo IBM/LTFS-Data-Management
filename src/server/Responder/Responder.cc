@@ -1,4 +1,7 @@
+#include "limits.h"
+
 #include <string>
+#include <condition_variable>
 #include <thread>
 
 #include "src/common/tracing/Trace.h"
