@@ -123,7 +123,6 @@ void MessageProcessor::requestNumber(long key, LTFSDmCommServer *command)
 	}
 	catch(...) {
 		MSG(LTFSDMS0007E);
-		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
 	}
 
 
@@ -134,6 +133,8 @@ void MessageProcessor::stop(long key, LTFSDmCommServer *command)
 {
    	const LTFSDmProtocol::LTFSDmStopRequest stopreq = command->stoprequest();
 	long keySent = stopreq.key();
+
+	cont = false;
 
 	TRACE(Trace::little, keySent);
 
@@ -153,7 +154,6 @@ void MessageProcessor::stop(long key, LTFSDmCommServer *command)
 	}
 	catch(...) {
 		MSG(LTFSDMS0007E);
-		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
 	}
 
 	terminate = true;
@@ -165,6 +165,8 @@ void MessageProcessor::status(long key, LTFSDmCommServer *command)
 {
    	const LTFSDmProtocol::LTFSDmStatusRequest statusreq = command->statusrequest();
 	long keySent = statusreq.key();
+
+	cont = false;
 
 	TRACE(Trace::little, keySent);
 
@@ -183,18 +185,17 @@ void MessageProcessor::status(long key, LTFSDmCommServer *command)
 	}
 	catch(...) {
 		MSG(LTFSDMS0007E);
-		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
 	}
 }
 
-void MessageProcessor::run(std::string label, long key, LTFSDmCommServer *command)
+void MessageProcessor::run(std::string label, long key, LTFSDmCommServer command)
 
 {
 	TRACE(Trace::much, __PRETTY_FUNCTION__);
 
-	while (terminate == false) {
+	while (cont == true &&  terminate == false) {
 		try {
-			command->recv();
+			command.recv();
 		}
 		catch(...) {
 			MSG(LTFSDMS0006E);
@@ -204,25 +205,25 @@ void MessageProcessor::run(std::string label, long key, LTFSDmCommServer *comman
 		TRACE(Trace::much, "new message received");
 
 		// MIGRATION
-		if ( command->has_migrequest() ) {
-			migrationMessage(key, command);
+		if ( command.has_migrequest() ) {
+			migrationMessage(key, &command);
 		}
 		// SELECTIVE RECALL
-		else if ( command->has_selrecrequest() ) {
-			selRecallMessage(key, command);
+		else if ( command.has_selrecrequest() ) {
+			selRecallMessage(key, &command);
 		}
-		else if ( command->has_reqnum() ) {
-			requestNumber(key, command);
+		else if ( command.has_reqnum() ) {
+			requestNumber(key, &command);
 		}
-		else if ( command->has_stoprequest() ) {
-			stop(key, command);
+		else if ( command.has_stoprequest() ) {
+			stop(key, &command);
 		}
-		else if ( command->has_statusrequest() ) {
-			status(key, command);
+		else if ( command.has_statusrequest() ) {
+			status(key, &command);
 		}
 		else {
 			TRACE(Trace::error, "unkown command\n");
 		}
 	}
-	command->closeAcc();
+	command.closeAcc();
 }

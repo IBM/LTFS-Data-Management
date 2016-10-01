@@ -42,13 +42,14 @@ void Receiver::run(std::string label, long key)
 		}
 		catch(...) {
 			MSG(LTFSDMS0005E);
-			//throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
 			break;
 		}
 
  		MessageProcessor *mproc = new MessageProcessor();
- 		subs.enqueue(&MessageProcessor::run, mproc, "MessageProcessor", key, &command);
+ 		subs.enqueue(&MessageProcessor::run, mproc, "MessageProcessor", key, command);
 	}
+
+	command.closeRef();
 
 	subs.waitAllRemaining();
 }

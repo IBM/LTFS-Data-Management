@@ -26,7 +26,8 @@ private:
 	std::atomic<int> socAccFd;
 public:
 	LTFSDmCommServer() : socRefFd(Const::UNSET), socAccFd(Const::UNSET) {}
-	~LTFSDmCommServer() { if ( socAccFd != Const::UNSET ) { ::close(socAccFd); socAccFd = Const::UNSET; }; if ( socRefFd != Const::UNSET ) { ::close(socRefFd); socRefFd = Const::UNSET;} }
+	LTFSDmCommServer(const LTFSDmCommServer& command) : socRefFd((int) command.socRefFd), socAccFd((int) command.socAccFd) {}
+	~LTFSDmCommServer() {}
 	void listen();
 	void accept();
 	void closeAcc() {::close(socAccFd); socAccFd = Const::UNSET;}
