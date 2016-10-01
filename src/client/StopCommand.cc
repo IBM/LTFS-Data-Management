@@ -1,3 +1,5 @@
+#include <fcntl.h>
+
 #include <string>
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
@@ -16,6 +18,7 @@ void StopCommand::printUsage()
 
 void StopCommand::doCommand(int argc, char **argv)
 {
+	int lockfd;
 
 	if ( argc > 1 ) {
 		printUsage();
@@ -57,5 +60,21 @@ void StopCommand::doCommand(int argc, char **argv)
 	if( stopresp.success() != true ) {
 		MSG(LTFSDMC0029E);
 		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+	}
+
+	if ( (lockfd = open(Const::SERVER_LOCK_FILE.c_str(), O_RDWR | O_CREAT, 0600)) == -1 ) {
+		MSG(LTFSDMC0033E);
+		TRACE(Trace::error, Const::SERVER_LOCK_FILE);
+		TRACE(Trace::error, errno);
+		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+	}
+
+	while ( flock(lockfd, LOCK_EX | LOCK_NB) == -1 ) {
+		INFO(LTFSDMC0034I);
+		sleep(1);
+	}
+
+	if ( flock(lockfd, LOCK_UN) == -1 ) {
+		MSG(LTFSDMC0035E);
 	}
 }
