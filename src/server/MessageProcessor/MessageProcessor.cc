@@ -16,7 +16,7 @@
 #include "src/server/Receiver/Receiver.h"
 #include "MessageProcessor.h"
 
-void MessageProcessor::migrationMessage(long key, LTFSDmCommServer *command)
+void MessageProcessor::migrationMessage(long key, LTFSDmCommServer *command, bool *cont)
 
 {
    	const LTFSDmProtocol::LTFSDmMigRequest migreq = command->migrequest();
@@ -66,7 +66,7 @@ void MessageProcessor::migrationMessage(long key, LTFSDmCommServer *command)
 	}
 }
 
-void  MessageProcessor::selRecallMessage(long key, LTFSDmCommServer *command)
+void  MessageProcessor::selRecallMessage(long key, LTFSDmCommServer *command, bool *cont)
 
 {
 	const LTFSDmProtocol::LTFSDmSelRecRequest selrecreq = command->selrecrequest();
@@ -97,7 +97,7 @@ void  MessageProcessor::selRecallMessage(long key, LTFSDmCommServer *command)
 	}
 }
 
-void MessageProcessor::requestNumber(long key, LTFSDmCommServer *command)
+void MessageProcessor::requestNumber(long key, LTFSDmCommServer *command, bool *cont)
 
 {
    	const LTFSDmProtocol::LTFSDmReqNumber reqnum = command->reqnum();
@@ -128,13 +128,13 @@ void MessageProcessor::requestNumber(long key, LTFSDmCommServer *command)
 
 }
 
-void MessageProcessor::stop(long key, LTFSDmCommServer *command)
+void MessageProcessor::stop(long key, LTFSDmCommServer *command, bool *cont)
 
 {
    	const LTFSDmProtocol::LTFSDmStopRequest stopreq = command->stoprequest();
 	long keySent = stopreq.key();
 
-	cont = false;
+	*cont = false;
 
 	TRACE(Trace::little, keySent);
 
@@ -157,16 +157,17 @@ void MessageProcessor::stop(long key, LTFSDmCommServer *command)
 	}
 
 	terminate = true;
+	termcond.notify_one();
 	command->closeRef();
 }
 
-void MessageProcessor::status(long key, LTFSDmCommServer *command)
+void MessageProcessor::status(long key, LTFSDmCommServer *command, bool *cont)
 
 {
    	const LTFSDmProtocol::LTFSDmStatusRequest statusreq = command->statusrequest();
 	long keySent = statusreq.key();
 
-	cont = false;
+	*cont = false;
 
 	TRACE(Trace::little, keySent);
 
@@ -192,6 +193,8 @@ void MessageProcessor::run(std::string label, long key, LTFSDmCommServer command
 
 {
 	TRACE(Trace::much, __PRETTY_FUNCTION__);
+	std::unique_lock<std::mutex> lock(termmtx);
+	bool cont = true;
 
 	while (cont == true &&  terminate == false) {
 		try {
@@ -204,25 +207,27 @@ void MessageProcessor::run(std::string label, long key, LTFSDmCommServer command
 
 		TRACE(Trace::much, "new message received");
 
-		// MIGRATION
-		if ( command.has_migrequest() ) {
-			migrationMessage(key, &command);
-		}
-		// SELECTIVE RECALL
-		else if ( command.has_selrecrequest() ) {
-			selRecallMessage(key, &command);
-		}
-		else if ( command.has_reqnum() ) {
-			requestNumber(key, &command);
-		}
-		else if ( command.has_stoprequest() ) {
-			stop(key, &command);
-		}
-		else if ( command.has_statusrequest() ) {
-			status(key, &command);
+		if ( command.has_stoprequest() ) {
+			stop(key, &command, &cont);
 		}
 		else {
-			TRACE(Trace::error, "unkown command\n");
+			termcond.notify_one();
+			if ( command.has_migrequest() ) {
+				termcond.notify_one();
+				migrationMessage(key, &command, &cont);
+			}
+			else if ( command.has_selrecrequest() ) {
+				selRecallMessage(key, &command, &cont);
+			}
+			else if ( command.has_reqnum() ) {
+				requestNumber(key, &command, &cont);
+			}
+			else if ( command.has_statusrequest() ) {
+				status(key, &command, &cont);
+			}
+			else {
+				TRACE(Trace::error, "unkown command\n");
+			}
 		}
 	}
 	command.closeAcc();

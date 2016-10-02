@@ -21,6 +21,8 @@ std::atomic<long> reqNumber;
 void Receiver::run(std::string label, long key)
 
 {
+	MessageProcessor mproc;
+	std::unique_lock<std::mutex> lock(mproc.termmtx);
 	LTFSDmCommServer command;
 	SubServer subs(40);
 
@@ -45,8 +47,8 @@ void Receiver::run(std::string label, long key)
 			break;
 		}
 
- 		MessageProcessor *mproc = new MessageProcessor();
- 		subs.enqueue(&MessageProcessor::run, mproc, "MessageProcessor", key, command);
+ 		subs.enqueue(&MessageProcessor::run, &mproc, "MessageProcessor", key, command);
+		mproc.termcond.wait(lock);
 	}
 
 	command.closeRef();
