@@ -155,9 +155,6 @@ void MessageProcessor::stop(long key, LTFSDmCommServer *command, bool *cont)
 	catch(...) {
 		MSG(LTFSDMS0007E);
 	}
-
-	terminate = true;
-	termcond.notify_one();
 	command->closeRef();
 }
 
@@ -179,6 +176,10 @@ void MessageProcessor::status(long key, LTFSDmCommServer *command, bool *cont)
 	LTFSDmProtocol::LTFSDmStatusResp *statusresp = command->mutable_statusresp();
 
 	statusresp->set_success(true);
+	// for testing
+    // int duration = random() % 20;
+    // sleep(duration);
+    // statusresp->set_pid(duration);
 	statusresp->set_pid(getpid());
 
 	try {
@@ -195,6 +196,7 @@ void MessageProcessor::run(std::string label, long key, LTFSDmCommServer command
 	TRACE(Trace::much, __PRETTY_FUNCTION__);
 	std::unique_lock<std::mutex> lock(termmtx);
 	bool cont = true;
+	bool firstTime = true;
 
 	while (cont == true &&  terminate == false) {
 		try {
@@ -207,20 +209,26 @@ void MessageProcessor::run(std::string label, long key, LTFSDmCommServer command
 
 		TRACE(Trace::much, "new message received");
 
-		if ( command.has_stoprequest() ) {
+		if ( command.has_reqnum() ) {
+			requestNumber(key, &command, &cont);
+		}
+		else if ( command.has_stoprequest() ) {
 			stop(key, &command, &cont);
+			terminate = true;
+			termcond.notify_one();
+			termmtx.unlock();
 		}
 		else {
-			termcond.notify_one();
-			if ( command.has_migrequest() ) {
+			if ( firstTime ) {
 				termcond.notify_one();
+				termmtx.unlock();
+				firstTime = false;
+			}
+			if ( command.has_migrequest() ) {
 				migrationMessage(key, &command, &cont);
 			}
 			else if ( command.has_selrecrequest() ) {
 				selRecallMessage(key, &command, &cont);
-			}
-			else if ( command.has_reqnum() ) {
-				requestNumber(key, &command, &cont);
 			}
 			else if ( command.has_statusrequest() ) {
 				status(key, &command, &cont);
