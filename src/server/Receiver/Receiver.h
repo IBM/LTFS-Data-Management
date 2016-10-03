@@ -1,7 +1,7 @@
 #ifndef _RECEIVER_H
 #define _RECEIVER_H
 
-extern std::atomic<long> reqNumber;
+extern std::atomic<long> globalReqNumber;
 
 class Receiver
 

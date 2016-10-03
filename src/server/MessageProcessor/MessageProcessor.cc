@@ -16,7 +16,7 @@
 #include "src/server/Receiver/Receiver.h"
 #include "MessageProcessor.h"
 
-void MessageProcessor::migrationMessage(long key, LTFSDmCommServer *command, bool *cont)
+void MessageProcessor::migrationMessage(long key, LTFSDmCommServer *command, bool *cont, long localReqNumber)
 
 {
    	const LTFSDmProtocol::LTFSDmMigRequest migreq = command->migrequest();
@@ -66,7 +66,7 @@ void MessageProcessor::migrationMessage(long key, LTFSDmCommServer *command, boo
 	}
 }
 
-void  MessageProcessor::selRecallMessage(long key, LTFSDmCommServer *command, bool *cont)
+void  MessageProcessor::selRecallMessage(long key, LTFSDmCommServer *command, bool *cont, long localReqNumber)
 
 {
 	const LTFSDmProtocol::LTFSDmSelRecRequest selrecreq = command->selrecrequest();
@@ -97,7 +97,7 @@ void  MessageProcessor::selRecallMessage(long key, LTFSDmCommServer *command, bo
 	}
 }
 
-void MessageProcessor::requestNumber(long key, LTFSDmCommServer *command, bool *cont)
+void MessageProcessor::requestNumber(long key, LTFSDmCommServer *command, bool *cont, long *localReqNumber)
 
 {
    	const LTFSDmProtocol::LTFSDmReqNumber reqnum = command->reqnum();
@@ -113,10 +113,10 @@ void MessageProcessor::requestNumber(long key, LTFSDmCommServer *command, bool *
 	LTFSDmProtocol::LTFSDmReqNumberResp *reqnumresp = command->mutable_reqnumresp();
 
 	reqnumresp->set_success(true);
-	reqNumber++;
-	reqnumresp->set_reqnumber(reqNumber);
+	*localReqNumber = ++globalReqNumber;
+	reqnumresp->set_reqnumber(*localReqNumber);
 
-	TRACE(Trace::little, (long) reqNumber);
+	TRACE(Trace::little, *localReqNumber);
 
 	try {
 		command->send();
@@ -128,7 +128,7 @@ void MessageProcessor::requestNumber(long key, LTFSDmCommServer *command, bool *
 
 }
 
-void MessageProcessor::stop(long key, LTFSDmCommServer *command, bool *cont)
+void MessageProcessor::stop(long key, LTFSDmCommServer *command, bool *cont, long localReqNumber)
 
 {
    	const LTFSDmProtocol::LTFSDmStopRequest stopreq = command->stoprequest();
@@ -158,7 +158,7 @@ void MessageProcessor::stop(long key, LTFSDmCommServer *command, bool *cont)
 	command->closeRef();
 }
 
-void MessageProcessor::status(long key, LTFSDmCommServer *command, bool *cont)
+void MessageProcessor::status(long key, LTFSDmCommServer *command, bool *cont, long localReqNumber)
 
 {
    	const LTFSDmProtocol::LTFSDmStatusRequest statusreq = command->statusrequest();
@@ -177,9 +177,11 @@ void MessageProcessor::status(long key, LTFSDmCommServer *command, bool *cont)
 
 	statusresp->set_success(true);
 	// for testing
-    // int duration = random() % 20;
-    // sleep(duration);
-    // statusresp->set_pid(duration);
+    //int duration = random() % 20;
+    //sleep(duration);
+	// if ( localReqNumber % 4 == 0 )
+	//sleep(20);
+	//statusresp->set_pid(localReqNumber);
 	statusresp->set_pid(getpid());
 
 	try {
@@ -197,6 +199,7 @@ void MessageProcessor::run(std::string label, long key, LTFSDmCommServer command
 	std::unique_lock<std::mutex> lock(termmtx);
 	bool cont = true;
 	bool firstTime = true;
+	long localReqNumber;
 
 	while (cont == true &&  terminate == false) {
 		try {
@@ -210,10 +213,10 @@ void MessageProcessor::run(std::string label, long key, LTFSDmCommServer command
 		TRACE(Trace::much, "new message received");
 
 		if ( command.has_reqnum() ) {
-			requestNumber(key, &command, &cont);
+			requestNumber(key, &command, &cont, &localReqNumber);
 		}
 		else if ( command.has_stoprequest() ) {
-			stop(key, &command, &cont);
+			stop(key, &command, &cont, localReqNumber);
 			terminate = true;
 			termcond.notify_one();
 			termmtx.unlock();
@@ -225,13 +228,13 @@ void MessageProcessor::run(std::string label, long key, LTFSDmCommServer command
 				firstTime = false;
 			}
 			if ( command.has_migrequest() ) {
-				migrationMessage(key, &command, &cont);
+				migrationMessage(key, &command, &cont, localReqNumber);
 			}
 			else if ( command.has_selrecrequest() ) {
-				selRecallMessage(key, &command, &cont);
+				selRecallMessage(key, &command, &cont, localReqNumber);
 			}
 			else if ( command.has_statusrequest() ) {
-				status(key, &command, &cont);
+				status(key, &command, &cont, localReqNumber);
 			}
 			else {
 				TRACE(Trace::error, "unkown command\n");

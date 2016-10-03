@@ -16,7 +16,7 @@
 
 #include "Receiver.h"
 
-std::atomic<long> reqNumber;
+std::atomic<long> globalReqNumber;
 
 void Receiver::run(std::string label, long key)
 
@@ -28,7 +28,7 @@ void Receiver::run(std::string label, long key)
 
 	TRACE(Trace::much, __PRETTY_FUNCTION__);
 
-	reqNumber = 0;
+	globalReqNumber = 0;
 
 	try {
 		command.listen();
@@ -47,7 +47,7 @@ void Receiver::run(std::string label, long key)
 			break;
 		}
 
- 		subs.enqueue(&MessageProcessor::run, &mproc, "MessageProcessor", key, command);
+		subs.enqueue(&MessageProcessor::run, &mproc, "MessageProcessor", key, command);
 		mproc.termcond.wait(lock);
 	}
 
