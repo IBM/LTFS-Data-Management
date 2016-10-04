@@ -27,7 +27,7 @@ void StatusCommand::doCommand(int argc, char **argv)
 		connect();
 	}
 	catch (...) {
-		MSG(LTFSDMC0031I);
+		MSG(LTFSDMC0026E);
 		return;
 	}
 

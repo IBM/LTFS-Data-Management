@@ -59,7 +59,7 @@ void LTFSDmCommServer::listen()
 		throw(LTFSDMErr::LTFSDM_COMM_ERROR);
 	}
 
-	if (::listen(socRefFd, 5) == -1) {
+	if (::listen(socRefFd, SOMAXCONN) == -1) {
 		TRACE(Trace::error, errno);
 		::close(socRefFd);
 		socRefFd = Const::UNSET;
