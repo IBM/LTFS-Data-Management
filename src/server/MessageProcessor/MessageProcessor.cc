@@ -200,11 +200,12 @@ void MessageProcessor::status(long key, LTFSDmCommServer *command, bool *cont, l
 void MessageProcessor::run(std::string label, long key, LTFSDmCommServer command)
 
 {
-	TRACE(Trace::much, __PRETTY_FUNCTION__);
 	std::unique_lock<std::mutex> lock(termmtx);
 	bool cont = true;
 	bool firstTime = true;
 	long localReqNumber = Const::UNSET;
+
+	TRACE(Trace::much, __PRETTY_FUNCTION__);
 
 	while (cont == true &&  terminate == false) {
 
@@ -213,8 +214,8 @@ void MessageProcessor::run(std::string label, long key, LTFSDmCommServer command
 		}
 		catch(...) {
 			MSG(LTFSDMS0006E);
+			lock.unlock();
 			termcond.notify_one();
-			termmtx.unlock();
 			break;
 		}
 
@@ -226,13 +227,13 @@ void MessageProcessor::run(std::string label, long key, LTFSDmCommServer command
 		else if ( command.has_stoprequest() ) {
 			stop(key, &command, &cont, localReqNumber);
 			terminate = true;
+			lock.unlock();
 			termcond.notify_one();
-			termmtx.unlock();
 		}
 		else {
 			if ( firstTime ) {
+				lock.unlock();
 				termcond.notify_one();
-				termmtx.unlock();
 				firstTime = false;
 			}
 			if ( command.has_migrequest() ) {
