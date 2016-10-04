@@ -76,7 +76,7 @@ void OpenLTFSCommand::getRequestNumber()
 		commCommand.recv();
 	}
 	catch(...) {
-		MSG(LTFSDMC0027E);
+		MSG(LTFSDMC0028E);
 		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
 	}
 

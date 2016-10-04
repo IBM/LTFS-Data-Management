@@ -176,12 +176,17 @@ void MessageProcessor::status(long key, LTFSDmCommServer *command, bool *cont, l
 	LTFSDmProtocol::LTFSDmStatusResp *statusresp = command->mutable_statusresp();
 
 	statusresp->set_success(true);
-	// for testing
-    //int duration = random() % 20;
-    //sleep(duration);
-	// if ( localReqNumber % 4 == 0 )
-	//sleep(20);
-	//statusresp->set_pid(localReqNumber);
+
+	//for testing
+
+    // int duration = random() % 20;
+    // sleep(duration);
+	// statusresp->set_pid(duration);
+
+	// if ( localReqNumber % 10 == 0 )
+	// sleep(20);
+	// statusresp->set_pid(localReqNumber);
+
 	statusresp->set_pid(getpid());
 
 	try {
@@ -199,14 +204,17 @@ void MessageProcessor::run(std::string label, long key, LTFSDmCommServer command
 	std::unique_lock<std::mutex> lock(termmtx);
 	bool cont = true;
 	bool firstTime = true;
-	long localReqNumber;
+	long localReqNumber = Const::UNSET;
 
 	while (cont == true &&  terminate == false) {
+
 		try {
 			command.recv();
 		}
 		catch(...) {
 			MSG(LTFSDMS0006E);
+			termcond.notify_one();
+			termmtx.unlock();
 			break;
 		}
 

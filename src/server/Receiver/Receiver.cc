@@ -47,8 +47,15 @@ void Receiver::run(std::string label, long key)
 			break;
 		}
 
-		subs.enqueue(&MessageProcessor::run, &mproc, "MessageProcessor", key, command);
-		mproc.termcond.wait(lock);
+		try {
+			subs.enqueue(&MessageProcessor::run, &mproc, "MessageProcessor", key, command);
+		}
+		catch(...) {
+			MSG(LTFSDMS0010E);
+			continue;
+		}
+
+		mproc.termcond.wait_for(lock, std::chrono::seconds(30));
 	}
 
 	command.closeRef();

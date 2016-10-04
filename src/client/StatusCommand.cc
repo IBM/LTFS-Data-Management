@@ -49,7 +49,7 @@ void StatusCommand::doCommand(int argc, char **argv)
 		commCommand.recv();
 	}
 	catch(...) {
-		MSG(LTFSDMC0027E);
+		MSG(LTFSDMC0028E);
 		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
 	}
 

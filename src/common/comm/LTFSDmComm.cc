@@ -72,7 +72,6 @@ void LTFSDmCommServer::accept()
 {
 	if ( (socAccFd = ::accept(socRefFd, NULL, NULL)) == -1) {
 		TRACE(Trace::error, errno);
-		::close(socRefFd);
 		socRefFd = Const::UNSET;
 		throw(LTFSDMErr::LTFSDM_COMM_ERROR);
 	}
