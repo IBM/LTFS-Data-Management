@@ -21,12 +21,14 @@ message LTFSDmMigRequest {
 		MIGRATED = 1;
 	}
 	required State state = 4;
+	required bool directory = 5;
+}
 
+message LTFSDmMigRequestObj {
 	message FileName {
 		required string filename = 1;
 	}
-
-	repeated FileName filenames = 5;
+	repeated FileName filenames = 1;
 }
 
 message LTFSDmMigRequestResp {
@@ -87,13 +89,13 @@ message Command {
 	oneof commands {
 		LTFSDmReqNumber reqnum = 1;
 		LTFSDmReqNumberResp reqnumresp = 2;
-		LTFSDmMigRequest migrequest = 3;
-		LTFSDmMigRequestResp migrequestresp = 4;
-		LTFSDmSelRecRequest selrecrequest = 5;
-		LTFSDmTransRecRequest transrecrequest = 6;
-		LTFSDmStopRequest stoprequest = 7;
-		LTFSDmStopResp stopresp = 8;
-		LTFSDmStatusRequest statusrequest = 9;
-		LTFSDmStatusResp statusresp = 10;
+		LTFSDmStopRequest stoprequest = 3;
+		LTFSDmStopResp stopresp = 4;
+		LTFSDmStatusRequest statusrequest = 5;
+		LTFSDmStatusResp statusresp = 6;
+		LTFSDmMigRequest migrequest = 7;
+		LTFSDmMigRequestObj migrequestobj = 8;
+		LTFSDmMigRequestResp migrequestresp = 9;
+		LTFSDmSelRecRequest selrecrequest = 10;
 	}
 }

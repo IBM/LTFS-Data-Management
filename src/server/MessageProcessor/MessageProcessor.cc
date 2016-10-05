@@ -44,10 +44,12 @@ void MessageProcessor::migrationMessage(long key, LTFSDmCommServer *command, boo
 			TRACE(Trace::little, "unkown target state\n");
 	}
 
+	/*
 	for (int j = 0; j < migreq.filenames_size(); j++) {
 		const LTFSDmProtocol::LTFSDmMigRequest::FileName& filename = migreq.filenames(j);
 		TRACE(Trace::little, filename.filename().c_str());
 	}
+	*/
 
 	// RESPONSE
 

@@ -50,11 +50,14 @@ void MigrationCommand::doCommand(int argc, char **argv)
 	TRACE(Trace::little, optind);
 
 	TRACE(Trace::little, waitForCompletion);
-	TRACE(Trace::little, preMigrate);
-	TRACE(Trace::little, requestNumber);
-	TRACE(Trace::little, collocationFactor);
+
+	// key to backend
+
+	TRACE(Trace::little, preMigrate);         // to backend
+	TRACE(Trace::little, requestNumber);      // to backend
+	TRACE(Trace::little, collocationFactor);  // to backend
 	TRACE(Trace::little, fileList);
-	TRACE(Trace::little, directoryName);
+	TRACE(Trace::little, directoryName);      // to backend
 
 	return;
 

@@ -6,6 +6,7 @@
 
 #include <string>
 #include <sstream>
+#include <fstream>
 #include <atomic>
 
 #include "src/common/const/Const.h"
@@ -25,25 +26,69 @@ int main(int argc, char *argv[]) {
 		exit(-1);
 	}
 
-	for (int i=0; i<3; i++) {
-		printf("i: %d\n", i);
+	/* COMMAND WILL BE MIGRATION */
+	LTFSDmProtocol::LTFSDmMigRequest *migreq = command.mutable_migrequest();
+	migreq->set_key(1234);
+	migreq->set_reqnumber(4321);
+	migreq->set_pid(getpid());
+	migreq->set_state(LTFSDmProtocol::LTFSDmMigRequest::MIGRATED);
+	migreq->set_directory(false);
 
-		/* COMMAND WILL BE MIGRATION */
-		LTFSDmProtocol::LTFSDmMigRequest *migreq = command.mutable_migrequest();
-		migreq->set_key(1234);
-		migreq->set_reqnumber(4321);
-		migreq->set_pid(getpid());
-		migreq->set_state(LTFSDmProtocol::LTFSDmMigRequest::MIGRATED);
+	printf("send:\n");
+
+	try {
+		command.send();
+	}
+	catch(...) {
+		printf("send error\n");
+		exit(-1);
+	}
+
+	printf("waiting for an answer\n");
+
+	try {
+		command.recv();
+	}
+	catch(...) {
+		printf("receive error\n");
+		exit(-1);
+	}
+
+	const LTFSDmProtocol::LTFSDmMigRequestResp migreqresp = command.migrequestresp();
+
+	if( migreqresp.success() == true ) {
+		printf("sending success, reqNumber: %llu\n", (unsigned long long) migreqresp.reqnumber());
+		if ( getpid() != migreqresp.pid() )
+			printf("WRONG RESPONSE -- WRONG RESPONSE -- WRONG RESPONSE -- WRONG RESPONSE\n");
+	}
+	else {
+		printf("error sending request\n");
+	}
 
 
-		for ( int i=1; i<5; i++ ) {
-			LTFSDmProtocol::LTFSDmMigRequest::FileName* filenames = migreq->add_filenames();
-			std::stringstream st;
-			st << "file" << random();
-			filenames->set_filename(st.str());
+	std::ifstream filelist(argv[1]);
+	std::string line;
+
+	LTFSDmProtocol::LTFSDmMigRequestObj *migreqobj = command.mutable_migrequestobj();
+
+	bool cont = true;
+
+	int i;
+
+	while (cont) {
+		LTFSDmProtocol::LTFSDmMigRequestObj::FileName* filenames; // = migreqobj->add_filenames();
+		for ( i = 0; (i < 7) && ((std::getline(filelist, line))); i++ ) {
+			filenames = migreqobj->add_filenames();
+			filenames->set_filename(line);
+			printf("add: %s\n", line.c_str());
 		}
 
-		printf("send:\n");
+		if ( i < 7 ) {
+			cont = false;
+			filenames = migreqobj->add_filenames();
+			filenames->set_filename(""); //end
+			printf("add: END\n");
+		}
 
 		try {
 			command.send();
@@ -52,8 +97,6 @@ int main(int argc, char *argv[]) {
 			printf("send error\n");
 			exit(-1);
 		}
-
-		printf("waiting for an answer\n");
 
 		try {
 			command.recv();
@@ -70,10 +113,13 @@ int main(int argc, char *argv[]) {
 			if ( getpid() != migreqresp.pid() )
 				printf("WRONG RESPONSE -- WRONG RESPONSE -- WRONG RESPONSE -- WRONG RESPONSE\n");
 		}
-		else {
+		else	 {
 			printf("error sending request\n");
 		}
-	}
+	} // end con
+
+	filelist.close();
+
 	google::protobuf::ShutdownProtobufLibrary();
 
 	return 0;
