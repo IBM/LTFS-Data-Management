@@ -28,9 +28,9 @@ int main(int argc, char **argv)
 
 	opterr = 0;
 
-	while (( opt = getopt(argc, argv, "b")) != -1 ) {
+	while (( opt = getopt(argc, argv, "f")) != -1 ) {
 		switch( opt ) {
-			case 'b':
+			case 'f':
 				detach = false;
 				break;
 			default:
