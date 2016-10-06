@@ -17,6 +17,44 @@
 
 int main(int argc, char *argv[]) {
 	LTFSDmCommClient command;
+	bool flist = false;
+	bool dname = false;
+	std::string fileList;
+	std::string dirName;
+	int opt;
+	std::stringstream parmList;
+
+	opterr = 0;
+
+	while (( opt = getopt(argc, argv, "f:d:")) != -1 ) {
+		switch( opt ) {
+			case 'f':
+				flist = true;
+				fileList = std::string(optarg);
+				break;
+			case 'd':
+				dname = true;
+				dirName = std::string(optarg);
+			default:
+				std::cout << "usage: "<< argv[0] << "file ...|-f <file list>|-d <dir name>" << std::endl;
+				return -1;
+		}
+	}
+
+	if(flist && dname) {
+		std::cout << "usage: "<< argv[0] << "file ...|-f <file list>|-d <dir name>" << std::endl;
+		return -1;
+	}
+
+	if ( !flist && !dname ) {
+		for ( int i=1; i<argc; i++ ) {
+			parmList << argv[i] << std::endl;
+			std::cout << "adding: " << argv[i] << std::endl;
+		}
+	}
+	else if ( dname ) {
+		parmList << dirName << std::endl;
+	}
 
 	srandom(time(NULL));
 
@@ -66,8 +104,18 @@ int main(int argc, char *argv[]) {
 		printf("error sending request\n");
 	}
 
+	std::istream *input;
+	std::ifstream filelist;
 
-	std::ifstream filelist(argv[1]);
+	if ( flist ) {
+		filelist.open(fileList);
+		input =  dynamic_cast<std::istream*>(&filelist);
+	}
+	else {
+		input = dynamic_cast<std::istream*>(&parmList);
+	}
+
+	//	std::ifstream filelist(argv[1]);
 	std::string line;
 
 	bool cont = true;
@@ -77,7 +125,7 @@ int main(int argc, char *argv[]) {
 	while (cont) {
 		LTFSDmProtocol::LTFSDmSendObjects *sendobjects = command.mutable_sendobjects();
 		LTFSDmProtocol::LTFSDmSendObjects::FileName* filenames;
-		for ( i = 0; (i < 7) && ((std::getline(filelist, line))); i++ ) {
+		for ( i = 0; (i < 7) && ((std::getline(*input, line))); i++ ) {
 			filenames = sendobjects->add_filenames();
 			filenames->set_filename(line);
 			printf("add: %s\n", line.c_str());
@@ -123,7 +171,8 @@ int main(int argc, char *argv[]) {
 		}
 	} // end con
 
-	filelist.close();
+	if ( flist )
+		filelist.close();
 
 	google::protobuf::ShutdownProtobufLibrary();
 
