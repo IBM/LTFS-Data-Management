@@ -1,13 +1,13 @@
+#include <libgen.h>
+
 #include <string>
 #include <fstream>
 #include <iostream>
 #include <vector>
 
-using namespace std;
-
 typedef struct {
-	string msgname;
-	string msgtxt;
+	std::string msgname;
+	std::string msgtxt;
 } message_t;
 
 const std::string IDENTIFIER = "LTFSDM";
@@ -15,16 +15,16 @@ const std::string IDENTIFIER = "LTFSDM";
 int main(int argc, char **argv)
 
 {
-	string first;
-	string second;
-	string line;
-	vector<message_t> messages;
-	vector<message_t>::iterator it;
-	ifstream infile;
-	ofstream outfile;
+	std::string first;
+	std::string second;
+	std::string line;
+	std::vector<message_t> messages;
+	std::vector<message_t>::iterator it;
+	std::ifstream infile;
+	std::ofstream outfile;
 
 	if ( argc != 3 ) {
-		cout << "usage: " << argv[0] << "< message text file name> <compiled message header>" << endl;
+		std::cout << "usage: " << argv[0] << " <message text file name> <compiled message header>" << std::endl;
 		return -1;
 	}
 
@@ -32,15 +32,19 @@ int main(int argc, char **argv)
 		infile.open(argv[1]);
 	}
 	catch(...) {
-		cout << "unable to open input file " << argv[1] << "." << endl;
+		std::cout << "unable to open input file " << argv[1] << "." << std::endl;
 	}
 
 	try {
 		outfile.open(argv[2]);
 	}
 	catch(...) {
-		cout << "unable to open outout file " << argv[2] << "." << endl;
+		std::cout << "unable to open outout file " << argv[2] << "." << std::endl;
 	}
+
+	std::string upperName = std::string(basename(argv[2]));
+	std::transform(upperName.begin(), upperName.end(), upperName.begin(), toupper);
+	std::replace(upperName.begin(), upperName.end(), '.', '_');
 
 	while (std::getline(infile, line))
 	{
@@ -53,20 +57,20 @@ int main(int argc, char **argv)
 		// if line starts with '"' append the message
 		else if ( line[0] == '"' ) {
 			messages.back().msgtxt += '\n';
-			messages.back().msgtxt += "                      ";
-			messages.back().msgtxt += string("+std::string(") + line + ")";
+			messages.back().msgtxt += "                       ";
+			messages.back().msgtxt += std::string("+std::string(") + line + ")";
 		}
 		// new message
 		else {
 			if ( line.compare(0, IDENTIFIER.size(), IDENTIFIER) ) {
-				cout << "Line:" << endl;
-				cout << ">>" << line << "<< " << endl;
-				cout << "does not look correctly formatted." << endl;
-				cout << "Message compilation stopped." << endl;
+				std::cout << "Line:" << std::endl;
+				std::cout << ">>" << line << "<< " << std::endl;
+				std::cout << "does not look correctly formatted." << std::endl;
+				std::cout << "Message compilation stopped." << std::endl;
 				return -1;
 			}
 			first = line.substr(0, line.find(' '));
-			second = line.substr(line.find('"'), string::npos - 1);
+			second = line.substr(line.find('"'), std::string::npos - 1);
 			messages.push_back((message_t) {first, "std::string(" + second + ")"});
 		}
 	}
@@ -74,43 +78,43 @@ int main(int argc, char **argv)
 	infile.close();
 
 	// create the header file
-	outfile << "#ifndef _MESSAGE_DEFINITION_H" << endl;
-	outfile << "#define _MESSAGE_DEFINITION_H" << endl;
-	outfile << endl;
-	outfile << "typedef std::string message_t[];" << endl;
-	outfile << "typedef std::string msgname_t[];" << endl;
-	outfile << endl;
-	outfile << "enum msg_id {" << endl;
+	outfile << "#ifndef _" << upperName << std::endl;
+	outfile << "#define _" << upperName << std::endl;
+	outfile << std::endl;
+	outfile << "typedef std::string message_t[];" << std::endl;
+	outfile << "typedef std::string msgname_t[];" << std::endl;
+	outfile << std::endl;
+	outfile << "enum msg_id {" << std::endl;
 	for (it = messages.begin(); it != messages.end(); ++it) {
 		if ( it + 1 != messages.end() )
-			outfile << "    " << it->msgname << "," << endl;
+			outfile << "    " << it->msgname << "," << std::endl;
 		else
-			outfile << "    " << it->msgname<< endl;
+			outfile << "    " << it->msgname<< std::endl;
 	}
-	outfile << "};" << endl;
-	outfile << endl;
+	outfile << "};" << std::endl;
+	outfile << std::endl;
 
-	outfile << "const message_t messages = {" << endl;
+	outfile << "const message_t messages = {" << std::endl;
 	for (it = messages.begin(); it != messages.end(); ++it) {
 		if ( it + 1 != messages.end() )
-			outfile << "    " << "/* " << it->msgname << " */  " << it->msgtxt << "," << endl;
+			outfile << "    " << "/* " << it->msgname << " */  " << it->msgtxt << "," << std::endl;
 		else
-			outfile << "    " << "/* " << it->msgname << " */  " << it->msgtxt << endl;
+			outfile << "    " << "/* " << it->msgname << " */  " << it->msgtxt << std::endl;
 	}
-	outfile << "};" << endl;
-	outfile << endl;
+	outfile << "};" << std::endl;
+	outfile << std::endl;
 
-	outfile << "const msgname_t msgname = {" << endl;
+	outfile << "const msgname_t msgname = {" << std::endl;
 	for (it = messages.begin(); it != messages.end(); ++it) {
 		if ( it + 1 != messages.end() )
-			outfile << "    " << "\"" << it->msgname << "\"," << endl;
+			outfile << "    " << "\"" << it->msgname << "\"," << std::endl;
 		else
-			outfile << "    " << "\"" << it->msgname << "\"" << endl;
+			outfile << "    " << "\"" << it->msgname << "\"" << std::endl;
 	}
-	outfile << "};" << endl;
-	outfile << endl;
+	outfile << "};" << std::endl;
+	outfile << std::endl;
 
-	outfile << "#endif /* _MESSAGE_DEFINITION_H */" << endl;
+	outfile << "#endif /* _" << upperName << " */" << std::endl;
 
 	outfile.close();
 

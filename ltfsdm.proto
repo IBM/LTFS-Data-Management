@@ -53,19 +53,6 @@ message LTFSDmSelRecRequest {
 	repeated FileName filenames = 4;
 }
 
-message LTFSDmTransRecRequest {
-	required uint64 key = 1;
-	required uint64 reqNumber = 2;
-	enum State {
-		PREMIGRATED = 0;
-		MIGRATED = 1;
-	}
-	required State state = 3;
-	required uint64 fsid = 4;
-	required uint64 igen = 5;
-	required uint64 inum = 6;
-}
-
 message LTFSDmStopRequest {
 	required uint64 key = 1;
 	required int64 reqNumber = 2;
