@@ -20,13 +20,13 @@ message LTFSDmSendObjects {
 
 message LTFSDmSendObjectsResp {
 	required bool success = 1;
-	required uint64 reqNumber = 2;
+	required int64 reqNumber = 2;
 	required int64 pid = 3;
 }
 
 message LTFSDmMigRequest {
 	required uint64 key = 1;
-	required uint64 reqNumber = 2;
+	required int64 reqNumber = 2;
 	required uint64 pid = 3;
 
 	enum State {
@@ -39,13 +39,13 @@ message LTFSDmMigRequest {
 
 message LTFSDmMigRequestResp {
 	required bool success = 1;
-	required uint64 reqNumber = 2;
+	required int64 reqNumber = 2;
 	required int64 pid = 3;
 }
 
 message LTFSDmSelRecRequest {
 	required uint64 key = 1;
-	required uint64 reqNumber = 2;
+	required int64 reqNumber = 2;
 	enum State {
 		PREMIGRATED = 0;
 		MIGRATED = 1;

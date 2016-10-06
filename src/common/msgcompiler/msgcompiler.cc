@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
+#include <algorithm>
 
 typedef struct {
 	std::string msgname;

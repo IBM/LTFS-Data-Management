@@ -205,7 +205,7 @@ void OpenLTFSCommand::sendObjects(std::stringstream *parmList)
 				TRACE(Trace::error, sendobjresp.pid());
 				throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
 			}
-			if ( requestNumber !=  sendobjresp.reqnumber() ) {
+			if ( requestNumber != sendobjresp.reqnumber() ) {
 				MSG(LTFSDMC0037E);
 				TRACE(Trace::error, requestNumber);
 				TRACE(Trace::error, sendobjresp.reqnumber());
