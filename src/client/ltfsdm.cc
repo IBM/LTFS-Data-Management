@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
 	traceObject.setTrclevel(Trace::much);
 
 	if ( argc < 2 ) {
-		openLTFSCommand = new HelpCommand();
+		openLTFSCommand = dynamic_cast<OpenLTFSCommand*>(new HelpCommand());
 		openLTFSCommand->doCommand(argc, argv);
 		rc = LTFSDMErr::LTFSDM_GENERAL_ERROR;
 		goto cleanup;
@@ -50,22 +50,22 @@ int main(int argc, char *argv[])
 	TRACE(Trace::little, command.c_str());
 
  	if  ( StartCommand().compare(command) ) {
-		openLTFSCommand = new StartCommand();
+		openLTFSCommand = dynamic_cast<OpenLTFSCommand*>(new StartCommand());
 	}
 	else if ( StopCommand().compare(command) ) {
-		openLTFSCommand = new StopCommand();
+		openLTFSCommand = dynamic_cast<OpenLTFSCommand*>(new StopCommand());
 	}
 	else if ( MigrationCommand().compare(command) ) {
-		openLTFSCommand = new MigrationCommand();
+		openLTFSCommand = dynamic_cast<OpenLTFSCommand*>(new MigrationCommand());
 	}
 	else if ( RecallCommand().compare(command) ) {
-		openLTFSCommand = new RecallCommand();
+		openLTFSCommand = dynamic_cast<OpenLTFSCommand*>(new RecallCommand());
 	}
 	else if ( HelpCommand().compare(command) ) {
-		openLTFSCommand = new HelpCommand();
+		openLTFSCommand = dynamic_cast<OpenLTFSCommand*>(new HelpCommand());
 	}
 	else if ( StatusCommand().compare(command) ) {
-		openLTFSCommand = new StatusCommand();
+		openLTFSCommand =dynamic_cast<OpenLTFSCommand*>(new StatusCommand());
 	}
 	else if ( InfoCommand().compare(command) ) {
 		if ( argc < 3 ) {
@@ -79,21 +79,21 @@ int main(int argc, char *argv[])
 		command = std::string(argv[1]);
 		TRACE(Trace::little, command.c_str());
 		if      ( InfoRequestsCommand().compare(command) ) {
-			openLTFSCommand = new InfoRequestsCommand();
+			openLTFSCommand = dynamic_cast<OpenLTFSCommand*>(new InfoRequestsCommand());
 		}
 		else if ( InfoFilesCommand().compare(command) ) {
-			openLTFSCommand = new InfoFilesCommand();
+			openLTFSCommand = dynamic_cast<OpenLTFSCommand*>(new InfoFilesCommand());
 		}
 		else {
 			MSG(LTFSDMC0012E, command.c_str());
-			openLTFSCommand = new HelpCommand();
+			openLTFSCommand = dynamic_cast<OpenLTFSCommand*>(new HelpCommand());
 			rc = LTFSDMErr::LTFSDM_GENERAL_ERROR;
 			goto cleanup;
 		}
 	}
 	else {
 		MSG(LTFSDMC0005E, command.c_str());
-		openLTFSCommand = new HelpCommand();
+		openLTFSCommand = dynamic_cast<OpenLTFSCommand*>(new HelpCommand());
 		rc = LTFSDMErr::LTFSDM_GENERAL_ERROR;
 		goto cleanup;
 	}
