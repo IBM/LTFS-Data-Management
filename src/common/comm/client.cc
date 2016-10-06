@@ -5,6 +5,7 @@
 #include <unistd.h>
 
 #include <string>
+#include <iostream>
 #include <sstream>
 #include <fstream>
 #include <atomic>
@@ -69,14 +70,13 @@ int main(int argc, char *argv[]) {
 	std::ifstream filelist(argv[1]);
 	std::string line;
 
-	LTFSDmProtocol::LTFSDmMigRequestObj *migreqobj = command.mutable_migrequestobj();
-
 	bool cont = true;
 
 	int i;
 
 	while (cont) {
-		LTFSDmProtocol::LTFSDmMigRequestObj::FileName* filenames; // = migreqobj->add_filenames();
+		LTFSDmProtocol::LTFSDmMigRequestObj *migreqobj = command.mutable_migrequestobj();
+		LTFSDmProtocol::LTFSDmMigRequestObj::FileName* filenames;
 		for ( i = 0; (i < 7) && ((std::getline(filelist, line))); i++ ) {
 			filenames = migreqobj->add_filenames();
 			filenames->set_filename(line);
@@ -104,6 +104,11 @@ int main(int argc, char *argv[]) {
 		catch(...) {
 			printf("receive error\n");
 			exit(-1);
+		}
+
+		if ( ! command.has_migrequestresp() ) {
+			std::cout << "wrong message sent from the server." << std::endl;
+			return 1;
 		}
 
 		const LTFSDmProtocol::LTFSDmMigRequestResp migreqresp = command.migrequestresp();

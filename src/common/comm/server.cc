@@ -5,6 +5,7 @@
 #include <stdlib.h>
 
 #include <string>
+#include <iostream>
 #include <atomic>
 
 #include "src/common/const/Const.h"
@@ -23,15 +24,14 @@ int main(int argc, char *argv[]) {
 		exit(-1);
 	}
 
-	try {
-		command.accept();
-	}
-	catch(...) {
-		exit(-1);
-	}
-
 	while (1) {
-		// command.ParseFromFileDescriptor(cl);
+		try {
+			command.accept();
+		}
+		catch(...) {
+			exit(-1);
+		}
+
 		try {
 			command.recv();
 		}
@@ -89,7 +89,14 @@ int main(int argc, char *argv[]) {
 					exit(-1);
 				}
 
+				if ( ! command.has_migrequestobj() ) {
+					std::cout << "wrong message sent from the client." << std::endl;
+					return 1;
+				}
+
 				const LTFSDmProtocol::LTFSDmMigRequestObj migreqobj = command.migrequestobj();
+
+				//std::cout <<  migreqobj.filenames_size() << "new list of %d number of objects received." << std::endl;
 
 				for (int j = 0; j < migreqobj.filenames_size(); j++) {
 					const LTFSDmProtocol::LTFSDmMigRequestObj::FileName& filename = migreqobj.filenames(j);
@@ -151,9 +158,7 @@ int main(int argc, char *argv[]) {
 			printf("unkown command\n");
 
 		printf("============================================================\n");
-
 	}
-
 
 	return 0;
 }
