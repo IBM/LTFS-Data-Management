@@ -89,17 +89,17 @@ int main(int argc, char *argv[]) {
 					exit(-1);
 				}
 
-				if ( ! command.has_migrequestobj() ) {
+				if ( ! command.has_sendobjects() ) {
 					std::cout << "wrong message sent from the client." << std::endl;
 					return 1;
 				}
 
-				const LTFSDmProtocol::LTFSDmMigRequestObj migreqobj = command.migrequestobj();
+				const LTFSDmProtocol::LTFSDmSendObjects sendobjects = command.sendobjects();
 
-				//std::cout <<  migreqobj.filenames_size() << "new list of %d number of objects received." << std::endl;
+				//std::cout <<  sendobjects.filenames_size() << "new list of %d number of objects received." << std::endl;
 
-				for (int j = 0; j < migreqobj.filenames_size(); j++) {
-					const LTFSDmProtocol::LTFSDmMigRequestObj::FileName& filename = migreqobj.filenames(j);
+				for (int j = 0; j < sendobjects.filenames_size(); j++) {
+					const LTFSDmProtocol::LTFSDmSendObjects::FileName& filename = sendobjects.filenames(j);
 					if ( filename.filename().compare("") != 0 ) {
 						printf("file name: %s\n", filename.filename().c_str());
 					}

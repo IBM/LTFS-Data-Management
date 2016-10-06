@@ -75,17 +75,17 @@ int main(int argc, char *argv[]) {
 	int i;
 
 	while (cont) {
-		LTFSDmProtocol::LTFSDmMigRequestObj *migreqobj = command.mutable_migrequestobj();
-		LTFSDmProtocol::LTFSDmMigRequestObj::FileName* filenames;
+		LTFSDmProtocol::LTFSDmSendObjects *sendobjects = command.mutable_sendobjects();
+		LTFSDmProtocol::LTFSDmSendObjects::FileName* filenames;
 		for ( i = 0; (i < 7) && ((std::getline(filelist, line))); i++ ) {
-			filenames = migreqobj->add_filenames();
+			filenames = sendobjects->add_filenames();
 			filenames->set_filename(line);
 			printf("add: %s\n", line.c_str());
 		}
 
 		if ( i < 7 ) {
 			cont = false;
-			filenames = migreqobj->add_filenames();
+			filenames = sendobjects->add_filenames();
 			filenames->set_filename(""); //end
 			printf("add: END\n");
 		}

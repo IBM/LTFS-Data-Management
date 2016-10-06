@@ -24,7 +24,7 @@ message LTFSDmMigRequest {
 	required bool directory = 5;
 }
 
-message LTFSDmMigRequestObj {
+message LTFSDmSendObjects {
 	message FileName {
 		required string filename = 1;
 	}
@@ -93,8 +93,8 @@ message Command {
 		LTFSDmStopResp stopresp = 4;
 		LTFSDmStatusRequest statusrequest = 5;
 		LTFSDmStatusResp statusresp = 6;
-		LTFSDmMigRequest migrequest = 7;
-		LTFSDmMigRequestObj migrequestobj = 8;
+		LTFSDmSendObjects sendobjects = 7;
+		LTFSDmMigRequest migrequest = 8;
 		LTFSDmMigRequestResp migrequestresp = 9;
 		LTFSDmSelRecRequest selrecrequest = 10;
 	}
