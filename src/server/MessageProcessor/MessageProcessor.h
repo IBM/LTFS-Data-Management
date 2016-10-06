@@ -5,11 +5,11 @@ class MessageProcessor
 
 {
 private:
-	void migrationMessage(long key, LTFSDmCommServer *command, bool *cont, long localReqNumber);
-	void selRecallMessage(long key, LTFSDmCommServer *command, bool *cont, long localReqNumber);
-	void requestNumber(long key, LTFSDmCommServer *command, bool *cont, long *localReqNumber);
-	void stop(long key, LTFSDmCommServer *command, bool *cont, long localReqNumber);
-	void status(long key, LTFSDmCommServer *command, bool *cont, long localReqNumber);
+	void migrationMessage(long key, LTFSDmCommServer *command, long localReqNumber);
+	void selRecallMessage(long key, LTFSDmCommServer *command, long localReqNumber);
+	void requestNumber(long key, LTFSDmCommServer *command, long *localReqNumber);
+	void stop(long key, LTFSDmCommServer *command, long localReqNumber);
+	void status(long key, LTFSDmCommServer *command, long localReqNumber);
 public:
 	std::mutex termmtx;
 	std::condition_variable termcond;

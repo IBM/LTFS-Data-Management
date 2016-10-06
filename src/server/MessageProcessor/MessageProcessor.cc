@@ -16,59 +16,96 @@
 #include "src/server/Receiver/Receiver.h"
 #include "MessageProcessor.h"
 
-void MessageProcessor::migrationMessage(long key, LTFSDmCommServer *command, bool *cont, long localReqNumber)
+void MessageProcessor::migrationMessage(long key, LTFSDmCommServer *command, long localReqNumber)
 
 {
-   	const LTFSDmProtocol::LTFSDmMigRequest migreq = command->migrequest();
 	unsigned long pid;
-	long keySent = 	migreq.key();
+	long requestNumber;
 
-	TRACE(Trace::little, keySent);
-
-	if ( key != keySent ) {
-		MSG(LTFSDMS0008E);
-		return;
-	}
-
-	TRACE(Trace::little, migreq.reqnumber());
+	std::cout << "Migration Request" << std::endl;
+	const LTFSDmProtocol::LTFSDmMigRequest migreq = command->migrequest();
+	std::cout << "key: " << migreq.key() << std::endl;
+	requestNumber = migreq.reqnumber();
+	std::cout << "reqNumber: " << requestNumber << std::endl;
 	pid = migreq.pid();
-	TRACE(Trace::little, pid);
+	std::cout << "client pid: " <<  pid << std::endl;
 	switch (migreq.state()) {
 		case LTFSDmProtocol::LTFSDmMigRequest::MIGRATED:
-			TRACE(Trace::little, "files to be migrated\n");
+			std::cout << "files to be migrated" << std::endl;
 			break;
 		case LTFSDmProtocol::LTFSDmMigRequest::PREMIGRATED:
-			TRACE(Trace::little, "files to be premigrated\n");
+			std::cout << "files to be premigrated" << std::endl;
 			break;
 		default:
-			TRACE(Trace::little, "unkown target state\n");
+			std::cout << "unkown target state" << std::endl;
 	}
-
-	/*
-	for (int j = 0; j < migreq.filenames_size(); j++) {
-		const LTFSDmProtocol::LTFSDmMigRequest::FileName& filename = migreq.filenames(j);
-		TRACE(Trace::little, filename.filename().c_str());
-	}
-	*/
 
 	// RESPONSE
 
 	LTFSDmProtocol::LTFSDmMigRequestResp *migreqresp = command->mutable_migrequestresp();
 
 	migreqresp->set_success(true);
-	migreqresp->set_reqnumber(time(NULL));
+	migreqresp->set_reqnumber(requestNumber);
 	migreqresp->set_pid(pid);
 
 	try {
 		command->send();
 	}
 	catch(...) {
-		MSG(LTFSDMS0007E);
-		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+		std::cout << "send error" << std::endl;
+		exit(-1);
+
+	}
+
+	bool cont = true;
+
+	while (cont) {
+		try {
+			command->recv();
+		}
+		catch(...) {
+			std::cout << "receive error" << std::endl;
+			exit(-1);
+		}
+
+		if ( ! command->has_sendobjects() ) {
+			std::cout << "wrong message sent from the client." << std::endl;
+			return;
+		}
+
+		const LTFSDmProtocol::LTFSDmSendObjects sendobjects = command->sendobjects();
+
+		for (int j = 0; j < sendobjects.filenames_size(); j++) {
+			const LTFSDmProtocol::LTFSDmSendObjects::FileName& filename = sendobjects.filenames(j);
+			if ( filename.filename().compare("") != 0 ) {
+				std::cout << "file name:" << filename.filename().c_str() << std::endl;
+			}
+			else {
+				cont = false;
+				std::cout << "END" << std::endl;
+			}
+		}
+
+		LTFSDmProtocol::LTFSDmSendObjectsResp *sendobjresp = command->mutable_sendobjectsresp();
+
+		sendobjresp->set_success(true);
+		sendobjresp->set_reqnumber(requestNumber);
+		sendobjresp->set_pid(pid);
+
+		try {
+			command->send();
+		}
+		catch(...) {
+			std::cout << "send error" << std::endl;
+			exit(-1);
+
+		}
+
+		std::cout << "==============================" << std::endl;
 	}
 }
 
-void  MessageProcessor::selRecallMessage(long key, LTFSDmCommServer *command, bool *cont, long localReqNumber)
+void  MessageProcessor::selRecallMessage(long key, LTFSDmCommServer *command, long localReqNumber)
 
 {
 	const LTFSDmProtocol::LTFSDmSelRecRequest selrecreq = command->selrecrequest();
@@ -99,7 +136,7 @@ void  MessageProcessor::selRecallMessage(long key, LTFSDmCommServer *command, bo
 	}
 }
 
-void MessageProcessor::requestNumber(long key, LTFSDmCommServer *command, bool *cont, long *localReqNumber)
+void MessageProcessor::requestNumber(long key, LTFSDmCommServer *command, long *localReqNumber)
 
 {
    	const LTFSDmProtocol::LTFSDmReqNumber reqnum = command->reqnum();
@@ -130,13 +167,11 @@ void MessageProcessor::requestNumber(long key, LTFSDmCommServer *command, bool *
 
 }
 
-void MessageProcessor::stop(long key, LTFSDmCommServer *command, bool *cont, long localReqNumber)
+void MessageProcessor::stop(long key, LTFSDmCommServer *command, long localReqNumber)
 
 {
    	const LTFSDmProtocol::LTFSDmStopRequest stopreq = command->stoprequest();
 	long keySent = stopreq.key();
-
-	*cont = false;
 
 	TRACE(Trace::little, keySent);
 
@@ -160,13 +195,11 @@ void MessageProcessor::stop(long key, LTFSDmCommServer *command, bool *cont, lon
 	command->closeRef();
 }
 
-void MessageProcessor::status(long key, LTFSDmCommServer *command, bool *cont, long localReqNumber)
+void MessageProcessor::status(long key, LTFSDmCommServer *command, long localReqNumber)
 
 {
    	const LTFSDmProtocol::LTFSDmStatusRequest statusreq = command->statusrequest();
 	long keySent = statusreq.key();
-
-	*cont = false;
 
 	TRACE(Trace::little, keySent);
 
@@ -203,14 +236,10 @@ void MessageProcessor::run(std::string label, long key, LTFSDmCommServer command
 
 {
 	std::unique_lock<std::mutex> lock(termmtx);
-	bool cont = true;
 	bool firstTime = true;
 	long localReqNumber = Const::UNSET;
 
-	TRACE(Trace::much, __PRETTY_FUNCTION__);
-
-	while (cont == true &&  terminate == false) {
-
+	while (true) {
 		try {
 			command.recv();
 		}
@@ -218,19 +247,20 @@ void MessageProcessor::run(std::string label, long key, LTFSDmCommServer command
 			MSG(LTFSDMS0006E);
 			lock.unlock();
 			termcond.notify_one();
-			break;
+			return;
 		}
 
 		TRACE(Trace::much, "new message received");
 
 		if ( command.has_reqnum() ) {
-			requestNumber(key, &command, &cont, &localReqNumber);
+			requestNumber(key, &command, &localReqNumber);
 		}
 		else if ( command.has_stoprequest() ) {
-			stop(key, &command, &cont, localReqNumber);
+			stop(key, &command, localReqNumber);
 			terminate = true;
 			lock.unlock();
 			termcond.notify_one();
+			break;
 		}
 		else {
 			if ( firstTime ) {
@@ -239,17 +269,18 @@ void MessageProcessor::run(std::string label, long key, LTFSDmCommServer command
 				firstTime = false;
 			}
 			if ( command.has_migrequest() ) {
-				migrationMessage(key, &command, &cont, localReqNumber);
+				migrationMessage(key, &command, localReqNumber);
 			}
 			else if ( command.has_selrecrequest() ) {
-				selRecallMessage(key, &command, &cont, localReqNumber);
+				selRecallMessage(key, &command, localReqNumber);
 			}
 			else if ( command.has_statusrequest() ) {
-				status(key, &command, &cont, localReqNumber);
+				status(key, &command, localReqNumber);
 			}
 			else {
 				TRACE(Trace::error, "unkown command\n");
 			}
+			break;
 		}
 	}
 	command.closeAcc();

@@ -11,6 +11,19 @@ message LTFSDmReqNumberResp {
 	required int64 reqNumber = 2;
 }
 
+message LTFSDmSendObjects {
+	message FileName {
+		required string filename = 1;
+	}
+	repeated FileName filenames = 1;
+}
+
+message LTFSDmSendObjectsResp {
+	required bool success = 1;
+	required uint64 reqNumber = 2;
+	required int64 pid = 3;
+}
+
 message LTFSDmMigRequest {
 	required uint64 key = 1;
 	required uint64 reqNumber = 2;
@@ -22,13 +35,6 @@ message LTFSDmMigRequest {
 	}
 	required State state = 4;
 	required bool directory = 5;
-}
-
-message LTFSDmSendObjects {
-	message FileName {
-		required string filename = 1;
-	}
-	repeated FileName filenames = 1;
 }
 
 message LTFSDmMigRequestResp {
@@ -81,8 +87,9 @@ message Command {
 		LTFSDmStatusRequest statusrequest = 5;
 		LTFSDmStatusResp statusresp = 6;
 		LTFSDmSendObjects sendobjects = 7;
-		LTFSDmMigRequest migrequest = 8;
-		LTFSDmMigRequestResp migrequestresp = 9;
-		LTFSDmSelRecRequest selrecrequest = 10;
+		LTFSDmSendObjectsResp sendobjectsresp = 8;
+		LTFSDmMigRequest migrequest = 9;
+		LTFSDmMigRequestResp migrequestresp = 10;
+		LTFSDmSelRecRequest selrecrequest = 11;
 	}
 }

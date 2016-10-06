@@ -36,8 +36,10 @@ public:
 
 	// non-virtual methods
 	void processOptions(int argc, char **argv);
+	void traceParms();
 	bool compare(std::string name) { return !command.compare(name); }
 	void connect();
+	void sendObjects(std::stringstream *parmList);
 };
 
 #endif /* _OPERATION_H */

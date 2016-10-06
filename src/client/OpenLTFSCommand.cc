@@ -57,6 +57,21 @@ void OpenLTFSCommand::processOptions(int argc, char **argv)
 	}
 }
 
+void OpenLTFSCommand::traceParms()
+
+{
+	TRACE(Trace::little, waitForCompletion);
+	TRACE(Trace::little, preMigrate);
+	TRACE(Trace::little, recToResident);
+	TRACE(Trace::little, requestNumber);
+	TRACE(Trace::little, collocationFactor);
+	TRACE(Trace::little, fileList);
+	TRACE(Trace::little, directoryName);
+	TRACE(Trace::little, command);
+	TRACE(Trace::little, optionStr);
+	TRACE(Trace::little, key);
+}
+
 void OpenLTFSCommand::getRequestNumber()
 
 {
@@ -124,4 +139,85 @@ void OpenLTFSCommand::connect()
 		getRequestNumber();
 
 	TRACE(Trace::little, requestNumber);
+}
+
+void OpenLTFSCommand::sendObjects(std::stringstream *parmList)
+
+{
+	std::istream *input;
+	std::ifstream filelist;
+	std::string line;
+	bool cont = true;
+	int i;
+
+	if ( fileList.compare("") ) {
+		filelist.open(fileList);
+		input =  dynamic_cast<std::istream*>(&filelist);
+	}
+	else {
+		input = dynamic_cast<std::istream*>(parmList);
+	}
+
+	while (cont) {
+		LTFSDmProtocol::LTFSDmSendObjects *sendobjects = commCommand.mutable_sendobjects();
+		LTFSDmProtocol::LTFSDmSendObjects::FileName* filenames;
+
+		for ( i = 0; (i < 7) && ((std::getline(*input, line))); i++ ) {
+			filenames = sendobjects->add_filenames();
+			filenames->set_filename(line);
+			TRACE(Trace::much, line);
+		}
+
+		if ( i < 7 ) {
+			cont = false;
+			filenames = sendobjects->add_filenames();
+			filenames->set_filename(""); //end
+			TRACE(Trace::much, "END");
+		}
+
+		try {
+			commCommand.send();
+		}
+		catch(...) {
+			MSG(LTFSDMC0027E);
+			throw LTFSDMErr::LTFSDM_GENERAL_ERROR;
+		}
+
+		try {
+			commCommand.recv();
+		}
+		catch(...) {
+			MSG(LTFSDMC0028E);
+			throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+		}
+
+		if ( ! commCommand.has_sendobjectsresp() ) {
+			MSG(LTFSDMC0039E);
+			throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+		}
+
+		const LTFSDmProtocol::LTFSDmSendObjectsResp sendobjresp = commCommand.sendobjectsresp();
+
+		if( sendobjresp.success() == true ) {
+			if ( getpid() != sendobjresp.pid() ) {
+				MSG(LTFSDMC0036E);
+				TRACE(Trace::error, getpid());
+				TRACE(Trace::error, sendobjresp.pid());
+				throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+			}
+			if ( requestNumber !=  sendobjresp.reqnumber() ) {
+				MSG(LTFSDMC0037E);
+				TRACE(Trace::error, requestNumber);
+				TRACE(Trace::error, sendobjresp.reqnumber());
+				throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+			}
+		}
+		else {
+			MSG(LTFSDMC0029E);
+			throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+		}
+	}
+
+	if ( fileList.compare("") )
+		filelist.close();
 }
