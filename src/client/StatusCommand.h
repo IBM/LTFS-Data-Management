@@ -7,6 +7,8 @@ class StatusCommand : public OpenLTFSCommand
 private:
 	std::stringstream serverPath;
 	void determineServerPath();
+	void checkOptions(int argc, char **argv) {}
+	void talkToBackend(std::stringstream *parmList) {}
 public:
     StatusCommand() : OpenLTFSCommand("status", "") {};
     ~StatusCommand() {};

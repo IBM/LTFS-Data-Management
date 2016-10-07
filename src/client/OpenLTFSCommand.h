@@ -29,6 +29,9 @@ protected:
 
 	void getRequestNumber();
 
+ 	virtual void checkOptions(int argc, char **argv) {}
+ 	virtual void talkToBackend(std::stringstream *parmList) {}
+
 public:
     virtual ~OpenLTFSCommand() {};
     virtual void printUsage() = 0;

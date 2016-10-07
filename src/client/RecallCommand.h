@@ -5,6 +5,8 @@ class RecallCommand : public OpenLTFSCommand
 
 {
 private:
+	void checkOptions(int argc, char **argv) {}
+	void talkToBackend(std::stringstream *parmList) {}
 public:
     RecallCommand() : OpenLTFSCommand("recall", ":+hwrn:f:R:") {};
     ~RecallCommand() {};

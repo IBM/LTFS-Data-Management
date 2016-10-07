@@ -1,5 +1,6 @@
 #include <unistd.h>
 #include <string>
+#include <sstream>
 
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
@@ -16,19 +17,10 @@ void MigrationCommand::printUsage()
 	INFO(LTFSDMC0001I);
 }
 
-void MigrationCommand::doCommand(int argc, char **argv)
+
+void MigrationCommand::checkOptions(int argc, char **argv)
+
 {
-	std::stringstream parmList;
-
-	if ( argc == 1 ) {
-		INFO(LTFSDMC0018E);
-		MSG(LTFSDMC0029E);
-		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
-
-	}
-
-	processOptions(argc, argv);
-
 	if ( fileList.compare("") && directoryName.compare("") ) {
 		INFO(LTFSDMC0015E);
 		MSG(LTFSDMC0029E);
@@ -50,20 +42,11 @@ void MigrationCommand::doCommand(int argc, char **argv)
 
 		}
 	}
+}
 
-	TRACE(Trace::little, argc);
-	TRACE(Trace::little, optind);
-	traceParms();
+void MigrationCommand::talkToBackend(std::stringstream *parmList)
 
-	if ( !fileList.compare("") && !directoryName.compare("") ) {
-		for ( int i=optind; i<argc; i++ ) {
-			parmList << argv[i] << std::endl;
-		}
-	}
-	else if ( directoryName.compare("") ) {
-		parmList << directoryName << std::endl;
-	}
-
+{
 	try {
 		connect();
 	}
@@ -125,5 +108,36 @@ void MigrationCommand::doCommand(int argc, char **argv)
 		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
 	}
 
-	sendObjects(&parmList);
+	sendObjects(parmList);
+}
+
+void MigrationCommand::doCommand(int argc, char **argv)
+{
+	std::stringstream parmList;
+
+	if ( argc == 1 ) {
+		INFO(LTFSDMC0018E);
+		MSG(LTFSDMC0029E);
+		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+
+	}
+
+	processOptions(argc, argv);
+
+	checkOptions(argc, argv);
+
+	TRACE(Trace::little, argc);
+	TRACE(Trace::little, optind);
+	traceParms();
+
+	if ( !fileList.compare("") && !directoryName.compare("") ) {
+		for ( int i=optind; i<argc; i++ ) {
+			parmList << argv[i] << std::endl;
+		}
+	}
+	else if ( directoryName.compare("") ) {
+		parmList << directoryName << std::endl;
+	}
+
+	talkToBackend(&parmList);
 }
