@@ -6,6 +6,7 @@
 #include <string.h>
 #include <libgen.h>
 #include <sys/types.h>
+#include <sys/time.h>
 #include <sys/syscall.h>
 #include <string>
 #include <iostream>
@@ -43,23 +44,26 @@ public:
 	void trace(const char *filename, int linenr, traceLevel tl, const char *varname, T s)
 
 	{
-		time_t current = time(NULL);
-		char curctime[25];
+		struct timeval curtime;
+		struct tm tmval;;
+		char curctime[26];
 
 		if ( tl <= getTrclevel()) {
-			ctime_r(&current, curctime);
-			curctime[strlen(curctime) - 1] = 0;
+			gettimeofday(&curtime, NULL);
+			localtime_r(&(curtime.tv_sec), &tmval);
+			strftime(curctime, 26, "%Y-%m-%dT%H:%M:%S", &tmval);
 
 			try {
 				mtx.lock();
-				tracefile << curctime << ":";
+				tracefile << curctime << ".";
+				tracefile << std::setfill('0') << std::setw(6) << curtime.tv_usec << ":[";
 				tracefile << std::setfill('0') << std::setw(6) << getpid() << ":";
 #ifdef __linux__
-				tracefile << std::setfill('0') << std::setw(6) << syscall(SYS_gettid) << ":";
+				tracefile << std::setfill('0') << std::setw(6) << syscall(SYS_gettid) << "]:";
 #elif __APPLE__
 				uint64_t tid;
 				pthread_threadid_np(pthread_self(), &tid);
-				tracefile << std::setfill('0') << std::setw(6) << tid << ":";
+				tracefile << std::setfill('0') << std::setw(6) << tid << "]:";
 #else
 #error "unsupported platform"
 #endif

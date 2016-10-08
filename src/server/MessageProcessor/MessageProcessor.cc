@@ -21,6 +21,8 @@ void MessageProcessor::getObjects(LTFSDmCommServer *command, long localReqNumber
 {
 	bool cont = true;
 
+	TRACE(Trace::much, __PRETTY_FUNCTION__);
+
 	while (cont) {
 		try {
 			command->recv();
@@ -75,6 +77,8 @@ void MessageProcessor::migrationMessage(long key, LTFSDmCommServer *command, lon
 	unsigned long pid;
 	long requestNumber;
 
+	TRACE(Trace::much, __PRETTY_FUNCTION__);
+
 	std::cout << "Migration Request" << std::endl;
 	const LTFSDmProtocol::LTFSDmMigRequest migreq = command->migrequest();
 	std::cout << "key: " << migreq.key() << std::endl;
@@ -118,6 +122,8 @@ void  MessageProcessor::selRecallMessage(long key, LTFSDmCommServer *command, lo
 	unsigned long pid;
 	long requestNumber;
 
+	TRACE(Trace::much, __PRETTY_FUNCTION__);
+
 	std::cout << "Recall Request" << std::endl;
 	const LTFSDmProtocol::LTFSDmSelRecRequest recreq = command->selrecrequest();
 	std::cout << "key: " << recreq.key() << std::endl;
@@ -160,6 +166,8 @@ void MessageProcessor::infoFilesMessage(long key, LTFSDmCommServer *command, lon
 	unsigned long pid;
 	long requestNumber;
 
+	TRACE(Trace::much, __PRETTY_FUNCTION__);
+
 	std::cout << "Info Files Request" << std::endl;
 	const LTFSDmProtocol::LTFSDmInfoFilesRequest infofilesreq = command->infofilesrequest();
 	std::cout << "key: " << infofilesreq.key() << std::endl;
@@ -192,6 +200,7 @@ void MessageProcessor::requestNumber(long key, LTFSDmCommServer *command, long *
    	const LTFSDmProtocol::LTFSDmReqNumber reqnum = command->reqnum();
 	long keySent = reqnum.key();
 
+	TRACE(Trace::much, __PRETTY_FUNCTION__);
 	TRACE(Trace::little, keySent);
 
 	if ( key != keySent ) {
@@ -224,6 +233,7 @@ void MessageProcessor::stopMessage(long key, LTFSDmCommServer *command, long loc
 	long keySent = stopreq.key();
 
 	TRACE(Trace::little, keySent);
+	TRACE(Trace::much, __PRETTY_FUNCTION__);
 
 	if ( key != keySent ) {
 		MSG(LTFSDMS0008E);
@@ -252,6 +262,7 @@ void MessageProcessor::statusMessage(long key, LTFSDmCommServer *command, long l
 	long keySent = statusreq.key();
 
 	TRACE(Trace::little, keySent);
+	TRACE(Trace::much, __PRETTY_FUNCTION__);
 
 	if ( key != keySent ) {
 		MSG(LTFSDMS0008E);

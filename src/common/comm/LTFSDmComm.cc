@@ -113,11 +113,11 @@ void LTFSDmComm::send(int fd)
 	free(buffer);
 }
 
-unsigned long readx(int fd, char *buffer, unsigned long size)
+ssize_t readx(int fd, char *buffer, size_t size)
 
 {
     unsigned long bread = 0;
-    unsigned long rsize;
+    ssize_t rsize;
     while (bread < size)
     {
         rsize = read(fd, buffer + bread, size - bread);
@@ -134,8 +134,8 @@ unsigned long readx(int fd, char *buffer, unsigned long size)
 void LTFSDmComm::recv(int fd)
 
 {
-	unsigned long MessageSize;
-	unsigned long rsize;
+	ssize_t MessageSize;
+	ssize_t rsize;
 	char *buffer;
 
 	rsize = readx(fd, (char *) &MessageSize, sizeof(long));
@@ -145,6 +145,8 @@ void LTFSDmComm::recv(int fd)
 		TRACE(Trace::error, sizeof(long));
 		throw(LTFSDMErr::LTFSDM_COMM_ERROR);
 	}
+
+	TRACE(Trace::much, MessageSize);
 
 	buffer = (char *) malloc(MessageSize);
 	memset(buffer, 0, MessageSize);
