@@ -5,7 +5,7 @@ class InfoFilesCommand : public OpenLTFSCommand
 
 {
 private:
-	void talkToBackend(std::stringstream *parmList) {}
+	void talkToBackend(std::stringstream *parmList);
 public:
     InfoFilesCommand() : OpenLTFSCommand("files", ":+hf:R:") {};
     ~InfoFilesCommand() {};

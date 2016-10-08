@@ -61,6 +61,19 @@ message LTFSDmSelRecRequestResp {
 	required int64 pid = 3;
 }
 
+message LTFSDmInfoFilesRequest {
+	required uint64 key = 1;
+	required int64 reqNumber = 2;
+	required uint64 pid = 3;
+	required bool directory = 5;
+}
+
+message LTFSDmInfoFilesRequestResp {
+	required bool success = 1;
+	required int64 reqNumber = 2;
+	required int64 pid = 3;
+}
+
 message LTFSDmStopRequest {
 	required uint64 key = 1;
 	required int64 reqNumber = 2;
@@ -94,5 +107,7 @@ message Command {
 		LTFSDmMigRequestResp migrequestresp = 10;
 		LTFSDmSelRecRequest selrecrequest = 11;
 		LTFSDmSelRecRequestResp selrecrequestresp = 12;
+		LTFSDmInfoFilesRequest infofilesrequest = 13;
+		LTFSDmInfoFilesRequestResp infofilesrequestresp = 14;
 	}
 }

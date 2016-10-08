@@ -154,6 +154,38 @@ void  MessageProcessor::selRecallMessage(long key, LTFSDmCommServer *command, lo
 	getObjects(command, localReqNumber, pid, requestNumber);
 }
 
+void MessageProcessor::infoFilesMessage(long key, LTFSDmCommServer *command, long localReqNumber)
+
+{
+	unsigned long pid;
+	long requestNumber;
+
+	std::cout << "Info Files Request" << std::endl;
+	const LTFSDmProtocol::LTFSDmInfoFilesRequest infofilesreq = command->infofilesrequest();
+	std::cout << "key: " << infofilesreq.key() << std::endl;
+	requestNumber = infofilesreq.reqnumber();
+	std::cout << "reqNumber: " << requestNumber << std::endl;
+	pid = infofilesreq.pid();
+	std::cout << "client pid: " <<  pid << std::endl;
+
+	LTFSDmProtocol::LTFSDmInfoFilesRequestResp *infofilesreqresp = command->mutable_infofilesrequestresp();
+
+	infofilesreqresp->set_success(true);
+	infofilesreqresp->set_reqnumber(requestNumber);
+	infofilesreqresp->set_pid(pid);
+
+	try {
+		command->send();
+	}
+	catch(...) {
+		TRACE(Trace::error, errno);
+		MSG(LTFSDMS0007E);
+		return;
+	}
+
+	getObjects(command, localReqNumber, pid, requestNumber);
+}
+
 void MessageProcessor::requestNumber(long key, LTFSDmCommServer *command, long *localReqNumber)
 
 {
@@ -185,7 +217,7 @@ void MessageProcessor::requestNumber(long key, LTFSDmCommServer *command, long *
 
 }
 
-void MessageProcessor::stop(long key, LTFSDmCommServer *command, long localReqNumber)
+void MessageProcessor::stopMessage(long key, LTFSDmCommServer *command, long localReqNumber)
 
 {
    	const LTFSDmProtocol::LTFSDmStopRequest stopreq = command->stoprequest();
@@ -213,7 +245,7 @@ void MessageProcessor::stop(long key, LTFSDmCommServer *command, long localReqNu
 	command->closeRef();
 }
 
-void MessageProcessor::status(long key, LTFSDmCommServer *command, long localReqNumber)
+void MessageProcessor::statusMessage(long key, LTFSDmCommServer *command, long localReqNumber)
 
 {
    	const LTFSDmProtocol::LTFSDmStatusRequest statusreq = command->statusrequest();
@@ -275,7 +307,7 @@ void MessageProcessor::run(std::string label, long key, LTFSDmCommServer command
 			requestNumber(key, &command, &localReqNumber);
 		}
 		else if ( command.has_stoprequest() ) {
-			stop(key, &command, localReqNumber);
+			stopMessage(key, &command, localReqNumber);
 			terminate = true;
 			lock.unlock();
 			termcond.notify_one();
@@ -293,8 +325,11 @@ void MessageProcessor::run(std::string label, long key, LTFSDmCommServer command
 			else if ( command.has_selrecrequest() ) {
 				selRecallMessage(key, &command, localReqNumber);
 			}
+			else if ( command.has_infofilesrequest() ) {
+				infoFilesMessage(key, &command, localReqNumber);
+			}
 			else if ( command.has_statusrequest() ) {
-				status(key, &command, localReqNumber);
+				statusMessage(key, &command, localReqNumber);
 			}
 			else {
 				TRACE(Trace::error, "unkown command\n");
