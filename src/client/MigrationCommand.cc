@@ -18,32 +18,6 @@ void MigrationCommand::printUsage()
 }
 
 
-void MigrationCommand::checkOptions(int argc, char **argv)
-
-{
-	if ( fileList.compare("") && directoryName.compare("") ) {
-		INFO(LTFSDMC0015E);
-		MSG(LTFSDMC0029E);
-		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
-
-	}
-
-	if (optind != argc) {
-		if (fileList.compare("")) {
-			INFO(LTFSDMC0016E);
-			MSG(LTFSDMC0029E);
-			throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
-
-		}
-		if (directoryName.compare("")) {
-			INFO(LTFSDMC0017E);
-			MSG(LTFSDMC0029E);
-			throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
-
-		}
-	}
-}
-
 void MigrationCommand::talkToBackend(std::stringstream *parmList)
 
 {
@@ -60,6 +34,8 @@ void MigrationCommand::talkToBackend(std::stringstream *parmList)
 	migreq->set_key(key);
 	migreq->set_reqnumber(requestNumber);
 	migreq->set_pid(getpid());
+	migreq->set_colfactor(collocationFactor);
+
 
 	if ( preMigrate == true )
 		migreq->set_state(LTFSDmProtocol::LTFSDmMigRequest::PREMIGRATED);
@@ -117,7 +93,6 @@ void MigrationCommand::doCommand(int argc, char **argv)
 
 	if ( argc == 1 ) {
 		INFO(LTFSDMC0018E);
-		MSG(LTFSDMC0029E);
 		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
 
 	}

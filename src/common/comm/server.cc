@@ -131,31 +131,8 @@ int main(int argc, char *argv[]) {
 				printf("=============== response ===============\n");
 			}
 		}
-
-		// SELECTIVE RECALL
-		else if ( command.has_selrecrequest() ) {
-			printf("Selective Recall Request\n");
-			const LTFSDmProtocol::LTFSDmSelRecRequest selrecreq = command.selrecrequest();
-			printf("key: %llu\n", (unsigned long long) selrecreq.key());
-			printf("key: %llu\n", (unsigned long long) selrecreq.reqnumber());
-			switch (selrecreq.state()) {
-				case LTFSDmProtocol::LTFSDmSelRecRequest::MIGRATED:
-					printf("files to be migrated\n");
-					break;
-				case LTFSDmProtocol::LTFSDmSelRecRequest::PREMIGRATED:
-					printf("files to be premigrated\n");
-					break;
-				default:
-					printf("unkown target state\n");
-			}
-
-			for (int j = 0; j < selrecreq.filenames_size(); j++) {
-				const LTFSDmProtocol::LTFSDmSelRecRequest::FileName& filename = selrecreq.filenames(j);
-				printf("file name: %s\n", filename.filename().c_str());
-			}
-		}
 		else
-			printf("unkown command\n");
+			printf("other command\n");
 
 		printf("============================================================\n");
 	}

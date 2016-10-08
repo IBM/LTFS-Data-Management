@@ -82,6 +82,7 @@ void MessageProcessor::migrationMessage(long key, LTFSDmCommServer *command, lon
 	std::cout << "reqNumber: " << requestNumber << std::endl;
 	pid = migreq.pid();
 	std::cout << "client pid: " <<  pid << std::endl;
+	std::cout << "colocation factor: " << migreq.colfactor() << std::endl;
 	switch (migreq.state()) {
 		case LTFSDmProtocol::LTFSDmMigRequest::MIGRATED:
 			std::cout << "files to be migrated" << std::endl;
@@ -114,32 +115,43 @@ void MessageProcessor::migrationMessage(long key, LTFSDmCommServer *command, lon
 void  MessageProcessor::selRecallMessage(long key, LTFSDmCommServer *command, long localReqNumber)
 
 {
-	const LTFSDmProtocol::LTFSDmSelRecRequest selrecreq = command->selrecrequest();
-	long keySent = 	selrecreq.key();
+	unsigned long pid;
+	long requestNumber;
 
-	TRACE(Trace::little, keySent);
+	std::cout << "Recall Request" << std::endl;
+	const LTFSDmProtocol::LTFSDmSelRecRequest recreq = command->selrecrequest();
+	std::cout << "key: " << recreq.key() << std::endl;
+	requestNumber = recreq.reqnumber();
+	std::cout << "reqNumber: " << requestNumber << std::endl;
+	pid = recreq.pid();
+	std::cout << "client pid: " <<  pid << std::endl;
+	switch (recreq.state()) {
+		case LTFSDmProtocol::LTFSDmSelRecRequest::RESIDENT:
+			std::cout << "files to be recalled to resident state" << std::endl;
+			break;
+		case LTFSDmProtocol::LTFSDmSelRecRequest::PREMIGRATED:
+			std::cout << "files to be recalled to premigrated state" << std::endl;
+			break;
+		default:
+			std::cout << "unkown target state" << std::endl;
+	}
 
-	if ( key != keySent ) {
-		MSG(LTFSDMS0008E);
+	LTFSDmProtocol::LTFSDmSelRecRequestResp *recreqresp = command->mutable_selrecrequestresp();
+
+	recreqresp->set_success(true);
+	recreqresp->set_reqnumber(requestNumber);
+	recreqresp->set_pid(pid);
+
+	try {
+		command->send();
+	}
+	catch(...) {
+		TRACE(Trace::error, errno);
+		MSG(LTFSDMS0007E);
 		return;
 	}
 
-	TRACE(Trace::little, selrecreq.reqnumber());
-	switch (selrecreq.state()) {
-		case LTFSDmProtocol::LTFSDmSelRecRequest::MIGRATED:
-			TRACE(Trace::little, "files to be migrated\n");
-			break;
-		case LTFSDmProtocol::LTFSDmSelRecRequest::PREMIGRATED:
-			TRACE(Trace::little, "files to be premigrated\n");
-			break;
-		default:
-			TRACE(Trace::little, "unkown target state\n");
-	}
-
-	for (int j = 0; j < selrecreq.filenames_size(); j++) {
-		const LTFSDmProtocol::LTFSDmSelRecRequest::FileName& filename = selrecreq.filenames(j);
-		TRACE(Trace::little, filename.filename().c_str());
-	}
+	getObjects(command, localReqNumber, pid, requestNumber);
 }
 
 void MessageProcessor::requestNumber(long key, LTFSDmCommServer *command, long *localReqNumber)

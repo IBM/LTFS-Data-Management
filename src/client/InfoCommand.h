@@ -5,7 +5,6 @@ class InfoCommand : public OpenLTFSCommand
 
 {
 private:
-	void checkOptions(int argc, char **argv) {}
 	void talkToBackend(std::stringstream *parmList) {}
 public:
 	InfoCommand() : OpenLTFSCommand("info", "") {};

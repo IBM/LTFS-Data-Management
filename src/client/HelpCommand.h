@@ -5,7 +5,6 @@ class HelpCommand : public OpenLTFSCommand
 
 {
 private:
-	void checkOptions(int argc, char **argv) {}
 	void talkToBackend(std::stringstream *parmList) {}
 public:
     HelpCommand() : OpenLTFSCommand("help", "") {};

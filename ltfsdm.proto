@@ -28,13 +28,13 @@ message LTFSDmMigRequest {
 	required uint64 key = 1;
 	required int64 reqNumber = 2;
 	required uint64 pid = 3;
-
 	enum State {
 		PREMIGRATED = 0;
 		MIGRATED = 1;
 	}
 	required State state = 4;
 	required bool directory = 5;
+	required int64 colFactor = 6;
 }
 
 message LTFSDmMigRequestResp {
@@ -46,17 +46,19 @@ message LTFSDmMigRequestResp {
 message LTFSDmSelRecRequest {
 	required uint64 key = 1;
 	required int64 reqNumber = 2;
+	required uint64 pid = 3;
 	enum State {
 		PREMIGRATED = 0;
-		MIGRATED = 1;
+		RESIDENT = 1;
 	}
-	required State state = 3;
+	required State state = 4;
+	required bool directory = 5;
+}
 
-	message FileName {
-		required string filename = 1;
-	}
-
-	repeated FileName filenames = 4;
+message LTFSDmSelRecRequestResp {
+	required bool success = 1;
+	required int64 reqNumber = 2;
+	required int64 pid = 3;
 }
 
 message LTFSDmStopRequest {
@@ -91,5 +93,6 @@ message Command {
 		LTFSDmMigRequest migrequest = 9;
 		LTFSDmMigRequestResp migrequestresp = 10;
 		LTFSDmSelRecRequest selrecrequest = 11;
+		LTFSDmSelRecRequestResp selrecrequestresp = 12;
 	}
 }

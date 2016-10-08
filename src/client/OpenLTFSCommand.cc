@@ -75,7 +75,6 @@ void OpenLTFSCommand::traceParms()
 void OpenLTFSCommand::getRequestNumber()
 
 {
-	/* COMMAND WILL BE REQNUMBER */
 	LTFSDmProtocol::LTFSDmReqNumber *reqnum = commCommand.mutable_reqnum();
 	reqnum->set_key(key);
 
@@ -140,6 +139,34 @@ void OpenLTFSCommand::connect()
 
 	TRACE(Trace::little, requestNumber);
 }
+
+
+void OpenLTFSCommand::checkOptions(int argc, char **argv)
+
+{
+	if ( fileList.compare("") && directoryName.compare("") ) {
+		INFO(LTFSDMC0015E);
+		MSG(LTFSDMC0029E);
+		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+
+	}
+
+	if (optind != argc) {
+		if (fileList.compare("")) {
+			INFO(LTFSDMC0016E);
+			MSG(LTFSDMC0029E);
+			throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+
+		}
+		if (directoryName.compare("")) {
+			INFO(LTFSDMC0017E);
+			MSG(LTFSDMC0029E);
+			throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+
+		}
+	}
+}
+
 
 void OpenLTFSCommand::sendObjects(std::stringstream *parmList)
 

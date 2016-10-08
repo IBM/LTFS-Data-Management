@@ -5,7 +5,6 @@ class InfoRequestsCommand : public OpenLTFSCommand
 
 {
 private:
-	void checkOptions(int argc, char **argv) {}
 	void talkToBackend(std::stringstream *parmList) {}
 public:
     InfoRequestsCommand() : OpenLTFSCommand("requests", ":+hwn:") {};

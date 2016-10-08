@@ -8,7 +8,6 @@ private:
 	std::stringstream serverPath;
 	void determineServerPath();
 	void startServer();
-	void checkOptions(int argc, char **argv) {}
 	void talkToBackend(std::stringstream *parmList) {}
 public:
     StartCommand() : OpenLTFSCommand("start", "") {};
