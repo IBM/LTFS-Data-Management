@@ -24,6 +24,7 @@ protected:
 	std::string directoryName;
 	std::string command;
 	std::string optionStr;
+	std::ifstream fileListStrm;
 	long key;
 	LTFSDmCommClient commCommand;
 
@@ -33,7 +34,7 @@ protected:
  	virtual void talkToBackend(std::stringstream *parmList) {}
 
 public:
-    virtual ~OpenLTFSCommand() {};
+    virtual ~OpenLTFSCommand();
     virtual void printUsage() = 0;
     virtual void doCommand(int argc, char **argv) = 0;
 

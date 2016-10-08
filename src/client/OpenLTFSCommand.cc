@@ -11,6 +11,15 @@
 
 #include "OpenLTFSCommand.h"
 
+OpenLTFSCommand::~OpenLTFSCommand()
+
+{
+	std::ifstream filelist;
+
+	if ( fileListStrm.is_open() ) {
+		fileListStrm.close();
+	}
+}
 
 void OpenLTFSCommand::processOptions(int argc, char **argv)
 
@@ -172,14 +181,13 @@ void OpenLTFSCommand::sendObjects(std::stringstream *parmList)
 
 {
 	std::istream *input;
-	std::ifstream filelist;
 	std::string line;
 	bool cont = true;
 	int i;
 
 	if ( fileList.compare("") ) {
-		filelist.open(fileList);
-		input =  dynamic_cast<std::istream*>(&filelist);
+		fileListStrm.open(fileList);
+		input =  dynamic_cast<std::istream*>(&fileListStrm);
 	}
 	else {
 		input = dynamic_cast<std::istream*>(parmList);
@@ -244,7 +252,4 @@ void OpenLTFSCommand::sendObjects(std::stringstream *parmList)
 			throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
 		}
 	}
-
-	if ( fileList.compare("") )
-		filelist.close();
 }
