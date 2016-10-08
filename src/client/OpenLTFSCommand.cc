@@ -1,3 +1,5 @@
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <string>
 #include <fstream>
@@ -249,6 +251,28 @@ void OpenLTFSCommand::sendObjects(std::stringstream *parmList)
 		}
 		else {
 			MSG(LTFSDMC0029E);
+			throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+		}
+	}
+}
+
+
+void OpenLTFSCommand::isValidRegularFile()
+
+{
+	struct stat statbuf;
+
+	if ( fileList.compare("") ) {
+		if ( stat(fileList.c_str(), &statbuf) ==  -1 ) {
+			MSG(LTFSDMC0040E, fileList.c_str());
+			throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+		}
+		if ( !S_ISREG(statbuf.st_mode) ) {
+			MSG(LTFSDMC0042E, fileList.c_str());
+			throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+		}
+		if ( statbuf.st_size < 2 ) {
+			MSG(LTFSDMC0041E, fileList.c_str());
 			throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
 		}
 	}

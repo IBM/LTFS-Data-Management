@@ -44,6 +44,7 @@ public:
 	bool compare(std::string name) { return !command.compare(name); }
 	void connect();
 	void sendObjects(std::stringstream *parmList);
+	void isValidRegularFile();
 };
 
 #endif /* _OPERATION_H */

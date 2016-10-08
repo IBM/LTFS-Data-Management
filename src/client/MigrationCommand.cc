@@ -1,5 +1,3 @@
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <unistd.h>
 #include <string>
 #include <sstream>
@@ -92,7 +90,6 @@ void MigrationCommand::talkToBackend(std::stringstream *parmList)
 void MigrationCommand::doCommand(int argc, char **argv)
 {
 	std::stringstream parmList;
-	struct stat statbuf;
 
 	if ( argc == 1 ) {
 		INFO(LTFSDMC0018E);
@@ -117,16 +114,7 @@ void MigrationCommand::doCommand(int argc, char **argv)
 		parmList << directoryName << std::endl;
 	}
 
-	if ( fileList.compare("") ) {
-		if ( stat(fileList.c_str(), &statbuf) ==  -1 ) {
-			MSG(LTFSDMC0040E, fileList.c_str());
-			throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
-		}
-		if ( statbuf.st_size < 2 ) {
-			MSG(LTFSDMC0041E, fileList.c_str());
-			throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
-		}
-	}
+	isValidRegularFile();
 
 	talkToBackend(&parmList);
 }
