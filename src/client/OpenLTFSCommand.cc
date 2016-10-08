@@ -162,13 +162,13 @@ void OpenLTFSCommand::sendObjects(std::stringstream *parmList)
 		LTFSDmProtocol::LTFSDmSendObjects *sendobjects = commCommand.mutable_sendobjects();
 		LTFSDmProtocol::LTFSDmSendObjects::FileName* filenames;
 
-		for ( i = 0; (i < 7) && ((std::getline(*input, line))); i++ ) {
+		for ( i = 0; (i < Const::MAX_OBJECTS_SEND) && ((std::getline(*input, line))); i++ ) {
 			filenames = sendobjects->add_filenames();
 			filenames->set_filename(line);
 			TRACE(Trace::much, line);
 		}
 
-		if ( i < 7 ) {
+		if ( i < Const::MAX_OBJECTS_SEND ) {
 			cont = false;
 			filenames = sendobjects->add_filenames();
 			filenames->set_filename(""); //end

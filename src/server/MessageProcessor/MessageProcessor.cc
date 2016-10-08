@@ -16,47 +16,9 @@
 #include "src/server/Receiver/Receiver.h"
 #include "MessageProcessor.h"
 
-void MessageProcessor::migrationMessage(long key, LTFSDmCommServer *command, long localReqNumber)
+void MessageProcessor::getObjects(LTFSDmCommServer *command, long localReqNumber, unsigned long pid, long requestNumber)
 
 {
-	unsigned long pid;
-	long requestNumber;
-
-	std::cout << "Migration Request" << std::endl;
-	const LTFSDmProtocol::LTFSDmMigRequest migreq = command->migrequest();
-	std::cout << "key: " << migreq.key() << std::endl;
-	requestNumber = migreq.reqnumber();
-	std::cout << "reqNumber: " << requestNumber << std::endl;
-	pid = migreq.pid();
-	std::cout << "client pid: " <<  pid << std::endl;
-	switch (migreq.state()) {
-		case LTFSDmProtocol::LTFSDmMigRequest::MIGRATED:
-			std::cout << "files to be migrated" << std::endl;
-			break;
-		case LTFSDmProtocol::LTFSDmMigRequest::PREMIGRATED:
-			std::cout << "files to be premigrated" << std::endl;
-			break;
-		default:
-			std::cout << "unkown target state" << std::endl;
-	}
-
-	// RESPONSE
-
-	LTFSDmProtocol::LTFSDmMigRequestResp *migreqresp = command->mutable_migrequestresp();
-
-	migreqresp->set_success(true);
-	migreqresp->set_reqnumber(requestNumber);
-	migreqresp->set_pid(pid);
-
-	try {
-		command->send();
-	}
-	catch(...) {
-		std::cout << "send error" << std::endl;
-		exit(-1);
-
-	}
-
 	bool cont = true;
 
 	while (cont) {
@@ -64,12 +26,14 @@ void MessageProcessor::migrationMessage(long key, LTFSDmCommServer *command, lon
 			command->recv();
 		}
 		catch(...) {
-			std::cout << "receive error" << std::endl;
-			exit(-1);
+			TRACE(Trace::error, errno);
+			MSG(LTFSDMS0006E);
+			return;
 		}
 
 		if ( ! command->has_sendobjects() ) {
-			std::cout << "wrong message sent from the client." << std::endl;
+			TRACE(Trace::error, command->has_sendobjects());
+			MSG(LTFSDMS0011E);
 			return;
 		}
 
@@ -96,13 +60,55 @@ void MessageProcessor::migrationMessage(long key, LTFSDmCommServer *command, lon
 			command->send();
 		}
 		catch(...) {
-			std::cout << "send error" << std::endl;
-			exit(-1);
-
+			TRACE(Trace::error, errno);
+			MSG(LTFSDMS0007E);
+			return;
 		}
 
 		std::cout << "==============================" << std::endl;
 	}
+}
+
+void MessageProcessor::migrationMessage(long key, LTFSDmCommServer *command, long localReqNumber)
+
+{
+	unsigned long pid;
+	long requestNumber;
+
+	std::cout << "Migration Request" << std::endl;
+	const LTFSDmProtocol::LTFSDmMigRequest migreq = command->migrequest();
+	std::cout << "key: " << migreq.key() << std::endl;
+	requestNumber = migreq.reqnumber();
+	std::cout << "reqNumber: " << requestNumber << std::endl;
+	pid = migreq.pid();
+	std::cout << "client pid: " <<  pid << std::endl;
+	switch (migreq.state()) {
+		case LTFSDmProtocol::LTFSDmMigRequest::MIGRATED:
+			std::cout << "files to be migrated" << std::endl;
+			break;
+		case LTFSDmProtocol::LTFSDmMigRequest::PREMIGRATED:
+			std::cout << "files to be premigrated" << std::endl;
+			break;
+		default:
+			std::cout << "unkown target state" << std::endl;
+	}
+
+	LTFSDmProtocol::LTFSDmMigRequestResp *migreqresp = command->mutable_migrequestresp();
+
+	migreqresp->set_success(true);
+	migreqresp->set_reqnumber(requestNumber);
+	migreqresp->set_pid(pid);
+
+	try {
+		command->send();
+	}
+	catch(...) {
+		TRACE(Trace::error, errno);
+		MSG(LTFSDMS0007E);
+		return;
+	}
+
+	getObjects(command, localReqNumber, pid, requestNumber);
 }
 
 void  MessageProcessor::selRecallMessage(long key, LTFSDmCommServer *command, long localReqNumber)
@@ -244,6 +250,7 @@ void MessageProcessor::run(std::string label, long key, LTFSDmCommServer command
 			command.recv();
 		}
 		catch(...) {
+			TRACE(Trace::error, errno);
 			MSG(LTFSDMS0006E);
 			lock.unlock();
 			termcond.notify_one();

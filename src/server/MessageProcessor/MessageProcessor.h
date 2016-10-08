@@ -5,6 +5,7 @@ class MessageProcessor
 
 {
 private:
+	void getObjects(LTFSDmCommServer *command, long localReqNumber, unsigned long pid, long requestNumber);
 	void migrationMessage(long key, LTFSDmCommServer *command, long localReqNumber);
 	void selRecallMessage(long key, LTFSDmCommServer *command, long localReqNumber);
 	void requestNumber(long key, LTFSDmCommServer *command, long *localReqNumber);

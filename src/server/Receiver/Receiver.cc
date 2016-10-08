@@ -24,7 +24,7 @@ void Receiver::run(std::string label, long key)
 	MessageProcessor mproc;
 	std::unique_lock<std::mutex> lock(mproc.termmtx);
 	LTFSDmCommServer command;
-	SubServer subs(40);
+	SubServer subs(Const::MAX_RECEIVER_THREADS);
 
 	TRACE(Trace::much, __PRETTY_FUNCTION__);
 
