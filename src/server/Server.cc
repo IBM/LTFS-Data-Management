@@ -87,6 +87,7 @@ void Server::daemonize()
 
 {
 	pid_t pid, sid;
+	int dev_null;
 
 	pid = fork();
 	if (pid < 0) {
@@ -99,23 +100,24 @@ void Server::daemonize()
 
 	sid = setsid();
 	if (sid < 0) {
+		MSG(LTFSDMS0012E);
 		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
 	}
 
 	TRACE(Trace::little, "Server started");
 	TRACE(Trace::little, getpid());
 
-	close(STDIN_FILENO);
-	close(STDOUT_FILENO);
-	close(STDERR_FILENO);
-
 	messageObject.setLogType(Message::LOGFILE);
 
 	/* redirect stdout to log file */
-// 	dup2(log, 0);
-// 	dup2(log, 1);
-// 	dup2(log, 2);
-// 	close(log);
+	if ( (dev_null = open("/dev/null", O_RDWR)) == -1 ) {
+		MSG(LTFSDMS0013E);
+		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+	}
+	dup2(dev_null, STDIN_FILENO);
+	dup2(dev_null, STDOUT_FILENO);
+	dup2(dev_null, STDERR_FILENO);
+	close(dev_null);
 
 	/* seting line buffers*/
 	setlinebuf(stdout);
