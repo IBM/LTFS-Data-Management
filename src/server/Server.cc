@@ -114,9 +114,15 @@ void Server::daemonize()
 		MSG(LTFSDMS0013E);
 		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
 	}
+
+	close(STDIN_FILENO);
+	close(STDOUT_FILENO);
+	close(STDERR_FILENO);
+
 	dup2(dev_null, STDIN_FILENO);
 	dup2(dev_null, STDOUT_FILENO);
 	dup2(dev_null, STDERR_FILENO);
+
 	close(dev_null);
 }
 
