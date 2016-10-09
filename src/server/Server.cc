@@ -118,10 +118,6 @@ void Server::daemonize()
 	dup2(dev_null, STDOUT_FILENO);
 	dup2(dev_null, STDERR_FILENO);
 	close(dev_null);
-
-	/* seting line buffers*/
-	setlinebuf(stdout);
-	setlinebuf(stderr);
 }
 
 void Server::run()
