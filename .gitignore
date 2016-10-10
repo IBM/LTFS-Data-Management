@@ -22,3 +22,5 @@ cscope.out
 src/common/comm/client
 src/common/comm/server
 bin
+~*.docx
+~*.pptx
