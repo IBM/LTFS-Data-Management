@@ -1,5 +1,5 @@
-#ifndef _MESSAGEPROCESSOR_H
-#define _MESSAGEPROCESSOR_H
+#ifndef _MESSAGEPARSER_H
+#define _MESSAGEPARSER_H
 
 class MessageParser
 
@@ -20,4 +20,4 @@ public:
 	void run(std::string label, long key, LTFSDmCommServer command);
 };
 
-#endif /* _MESSAGEPROCESSOR_H */
+#endif /* _MESSAGEPARSER_H */
