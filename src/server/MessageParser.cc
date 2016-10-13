@@ -14,9 +14,15 @@
 #include "src/server/SubServer.h"
 #include "src/server/Server.h"
 #include "src/server/Receiver.h"
+
+#include "FileOperation.h"
+#include "Migration.h"
+#include "SelRecall.h"
+#include "InfoFiles.h"
+
 #include "MessageParser.h"
 
-void MessageParser::getObjects(LTFSDmCommServer *command, long localReqNumber, unsigned long pid, long requestNumber)
+void MessageParser::getObjects(LTFSDmCommServer *command, long localReqNumber, unsigned long pid, long requestNumber, FileOperation *fopt)
 
 {
 	bool cont = true;
@@ -44,11 +50,10 @@ void MessageParser::getObjects(LTFSDmCommServer *command, long localReqNumber, u
 		for (int j = 0; j < sendobjects.filenames_size(); j++) {
 			const LTFSDmProtocol::LTFSDmSendObjects::FileName& filename = sendobjects.filenames(j);
 			if ( filename.filename().compare("") != 0 ) {
-				std::cout << "file name:" << filename.filename().c_str() << std::endl;
+				fopt->addFileName(filename.filename());
 			}
 			else {
-				cont = false;
-				std::cout << "END" << std::endl;
+				cont = false; // END
 			}
 		}
 
@@ -66,8 +71,6 @@ void MessageParser::getObjects(LTFSDmCommServer *command, long localReqNumber, u
 			MSG(LTFSDMS0007E);
 			return;
 		}
-
-		std::cout << "==============================" << std::endl;
 	}
 }
 
@@ -76,27 +79,21 @@ void MessageParser::migrationMessage(long key, LTFSDmCommServer *command, long l
 {
 	unsigned long pid;
 	long requestNumber;
+	const LTFSDmProtocol::LTFSDmMigRequest migreq = command->migrequest();
+	long keySent = migreq.key();
 
 	TRACE(Trace::much, __PRETTY_FUNCTION__);
+	TRACE(Trace::little, keySent);
 
-	std::cout << "Migration Request" << std::endl;
-	const LTFSDmProtocol::LTFSDmMigRequest migreq = command->migrequest();
-	std::cout << "key: " << migreq.key() << std::endl;
-	requestNumber = migreq.reqnumber();
-	std::cout << "reqNumber: " << requestNumber << std::endl;
-	pid = migreq.pid();
-	std::cout << "client pid: " <<  pid << std::endl;
-	std::cout << "colocation factor: " << migreq.colfactor() << std::endl;
-	switch (migreq.state()) {
-		case LTFSDmProtocol::LTFSDmMigRequest::MIGRATED:
-			std::cout << "files to be migrated" << std::endl;
-			break;
-		case LTFSDmProtocol::LTFSDmMigRequest::PREMIGRATED:
-			std::cout << "files to be premigrated" << std::endl;
-			break;
-		default:
-			std::cout << "unkown target state" << std::endl;
+	if ( key != keySent ) {
+		MSG(LTFSDMS0008E);
+		return;
 	}
+
+	requestNumber = migreq.reqnumber();
+	pid = migreq.pid();
+
+	Migration mig( pid, requestNumber, migreq.colfactor(), migreq.state());
 
 	LTFSDmProtocol::LTFSDmMigRequestResp *migreqresp = command->mutable_migrequestresp();
 
@@ -113,7 +110,9 @@ void MessageParser::migrationMessage(long key, LTFSDmCommServer *command, long l
 		return;
 	}
 
-	getObjects(command, localReqNumber, pid, requestNumber);
+	getObjects(command, localReqNumber, pid, requestNumber, dynamic_cast<FileOperation*> (&mig));
+
+	mig.start();
 }
 
 void  MessageParser::selRecallMessage(long key, LTFSDmCommServer *command, long localReqNumber)
@@ -121,26 +120,21 @@ void  MessageParser::selRecallMessage(long key, LTFSDmCommServer *command, long 
 {
 	unsigned long pid;
 	long requestNumber;
+	const LTFSDmProtocol::LTFSDmSelRecRequest recreq = command->selrecrequest();
+	long keySent = recreq.key();
 
 	TRACE(Trace::much, __PRETTY_FUNCTION__);
+	TRACE(Trace::little, keySent);
 
-	std::cout << "Recall Request" << std::endl;
-	const LTFSDmProtocol::LTFSDmSelRecRequest recreq = command->selrecrequest();
-	std::cout << "key: " << recreq.key() << std::endl;
-	requestNumber = recreq.reqnumber();
-	std::cout << "reqNumber: " << requestNumber << std::endl;
-	pid = recreq.pid();
-	std::cout << "client pid: " <<  pid << std::endl;
-	switch (recreq.state()) {
-		case LTFSDmProtocol::LTFSDmSelRecRequest::RESIDENT:
-			std::cout << "files to be recalled to resident state" << std::endl;
-			break;
-		case LTFSDmProtocol::LTFSDmSelRecRequest::PREMIGRATED:
-			std::cout << "files to be recalled to premigrated state" << std::endl;
-			break;
-		default:
-			std::cout << "unkown target state" << std::endl;
+	if ( key != keySent ) {
+		MSG(LTFSDMS0008E);
+		return;
 	}
+
+	requestNumber = recreq.reqnumber();
+	pid = recreq.pid();
+
+	SelRecall srec( pid, requestNumber, recreq.state());
 
 	LTFSDmProtocol::LTFSDmSelRecRequestResp *recreqresp = command->mutable_selrecrequestresp();
 
@@ -157,7 +151,9 @@ void  MessageParser::selRecallMessage(long key, LTFSDmCommServer *command, long 
 		return;
 	}
 
-	getObjects(command, localReqNumber, pid, requestNumber);
+	getObjects(command, localReqNumber, pid, requestNumber, dynamic_cast<FileOperation*> (&srec));
+
+	srec.start();
 }
 
 void MessageParser::infoFilesMessage(long key, LTFSDmCommServer *command, long localReqNumber)
@@ -165,16 +161,21 @@ void MessageParser::infoFilesMessage(long key, LTFSDmCommServer *command, long l
 {
 	unsigned long pid;
 	long requestNumber;
+	const LTFSDmProtocol::LTFSDmInfoFilesRequest infofilesreq = command->infofilesrequest();
+	long keySent = infofilesreq.key();
 
 	TRACE(Trace::much, __PRETTY_FUNCTION__);
+	TRACE(Trace::little, keySent);
 
-	std::cout << "Info Files Request" << std::endl;
-	const LTFSDmProtocol::LTFSDmInfoFilesRequest infofilesreq = command->infofilesrequest();
-	std::cout << "key: " << infofilesreq.key() << std::endl;
+	if ( key != keySent ) {
+		MSG(LTFSDMS0008E);
+		return;
+	}
+
 	requestNumber = infofilesreq.reqnumber();
-	std::cout << "reqNumber: " << requestNumber << std::endl;
 	pid = infofilesreq.pid();
-	std::cout << "client pid: " <<  pid << std::endl;
+
+	InfoFiles infofiles( pid, requestNumber);
 
 	LTFSDmProtocol::LTFSDmInfoFilesRequestResp *infofilesreqresp = command->mutable_infofilesrequestresp();
 
@@ -191,7 +192,9 @@ void MessageParser::infoFilesMessage(long key, LTFSDmCommServer *command, long l
 		return;
 	}
 
-	getObjects(command, localReqNumber, pid, requestNumber);
+	getObjects(command, localReqNumber, pid, requestNumber, dynamic_cast<FileOperation*> (&infofiles));
+
+	infofiles.start();
 }
 
 void MessageParser::requestNumber(long key, LTFSDmCommServer *command, long *localReqNumber)
@@ -232,8 +235,8 @@ void MessageParser::stopMessage(long key, LTFSDmCommServer *command, long localR
    	const LTFSDmProtocol::LTFSDmStopRequest stopreq = command->stoprequest();
 	long keySent = stopreq.key();
 
-	TRACE(Trace::little, keySent);
 	TRACE(Trace::much, __PRETTY_FUNCTION__);
+	TRACE(Trace::little, keySent);
 
 	if ( key != keySent ) {
 		MSG(LTFSDMS0008E);

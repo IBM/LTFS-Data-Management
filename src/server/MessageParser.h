@@ -5,7 +5,7 @@ class MessageParser
 
 {
 private:
-	void getObjects(LTFSDmCommServer *command, long localReqNumber, unsigned long pid, long requestNumber);
+	void getObjects(LTFSDmCommServer *command, long localReqNumber, unsigned long pid, long requestNumber, FileOperation *fopt);
 	void migrationMessage(long key, LTFSDmCommServer *command, long localReqNumber);
 	void selRecallMessage(long key, LTFSDmCommServer *command, long localReqNumber);
 	void infoFilesMessage(long key, LTFSDmCommServer *command, long localReqNumber);
