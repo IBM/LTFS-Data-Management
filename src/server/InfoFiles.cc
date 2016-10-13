@@ -8,7 +8,7 @@
 void InfoFiles::start()
 
 {
-	int i;
+	int i = 0;
 
 	std::cout << "Info Files Request" << std::endl;
 

@@ -10,7 +10,7 @@
 void SelRecall::start()
 
 {
-	int i;
+	int i = 0;
 
 	std::cout << "Selective Recall request" << std::endl;
 
