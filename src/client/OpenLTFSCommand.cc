@@ -262,7 +262,10 @@ void OpenLTFSCommand::isValidRegularFile()
 {
 	struct stat statbuf;
 
-	if ( fileList.compare("") ) {
+	if ( !fileList.compare("-") ) { // if "-" is presented read from stdin
+		fileList = "/dev/stdin";
+	}
+	else if ( fileList.compare("") ) {
 		if ( stat(fileList.c_str(), &statbuf) ==  -1 ) {
 			MSG(LTFSDMC0040E, fileList.c_str());
 			throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
