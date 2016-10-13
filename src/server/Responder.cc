@@ -6,7 +6,7 @@
 
 #include "src/common/tracing/Trace.h"
 
-#include "src/server/SubServer/SubServer.h"
+#include "src/server/SubServer.h"
 #include "src/server/Server.h"
 #include "Responder.h"
 

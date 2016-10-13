@@ -11,9 +11,9 @@
 #include "src/common/comm/ltfsdm.pb.h"
 #include "src/common/comm/LTFSDmComm.h"
 
-#include "src/server/SubServer/SubServer.h"
+#include "src/server/SubServer.h"
 #include "src/server/Server.h"
-#include "src/server/Receiver/Receiver.h"
+#include "src/server/Receiver.h"
 #include "MessageProcessor.h"
 
 void MessageProcessor::getObjects(LTFSDmCommServer *command, long localReqNumber, unsigned long pid, long requestNumber)

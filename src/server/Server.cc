@@ -20,9 +20,9 @@
 #include "src/common/errors/errors.h"
 #include "src/common/const/Const.h"
 
-#include "src/server/Receiver/Receiver.h"
-#include "src/server/Responder/Responder.h"
-#include "src/server/SubServer/SubServer.h"
+#include "src/server/Receiver.h"
+#include "src/server/Responder.h"
+#include "src/server/SubServer.h"
 #include "src/server/Server.h"
 
 std::atomic<bool> terminate;

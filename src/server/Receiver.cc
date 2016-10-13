@@ -10,9 +10,9 @@
 #include "src/common/comm/ltfsdm.pb.h"
 #include "src/common/comm/LTFSDmComm.h"
 
-#include "src/server/SubServer/SubServer.h"
+#include "src/server/SubServer.h"
 #include "src/server/Server.h"
-#include "src/server/MessageProcessor/MessageProcessor.h"
+#include "src/server/MessageProcessor.h"
 
 #include "Receiver.h"
 
