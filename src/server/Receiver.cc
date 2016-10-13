@@ -12,7 +12,7 @@
 
 #include "src/server/SubServer.h"
 #include "src/server/Server.h"
-#include "src/server/MessageProcessor.h"
+#include "src/server/MessageParser.h"
 
 #include "Receiver.h"
 
@@ -21,7 +21,7 @@ std::atomic<long> globalReqNumber;
 void Receiver::run(std::string label, long key)
 
 {
-	MessageProcessor mproc;
+	MessageParser mproc;
 	std::unique_lock<std::mutex> lock(mproc.termmtx);
 	LTFSDmCommServer command;
 	SubServer subs(Const::MAX_RECEIVER_THREADS);
@@ -48,7 +48,7 @@ void Receiver::run(std::string label, long key)
 		}
 
 		try {
-			subs.enqueue(&MessageProcessor::run, &mproc, "MessageProcessor", key, command);
+			subs.enqueue(&MessageParser::run, &mproc, "MessageParser", key, command);
 		}
 		catch(...) {
 			MSG(LTFSDMS0010E);

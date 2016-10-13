@@ -14,9 +14,9 @@
 #include "src/server/SubServer.h"
 #include "src/server/Server.h"
 #include "src/server/Receiver.h"
-#include "MessageProcessor.h"
+#include "MessageParser.h"
 
-void MessageProcessor::getObjects(LTFSDmCommServer *command, long localReqNumber, unsigned long pid, long requestNumber)
+void MessageParser::getObjects(LTFSDmCommServer *command, long localReqNumber, unsigned long pid, long requestNumber)
 
 {
 	bool cont = true;
@@ -71,7 +71,7 @@ void MessageProcessor::getObjects(LTFSDmCommServer *command, long localReqNumber
 	}
 }
 
-void MessageProcessor::migrationMessage(long key, LTFSDmCommServer *command, long localReqNumber)
+void MessageParser::migrationMessage(long key, LTFSDmCommServer *command, long localReqNumber)
 
 {
 	unsigned long pid;
@@ -116,7 +116,7 @@ void MessageProcessor::migrationMessage(long key, LTFSDmCommServer *command, lon
 	getObjects(command, localReqNumber, pid, requestNumber);
 }
 
-void  MessageProcessor::selRecallMessage(long key, LTFSDmCommServer *command, long localReqNumber)
+void  MessageParser::selRecallMessage(long key, LTFSDmCommServer *command, long localReqNumber)
 
 {
 	unsigned long pid;
@@ -160,7 +160,7 @@ void  MessageProcessor::selRecallMessage(long key, LTFSDmCommServer *command, lo
 	getObjects(command, localReqNumber, pid, requestNumber);
 }
 
-void MessageProcessor::infoFilesMessage(long key, LTFSDmCommServer *command, long localReqNumber)
+void MessageParser::infoFilesMessage(long key, LTFSDmCommServer *command, long localReqNumber)
 
 {
 	unsigned long pid;
@@ -194,7 +194,7 @@ void MessageProcessor::infoFilesMessage(long key, LTFSDmCommServer *command, lon
 	getObjects(command, localReqNumber, pid, requestNumber);
 }
 
-void MessageProcessor::requestNumber(long key, LTFSDmCommServer *command, long *localReqNumber)
+void MessageParser::requestNumber(long key, LTFSDmCommServer *command, long *localReqNumber)
 
 {
    	const LTFSDmProtocol::LTFSDmReqNumber reqnum = command->reqnum();
@@ -226,7 +226,7 @@ void MessageProcessor::requestNumber(long key, LTFSDmCommServer *command, long *
 
 }
 
-void MessageProcessor::stopMessage(long key, LTFSDmCommServer *command, long localReqNumber)
+void MessageParser::stopMessage(long key, LTFSDmCommServer *command, long localReqNumber)
 
 {
    	const LTFSDmProtocol::LTFSDmStopRequest stopreq = command->stoprequest();
@@ -255,7 +255,7 @@ void MessageProcessor::stopMessage(long key, LTFSDmCommServer *command, long loc
 	command->closeRef();
 }
 
-void MessageProcessor::statusMessage(long key, LTFSDmCommServer *command, long localReqNumber)
+void MessageParser::statusMessage(long key, LTFSDmCommServer *command, long localReqNumber)
 
 {
    	const LTFSDmProtocol::LTFSDmStatusRequest statusreq = command->statusrequest();
@@ -293,7 +293,7 @@ void MessageProcessor::statusMessage(long key, LTFSDmCommServer *command, long l
 	}
 }
 
-void MessageProcessor::run(std::string label, long key, LTFSDmCommServer command)
+void MessageParser::run(std::string label, long key, LTFSDmCommServer command)
 
 {
 	std::unique_lock<std::mutex> lock(termmtx);

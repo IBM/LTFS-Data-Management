@@ -1,7 +1,7 @@
 #ifndef _MESSAGEPROCESSOR_H
 #define _MESSAGEPROCESSOR_H
 
-class MessageProcessor
+class MessageParser
 
 {
 private:
@@ -15,8 +15,8 @@ private:
 public:
 	std::mutex termmtx;
 	std::condition_variable termcond;
-	MessageProcessor() {}
-	~MessageProcessor() {};
+	MessageParser() {}
+	~MessageParser() {};
 	void run(std::string label, long key, LTFSDmCommServer command);
 };
 
