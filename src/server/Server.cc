@@ -14,12 +14,15 @@
 #include <condition_variable>
 #include <thread>
 
+#include <sqlite3.h>
+
 #include "src/common/util/util.h"
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
 #include "src/common/errors/errors.h"
 #include "src/common/const/Const.h"
 
+#include "DataBase.h"
 #include "src/server/Receiver.h"
 #include "src/server/Responder.h"
 #include "src/server/SubServer.h"
@@ -81,6 +84,16 @@ void Server::initialize()
 {
 	lockServer();
 	writeKey();
+
+	try {
+		DB.cleanup();
+		DB.open();
+		DB.createTables();
+	}
+	catch (LTFSDMErr error) {
+		MSG(LTFSDMS0014E);
+		throw(error);
+	}
 }
 
 void Server::daemonize()

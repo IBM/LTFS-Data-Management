@@ -1,6 +1,7 @@
 RELPATH = ../..
 
 LIB_SRC_FILES := Server.cc
+LIB_SRC_FILES += DataBase.cc
 LIB_SRC_FILES += SubServer.cc
 LIB_SRC_FILES += Receiver.cc
 LIB_SRC_FILES += Responder.cc

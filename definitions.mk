@@ -15,7 +15,7 @@ CXX = g++
 CXXFLAGS  := -std=c++11 -g2 -ggdb -Wall -Werror -D_GNU_SOURCE -I$(RELPATH) -I/opt/local/include -I/usr/local/include
 
 # for protocol buffers
-LDFLAGS := -lprotobuf -lpthread -L/usr/local/lib
+LDFLAGS := -lprotobuf -lpthread -lsqlite3 -L/usr/local/lib
 
 BINDIR := $(RELPATH)/bin
 LIBDIR := $(RELPATH)/lib
