@@ -7,10 +7,16 @@
 
 #include "SelRecall.h"
 
+void SelRecall::addFileName(std::string fileName)
+
+{
+
+}
+
 void SelRecall::start()
 
 {
-	int i = 0;
+	//	int i = 0;
 
 	std::cout << "Selective Recall request" << std::endl;
 
@@ -28,9 +34,9 @@ void SelRecall::start()
 			std::cout << "unkown target state" << std::endl;
 	}
 
-	for(std::vector<std::string>::iterator it = fileList.begin(); it != fileList.end(); ++it) {
-		std::cout << "file " << ++i << ": " << *it << std::endl;
-	}
+	// for(std::vector<std::string>::iterator it = fileList.begin(); it != fileList.end(); ++it) {
+	// 	std::cout << "file " << ++i << ": " << *it << std::endl;
+	// }
 
 	std::cout << std::endl;
 

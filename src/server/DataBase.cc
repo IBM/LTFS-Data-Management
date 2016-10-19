@@ -72,19 +72,18 @@ void DataBase::createTables()
 	int rc;
 
 	sql = std::string("CREATE TABLE JOB_QUEUE(")
-		+ std::string("OPERATION INT NOT NULL,")
-		+ std::string("FILE_NAME CHAR(4096) UNIQUE PRIMARY KEY NOT NULL,")
-		+ std::string("REQ_NUM INT NOT NULL,")
-		+ std::string("MIGRATION_STATE INT NOT NULL,")
-		+ std::string("COLOC_NUM INT NOT NULL,")
-		+ std::string("FILE_SIZE INT NOT NULL,")
-		+ std::string("H_PTR INT NOT NULL,")
-		+ std::string("H_SIZE INT NOT NULL,")
-		+ std::string("FS_ID INT NOT NULL,")
-		+ std::string("I_GEN INT NOT NULL,")
-		+ std::string("I_NUM INT NOT NULL);")
-		+ std::string("MTIME INT NOT NULL);")
-		+ std::string("LAST_UPD INT NOT NULL);");
+		+ std::string("OPERATION INT NOT NULL, ")
+		+ std::string("FILE_NAME CHAR(4096) UNIQUE PRIMARY KEY NOT NULL, ")
+		+ std::string("REQ_NUM INT NOT NULL, ")
+		+ std::string("TARGET_STATE INT NOT NULL, ")
+		+ std::string("COLOC_NUM INT NOT NULL, ")
+		+ std::string("FILE_SIZE INT NOT NULL, ")
+		+ std::string("FS_ID INT NOT NULL, ")
+		+ std::string("I_GEN INT NOT NULL, ")
+		+ std::string("I_NUM INT NOT NULL, ")
+		+ std::string("MTIME INT NOT NULL, ")
+		+ std::string("LAST_UPD INT NOT NULL, ")
+		+ std::string("FAILED INT NOT NULL);");
 
 	rc = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, NULL);
 

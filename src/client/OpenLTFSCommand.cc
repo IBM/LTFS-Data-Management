@@ -184,6 +184,7 @@ void OpenLTFSCommand::sendObjects(std::stringstream *parmList)
 {
 	std::istream *input;
 	std::string line;
+	char *file_name;
 	bool cont = true;
 	int i;
 
@@ -200,8 +201,15 @@ void OpenLTFSCommand::sendObjects(std::stringstream *parmList)
 		LTFSDmProtocol::LTFSDmSendObjects::FileName* filenames;
 
 		for ( i = 0; (i < Const::MAX_OBJECTS_SEND) && ((std::getline(*input, line))); i++ ) {
-			filenames = sendobjects->add_filenames();
-			filenames->set_filename(line);
+			file_name = canonicalize_file_name(line.c_str());
+			if ( file_name ) {
+				filenames = sendobjects->add_filenames();
+				filenames->set_filename(file_name);
+				free(file_name);
+			}
+			else  {
+				MSG(LTFSDMC0043E, line.c_str());
+			}
 			TRACE(Trace::much, line);
 		}
 

@@ -1,5 +1,7 @@
 RELPATH = ../..
 
+LDFLAGS := -lprotobuf -lpthread -lsqlite3 -ldmconnector
+
 LIB_SRC_FILES := Server.cc
 LIB_SRC_FILES += DataBase.cc
 LIB_SRC_FILES += SubServer.cc

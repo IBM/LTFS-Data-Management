@@ -1,6 +1,6 @@
 # common definitions
 
-.PHONY: clean build libdir
+.PHONY: clean build libdir connector
 
 # to be used below
 PROJECT := OpenLTFS
@@ -12,13 +12,12 @@ CXX = g++
 
 # use c++11 to build the code
 # CXXFLAGS  := -std=c++11 -g2 -ggdb -Wall -Werror -Wno-format-security -D_GNU_SOURCE -I$(RELPATH)
-CXXFLAGS  := -std=c++11 -g2 -ggdb -Wall -Werror -D_GNU_SOURCE -I$(RELPATH) -I/opt/local/include -I/usr/local/include
-
-# for protocol buffers
-LDFLAGS := -lprotobuf -lpthread -lsqlite3 -L/usr/local/lib
+CXXFLAGS  := -std=c++11 -g2 -ggdb -fPIC -Wall -Werror -D_GNU_SOURCE -I$(RELPATH) -I/opt/local/include -I/usr/local/include
 
 BINDIR := $(RELPATH)/bin
 LIBDIR := $(RELPATH)/lib
+
+LDFLAGS += -L$(BINDIR)
 
 # client, common, or server
 TARGETCOMP := $(shell perl -e "print '$(CURDIR)' =~ /.*$(PROJECT)\/src\/([^\/]+)/")
@@ -45,6 +44,9 @@ objfiles = $(patsubst %.cc,%.o, $(1))
 
 # build rules
 default: build
+
+lib%connector.so: Connector.o
+	$(CXX) -shared $(LDFLAGS) $(CXXFLAGS) $^ -o $@
 
 # creating diretories if missing
 $(DEPDIR) $(LIBDIR) $(BINDIR):

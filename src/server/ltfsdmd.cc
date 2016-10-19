@@ -14,6 +14,7 @@
 #include "src/common/errors/errors.h"
 #include "src/common/const/Const.h"
 
+#include "src/connector/Connector.h"
 #include "src/server/SubServer.h"
 #include "src/server/Server.h"
 

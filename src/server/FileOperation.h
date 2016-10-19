@@ -2,10 +2,8 @@
 #define _FILEOPERATION_H
 
 class FileOperation {
-protected:
-	std::vector<std::string> fileList;
 public:
-	void addFileName(std::string fileName);
+	virtual void addFileName(std::string fileName) {}
 	virtual void start() {}
 };
 

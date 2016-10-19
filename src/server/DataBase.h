@@ -6,6 +6,10 @@ private:
 	sqlite3 *db;
 	bool dbNeedsClosed;
 public:
+	enum operation {
+		MIGRATION,
+		RECALL
+	};
 	DataBase() : db(NULL), dbNeedsClosed(false) {}
 	~DataBase();
 	void cleanup();

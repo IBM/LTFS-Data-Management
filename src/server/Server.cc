@@ -22,11 +22,12 @@
 #include "src/common/errors/errors.h"
 #include "src/common/const/Const.h"
 
+#include "src/connector/Connector.h"
 #include "DataBase.h"
-#include "src/server/Receiver.h"
-#include "src/server/Responder.h"
-#include "src/server/SubServer.h"
-#include "src/server/Server.h"
+#include "Receiver.h"
+#include "Responder.h"
+#include "SubServer.h"
+#include "Server.h"
 
 std::atomic<bool> terminate;
 

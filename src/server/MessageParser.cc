@@ -3,6 +3,8 @@
 #include <condition_variable>
 #include <thread>
 
+#include <sqlite3.h>
+
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
 #include "src/common/errors/errors.h"
@@ -11,6 +13,7 @@
 #include "src/common/comm/ltfsdm.pb.h"
 #include "src/common/comm/LTFSDmComm.h"
 
+#include "src/connector/Connector.h"
 #include "src/server/SubServer.h"
 #include "src/server/Server.h"
 #include "src/server/Receiver.h"
@@ -26,6 +29,7 @@ void MessageParser::getObjects(LTFSDmCommServer *command, long localReqNumber, u
 
 {
 	bool cont = true;
+	bool success = true;
 
 	TRACE(Trace::much, __PRETTY_FUNCTION__);
 
@@ -47,19 +51,24 @@ void MessageParser::getObjects(LTFSDmCommServer *command, long localReqNumber, u
 
 		const LTFSDmProtocol::LTFSDmSendObjects sendobjects = command->sendobjects();
 
-		for (int j = 0; j < sendobjects.filenames_size(); j++) {
-			const LTFSDmProtocol::LTFSDmSendObjects::FileName& filename = sendobjects.filenames(j);
-			if ( filename.filename().compare("") != 0 ) {
-				fopt->addFileName(filename.filename());
+			for (int j = 0; j < sendobjects.filenames_size(); j++) {
+				const LTFSDmProtocol::LTFSDmSendObjects::FileName& filename = sendobjects.filenames(j);
+				if ( filename.filename().compare("") != 0 ) {
+					try {
+						fopt->addFileName(filename.filename());
+					}
+					catch( LTFSDMErr error) {
+						MSG(LTFSDMS0015E, filename.filename().c_str());
+					}
+				}
+				else {
+					cont = false; // END
+				}
 			}
-			else {
-				cont = false; // END
-			}
-		}
 
 		LTFSDmProtocol::LTFSDmSendObjectsResp *sendobjresp = command->mutable_sendobjectsresp();
 
-		sendobjresp->set_success(true);
+		sendobjresp->set_success(success);
 		sendobjresp->set_reqnumber(requestNumber);
 		sendobjresp->set_pid(pid);
 

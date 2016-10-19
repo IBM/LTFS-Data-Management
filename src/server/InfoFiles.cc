@@ -5,6 +5,12 @@
 #include "FileOperation.h"
 #include "InfoFiles.h"
 
+void InfoFiles::addFileName(std::string fileName)
+
+{
+	fileList.push_back(fileName);
+}
+
 void InfoFiles::start()
 
 {

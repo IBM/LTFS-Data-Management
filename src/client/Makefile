@@ -1,5 +1,7 @@
 RELPATH = ../..
 
+LDFLAGS += -lprotobuf
+
 LIB_SRC_FILES := OpenLTFSCommand.cc StartCommand.cc StopCommand.cc MigrationCommand.cc RecallCommand.cc HelpCommand.cc InfoRequestsCommand.cc InfoFilesCommand.cc StatusCommand.cc
 CLEANUP_FILES := ltfsdm
 BINARY := ltfsdm

@@ -9,6 +9,7 @@ private:
 public:
 	SelRecall(unsigned long _pid, long _reqNumber, LTFSDmProtocol::LTFSDmSelRecRequest::State _targetState) :
 		pid(_pid), reqNumber(_reqNumber), targetState(_targetState) {}
+	void addFileName(std::string fileName);
 	void start();
 };
 

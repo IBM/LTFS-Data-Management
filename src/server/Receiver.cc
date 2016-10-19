@@ -10,6 +10,7 @@
 #include "src/common/comm/ltfsdm.pb.h"
 #include "src/common/comm/LTFSDmComm.h"
 
+#include "src/connector/Connector.h"
 #include "SubServer.h"
 #include "Server.h"
 #include "FileOperation.h"
