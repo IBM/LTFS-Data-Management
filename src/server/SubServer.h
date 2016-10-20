@@ -18,7 +18,7 @@ public:
 	void waitAllRemaining();
 
 	template< typename Function, typename... Args >
-	void enqueue(Function&& f, Args... args)
+	void enqueue(std::string label, Function&& f, Args... args)
 	{
 		int countb;
 		std::unique_lock<std::mutex> lock(bmtx);
@@ -31,8 +31,10 @@ public:
 
 		std::thread *thrd1 = new std::thread(f, args ...);
 		TRACE(Trace::much, thrd1->get_id());
+		pthread_setname_np(thrd1->native_handle(), label.c_str());
 		std::thread *thrd2 = new std::thread(&SubServer::waitThread, this, thrd1, thrdprev);
 		TRACE(Trace::much, thrd2->get_id());
+		pthread_setname_np(thrd2->native_handle(), (std::string("wait: ") + label).c_str());
 		thrdprev = thrd2;
 	}
 };

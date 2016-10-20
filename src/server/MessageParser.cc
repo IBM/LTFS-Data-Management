@@ -309,7 +309,7 @@ void MessageParser::statusMessage(long key, LTFSDmCommServer *command, long loca
 	}
 }
 
-void MessageParser::run(std::string label, long key, LTFSDmCommServer command)
+void MessageParser::run(long key, LTFSDmCommServer command)
 
 {
 	std::unique_lock<std::mutex> lock(termmtx);

@@ -9,7 +9,7 @@ class Receiver
 public:
 	Receiver() {}
 	~Receiver() {};
-	void run(std::string label, long key);
+	void run(long key);
 };
 
 #endif /* _RECEIVER_H */

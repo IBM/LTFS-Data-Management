@@ -7,7 +7,7 @@ class Responder
 public:
 	Responder() {}
 	~Responder() {};
-	void run(std::string label, long key);
+	void run(long key);
 };
 
 #endif /* _RESPONDER_H */

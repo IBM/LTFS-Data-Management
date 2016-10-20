@@ -27,6 +27,7 @@
 #include "Receiver.h"
 #include "Responder.h"
 #include "SubServer.h"
+#include "Scheduler.h"
 #include "Server.h"
 
 std::atomic<bool> terminate;
@@ -138,13 +139,15 @@ void Server::run()
 
 {
 	SubServer subs;
+	Scheduler sched;
 	Receiver recv;
 	Responder resp;
 
 	terminate = false;
 
-	subs.enqueue(&Receiver::run, &recv, "Receiver", key);
-	subs.enqueue(&Responder::run, &resp, "Responder", key);
+	subs.enqueue("Scheduler", &Scheduler::run, &sched, key);
+	subs.enqueue("Receiver", &Receiver::run, &recv, key);
+	subs.enqueue("Responder", &Responder::run, &resp, key);
 
 	subs.waitAllRemaining();
 }

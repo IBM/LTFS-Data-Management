@@ -20,7 +20,7 @@
 
 std::atomic<long> globalReqNumber;
 
-void Receiver::run(std::string label, long key)
+void Receiver::run(long key)
 
 {
 	MessageParser mproc;
@@ -50,7 +50,7 @@ void Receiver::run(std::string label, long key)
 		}
 
 		try {
-			subs.enqueue(&MessageParser::run, &mproc, "MessageParser", key, command);
+			subs.enqueue("MessageParser", &MessageParser::run, &mproc, key, command);
 		}
 		catch(...) {
 			MSG(LTFSDMS0010E);

@@ -17,7 +17,7 @@ public:
 	std::condition_variable termcond;
 	MessageParser() {}
 	~MessageParser() {};
-	void run(std::string label, long key, LTFSDmCommServer command);
+	void run(long key, LTFSDmCommServer command);
 };
 
 #endif /* _MESSAGEPARSER_H */

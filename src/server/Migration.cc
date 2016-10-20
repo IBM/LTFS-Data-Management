@@ -118,7 +118,7 @@ void Migration::start()
 		ssql2 << reqNumber << ", ";                                                             // FILE_NAME
 		ssql2 << targetState << ", ";                                                           // TARGET_STATE
 		ssql2 << colNumber << ", ";                                                             // COLOC_NUM
-		ssql2 << "NULL);";                                                                    // TAPE_ID
+		ssql2 << "NULL);";                                                                      // TAPE_ID
 
 		rc = sqlite3_prepare_v2(DB.getDB(), ssql2.str().c_str(), -1, &stmt2, NULL);
 
