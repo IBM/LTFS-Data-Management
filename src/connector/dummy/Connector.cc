@@ -43,6 +43,8 @@ struct stat FsObj::stat()
 
 	memset(&statbuf, 0, sizeof(statbuf));
 
+	statbuf.st_mode = S_IFREG;
+
 	return statbuf;
 }
 

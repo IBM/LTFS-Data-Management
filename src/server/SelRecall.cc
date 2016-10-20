@@ -46,9 +46,9 @@ void SelRecall::addFileName(std::string fileName)
 
 		ssql << statbuf.st_size << ", ";                          // FILE_SIZE
 
-		ssql << fso.getFsId() << ", ";                           // FS_ID
-		ssql << fso.getIGen() << ", ";                           // I_GEN
-		ssql << fso.getINode() << ", ";                          // I_NUM
+		ssql << fso.getFsId() << ", ";                            // FS_ID
+		ssql << fso.getIGen() << ", ";                            // I_GEN
+		ssql << fso.getINode() << ", ";                           // I_NUM
 	}
 	catch ( int error ) {
 		MSG(LTFSDMS0017E, fileName.c_str());
