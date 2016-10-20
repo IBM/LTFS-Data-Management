@@ -1,10 +1,11 @@
 RELPATH = ../../..
 
 LDFLAGS := -ldm
+SHAREDLIB := lib$(notdir $(CURDIR))connector.so
 
 LIB_SRC_FILES :=
-CLEANUP_FILES := libdmconnector.so
-BINARY := libdmconnector.so
+CLEANUP_FILES := $(SHAREDLIB)
+BINARY := $(SHAREDLIB)
 POSTTARGET :=
 
 ARCHIVES :=

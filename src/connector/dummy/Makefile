@@ -1,8 +1,10 @@
 RELPATH = ../../..
 
+SHAREDLIB := lib$(notdir $(CURDIR))connector.so
+
 LIB_SRC_FILES :=
-CLEANUP_FILES := libtstconnector.so
-BINARY := libtstconnector.so
+CLEANUP_FILES := $(SHAREDLIB)
+BINARY := $(SHAREDLIB)
 POSTTARGET :=
 
 ARCHIVES :=

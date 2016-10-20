@@ -21,14 +21,14 @@ FsObj::FsObj(std::string fileName)
 
 {
 	handle = nullptr;
-	size = 0;
+	handleLength = 0;
 }
 
 FsObj::FsObj(unsigned long long fsId, unsigned int iGen, unsigned long long iNode)
 
 {
 	handle = nullptr;
-	size = 0;
+	handleLength = 0;
 }
 
 FsObj::~FsObj()

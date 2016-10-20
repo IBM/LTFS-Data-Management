@@ -1,6 +1,6 @@
 # common definitions
 
-.PHONY: clean build libdir connector
+.PHONY: clean build libdir
 
 # to be used below
 PROJECT := OpenLTFS
@@ -45,7 +45,7 @@ objfiles = $(patsubst %.cc,%.o, $(1))
 # build rules
 default: build
 
-lib%connector.so: Connector.o
+$(SHAREDLIB): Connector.o
 	$(CXX) -shared $(LDFLAGS) $(CXXFLAGS) $^ -o $@
 
 # creating diretories if missing

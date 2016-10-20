@@ -3,6 +3,8 @@ include components.mk
 # for executing code
 export PATH := $(PATH):$(CURDIR)/bin
 
+export CONNECTOR := dmapi
+
 .PHONY: build clean
 
 default: build
