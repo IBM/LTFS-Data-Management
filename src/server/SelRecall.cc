@@ -33,7 +33,7 @@ void SelRecall::addFileName(std::string fileName)
 	ssql << "'" << fileName << "', ";                             // FILE_NAME
 	ssql << reqNumber << ", ";                                    // REQ_NUM
 	ssql << targetState << ", ";                                  // MIGRATION_STATE
-	ssql << Const::UNSET << ", ";                                 // COLOC_NUM
+	ssql << "NULL" << ", ";                                         // COLOC_NUM
 
 	try {
 		FsObj fso(fileName);
