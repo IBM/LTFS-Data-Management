@@ -73,6 +73,7 @@ void DataBase::createTables()
 
 	sql = std::string("CREATE TABLE JOB_QUEUE(")
 		+ std::string("OPERATION INT NOT NULL, ")
+// "NULLs are still distinct in a UNIQUE column" => good for transparent recall
 		+ std::string("FILE_NAME CHAR(4096) UNIQUE PRIMARY KEY NOT NULL, ")
 		+ std::string("REQ_NUM INT NOT NULL, ")
 		+ std::string("TARGET_STATE INT NOT NULL, ")
@@ -105,4 +106,33 @@ void DataBase::createTables()
 		TRACE(Trace::error, rc);
 		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
 	}
+
+	sql = std::string("CREATE TABLE REQUEST_QUEUE(")
+		+ std::string("OPERATION INT NOT NULL, ")
+		+ std::string("REQ_NUM INT NOT NULL, ")
+		+ std::string("TARGET_STATE INT NOT NULL, ")
+		+ std::string("COLOC_NUM INT NOT NULL, ")
+		+ std::string("TAPE_ID CHAR(9) NOT NULL);");
+
+	rc = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, NULL);
+
+	if( rc != SQLITE_OK ) {
+		TRACE(Trace::error, rc);
+		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+	}
+
+	rc = sqlite3_step(stmt);
+
+	if ( rc != SQLITE_DONE ) {
+		TRACE(Trace::error, rc);
+		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+	}
+
+	rc = sqlite3_finalize(stmt);
+
+	if ( rc != SQLITE_OK ) {
+		TRACE(Trace::error, rc);
+		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+	}
+
 }

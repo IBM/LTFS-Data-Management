@@ -57,8 +57,8 @@ void MessageParser::getObjects(LTFSDmCommServer *command, long localReqNumber, u
 					try {
 						fopt->addFileName(filename.filename());
 					}
-					catch( LTFSDMErr error) {
-						MSG(LTFSDMS0015E, filename.filename().c_str());
+					catch(int error) {
+						MSG(LTFSDMS0015E, filename.filename().c_str(), sqlite3_errstr(error));
 					}
 				}
 				else {

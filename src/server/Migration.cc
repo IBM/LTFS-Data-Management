@@ -63,21 +63,21 @@ void Migration::addFileName(std::string fileName)
 	if( rc != SQLITE_OK ) {
 		std::cout << "rc: " << rc << std::endl;
 		TRACE(Trace::error, rc);
-		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+		throw(rc);
 	}
 
 	rc = sqlite3_step(stmt);
 
 	if ( rc != SQLITE_DONE ) {
 		TRACE(Trace::error, rc);
-		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+		throw(rc);
 	}
 
 	rc = sqlite3_finalize(stmt);
 
 	if ( rc != SQLITE_OK ) {
 		TRACE(Trace::error, rc);
-		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+		throw(rc);
 	}
 	return;
 }
