@@ -57,21 +57,21 @@ Connector::~Connector()
 	dm_destroy_session(dmapiSession);
 }
 
-FsObj::FsObj(std::string fileName)
+FsObj::FsObj(std::string fileName) : handle(NULL), handleLength(0)
 
 {
 	char *fname = (char *) fileName.c_str();
 
-	if ( dm_path_to_handle(fname, &handle, &size) != 0 ) {
+	if ( dm_path_to_handle(fname, &handle, &handleLength) != 0 ) {
 		TRACE(Trace::error, errno);
 		throw(errno);
 	}
 }
 
-FsObj::FsObj(unsigned long long fsId, unsigned int iGen, unsigned long long iNode)
+FsObj::FsObj(unsigned long long fsId, unsigned int iGen, unsigned long long iNode) : handle(NULL), handleLength(0)
 
 {
-	if ( dm_make_handle(&fsId, &iNode, &iGen, &handle, &size) != 0 ) {
+	if ( dm_make_handle(&fsId, &iNode, &iGen, &handle, &handleLength) != 0 ) {
 		TRACE(Trace::error, errno);
 		throw(errno);
 	}
@@ -80,7 +80,7 @@ FsObj::FsObj(unsigned long long fsId, unsigned int iGen, unsigned long long iNod
 FsObj::~FsObj()
 
 {
-	dm_handle_free(handle, size);
+	dm_handle_free(handle, handleLength);
 }
 
 struct stat FsObj::stat()
@@ -91,30 +91,75 @@ struct stat FsObj::stat()
 
 	memset(&statbuf, 0, sizeof(statbuf));
 
- 	if ( dm_get_fileattr(dmapiSession, handle, size, DM_NO_TOKEN, DM_AT_STAT, &dmstatbuf) != 0 ) {
+	if ( handle == NULL )
+		return statbuf;
+
+ 	if ( dm_get_fileattr(dmapiSession, handle, handleLength, DM_NO_TOKEN, DM_AT_STAT, &dmstatbuf) != 0 ) {
 		TRACE(Trace::error, errno);
 	    throw(errno);
 	}
 
-
+	statbuf.st_dev = dmstatbuf.dt_dev;
+	statbuf.st_ino = dmstatbuf.dt_ino;
+	statbuf.st_mode = dmstatbuf.dt_mode;
+	statbuf.st_nlink = dmstatbuf.dt_nlink;
+	statbuf.st_uid = dmstatbuf.dt_uid;
+	statbuf.st_gid = dmstatbuf.dt_gid;
+	statbuf.st_rdev = dmstatbuf.dt_rdev;
+	statbuf.st_size = dmstatbuf.dt_size;
+	statbuf.st_blksize = dmstatbuf.dt_blksize;
+	statbuf.st_blocks = dmstatbuf.dt_blocks;
+	statbuf.st_atime = dmstatbuf.dt_atime;
+	statbuf.st_mtime = dmstatbuf.dt_mtime;
+	statbuf.st_ctime = dmstatbuf.dt_ctime;
 
 	return statbuf;
 }
 
-unsigned long FsObj::getFsId()
+unsigned long long FsObj::getFsId()
 
 {
-	return 11;
+	unsigned long long fsid;
+
+	if ( handleLength == 0 )
+		return 0;
+
+	if (dm_handle_to_fsid(handle, handleLength, &fsid)) {
+		TRACE(Trace::error, errno);
+	    throw(errno);
+	}
+
+	return fsid;
 }
 
-unsigned long FsObj::getIGen()
+unsigned int FsObj::getIGen()
 
 {
-	return 12;
+	unsigned int igen;
+
+	if ( handleLength == 0 )
+		return 0;
+
+	if (dm_handle_to_igen(handle, handleLength, &igen)) {
+		TRACE(Trace::error, errno);
+	    throw(errno);
+	}
+
+	return igen;
 }
 
-unsigned long FsObj::getINode()
+unsigned long long FsObj::getINode()
 
 {
-	return 13;
+	unsigned long long ino;
+
+	if ( handleLength == 0 )
+		return 0;
+
+	if (dm_handle_to_ino(handle, handleLength, &ino)) {
+		TRACE(Trace::error, errno);
+	    throw(errno);
+	}
+
+	return ino;
 }

@@ -8,7 +8,8 @@ private:
 public:
 	enum operation {
 		MIGRATION,
-		RECALL
+		SELRECALL,
+		TRARECALL
 	};
 	DataBase() : db(NULL), dbNeedsClosed(false) {}
 	~DataBase();

@@ -46,19 +46,19 @@ struct stat FsObj::stat()
 	return statbuf;
 }
 
-unsigned long FsObj::getFsId()
+unsigned long long FsObj::getFsId()
 
 {
 	return 1;
 }
 
-unsigned long FsObj::getIGen()
+unsigned int FsObj::getIGen()
 
 {
 	return 2;
 }
 
-unsigned long FsObj::getINode()
+unsigned long long FsObj::getINode()
 
 {
 	return 3;

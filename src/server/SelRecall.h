@@ -6,6 +6,7 @@ private:
 	unsigned long pid;
 	long reqNumber;
 	LTFSDmProtocol::LTFSDmSelRecRequest::State targetState;
+	sqlite3_stmt *stmt;
 public:
 	SelRecall(unsigned long _pid, long _reqNumber, LTFSDmProtocol::LTFSDmSelRecRequest::State _targetState) :
 		pid(_pid), reqNumber(_reqNumber), targetState(_targetState) {}

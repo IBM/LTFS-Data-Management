@@ -10,15 +10,15 @@ public:
 class FsObj {
 private:
 	void *handle;
-	unsigned long size;
+	unsigned long handleLength;
 public:
 	FsObj(std::string fileName);
 	FsObj(unsigned long long fsId, unsigned int iGen, unsigned long long iNode);
 	~FsObj();
 	struct stat stat();
-	unsigned long getFsId();
-	unsigned long getIGen();
-	unsigned long getINode();
+	unsigned long long getFsId();
+	unsigned int getIGen();
+	unsigned long long getINode();
 };
 
 #endif /* _CONNECTOR_H */
