@@ -74,7 +74,7 @@ void DataBase::createTables()
 	sql = std::string("CREATE TABLE JOB_QUEUE(")
 		+ std::string("OPERATION INT NOT NULL, ")
 // "NULLs are still distinct in a UNIQUE column" => good for transparent recall
-		+ std::string("FILE_NAME CHAR(4096) UNIQUE PRIMARY KEY NOT NULL, ")
+		+ std::string("FILE_NAME CHAR(4096) UNIQUE PRIMARY KEY, ")
 		+ std::string("REQ_NUM INT NOT NULL, ")
 		+ std::string("TARGET_STATE INT NOT NULL, ")
 		+ std::string("COLOC_NUM INT NOT NULL, ")
