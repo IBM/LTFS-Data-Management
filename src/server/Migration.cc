@@ -26,7 +26,6 @@ void Migration::addFileName(std::string fileName)
 	int rc;
 	struct stat statbuf;
 	std::stringstream ssql;
-	FsObj *fso = NULL;
 
 	ssql << "INSERT INTO JOB_QUEUE (OPERATION, FILE_NAME, REQ_NUM, TARGET_STATE, COLOC_NUM, FILE_SIZE, FS_ID, I_GEN, I_NUM, MTIME, LAST_UPD, FAILED) ";
 	ssql << "VALUES (" << DataBase::MIGRATION << ", ";            // OPERATION
@@ -36,37 +35,28 @@ void Migration::addFileName(std::string fileName)
 	ssql << jobnum % colFactor << ", ";                           // COLOC_NUM
 
 	try {
-		fso = new FsObj(fileName);
-		statbuf = fso->stat();
+		FsObj fso(fileName);
+		statbuf = fso.stat();
+
+		if (!S_ISREG(statbuf.st_mode)) {
+			MSG(LTFSDMS0018E, fileName.c_str());
+			return;
+		}
+
+		ssql << statbuf.st_size << ", ";                          // FILE_SIZE
+
+		ssql << fso.getFsId() << ", ";                           // FS_ID
+		ssql << fso.getIGen() << ", ";                           // I_GEN
+		ssql << fso.getINode() << ", ";                          // I_NUM
 	}
 	catch ( int error ) {
 		MSG(LTFSDMS0017E, fileName.c_str());
-		goto failed;
-	}
-
-	if (!S_ISREG(statbuf.st_mode)) {
-		MSG(LTFSDMS0018E, fileName.c_str());
-		goto failed;
-	}
-
-	ssql << statbuf.st_size << ", ";                              // FILE_SIZE
-
-	try {
-		ssql << fso->getFsId() << ", ";                           // FS_ID
-		ssql << fso->getIGen() << ", ";                           // I_GEN
-		ssql << fso->getINode() << ", ";                          // I_NUM
-	}
-	catch ( int error ) {
-		MSG(LTFSDMS0017E, fileName.c_str());
-		goto failed;
+		return;
 	}
 
 	ssql << statbuf.st_mtime << ", ";                             // MTIME
 	ssql << time(NULL) << ", ";                                   // LAST_UPD
 	ssql << 0 << ");";                                            // FAILED
-
-	if ( fso )
-		delete(fso);
 
 	rc = sqlite3_prepare_v2(DB.getDB(), ssql.str().c_str(), -1, &stmt, NULL);
 
@@ -90,10 +80,6 @@ void Migration::addFileName(std::string fileName)
 		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
 	}
 	return;
-
-failed:
-	if ( fso )
-		delete(fso);
 }
 
 void Migration::start()

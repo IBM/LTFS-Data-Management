@@ -5,6 +5,10 @@ export PATH := $(PATH):$(CURDIR)/bin
 
 export CONNECTOR := dmapi
 
+ifeq ($(wildcard src/connector/$(CONNECTOR)),)
+    $(error connector $(CONNECTOR) does not exit)
+endif
+
 .PHONY: build clean
 
 default: build
