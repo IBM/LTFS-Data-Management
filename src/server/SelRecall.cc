@@ -64,7 +64,6 @@ void SelRecall::addFileName(std::string fileName)
 	rc = sqlite3_prepare_v2(DB.getDB(), ssql.str().c_str(), -1, &stmt, NULL);
 
 	if( rc != SQLITE_OK ) {
-		std::cout << "rc: " << rc << std::endl;
 		TRACE(Trace::error, rc);
 		throw(rc);
 	}
@@ -101,7 +100,6 @@ void SelRecall::start()
 	rc = sqlite3_prepare_v2(DB.getDB(), ssql.str().c_str(), -1, &stmt, NULL);
 
 	if( rc != SQLITE_OK ) {
-		std::cout << "rc: " << rc << std::endl;
 		TRACE(Trace::error, rc);
 		throw(rc);
 	}
@@ -125,7 +123,6 @@ void SelRecall::start()
 		rc = sqlite3_prepare_v2(DB.getDB(), ssql2.str().c_str(), -1, &stmt2, NULL);
 
 		if( rc != SQLITE_OK ) {
-			std::cout << "rc: " << rc << std::endl;
 			TRACE(Trace::error, rc);
 			throw(rc);
 		}
