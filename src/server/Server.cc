@@ -138,6 +138,8 @@ void Server::daemonize()
 void Server::run()
 
 {
+	Connector connector;
+
 	SubServer subs;
 	Scheduler sched;
 	Receiver recv;
