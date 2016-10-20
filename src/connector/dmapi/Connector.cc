@@ -5,6 +5,7 @@
 #include <errno.h>
 
 #include <string>
+#include <sstream>
 
 #include "src/common/util/util.h"
 #include "src/common/messages/Message.h"
@@ -162,4 +163,14 @@ unsigned long long FsObj::getINode()
 	}
 
 	return ino;
+}
+
+std::string FsObj::getTapeId()
+
+{
+	std::stringstream sstr;
+
+	sstr << "TAPE0" << time(NULL) % 10 << random() % 4;
+
+	return sstr.str();
 }

@@ -91,6 +91,7 @@ void DataBase::createTables()
 		+ std::string("I_NUM INT NOT NULL, ")
 		+ std::string("MTIME INT NOT NULL, ")
 		+ std::string("LAST_UPD INT NOT NULL, ")
+		+ std::string("TAPE_ID CHAR(9), ")
 		+ std::string("FAILED INT NOT NULL);");
 
 	rc = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, NULL);
@@ -119,7 +120,7 @@ void DataBase::createTables()
 		+ std::string("REQ_NUM INT NOT NULL, ")
 		+ std::string("TARGET_STATE INT, ")
 		+ std::string("COLOC_NUM INT, ")
-		+ std::string("TAPE_ID CHAR(9));");
+		+ std::string("TAPE_ID CHAR(16));");  // including logical characters
 
 	rc = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, NULL);
 

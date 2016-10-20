@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include <string>
+#include <sstream>
 
 #include "src/connector/Connector.h"
 
@@ -64,4 +65,14 @@ unsigned long long FsObj::getINode()
 
 {
 	return 3;
+}
+
+std::string FsObj::getTapeId()
+
+{
+	std::stringstream sstr;
+
+	sstr << "TAPE0" << random() % 4;
+
+	return sstr.str();
 }

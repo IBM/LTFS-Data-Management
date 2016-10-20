@@ -19,6 +19,7 @@ public:
 	unsigned long long getFsId();
 	unsigned int getIGen();
 	unsigned long long getINode();
+	std::string getTapeId();
 };
 
 #endif /* _CONNECTOR_H */
