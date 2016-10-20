@@ -13,7 +13,7 @@ message LTFSDmReqNumberResp {
 
 message LTFSDmSendObjects {
 	message FileName {
-		required string filename = 1;
+		required bytes filename = 1;
 	}
 	repeated FileName filenames = 1;
 }

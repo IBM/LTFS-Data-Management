@@ -58,7 +58,11 @@ void MessageParser::getObjects(LTFSDmCommServer *command, long localReqNumber, u
 						fopt->addFileName(filename.filename());
 					}
 					catch(int error) {
-						MSG(LTFSDMS0015E, filename.filename().c_str(), sqlite3_errstr(error));
+						if ( error == SQLITE_CONSTRAINT_PRIMARYKEY ||
+							 error == SQLITE_CONSTRAINT_UNIQUE)
+							MSG(LTFSDMS0019E, filename.filename().c_str());
+						else
+							MSG(LTFSDMS0015E, filename.filename().c_str(), sqlite3_errstr(error));
 					}
 				}
 				else {

@@ -61,6 +61,13 @@ void DataBase::open()
 		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
 	}
 
+	rc = sqlite3_extended_result_codes(db, 1);
+
+	if ( rc != SQLITE_OK ) {
+		TRACE(Trace::error, rc);
+		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+	}
+
 	dbNeedsClosed = true;
 }
 
