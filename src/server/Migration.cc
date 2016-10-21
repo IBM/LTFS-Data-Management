@@ -27,12 +27,12 @@ void Migration::addFileName(std::string fileName)
 	struct stat statbuf;
 	std::stringstream ssql;
 
-	ssql << "INSERT INTO JOB_QUEUE (OPERATION, FILE_NAME, REQ_NUM, TARGET_STATE, COLOC_NUM, FILE_SIZE, FS_ID, I_GEN, I_NUM, MTIME, LAST_UPD, TAPE_ID, FAILED) ";
+	ssql << "INSERT INTO JOB_QUEUE (OPERATION, FILE_NAME, REQ_NUM, TARGET_STATE, COLOC_GRP, FILE_SIZE, FS_ID, I_GEN, I_NUM, MTIME, LAST_UPD, TAPE_ID, FAILED) ";
 	ssql << "VALUES (" << DataBase::MIGRATION << ", ";            // OPERATION
 	ssql << "'" << fileName << "', ";                             // FILE_NAME
 	ssql << reqNumber << ", ";                                    // REQ_NUM
 	ssql << targetState << ", ";                                  // MIGRATION_STATE
-	ssql << jobnum % colFactor << ", ";                           // COLOC_NUM
+	ssql << jobnum % colFactor << ", ";                           // COLOC_GRP
 
 	try {
 		FsObj fso(fileName);
@@ -95,7 +95,7 @@ void Migration::start()
 	ssql.str("");
 	ssql.clear();
 
-	ssql << "SELECT COLOC_NUM FROM JOB_QUEUE WHERE REQ_NUM=" << reqNumber << " GROUP BY COLOC_NUM";
+	ssql << "SELECT COLOC_GRP FROM JOB_QUEUE WHERE REQ_NUM=" << reqNumber << " GROUP BY COLOC_GRP";
 
 	rc = sqlite3_prepare_v2(DB.getDB(), ssql.str().c_str(), -1, &stmt, NULL);
 
@@ -113,11 +113,11 @@ void Migration::start()
 
 		int colNumber = sqlite3_column_int (stmt, 0);
 
-		ssql2 << "INSERT INTO REQUEST_QUEUE (OPERATION, REQ_NUM, TARGET_STATE, COLOC_NUM, TAPE_ID) ";
+		ssql2 << "INSERT INTO REQUEST_QUEUE (OPERATION, REQ_NUM, TARGET_STATE, COLOC_GRP, TAPE_ID) ";
 		ssql2 << "VALUES (" << DataBase::MIGRATION << ", ";                                     // OPERATION
 		ssql2 << reqNumber << ", ";                                                             // FILE_NAME
 		ssql2 << targetState << ", ";                                                           // TARGET_STATE
-		ssql2 << colNumber << ", ";                                                             // COLOC_NUM
+		ssql2 << colNumber << ", ";                                                             // COLOC_GRP
 		ssql2 << "NULL);";                                                                      // TAPE_ID
 
 		rc = sqlite3_prepare_v2(DB.getDB(), ssql2.str().c_str(), -1, &stmt2, NULL);

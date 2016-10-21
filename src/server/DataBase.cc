@@ -84,7 +84,7 @@ void DataBase::createTables()
 		+ std::string("FILE_NAME CHAR(4096) UNIQUE PRIMARY KEY, ")
 		+ std::string("REQ_NUM INT NOT NULL, ")
 		+ std::string("TARGET_STATE INT NOT NULL, ")
-		+ std::string("COLOC_NUM INT, ")
+		+ std::string("COLOC_GRP INT, ")
 		+ std::string("FILE_SIZE INT NOT NULL, ")
 		+ std::string("FS_ID INT NOT NULL, ")
 		+ std::string("I_GEN INT NOT NULL, ")
@@ -119,7 +119,7 @@ void DataBase::createTables()
 		+ std::string("OPERATION INT NOT NULL, ")
 		+ std::string("REQ_NUM INT NOT NULL, ")
 		+ std::string("TARGET_STATE INT, ")
-		+ std::string("COLOC_NUM INT, ")
+		+ std::string("COLOC_GRP INT, ")
 		+ std::string("TAPE_ID CHAR(16));");  // including logical characters
 
 	rc = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, NULL);

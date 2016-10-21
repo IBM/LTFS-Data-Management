@@ -29,12 +29,12 @@ void SelRecall::addFileName(std::string fileName)
 	std::stringstream ssql;
 	sqlite3_stmt *stmt;
 
-	ssql << "INSERT INTO JOB_QUEUE (OPERATION, FILE_NAME, REQ_NUM, TARGET_STATE, COLOC_NUM, FILE_SIZE, FS_ID, I_GEN, I_NUM, MTIME, LAST_UPD, TAPE_ID, FAILED) ";
+	ssql << "INSERT INTO JOB_QUEUE (OPERATION, FILE_NAME, REQ_NUM, TARGET_STATE, COLOC_GRP, FILE_SIZE, FS_ID, I_GEN, I_NUM, MTIME, LAST_UPD, TAPE_ID, FAILED) ";
 	ssql << "VALUES (" << DataBase::SELRECALL << ", ";            // OPERATION
 	ssql << "'" << fileName << "', ";                             // FILE_NAME
 	ssql << reqNumber << ", ";                                    // REQ_NUM
 	ssql << targetState << ", ";                                  // MIGRATION_STATE
-	ssql << "NULL" << ", ";                                       // COLOC_NUM
+	ssql << "NULL" << ", ";                                       // COLOC_GRP
 
 	try {
 		FsObj fso(fileName);
@@ -113,11 +113,11 @@ void SelRecall::start()
 
 		const char *cstr = reinterpret_cast<const char*>(sqlite3_column_text (stmt, 0));
 
-		ssql2 << "INSERT INTO REQUEST_QUEUE (OPERATION, REQ_NUM, TARGET_STATE, COLOC_NUM, TAPE_ID) ";
+		ssql2 << "INSERT INTO REQUEST_QUEUE (OPERATION, REQ_NUM, TARGET_STATE, COLOC_GRP, TAPE_ID) ";
 		ssql2 << "VALUES (" << DataBase::SELRECALL << ", ";                                     // OPERATION
 		ssql2 << reqNumber << ", ";                                                             // FILE_NAME
 		ssql2 << targetState << ", ";                                                           // TARGET_STATE
-		ssql2 << "NULL" << ", ";                                                                // COLOC_NUM
+		ssql2 << "NULL" << ", ";                                                                // COLOC_GRP
 		ssql2 << "'" << (cstr ? std::string(cstr) : std::string("")) << "');";                  // TAPE_ID
 
 		rc = sqlite3_prepare_v2(DB.getDB(), ssql2.str().c_str(), -1, &stmt2, NULL);
