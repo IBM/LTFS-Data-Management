@@ -114,7 +114,7 @@ std::vector<std::string> Migration::getTapes()
 	return tapeList;
 }
 
-void Migration::start()
+void Migration::addRequest()
 
 {
 	int rc;

@@ -125,7 +125,7 @@ void MessageParser::migrationMessage(long key, LTFSDmCommServer *command, long l
 
 	getObjects(command, localReqNumber, pid, requestNumber, dynamic_cast<FileOperation*> (&mig));
 
-	mig.start();
+	mig.addRequest();
 }
 
 void  MessageParser::selRecallMessage(long key, LTFSDmCommServer *command, long localReqNumber)
@@ -166,7 +166,7 @@ void  MessageParser::selRecallMessage(long key, LTFSDmCommServer *command, long 
 
 	getObjects(command, localReqNumber, pid, requestNumber, dynamic_cast<FileOperation*> (&srec));
 
-	srec.start();
+	srec.addRequest();
 }
 
 void MessageParser::infoFilesMessage(long key, LTFSDmCommServer *command, long localReqNumber)

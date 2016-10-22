@@ -85,7 +85,7 @@ void SelRecall::addFileName(std::string fileName)
 	return;
 }
 
-void SelRecall::start()
+void SelRecall::addRequest()
 
 {
 	int rc;
