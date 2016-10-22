@@ -113,12 +113,14 @@ void SelRecall::start()
 
 		const char *cstr = reinterpret_cast<const char*>(sqlite3_column_text (stmt, 0));
 
-		ssql2 << "INSERT INTO REQUEST_QUEUE (OPERATION, REQ_NUM, TARGET_STATE, COLOC_GRP, TAPE_ID) ";
+		ssql2 << "INSERT INTO REQUEST_QUEUE (OPERATION, REQ_NUM, TARGET_STATE, COLOC_GRP, TAPE_ID, TIME_ADDED, STATE) ";
 		ssql2 << "VALUES (" << DataBase::SELRECALL << ", ";                                     // OPERATION
 		ssql2 << reqNumber << ", ";                                                             // FILE_NAME
 		ssql2 << targetState << ", ";                                                           // TARGET_STATE
 		ssql2 << "NULL" << ", ";                                                                // COLOC_GRP
-		ssql2 << "'" << (cstr ? std::string(cstr) : std::string("")) << "');";                  // TAPE_ID
+		ssql2 << "'" << (cstr ? std::string(cstr) : std::string("")) << "', ";                  // TAPE_ID
+		ssql2 << time(NULL) << ", ";                                                            // TIME_ADDED
+		ssql2 << DataBase::NEW << ");";                                                         // STATE
 
 		rc = sqlite3_prepare_v2(DB.getDB(), ssql2.str().c_str(), -1, &stmt2, NULL);
 

@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <vector>
 
 #include <sqlite3.h>
 #include "src/common/comm/ltfsdm.pb.h"
@@ -85,15 +86,42 @@ void Migration::addFileName(std::string fileName)
 	return;
 }
 
+std::vector<std::string> Migration::getTapes()
+
+{
+	int rc;
+	std::string sql;
+	sqlite3_stmt *stmt;
+
+	sql = std::string("SELECT * FROM TAPE_LIST");
+
+	rc = sqlite3_prepare_v2(DB.getDB(), sql.c_str(), -1, &stmt, NULL);
+
+	if( rc != SQLITE_OK ) {
+		TRACE(Trace::error, rc);
+		throw(rc);
+	}
+
+	while ( (rc = sqlite3_step(stmt)) == SQLITE_ROW ) {
+		tapeList.push_back(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0)));
+	}
+
+	if ( rc != SQLITE_DONE ) {
+		TRACE(Trace::error, rc);
+		throw(rc);
+	}
+
+	return tapeList;
+}
+
 void Migration::start()
 
 {
 	int rc;
 	std::stringstream ssql;
 	sqlite3_stmt *stmt;
-
-	ssql.str("");
-	ssql.clear();
+	int colNumber;
+	std::string tapeId;
 
 	ssql << "SELECT COLOC_GRP FROM JOB_QUEUE WHERE REQ_NUM=" << reqNumber << " GROUP BY COLOC_GRP";
 
@@ -107,18 +135,23 @@ void Migration::start()
 	std::stringstream ssql2;
 	sqlite3_stmt *stmt2;
 
+	getTapes();
+
 	while ( (rc = sqlite3_step(stmt)) == SQLITE_ROW ) {
 		ssql2.str("");
 		ssql2.clear();
 
-		int colNumber = sqlite3_column_int (stmt, 0);
+		colNumber = sqlite3_column_int (stmt, 0);
+		tapeId = tapeList[colNumber %tapeList.size()];
 
-		ssql2 << "INSERT INTO REQUEST_QUEUE (OPERATION, REQ_NUM, TARGET_STATE, COLOC_GRP, TAPE_ID) ";
+		ssql2 << "INSERT INTO REQUEST_QUEUE (OPERATION, REQ_NUM, TARGET_STATE, COLOC_GRP, TAPE_ID, TIME_ADDED, STATE) ";
 		ssql2 << "VALUES (" << DataBase::MIGRATION << ", ";                                     // OPERATION
 		ssql2 << reqNumber << ", ";                                                             // FILE_NAME
 		ssql2 << targetState << ", ";                                                           // TARGET_STATE
 		ssql2 << colNumber << ", ";                                                             // COLOC_GRP
-		ssql2 << "NULL);";                                                                      // TAPE_ID
+		ssql2 << "'" << tapeId << "', ";                                                        // TAPE_ID
+		ssql2 << time(NULL) << ", ";                                                            // TIME_ADDED
+		ssql2 << DataBase::NEW << ");";                                                         // STATE
 
 		rc = sqlite3_prepare_v2(DB.getDB(), ssql2.str().c_str(), -1, &stmt2, NULL);
 

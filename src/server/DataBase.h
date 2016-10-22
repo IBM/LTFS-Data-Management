@@ -11,6 +11,15 @@ public:
 		SELRECALL,
 		TRARECALL
 	};
+	enum req_state {
+		NEW,
+		INPROGRESS,
+		COMPLETED
+	};
+	enum tape_state {
+		FREE,
+		INUSE
+	};
 	DataBase() : db(NULL), dbNeedsClosed(false) {}
 	~DataBase();
 	void cleanup();

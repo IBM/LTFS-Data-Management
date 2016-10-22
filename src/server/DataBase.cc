@@ -1,6 +1,7 @@
 #include <unistd.h>
 
 #include <string>
+#include <sstream>
 
 #include <sqlite3.h>
 
@@ -120,9 +121,65 @@ void DataBase::createTables()
 		+ std::string("REQ_NUM INT NOT NULL, ")
 		+ std::string("TARGET_STATE INT, ")
 		+ std::string("COLOC_GRP INT, ")
-		+ std::string("TAPE_ID CHAR(16));");  // including logical characters
+		+ std::string("TAPE_ID CHAR(9), ")
+		+ std::string("TIME_ADDED INT NOT NULL, ")
+		+ std::string("STATE INT NOT NULL);");
 
 	rc = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, NULL);
+
+	if( rc != SQLITE_OK ) {
+		TRACE(Trace::error, rc);
+		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+	}
+
+	rc = sqlite3_step(stmt);
+
+	if ( rc != SQLITE_DONE ) {
+		TRACE(Trace::error, rc);
+		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+	}
+
+	rc = sqlite3_finalize(stmt);
+
+	if ( rc != SQLITE_OK ) {
+		TRACE(Trace::error, rc);
+		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+	}
+
+	sql = std::string("CREATE TABLE TAPE_LIST(")
+		+ std::string("TAPE_ID CHAR(9), ")
+		+ std::string("STATE INT NOT NULL);");
+
+	rc = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, NULL);
+
+	if( rc != SQLITE_OK ) {
+		TRACE(Trace::error, rc);
+		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+	}
+
+	rc = sqlite3_step(stmt);
+
+	if ( rc != SQLITE_DONE ) {
+		TRACE(Trace::error, rc);
+		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+	}
+
+	rc = sqlite3_finalize(stmt);
+
+	if ( rc != SQLITE_OK ) {
+		TRACE(Trace::error, rc);
+		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+	}
+
+	/* temporary for this prototype add two specific tapes initalially */
+
+	std::stringstream ssql;
+
+	ssql << "INSERT INTO TAPE_LIST (TAPE_ID, STATE) VALUES ";
+	ssql << "('DV1480L6', " << DataBase::FREE << "), ";
+	ssql << "('DV1481L6', " << DataBase::FREE << ");";
+
+	rc = sqlite3_prepare_v2(db, ssql.str().c_str(), -1, &stmt, NULL);
 
 	if( rc != SQLITE_OK ) {
 		TRACE(Trace::error, rc);
