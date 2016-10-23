@@ -6,6 +6,9 @@
 #include <sstream>
 #include <vector>
 
+#include <mutex>
+#include <condition_variable>
+
 #include <sqlite3.h>
 #include "src/common/comm/ltfsdm.pb.h"
 
@@ -19,6 +22,7 @@
 
 #include "DataBase.h"
 #include "FileOperation.h"
+#include "Scheduler.h"
 #include "Migration.h"
 
 void Migration::addFileName(std::string fileName)
@@ -60,26 +64,11 @@ void Migration::addFileName(std::string fileName)
 	ssql << "NULL" << ", ";                                       // TAPE_ID
 	ssql << 0 << ");";                                            // FAILED
 
-	rc = sqlite3_prepare_v2(DB.getDB(), ssql.str().c_str(), -1, &stmt, NULL);
-
-	if( rc != SQLITE_OK ) {
-		TRACE(Trace::error, rc);
-		throw(rc);
-	}
+	DataBase::prepare(ssql.str(), &stmt);
 
 	rc = sqlite3_step(stmt);
 
-	if ( rc != SQLITE_DONE ) {
-		TRACE(Trace::error, rc);
-		throw(rc);
-	}
-
-	rc = sqlite3_finalize(stmt);
-
-	if ( rc != SQLITE_OK ) {
-		TRACE(Trace::error, rc);
-		throw(rc);
-	}
+	DataBase::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 
 	jobnum++;
 
@@ -95,21 +84,13 @@ std::vector<std::string> Migration::getTapes()
 
 	sql = std::string("SELECT * FROM TAPE_LIST");
 
-	rc = sqlite3_prepare_v2(DB.getDB(), sql.c_str(), -1, &stmt, NULL);
+	DataBase::prepare(sql, &stmt);
 
-	if( rc != SQLITE_OK ) {
-		TRACE(Trace::error, rc);
-		throw(rc);
-	}
-
-	while ( (rc = sqlite3_step(stmt)) == SQLITE_ROW ) {
+	while ( (rc = DataBase::step(stmt)) == SQLITE_ROW ) {
 		tapeList.push_back(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0)));
 	}
 
-	if ( rc != SQLITE_DONE ) {
-		TRACE(Trace::error, rc);
-		throw(rc);
-	}
+	DataBase::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 
 	return tapeList;
 }
@@ -122,22 +103,20 @@ void Migration::addRequest()
 	sqlite3_stmt *stmt;
 	int colNumber;
 	std::string tapeId;
+	bool requestAdded = false;
+
+	std::unique_lock<std::mutex> lock(Scheduler::mtx);
 
 	ssql << "SELECT COLOC_GRP FROM JOB_QUEUE WHERE REQ_NUM=" << reqNumber << " GROUP BY COLOC_GRP";
 
-	rc = sqlite3_prepare_v2(DB.getDB(), ssql.str().c_str(), -1, &stmt, NULL);
-
-	if( rc != SQLITE_OK ) {
-		TRACE(Trace::error, rc);
-		throw(rc);
-	}
+	DataBase::prepare(ssql.str(), &stmt);
 
 	std::stringstream ssql2;
 	sqlite3_stmt *stmt2;
 
 	getTapes();
 
-	while ( (rc = sqlite3_step(stmt)) == SQLITE_ROW ) {
+	while ( (rc = DataBase::step(stmt)) == SQLITE_ROW ) {
 		ssql2.str("");
 		ssql2.clear();
 
@@ -151,27 +130,20 @@ void Migration::addRequest()
 		ssql2 << colNumber << ", ";                                                             // COLOC_GRP
 		ssql2 << "'" << tapeId << "', ";                                                        // TAPE_ID
 		ssql2 << time(NULL) << ", ";                                                            // TIME_ADDED
-		ssql2 << DataBase::NEW << ");";                                                         // STATE
+		ssql2 << DataBase::REQ_NEW << ");";                                                     // STATE
 
-		rc = sqlite3_prepare_v2(DB.getDB(), ssql2.str().c_str(), -1, &stmt2, NULL);
+		DataBase::prepare(ssql2.str(), &stmt2);
 
-		if( rc != SQLITE_OK ) {
-			TRACE(Trace::error, rc);
-			throw(rc);
-		}
+		rc = DataBase::step(stmt2);
 
-		rc = sqlite3_step(stmt2);
+		DataBase::checkRcAndFinalize(stmt2, rc, SQLITE_DONE);
 
-		if ( rc != SQLITE_DONE ) {
-			TRACE(Trace::error, rc);
-			throw(rc);
-		}
+		requestAdded = true;
+	}
 
-		rc = sqlite3_finalize(stmt2);
+	DataBase::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 
-		if ( rc != SQLITE_OK ) {
-			TRACE(Trace::error, rc);
-			throw(rc);
-		}
+	if (requestAdded) {
+		Scheduler::cond.notify_one();
 	}
 }

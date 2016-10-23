@@ -5,6 +5,8 @@ class Scheduler
 
 {
 public:
+	static std::mutex mtx;
+	static std::condition_variable cond;
 	Scheduler() {}
 	~Scheduler() {};
 	void run(long key);

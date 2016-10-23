@@ -19,6 +19,7 @@
 #include "src/server/Receiver.h"
 
 #include "FileOperation.h"
+#include "Scheduler.h"
 #include "Migration.h"
 #include "SelRecall.h"
 #include "InfoFiles.h"
@@ -248,6 +249,8 @@ void MessageParser::stopMessage(long key, LTFSDmCommServer *command, long localR
    	const LTFSDmProtocol::LTFSDmStopRequest stopreq = command->stoprequest();
 	long keySent = stopreq.key();
 
+	std::unique_lock<std::mutex> lock(Scheduler::mtx);
+
 	TRACE(Trace::much, __PRETTY_FUNCTION__);
 	TRACE(Trace::little, keySent);
 
@@ -269,6 +272,9 @@ void MessageParser::stopMessage(long key, LTFSDmCommServer *command, long localR
 		MSG(LTFSDMS0007E);
 	}
 	command->closeRef();
+
+	lock.unlock();
+	Scheduler::cond.notify_one();
 }
 
 void MessageParser::statusMessage(long key, LTFSDmCommServer *command, long localReqNumber)

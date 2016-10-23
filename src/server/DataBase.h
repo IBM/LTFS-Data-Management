@@ -7,22 +7,25 @@ private:
 	bool dbNeedsClosed;
 public:
 	enum operation {
-		MIGRATION,
+		TRARECALL,
 		SELRECALL,
-		TRARECALL
+		MIGRATION
 	};
 	enum req_state {
-		NEW,
-		INPROGRESS,
-		COMPLETED
+		REQ_NEW,
+		REQ_INPROGRESS,
+		REQ_COMPLETED
 	};
 	enum tape_state {
-		FREE,
-		INUSE
+		TAPE_FREE,
+		TAPE_INUSE
 	};
 	DataBase() : db(NULL), dbNeedsClosed(false) {}
 	~DataBase();
 	void cleanup();
+	static void checkRcAndFinalize(sqlite3_stmt *stmt, int rc, int expected);
+	static int step(sqlite3_stmt *stmt);
+	static void prepare(std::string sql, sqlite3_stmt **stmt);
 	void open();
 	void createTables();
 	sqlite3 *getDB() { return db; }

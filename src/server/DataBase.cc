@@ -31,6 +31,41 @@ void DataBase::cleanup()
 	unlink((Const::DB_FILE + std::string("-journal")).c_str());
 }
 
+void DataBase::prepare(std::string sql, sqlite3_stmt **stmt)
+
+{
+	int rc;
+
+	rc = sqlite3_prepare_v2(DB.getDB(), sql.c_str(), -1, stmt, NULL);
+
+	if( rc != SQLITE_OK ) {
+		TRACE(Trace::error, rc);
+		throw(rc);
+	}
+}
+
+int DataBase::step(sqlite3_stmt *stmt)
+
+{
+	return  sqlite3_step(stmt);
+}
+
+void DataBase::checkRcAndFinalize(sqlite3_stmt *stmt, int rc, int expected)
+
+{
+	if ( rc != expected ) {
+		TRACE(Trace::error, rc);
+		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+	}
+
+	rc = sqlite3_finalize(stmt);
+
+	if ( rc != SQLITE_OK ) {
+		TRACE(Trace::error, rc);
+		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+	}
+}
+
 void DataBase::open()
 
 {
@@ -95,26 +130,11 @@ void DataBase::createTables()
 		+ std::string("TAPE_ID CHAR(9), ")
 		+ std::string("FAILED INT NOT NULL);");
 
-	rc = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, NULL);
+	prepare(sql, &stmt);
 
-	if( rc != SQLITE_OK ) {
-		TRACE(Trace::error, rc);
-		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
-	}
+	rc = step(stmt);
 
-	rc = sqlite3_step(stmt);
-
-	if ( rc != SQLITE_DONE ) {
-		TRACE(Trace::error, rc);
-		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
-	}
-
-	rc = sqlite3_finalize(stmt);
-
-	if ( rc != SQLITE_OK ) {
-		TRACE(Trace::error, rc);
-		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
-	}
+	checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 
 	sql = std::string("CREATE TABLE REQUEST_QUEUE(")
 		+ std::string("OPERATION INT NOT NULL, ")
@@ -125,79 +145,33 @@ void DataBase::createTables()
 		+ std::string("TIME_ADDED INT NOT NULL, ")
 		+ std::string("STATE INT NOT NULL);");
 
-	rc = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, NULL);
+	prepare(sql, &stmt);
 
-	if( rc != SQLITE_OK ) {
-		TRACE(Trace::error, rc);
-		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
-	}
+	rc = step(stmt);
 
-	rc = sqlite3_step(stmt);
-
-	if ( rc != SQLITE_DONE ) {
-		TRACE(Trace::error, rc);
-		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
-	}
-
-	rc = sqlite3_finalize(stmt);
-
-	if ( rc != SQLITE_OK ) {
-		TRACE(Trace::error, rc);
-		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
-	}
+	checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 
 	sql = std::string("CREATE TABLE TAPE_LIST(")
 		+ std::string("TAPE_ID CHAR(9), ")
 		+ std::string("STATE INT NOT NULL);");
 
-	rc = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, NULL);
+	prepare(sql, &stmt);
 
-	if( rc != SQLITE_OK ) {
-		TRACE(Trace::error, rc);
-		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
-	}
+	rc = step(stmt);
 
-	rc = sqlite3_step(stmt);
-
-	if ( rc != SQLITE_DONE ) {
-		TRACE(Trace::error, rc);
-		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
-	}
-
-	rc = sqlite3_finalize(stmt);
-
-	if ( rc != SQLITE_OK ) {
-		TRACE(Trace::error, rc);
-		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
-	}
+	checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 
 	/* temporary for this prototype add two specific tapes initalially */
 
 	std::stringstream ssql;
 
 	ssql << "INSERT INTO TAPE_LIST (TAPE_ID, STATE) VALUES ";
-	ssql << "('DV1480L6', " << DataBase::FREE << "), ";
-	ssql << "('DV1481L6', " << DataBase::FREE << ");";
+	ssql << "('DV1480L6', " << DataBase::TAPE_FREE << "), ";
+	ssql << "('DV1481L6', " << DataBase::TAPE_FREE << ");";
 
-	rc = sqlite3_prepare_v2(db, ssql.str().c_str(), -1, &stmt, NULL);
+	prepare(ssql.str(), &stmt);
 
-	if( rc != SQLITE_OK ) {
-		TRACE(Trace::error, rc);
-		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
-	}
+	rc = step(stmt);
 
-	rc = sqlite3_step(stmt);
-
-	if ( rc != SQLITE_DONE ) {
-		TRACE(Trace::error, rc);
-		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
-	}
-
-	rc = sqlite3_finalize(stmt);
-
-	if ( rc != SQLITE_OK ) {
-		TRACE(Trace::error, rc);
-		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
-	}
-
+	checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 }

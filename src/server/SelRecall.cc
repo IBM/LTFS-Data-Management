@@ -5,6 +5,9 @@
 #include <iostream>
 #include <sstream>
 
+#include <mutex>
+#include <condition_variable>
+
 #include <sqlite3.h>
 #include "src/common/comm/ltfsdm.pb.h"
 
@@ -18,7 +21,7 @@
 
 #include "DataBase.h"
 #include "FileOperation.h"
-
+#include "Scheduler.h"
 #include "SelRecall.h"
 
 void SelRecall::addFileName(std::string fileName)
@@ -60,27 +63,11 @@ void SelRecall::addFileName(std::string fileName)
 		return;
 	}
 
+	DataBase::prepare(ssql.str(), &stmt);
 
-	rc = sqlite3_prepare_v2(DB.getDB(), ssql.str().c_str(), -1, &stmt, NULL);
+	rc = DataBase::step(stmt);
 
-	if( rc != SQLITE_OK ) {
-		TRACE(Trace::error, rc);
-		throw(rc);
-	}
-
-	rc = sqlite3_step(stmt);
-
-	if ( rc != SQLITE_DONE ) {
-		TRACE(Trace::error, rc);
-		throw(rc);
-	}
-
-	rc = sqlite3_finalize(stmt);
-
-	if ( rc != SQLITE_OK ) {
-		TRACE(Trace::error, rc);
-		throw(rc);
-	}
+	DataBase::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 
 	return;
 }
@@ -91,25 +78,20 @@ void SelRecall::addRequest()
 	int rc;
 	std::stringstream ssql;
 	sqlite3_stmt *stmt;
+	bool requestAdded = false;
+
+	std::unique_lock<std::mutex> lock(Scheduler::mtx);
 
 	ssql.str("");
 	ssql.clear();
 
 	ssql << "SELECT TAPE_ID FROM JOB_QUEUE WHERE REQ_NUM=" << reqNumber << " GROUP BY TAPE_ID";
 
-	rc = sqlite3_prepare_v2(DB.getDB(), ssql.str().c_str(), -1, &stmt, NULL);
+	DataBase::prepare(ssql.str(), &stmt);
 
-	if( rc != SQLITE_OK ) {
-		TRACE(Trace::error, rc);
-		throw(rc);
-	}
-
-	std::stringstream ssql2;
-	sqlite3_stmt *stmt2;
-
-	while ( (rc = sqlite3_step(stmt)) == SQLITE_ROW ) {
-		ssql2.str("");
-		ssql2.clear();
+	while ( (rc = DataBase::step(stmt)) == SQLITE_ROW ) {
+		std::stringstream ssql2;
+		sqlite3_stmt *stmt2;
 
 		const char *cstr = reinterpret_cast<const char*>(sqlite3_column_text (stmt, 0));
 
@@ -120,27 +102,17 @@ void SelRecall::addRequest()
 		ssql2 << "NULL" << ", ";                                                                // COLOC_GRP
 		ssql2 << "'" << (cstr ? std::string(cstr) : std::string("")) << "', ";                  // TAPE_ID
 		ssql2 << time(NULL) << ", ";                                                            // TIME_ADDED
-		ssql2 << DataBase::NEW << ");";                                                         // STATE
+		ssql2 << DataBase::REQ_NEW << ");";                                                     // STATE
 
-		rc = sqlite3_prepare_v2(DB.getDB(), ssql2.str().c_str(), -1, &stmt2, NULL);
+		DataBase::prepare(ssql2.str(), &stmt2);
 
-		if( rc != SQLITE_OK ) {
-			TRACE(Trace::error, rc);
-			throw(rc);
-		}
+		rc = DataBase::step(stmt2);
 
-		rc = sqlite3_step(stmt2);
-
-		if ( rc != SQLITE_DONE ) {
-			TRACE(Trace::error, rc);
-			throw(rc);
-		}
-
-		rc = sqlite3_finalize(stmt2);
-
-		if ( rc != SQLITE_OK ) {
-			TRACE(Trace::error, rc);
-			throw(rc);
-		}
+		DataBase::checkRcAndFinalize(stmt2, rc, SQLITE_DONE);
 	}
+
+	DataBase::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+
+	if (requestAdded)
+		Scheduler::cond.notify_one();
 }

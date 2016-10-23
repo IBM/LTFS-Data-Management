@@ -170,7 +170,7 @@ std::string FsObj::getTapeId()
 {
 	std::stringstream sstr;
 
-	sstr << "TAPE0" << time(NULL) % 10 << random() % 4;
+	sstr << "DV148" << random() % 2 <<  "L6";
 
 	return sstr.str();
 }
