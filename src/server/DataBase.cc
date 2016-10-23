@@ -55,14 +55,14 @@ void DataBase::checkRcAndFinalize(sqlite3_stmt *stmt, int rc, int expected)
 {
 	if ( rc != expected ) {
 		TRACE(Trace::error, rc);
-		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+		throw(rc);
 	}
 
 	rc = sqlite3_finalize(stmt);
 
 	if ( rc != SQLITE_OK ) {
 		TRACE(Trace::error, rc);
-		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+		throw(rc);
 	}
 }
 
