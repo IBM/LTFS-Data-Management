@@ -152,16 +152,53 @@ void Migration::addRequest()
 bool Migration::queryResult(long reqNumber, long *resident, long *premigrated, long *migrated)
 
 {
-	static int test = 0;
+	int rc;
+	std::stringstream ssql;
+	bool done = false;
 
-	test++;
+	ssql << "SELECT STATE FROM REQUEST_QUEUE WHERE REQ_NUM=" << reqNumber;
 
-	*resident = -1;
-	*premigrated = -2;
-	*migrated = -3;
+	sqlite3_statement::prepare(ssql.str(), &stmt);
 
-	if ( test < 10 )
-		return  false;
-	else
-		return true;
+	while ( (rc = sqlite3_statement::step(stmt)) == SQLITE_ROW ) {
+		if ( sqlite3_column_int(stmt, 0) == DataBase::REQ_COMPLETED ) {
+			done = true;
+		}
+	}
+
+	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+
+	ssql.str("");
+	ssql.clear();
+
+	ssql << "SELECT FILE_STATE, COUNT(*) FROM JOB_QUEUE WHERE REQ_NUM=" << reqNumber << " GROUP BY FILE_STATE";
+
+	sqlite3_stmt *stmt;
+
+	sqlite3_statement::prepare(ssql.str(), &stmt);
+
+	*resident = 0;
+	*premigrated = 0;
+	*migrated = 0;
+
+	while ( (rc = sqlite3_statement::step(stmt)) == SQLITE_ROW ) {
+		switch ( sqlite3_column_int(stmt, 0) ) {
+			case DataBase::RESIDENT:
+				*resident = sqlite3_column_int(stmt, 1);
+				break;
+			case DataBase::PREMIGRATED:
+				*premigrated = sqlite3_column_int(stmt, 1);
+				break;
+			case DataBase::MIGRATED:
+				*migrated = sqlite3_column_int(stmt, 1);
+				break;
+			default:
+				TRACE(Trace::error, sqlite3_column_int(stmt, 0));
+				throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+		}
+	}
+
+	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+
+	return done;
 }

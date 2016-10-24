@@ -8,6 +8,7 @@
 #include <typeinfo>
 
 #include <sqlite3.h>
+#include "src/common/comm/ltfsdm.pb.h"
 
 #include "src/common/tracing/Trace.h"
 #include "src/common/util/util.h"
@@ -20,32 +21,78 @@
 std::mutex Scheduler::mtx;
 std::condition_variable Scheduler::cond;
 
+void migrationStep(int reqNum, int colGrp, std::string tapeId, int fromState, int toState)
+
+{
+	sqlite3_stmt *stmt;
+	std::stringstream ssql;
+	int rc, rc2;
+    int group_end = 0;
+    int group_begin = -1;
+	long previous;
+	long current;
+
+	ssql << "SELECT ROWID, * FROM JOB_QUEUE WHERE REQ_NUM=" << reqNum << " AND COLOC_GRP=" << colGrp << " AND FILE_STATE=" << fromState;
+
+	sqlite3_statement::prepare(ssql.str(), &stmt);
+
+	std::cout << "Processing files for request " << reqNum << " and colocation group " << colGrp << std::endl;
+
+	previous = time(NULL);
+
+	while ( (rc = sqlite3_statement::step(stmt) ) ) {
+		if ( rc != SQLITE_ROW && rc != SQLITE_DONE )
+			break;
+
+		if ( rc == SQLITE_ROW ) {
+			const char *cstr = reinterpret_cast<const char*>(sqlite3_column_text (stmt, 2));
+			std::cout << "Processing of " << (cstr ? std::string(cstr) : std::string("")) << " to " << tapeId << std::endl;
+			usleep(random() % 100000);
+
+			group_end = sqlite3_column_int(stmt, 0);
+			if ( group_begin == -1 )
+				group_begin = group_end;
+			current = time(NULL);
+			if ( current - previous < 1 )
+				continue;
+			previous = current;
+		}
+
+		ssql.str("");
+		ssql.clear();
+
+		ssql << "UPDATE JOB_QUEUE SET FILE_STATE = " <<  toState;
+		ssql << " WHERE COLOC_GRP = " << colGrp << " AND (ROWID BETWEEN " << group_begin << " AND " << group_end << ")";
+
+		sqlite3_stmt *stmt2;
+
+		sqlite3_statement::prepare(ssql.str(), &stmt2);
+		rc2 = sqlite3_statement::step(stmt2);
+		sqlite3_statement::checkRcAndFinalize(stmt2, rc2, SQLITE_DONE);
+
+		if ( rc == SQLITE_DONE )
+			break;
+	}
+
+	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+}
+
 void migration(int reqNum, int tgtState, int colGrp, std::string tapeId)
 
 {
 	TRACE(Trace::much, __PRETTY_FUNCTION__);
+
 	sqlite3_stmt *stmt;
 	std::stringstream ssql;
 	int rc;
 
-	ssql << "SELECT * FROM JOB_QUEUE WHERE REQ_NUM=" << reqNum << " AND COLOC_GRP=" << colGrp << ";";
+	migrationStep(reqNum, colGrp, tapeId,  DataBase::RESIDENT, DataBase::PREMIGRATED);
 
-	sqlite3_statement::prepare(ssql.str(), &stmt);
-
-	std::cout << "Migrating files for request " << reqNum << " and colocation group " << colGrp << std::endl;
-
-	while ( (rc = sqlite3_statement::step(stmt)) == SQLITE_ROW ) {
-		const char *cstr = reinterpret_cast<const char*>(sqlite3_column_text (stmt, 1));
-		std::cout << "Migration of " << (cstr ? std::string(cstr) : std::string("")) << " to " << tapeId << std::endl;
-		usleep(random() % 1000000);
-	}
-
-	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+	if ( tgtState != LTFSDmProtocol::LTFSDmMigRequest::PREMIGRATED )
+		migrationStep(reqNum, colGrp, tapeId,  DataBase::PREMIGRATED, DataBase::MIGRATED);
 
 	std::unique_lock<std::mutex> lock(Scheduler::mtx);
 
-	ssql.str("");
-	ssql.clear();
 	ssql << "UPDATE REQUEST_QUEUE SET STATE=" << DataBase::REQ_COMPLETED;
 	ssql << " WHERE REQ_NUM=" << reqNum << " AND COLOC_GRP=" << colGrp << ";";
 
