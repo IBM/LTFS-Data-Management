@@ -21,6 +21,26 @@
 std::mutex Scheduler::mtx;
 std::condition_variable Scheduler::cond;
 
+void preMigrate(std::string fileName, std::string tapeId)
+
+{
+	// getHandle
+	// requestRights (exclusive)
+	// copy data (dm_reas_invis()))
+	// add attribute
+	// create managed region
+	// release right
+}
+
+void stub(std::string fileName)
+
+{
+	// getHandle
+	// requestRights (exclusive)
+	// punchHole
+	// release right
+}
+
 void migrationStep(int reqNum, int colGrp, std::string tapeId, int fromState, int toState)
 
 {

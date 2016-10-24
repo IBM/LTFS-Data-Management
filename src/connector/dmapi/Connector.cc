@@ -20,31 +20,128 @@
 dm_sessid_t dmapiSession;
 dm_token_t dmapiToken;
 
+void dmapiSessionCleanup()
+
+{
+	int i;
+	unsigned int j;
+	unsigned int num_sessions = 0;
+	unsigned int num_sessions_res = 0;
+	dm_sessid_t *sidbufp = NULL;
+    unsigned long rseslenp;
+	unsigned int rtoklenp;
+    char buffer[DM_SESSION_INFO_LEN];
+
+	sidbufp = (dm_sessid_t*)malloc(sizeof( dm_sessid_t ));
+
+	if ( sidbufp == NULL ) {
+		MSG(LTFSDMD0001E);
+		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+	}
+
+	while ( dm_getall_sessions(num_sessions, sidbufp, &num_sessions_res) == -1 ) {
+        free(sidbufp);
+
+        if ( errno != E2BIG ) {
+            TRACE(Trace::error, errno);
+			throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+        }
+
+		sidbufp = NULL;
+        sidbufp = (dm_sessid_t*)malloc(num_sessions_res * sizeof( dm_sessid_t ));
+
+		if ( !sidbufp ) {
+            MSG(LTFSDMD0001E);
+			throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+        }
+
+		num_sessions = num_sessions_res;
+    }
+
+	MSG(LTFSDMD0002I, num_sessions);
+
+	unsigned int num_tokens = 1024;
+	dm_token_t *tokbufp = NULL;
+
+	for ( i = 0; i < (int)num_sessions; i++ ) {
+        if ( dm_query_session(sidbufp[i], sizeof( buffer ), buffer, &rseslenp) == -1 ) {
+            MSG(LTFSDMD0001E);
+			free(sidbufp);
+			throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+        }
+		else if (Const::DMAPI_SESSION_NAME.compare(buffer) == 0) {
+			TRACE(Trace::error, i);
+			TRACE(Trace::error, (unsigned long) sidbufp[i]);
+
+			tokbufp =  (dm_token_t *) malloc(sizeof(dm_token_t) * num_tokens);
+			if ( !tokbufp ) {
+				MSG(LTFSDMD0001E);
+				free(sidbufp);
+				throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+			}
+
+			while (dm_getall_tokens(sidbufp[i], num_tokens, tokbufp, &rtoklenp) == -1) {
+				if ( errno != E2BIG ) {
+					TRACE(Trace::error, errno);
+					throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+				}
+				free(tokbufp);
+				tokbufp = NULL;
+				tokbufp =  (dm_token_t *) malloc(sizeof(dm_token_t) * rtoklenp);
+				if ( !tokbufp ) {
+					MSG(LTFSDMD0001E);
+					free(sidbufp);
+					throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+				}
+			}
+
+			for (j = 0; j<rtoklenp; j++)
+			{
+				TRACE(Trace::error, j);
+				TRACE(Trace::error, (unsigned long) tokbufp[j]);
+				if ( dm_respond_event(sidbufp[i], tokbufp[j], DM_RESP_ABORT, EINTR, 0, NULL) == 1 )
+					TRACE(Trace::error, errno);
+				else
+					MSG(LTFSDMD0003I);
+			}
+
+			if ( dm_destroy_session(sidbufp[i]) == -1 ) {
+				TRACE(Trace::error, errno);
+				MSG(LTFSDMD0004E);
+			}
+			else {
+				MSG(LTFSDMD0005I, (unsigned long) sidbufp[i]);
+			}
+		}
+	}
+}
+
 Connector::Connector()
 
 {
 	char          *version          = NULL;
-    // size_t         msglen           = 8;
-    // char           msgdatap[8];
+    size_t         msglen           = 8;
+    char           msgdatap[8];
 
-
-	//    memset((char *) msgdatap, 0, sizeof(msgdatap));
+	memset((char *) msgdatap, 0, sizeof(msgdatap));
 
     if (dm_init_service(&version)) {
 		TRACE(Trace::error, errno);
 		goto failed;
 	}
 
-	if (dm_create_session(DM_NO_SESSION, (char *) "ltfsdm", &dmapiSession)) {
+	dmapiSessionCleanup();
+
+	if (dm_create_session(DM_NO_SESSION, (char *) Const::DMAPI_SESSION_NAME.c_str(), &dmapiSession)) {
 		TRACE(Trace::error, errno);
 		goto failed;
 	}
 
-    // if(dm_create_userevent(dmapiSession, msglen, (void*)msgdatap, &dmapiToken)) {
-    //     dm_destroy_session(dmapiSession);
-	// 	TRACE(Trace::error, errno);
-	// 	goto failed;
-	// }
+    if(dm_create_userevent(dmapiSession, msglen, (void*)msgdatap, &dmapiToken)) {
+        dm_destroy_session(dmapiSession);
+		TRACE(Trace::error, errno);
+		goto failed;
+	}
 
 	return;
 
@@ -55,6 +152,11 @@ failed:
 Connector::~Connector()
 
 {
+	if ( dm_respond_event(dmapiSession, dmapiToken, DM_RESP_ABORT, EINTR, 0, NULL) == 1 )
+		TRACE(Trace::error, errno);
+	else
+		MSG(LTFSDMD0003I);
+
 	dm_destroy_session(dmapiSession);
 }
 
