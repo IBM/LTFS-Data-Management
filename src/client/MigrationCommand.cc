@@ -17,6 +17,70 @@ void MigrationCommand::printUsage()
 	INFO(LTFSDMC0001I);
 }
 
+void MigrationCommand::queryResults()
+
+{
+	long resident = 0;
+	long premigrated = 0;
+	long migrated = 0;
+	bool first = true;
+	bool done = false;
+
+	do {
+		if (first)
+			first = false;
+		else
+			sleep(10);
+
+		LTFSDmProtocol::LTFSDmMigStatusRequest *migstatus = commCommand.mutable_migstatusrequest();
+
+		migstatus->set_key(key);
+		migstatus->set_reqnumber(requestNumber);
+		migstatus->set_pid(getpid());
+
+		try {
+			commCommand.send();
+		}
+		catch(...) {
+			MSG(LTFSDMC0027E);
+			throw LTFSDMErr::LTFSDM_GENERAL_ERROR;
+		}
+
+		try {
+			commCommand.recv();
+		}
+		catch(...) {
+			MSG(LTFSDMC0028E);
+			throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+		}
+
+		const LTFSDmProtocol::LTFSDmMigStatusResp migstatusresp = commCommand.migstatusresp();
+
+		if( migstatusresp.success() == true ) {
+			if ( getpid() != migstatusresp.pid() ) {
+				MSG(LTFSDMC0036E);
+				TRACE(Trace::error, getpid());
+				TRACE(Trace::error, migstatusresp.pid());
+				throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+			}
+			if ( requestNumber !=  migstatusresp.reqnumber() ) {
+				MSG(LTFSDMC0037E);
+				TRACE(Trace::error, requestNumber);
+				TRACE(Trace::error, migstatusresp.reqnumber());
+				throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+			}
+			resident =  migstatusresp.resident();
+			premigrated =  migstatusresp.premigrated();
+			migrated =  migstatusresp.migrated();
+			done = migstatusresp.done();
+			INFO(LTFSDMC0045I, resident, premigrated, migrated);
+		}
+		else {
+			MSG(LTFSDMC0029E);
+			throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+		}
+	} while (!done);
+}
 
 void MigrationCommand::talkToBackend(std::stringstream *parmList)
 
@@ -85,6 +149,8 @@ void MigrationCommand::talkToBackend(std::stringstream *parmList)
 	}
 
 	sendObjects(parmList);
+
+	queryResults();
 }
 
 void MigrationCommand::doCommand(int argc, char **argv)

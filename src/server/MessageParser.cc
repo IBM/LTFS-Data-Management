@@ -52,24 +52,24 @@ void MessageParser::getObjects(LTFSDmCommServer *command, long localReqNumber, u
 
 		const LTFSDmProtocol::LTFSDmSendObjects sendobjects = command->sendobjects();
 
-			for (int j = 0; j < sendobjects.filenames_size(); j++) {
-				const LTFSDmProtocol::LTFSDmSendObjects::FileName& filename = sendobjects.filenames(j);
-				if ( filename.filename().compare("") != 0 ) {
-					try {
-						fopt->addFileName(filename.filename());
-					}
-					catch(int error) {
-						if ( error == SQLITE_CONSTRAINT_PRIMARYKEY ||
-							 error == SQLITE_CONSTRAINT_UNIQUE)
-							MSG(LTFSDMS0019E, filename.filename().c_str());
-						else
-							MSG(LTFSDMS0015E, filename.filename().c_str(), sqlite3_errstr(error));
-					}
+		for (int j = 0; j < sendobjects.filenames_size(); j++) {
+			const LTFSDmProtocol::LTFSDmSendObjects::FileName& filename = sendobjects.filenames(j);
+			if ( filename.filename().compare("") != 0 ) {
+				try {
+					fopt->addFileName(filename.filename());
 				}
-				else {
-					cont = false; // END
+				catch(int error) {
+					if ( error == SQLITE_CONSTRAINT_PRIMARYKEY ||
+						 error == SQLITE_CONSTRAINT_UNIQUE)
+						MSG(LTFSDMS0019E, filename.filename().c_str());
+					else
+						MSG(LTFSDMS0015E, filename.filename().c_str(), sqlite3_errstr(error));
 				}
 			}
+			else {
+				cont = false; // END
+			}
+		}
 
 		LTFSDmProtocol::LTFSDmSendObjectsResp *sendobjresp = command->mutable_sendobjectsresp();
 
@@ -100,7 +100,7 @@ void MessageParser::migrationMessage(long key, LTFSDmCommServer *command, long l
 	TRACE(Trace::little, keySent);
 
 	if ( key != keySent ) {
-		MSG(LTFSDMS0008E);
+		MSG(LTFSDMS0008E, keySent);
 		return;
 	}
 
@@ -127,6 +127,54 @@ void MessageParser::migrationMessage(long key, LTFSDmCommServer *command, long l
 	getObjects(command, localReqNumber, pid, requestNumber, dynamic_cast<FileOperation*> (&mig));
 
 	mig.addRequest();
+
+	long resident = 0;
+	long premigrated = 0;
+	long migrated = 0;
+	bool done;
+
+	do {
+		try {
+			command->recv();
+		}
+		catch(...) {
+			TRACE(Trace::error, errno);
+			MSG(LTFSDMS0006E);
+			return;
+		}
+
+		const LTFSDmProtocol::LTFSDmMigStatusRequest migstatus = command->migstatusrequest();
+
+		keySent = migstatus.key();
+		if ( key != keySent ) {
+			MSG(LTFSDMS0008E, keySent);
+			return;
+		}
+
+		requestNumber = migstatus.reqnumber();
+		pid = migstatus.pid();
+
+		done = mig.queryResult(requestNumber, &resident, &premigrated, &migrated);
+
+		LTFSDmProtocol::LTFSDmMigStatusResp *migstatusresp = command->mutable_migstatusresp();
+
+		migstatusresp->set_success(true);
+		migstatusresp->set_reqnumber(requestNumber);
+		migstatusresp->set_pid(pid);
+		migstatusresp->set_resident(resident);
+		migstatusresp->set_premigrated(premigrated);
+		migstatusresp->set_migrated(migrated);
+		migstatusresp->set_done(done);
+
+		try {
+			command->send();
+		}
+		catch(...) {
+			TRACE(Trace::error, errno);
+			MSG(LTFSDMS0007E);
+			return;
+		}
+	} while (!done);
 }
 
 void  MessageParser::selRecallMessage(long key, LTFSDmCommServer *command, long localReqNumber)
@@ -141,7 +189,7 @@ void  MessageParser::selRecallMessage(long key, LTFSDmCommServer *command, long 
 	TRACE(Trace::little, keySent);
 
 	if ( key != keySent ) {
-		MSG(LTFSDMS0008E);
+		MSG(LTFSDMS0008E, keySent);
 		return;
 	}
 
@@ -182,7 +230,7 @@ void MessageParser::infoFilesMessage(long key, LTFSDmCommServer *command, long l
 	TRACE(Trace::little, keySent);
 
 	if ( key != keySent ) {
-		MSG(LTFSDMS0008E);
+		MSG(LTFSDMS0008E, keySent);
 		return;
 	}
 
@@ -221,7 +269,7 @@ void MessageParser::requestNumber(long key, LTFSDmCommServer *command, long *loc
 	TRACE(Trace::little, keySent);
 
 	if ( key != keySent ) {
-		MSG(LTFSDMS0008E);
+		MSG(LTFSDMS0008E, keySent);
 		return;
 	}
 
@@ -255,7 +303,7 @@ void MessageParser::stopMessage(long key, LTFSDmCommServer *command, long localR
 	TRACE(Trace::little, keySent);
 
 	if ( key != keySent ) {
-		MSG(LTFSDMS0008E);
+		MSG(LTFSDMS0008E, keySent);
 		return;
 	}
 
@@ -287,23 +335,13 @@ void MessageParser::statusMessage(long key, LTFSDmCommServer *command, long loca
 	TRACE(Trace::much, __PRETTY_FUNCTION__);
 
 	if ( key != keySent ) {
-		MSG(LTFSDMS0008E);
+		MSG(LTFSDMS0008E, keySent);
 		return;
 	}
 
 	LTFSDmProtocol::LTFSDmStatusResp *statusresp = command->mutable_statusresp();
 
 	statusresp->set_success(true);
-
-	//for testing
-
-    // int duration = random() % 20;
-    // sleep(duration);
-	// statusresp->set_pid(duration);
-
-	// if ( localReqNumber % 10 == 0 )
-	// sleep(20);
-	// statusresp->set_pid(localReqNumber);
 
 	statusresp->set_pid(getpid());
 

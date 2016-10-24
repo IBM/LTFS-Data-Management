@@ -16,6 +16,7 @@ public:
 		pid(_pid), reqNumber(_reqNumber), colFactor(_colFactor), targetState(_targetState), stmt(NULL), jobnum(0) {}
 	void addFileName(std::string fileName);
 	void addRequest();
+	bool queryResult(long reqNumber, long *resident, long *premigrated, long *migrated);
 };
 
 #endif /* _MIGRATION_H */

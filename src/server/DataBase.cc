@@ -93,6 +93,7 @@ void DataBase::createTables()
 		+ std::string("MTIME INT NOT NULL, ")
 		+ std::string("LAST_UPD INT NOT NULL, ")
 		+ std::string("TAPE_ID CHAR(9), ")
+		+ std::string("FILE_STATE INT NOT NULL, ")
 		+ std::string("FAILED INT NOT NULL);");
 
 	sqlite3_statement::prepare(sql, &stmt);

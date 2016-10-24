@@ -32,7 +32,7 @@ void SelRecall::addFileName(std::string fileName)
 	std::stringstream ssql;
 	sqlite3_stmt *stmt;
 
-	ssql << "INSERT INTO JOB_QUEUE (OPERATION, FILE_NAME, REQ_NUM, TARGET_STATE, COLOC_GRP, FILE_SIZE, FS_ID, I_GEN, I_NUM, MTIME, LAST_UPD, TAPE_ID, FAILED) ";
+	ssql << "INSERT INTO JOB_QUEUE (OPERATION, FILE_NAME, REQ_NUM, TARGET_STATE, COLOC_GRP, FILE_SIZE, FS_ID, I_GEN, I_NUM, MTIME, LAST_UPD, TAPE_ID, FILE_STATE, FAILED) ";
 	ssql << "VALUES (" << DataBase::SELRECALL << ", ";            // OPERATION
 	ssql << "'" << fileName << "', ";                             // FILE_NAME
 	ssql << reqNumber << ", ";                                    // REQ_NUM
@@ -56,6 +56,7 @@ void SelRecall::addFileName(std::string fileName)
 		ssql << statbuf.st_mtime << ", ";                         // MTIME
 		ssql << time(NULL) << ", ";                               // LAST_UPD
 		ssql << "'" << fso.getTapeId() << "', ";                  // TAPE_ID
+		ssql << DataBase::MIGRATED << ", ";                       // FILE_STATE
 		ssql << 0 << ");";                                        // FAILED
 	}
 	catch ( int error ) {

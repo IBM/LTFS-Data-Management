@@ -32,7 +32,7 @@ void Migration::addFileName(std::string fileName)
 	struct stat statbuf;
 	std::stringstream ssql;
 
-	ssql << "INSERT INTO JOB_QUEUE (OPERATION, FILE_NAME, REQ_NUM, TARGET_STATE, COLOC_GRP, FILE_SIZE, FS_ID, I_GEN, I_NUM, MTIME, LAST_UPD, TAPE_ID, FAILED) ";
+	ssql << "INSERT INTO JOB_QUEUE (OPERATION, FILE_NAME, REQ_NUM, TARGET_STATE, COLOC_GRP, FILE_SIZE, FS_ID, I_GEN, I_NUM, MTIME, LAST_UPD, TAPE_ID, FILE_STATE, FAILED) ";
 	ssql << "VALUES (" << DataBase::MIGRATION << ", ";            // OPERATION
 	ssql << "'" << fileName << "', ";                             // FILE_NAME
 	ssql << reqNumber << ", ";                                    // REQ_NUM
@@ -62,6 +62,7 @@ void Migration::addFileName(std::string fileName)
 	ssql << statbuf.st_mtime << ", ";                             // MTIME
 	ssql << time(NULL) << ", ";                                   // LAST_UPD
 	ssql << "NULL" << ", ";                                       // TAPE_ID
+	ssql << DataBase::RESIDENT << ", ";                           // FILE_STATE
 	ssql << 0 << ");";                                            // FAILED
 
 	sqlite3_statement::prepare(ssql.str(), &stmt);
@@ -146,4 +147,21 @@ void Migration::addRequest()
 	if (requestAdded) {
 		Scheduler::cond.notify_one();
 	}
+}
+
+bool Migration::queryResult(long reqNumber, long *resident, long *premigrated, long *migrated)
+
+{
+	static int test = 0;
+
+	test++;
+
+	*resident = -1;
+	*premigrated = -2;
+	*migrated = -3;
+
+	if ( test < 10 )
+		return  false;
+	else
+		return true;
 }
