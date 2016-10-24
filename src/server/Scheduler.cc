@@ -30,17 +30,17 @@ void migration(int reqNum, int tgtState, int colGrp, std::string tapeId)
 
 	ssql << "SELECT * FROM JOB_QUEUE WHERE REQ_NUM=" << reqNum << " AND COLOC_GRP=" << colGrp << ";";
 
-	DataBase::prepare(ssql.str(), &stmt);
+	sqlite3_statement::prepare(ssql.str(), &stmt);
 
 	std::cout << "Migrating files for request " << reqNum << " and colocation group " << colGrp << std::endl;
 
-	while ( (rc = DataBase::step(stmt)) == SQLITE_ROW ) {
+	while ( (rc = sqlite3_statement::step(stmt)) == SQLITE_ROW ) {
 		const char *cstr = reinterpret_cast<const char*>(sqlite3_column_text (stmt, 1));
 		std::cout << "Migration of " << (cstr ? std::string(cstr) : std::string("")) << " to " << tapeId << std::endl;
 		usleep(random() % 1000000);
 	}
 
-	DataBase::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 
 	std::unique_lock<std::mutex> lock(Scheduler::mtx);
 
@@ -49,22 +49,22 @@ void migration(int reqNum, int tgtState, int colGrp, std::string tapeId)
 	ssql << "UPDATE REQUEST_QUEUE SET STATE=" << DataBase::REQ_COMPLETED;
 	ssql << " WHERE REQ_NUM=" << reqNum << " AND COLOC_GRP=" << colGrp << ";";
 
-	DataBase::prepare(ssql.str(), &stmt);
+	sqlite3_statement::prepare(ssql.str(), &stmt);
 
-	rc = DataBase::step(stmt);
+	rc = sqlite3_statement::step(stmt);
 
-	DataBase::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 
 	ssql.str("");
 	ssql.clear();
 	ssql << "UPDATE TAPE_LIST SET STATE=" << DataBase::TAPE_FREE;
 	ssql << " WHERE TAPE_ID='" << tapeId << "';";
 
-	DataBase::prepare(ssql.str(), &stmt);
+	sqlite3_statement::prepare(ssql.str(), &stmt);
 
-	rc = DataBase::step(stmt);
+	rc = sqlite3_statement::step(stmt);
 
-	DataBase::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 
 	Scheduler::cond.notify_one();
 }
@@ -92,9 +92,9 @@ void Scheduler::run(long key)
 		ssql << " AND TAPE_ID IN (SELECT TAPE_ID FROM TAPE_LIST WHERE STATE=";
 		ssql << DataBase::TAPE_FREE << ") ORDER BY OPERATION,REQ_NUM;";
 
-		DataBase::prepare(ssql.str(), &stmt);
+		sqlite3_statement::prepare(ssql.str(), &stmt);
 
-		if ( (rc = DataBase::step(stmt)) == SQLITE_ROW ) {
+		if ( (rc = sqlite3_statement::step(stmt)) == SQLITE_ROW ) {
 			std::stringstream ssql2;
 			sqlite3_stmt *stmt2;
 
@@ -110,11 +110,11 @@ void Scheduler::run(long key)
 			ssql2 << "UPDATE TAPE_LIST SET STATE=" << DataBase::TAPE_INUSE;
 			ssql2 << " WHERE TAPE_ID='" << tapeId << "';";
 
-			DataBase::prepare(ssql2.str(), &stmt2);
+			sqlite3_statement::prepare(ssql2.str(), &stmt2);
 
-			rc = DataBase::step(stmt2);
+			rc = sqlite3_statement::step(stmt2);
 
-			DataBase::checkRcAndFinalize(stmt2, rc, SQLITE_DONE);
+			sqlite3_statement::checkRcAndFinalize(stmt2, rc, SQLITE_DONE);
 
 			int reqNum = sqlite3_column_int(stmt, 1);
 			int tgtState = sqlite3_column_int(stmt, 2);
@@ -135,6 +135,6 @@ void Scheduler::run(long key)
 			}
 		}
 
-		DataBase::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+		sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 	}
 }

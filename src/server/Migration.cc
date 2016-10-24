@@ -64,11 +64,11 @@ void Migration::addFileName(std::string fileName)
 	ssql << "NULL" << ", ";                                       // TAPE_ID
 	ssql << 0 << ");";                                            // FAILED
 
-	DataBase::prepare(ssql.str(), &stmt);
+	sqlite3_statement::prepare(ssql.str(), &stmt);
 
 	rc = sqlite3_step(stmt);
 
-	DataBase::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 
 	jobnum++;
 
@@ -84,13 +84,13 @@ std::vector<std::string> Migration::getTapes()
 
 	sql = std::string("SELECT * FROM TAPE_LIST");
 
-	DataBase::prepare(sql, &stmt);
+	sqlite3_statement::prepare(sql, &stmt);
 
-	while ( (rc = DataBase::step(stmt)) == SQLITE_ROW ) {
+	while ( (rc = sqlite3_statement::step(stmt)) == SQLITE_ROW ) {
 		tapeList.push_back(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0)));
 	}
 
-	DataBase::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 
 	return tapeList;
 }
@@ -109,14 +109,14 @@ void Migration::addRequest()
 
 	ssql << "SELECT COLOC_GRP FROM JOB_QUEUE WHERE REQ_NUM=" << reqNumber << " GROUP BY COLOC_GRP";
 
-	DataBase::prepare(ssql.str(), &stmt);
+	sqlite3_statement::prepare(ssql.str(), &stmt);
 
 	std::stringstream ssql2;
 	sqlite3_stmt *stmt2;
 
 	getTapes();
 
-	while ( (rc = DataBase::step(stmt)) == SQLITE_ROW ) {
+	while ( (rc = sqlite3_statement::step(stmt)) == SQLITE_ROW ) {
 		ssql2.str("");
 		ssql2.clear();
 
@@ -132,16 +132,16 @@ void Migration::addRequest()
 		ssql2 << time(NULL) << ", ";                                                            // TIME_ADDED
 		ssql2 << DataBase::REQ_NEW << ");";                                                     // STATE
 
-		DataBase::prepare(ssql2.str(), &stmt2);
+		sqlite3_statement::prepare(ssql2.str(), &stmt2);
 
-		rc = DataBase::step(stmt2);
+		rc = sqlite3_statement::step(stmt2);
 
-		DataBase::checkRcAndFinalize(stmt2, rc, SQLITE_DONE);
+		sqlite3_statement::checkRcAndFinalize(stmt2, rc, SQLITE_DONE);
 
 		requestAdded = true;
 	}
 
-	DataBase::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 
 	if (requestAdded) {
 		Scheduler::cond.notify_one();

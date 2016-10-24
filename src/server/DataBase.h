@@ -23,14 +23,17 @@ public:
 	DataBase() : db(NULL), dbNeedsClosed(false) {}
 	~DataBase();
 	void cleanup();
-	static void checkRcAndFinalize(sqlite3_stmt *stmt, int rc, int expected);
-	static int step(sqlite3_stmt *stmt);
-	static void prepare(std::string sql, sqlite3_stmt **stmt);
 	void open();
 	void createTables();
 	sqlite3 *getDB() { return db; }
 };
 
 extern DataBase DB;
+
+namespace sqlite3_statement {
+	void prepare(std::string sql, sqlite3_stmt **stmt);
+	int step(sqlite3_stmt *stmt);
+	void checkRcAndFinalize(sqlite3_stmt *stmt, int rc, int expected);
+}
 
 #endif /* _DATABASE_H */

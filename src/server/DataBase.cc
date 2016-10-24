@@ -31,41 +31,6 @@ void DataBase::cleanup()
 	unlink((Const::DB_FILE + std::string("-journal")).c_str());
 }
 
-void DataBase::prepare(std::string sql, sqlite3_stmt **stmt)
-
-{
-	int rc;
-
-	rc = sqlite3_prepare_v2(DB.getDB(), sql.c_str(), -1, stmt, NULL);
-
-	if( rc != SQLITE_OK ) {
-		TRACE(Trace::error, rc);
-		throw(rc);
-	}
-}
-
-int DataBase::step(sqlite3_stmt *stmt)
-
-{
-	return  sqlite3_step(stmt);
-}
-
-void DataBase::checkRcAndFinalize(sqlite3_stmt *stmt, int rc, int expected)
-
-{
-	if ( rc != expected ) {
-		TRACE(Trace::error, rc);
-		throw(rc);
-	}
-
-	rc = sqlite3_finalize(stmt);
-
-	if ( rc != SQLITE_OK ) {
-		TRACE(Trace::error, rc);
-		throw(rc);
-	}
-}
-
 void DataBase::open()
 
 {
@@ -130,11 +95,11 @@ void DataBase::createTables()
 		+ std::string("TAPE_ID CHAR(9), ")
 		+ std::string("FAILED INT NOT NULL);");
 
-	prepare(sql, &stmt);
+	sqlite3_statement::prepare(sql, &stmt);
 
-	rc = step(stmt);
+	rc = sqlite3_statement::step(stmt);
 
-	checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 
 	sql = std::string("CREATE TABLE REQUEST_QUEUE(")
 		+ std::string("OPERATION INT NOT NULL, ")
@@ -145,21 +110,21 @@ void DataBase::createTables()
 		+ std::string("TIME_ADDED INT NOT NULL, ")
 		+ std::string("STATE INT NOT NULL);");
 
-	prepare(sql, &stmt);
+	sqlite3_statement::prepare(sql, &stmt);
 
-	rc = step(stmt);
+	rc = sqlite3_statement::step(stmt);
 
-	checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 
 	sql = std::string("CREATE TABLE TAPE_LIST(")
 		+ std::string("TAPE_ID CHAR(9), ")
 		+ std::string("STATE INT NOT NULL);");
 
-	prepare(sql, &stmt);
+	sqlite3_statement::prepare(sql, &stmt);
 
-	rc = step(stmt);
+	rc = sqlite3_statement::step(stmt);
 
-	checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 
 	/* temporary for this prototype add two specific tapes initalially */
 
@@ -169,9 +134,44 @@ void DataBase::createTables()
 	ssql << "('DV1480L6', " << DataBase::TAPE_FREE << "), ";
 	ssql << "('DV1481L6', " << DataBase::TAPE_FREE << ");";
 
-	prepare(ssql.str(), &stmt);
+	sqlite3_statement::prepare(ssql.str(), &stmt);
 
-	rc = step(stmt);
+	rc = sqlite3_statement::step(stmt);
 
-	checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+}
+
+void sqlite3_statement::prepare(std::string sql, sqlite3_stmt **stmt)
+
+{
+	int rc;
+
+	rc = sqlite3_prepare_v2(DB.getDB(), sql.c_str(), -1, stmt, NULL);
+
+	if( rc != SQLITE_OK ) {
+		TRACE(Trace::error, rc);
+		throw(rc);
+	}
+}
+
+int sqlite3_statement::step(sqlite3_stmt *stmt)
+
+{
+	return  sqlite3_step(stmt);
+}
+
+void sqlite3_statement::checkRcAndFinalize(sqlite3_stmt *stmt, int rc, int expected)
+
+{
+	if ( rc != expected ) {
+		TRACE(Trace::error, rc);
+		throw(rc);
+	}
+
+	rc = sqlite3_finalize(stmt);
+
+	if ( rc != SQLITE_OK ) {
+		TRACE(Trace::error, rc);
+		throw(rc);
+	}
 }

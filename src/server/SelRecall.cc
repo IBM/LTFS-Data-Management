@@ -63,11 +63,11 @@ void SelRecall::addFileName(std::string fileName)
 		return;
 	}
 
-	DataBase::prepare(ssql.str(), &stmt);
+	sqlite3_statement::prepare(ssql.str(), &stmt);
 
-	rc = DataBase::step(stmt);
+	rc = sqlite3_statement::step(stmt);
 
-	DataBase::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 
 	return;
 }
@@ -87,9 +87,9 @@ void SelRecall::addRequest()
 
 	ssql << "SELECT TAPE_ID FROM JOB_QUEUE WHERE REQ_NUM=" << reqNumber << " GROUP BY TAPE_ID";
 
-	DataBase::prepare(ssql.str(), &stmt);
+	sqlite3_statement::prepare(ssql.str(), &stmt);
 
-	while ( (rc = DataBase::step(stmt)) == SQLITE_ROW ) {
+	while ( (rc = sqlite3_statement::step(stmt)) == SQLITE_ROW ) {
 		std::stringstream ssql2;
 		sqlite3_stmt *stmt2;
 
@@ -104,14 +104,14 @@ void SelRecall::addRequest()
 		ssql2 << time(NULL) << ", ";                                                            // TIME_ADDED
 		ssql2 << DataBase::REQ_NEW << ");";                                                     // STATE
 
-		DataBase::prepare(ssql2.str(), &stmt2);
+		sqlite3_statement::prepare(ssql2.str(), &stmt2);
 
-		rc = DataBase::step(stmt2);
+		rc = sqlite3_statement::step(stmt2);
 
-		DataBase::checkRcAndFinalize(stmt2, rc, SQLITE_DONE);
+		sqlite3_statement::checkRcAndFinalize(stmt2, rc, SQLITE_DONE);
 	}
 
-	DataBase::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 
 	if (requestAdded)
 		Scheduler::cond.notify_one();
