@@ -92,7 +92,7 @@ void Server::initialize()
 		DB.open();
 		DB.createTables();
 	}
-	catch (LTFSDMErr error) {
+	catch (int error) {
 		MSG(LTFSDMS0014E);
 		throw(error);
 	}

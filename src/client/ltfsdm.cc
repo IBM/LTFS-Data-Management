@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
 {
 	OpenLTFSCommand *openLTFSCommand = NULL;
 	std::string command;
-	LTFSDMErr rc = LTFSDMErr::LTFSDM_OK ;
+	int rc = LTFSDMErr::LTFSDM_OK ;
 
 	try {
 		LTFSDM::init();
@@ -111,7 +111,7 @@ int main(int argc, char *argv[])
 	try {
 		openLTFSCommand->doCommand(argc, argv);
 	}
-	catch(LTFSDMErr err) {
+	catch(int err) {
 		rc = err;
 		goto cleanup;
 	}

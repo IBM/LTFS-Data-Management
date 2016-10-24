@@ -23,7 +23,7 @@ int main(int argc, char **argv)
 
 {
  	Server ltfsdmd;
-	LTFSDMErr err = LTFSDMErr::LTFSDM_OK;
+	int err = LTFSDMErr::LTFSDM_OK;
 	bool detach = true;
 	int opt;
 
@@ -58,7 +58,7 @@ int main(int argc, char **argv)
 			ltfsdmd.daemonize();
 		ltfsdmd.run();
 	}
-	catch ( LTFSDMErr initerr ) {
+	catch ( int initerr ) {
 		err = initerr;
 		goto end;
 	}
