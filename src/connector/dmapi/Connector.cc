@@ -114,6 +114,10 @@ void dmapiSessionCleanup()
 			}
 		}
 	}
+	if (sidbufp != NULL)
+		free(sidbufp);
+	if (tokbufp != NULL)
+		free(tokbufp);
 }
 
 Connector::Connector()
