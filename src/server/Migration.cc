@@ -154,15 +154,15 @@ bool Migration::queryResult(long reqNumber, long *resident, long *premigrated, l
 {
 	int rc;
 	std::stringstream ssql;
-	bool done = false;
+	bool done = true;
 
 	ssql << "SELECT STATE FROM REQUEST_QUEUE WHERE REQ_NUM=" << reqNumber;
 
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 
 	while ( (rc = sqlite3_statement::step(stmt)) == SQLITE_ROW ) {
-		if ( sqlite3_column_int(stmt, 0) == DataBase::REQ_COMPLETED ) {
-			done = true;
+		if ( sqlite3_column_int(stmt, 0) != DataBase::REQ_COMPLETED ) {
+			done = false;
 		}
 	}
 
