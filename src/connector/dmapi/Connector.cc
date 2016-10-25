@@ -176,7 +176,7 @@ FsObj::FsObj(std::string fileName) : handle(NULL), handleLength(0), isLocked(fal
 }
 
 FsObj::FsObj(unsigned long long fsId, unsigned int iGen, unsigned long long iNode)
-	: handle(NULL), handleLength(0), isLocked(false), offset(0)
+	: handle(NULL), handleLength(0), isLocked(false)
 
 {
 	if ( dm_make_handle(&fsId, &iNode, &iGen, &handle, &handleLength) != 0 ) {
@@ -317,35 +317,18 @@ void FsObj::unlock()
 	isLocked = false;
 }
 
-bool FsObj::read(unsigned long size, char *buffer, long *rsize)
+long FsObj::read(long offset, unsigned long size, char *buffer)
 
 {
-	dm_stat_t dmstatbuf;
+	long rsize;
 
-	*rsize = dm_read_invis(dmapiSession, handle, handleLength, dmapiToken, offset, size, buffer);
+	rsize = dm_read_invis(dmapiSession, handle, handleLength, dmapiToken, offset, size, buffer);
 
 	TRACE(Trace::much, offset);
 	TRACE(Trace::much, size);
 	TRACE(Trace::much, rsize);
 
-	if ( *rsize == -1 ) {
-		TRACE(Trace::error, errno);
-		throw(errno);
-	}
-
-	if ( *rsize == 0 ) {
-		if ( dm_get_fileattr(dmapiSession, handle, handleLength, dmapiToken, DM_AT_STAT, &dmstatbuf) != 0 ) {
-			TRACE(Trace::error, errno);
-			throw(errno);
-		}
-
-		if ( offset == dmstatbuf.dt_size )
-			return false;
-	}
-
-	offset += *rsize;
-
-	return true;
+	return rsize;
 }
 
 

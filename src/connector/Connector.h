@@ -12,7 +12,6 @@ private:
 	void *handle;
 	unsigned long handleLength;
 	bool isLocked;
-	long offset;
 public:
 	FsObj(std::string fileName);
 	FsObj(unsigned long long fsId, unsigned int iGen, unsigned long long iNode);
@@ -24,7 +23,7 @@ public:
 	std::string getTapeId();
 	void lock();
 	void unlock();
-	bool read(unsigned long size, char *buffer, long *rsize);
+	long read(long offset, unsigned long size, char *buffer);
 	void addAttribute(std::string key, std::string value);
 	void finishPremigration();
 	void stub();

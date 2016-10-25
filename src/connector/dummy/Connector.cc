@@ -88,10 +88,10 @@ void FsObj::unlock()
 }
 
 
-bool FsObj::read(unsigned long size, char *buffer, long *rsize)
+long FsObj::read(long offset, unsigned long size, char *buffer)
 
 {
-	return true;
+	return 0;
 }
 
 

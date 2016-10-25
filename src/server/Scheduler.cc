@@ -27,10 +27,12 @@ void preMigrate(std::string fileName, std::string tapeId)
 
 {
 	std::stringstream target;
+	struct stat statbuf;
 	char buffer[256*1024];
 	long rsize;
 	long wsize;
 	int fd = -1;
+	long offset = 0;
 
 	try {
 		FsObj source(fileName);
@@ -52,16 +54,25 @@ void preMigrate(std::string fileName, std::string tapeId)
 
 		source.lock();
 
-		while (source.read(sizeof(buffer), buffer, &rsize)) {
+		statbuf = source.stat();
+
+		while ( offset < statbuf.st_size ) {
+			rsize = source.read(offset, sizeof(buffer), buffer);
+			if ( rsize == -1 ) {
+				TRACE(Trace::error, errno);
+				MSG(LTFSDMS0023E, fileName);
+				throw(errno);
+			}
 			wsize = write(fd, buffer, rsize);
 			if ( wsize != rsize ) {
 				TRACE(Trace::error, errno);
 				TRACE(Trace::error, wsize);
 				TRACE(Trace::error, rsize);
-				MSG(LTFSDMS0021E, target.str().c_str());
+				MSG(LTFSDMS0022E, target.str().c_str());
 				close(fd);
 				throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
 			}
+			offset += rsize;
 		}
 
 		close(fd);
