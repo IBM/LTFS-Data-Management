@@ -37,7 +37,7 @@ void Receiver::run(long key)
 	}
 	catch(...) {
 		MSG(LTFSDMS0004E);
-		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+		throw(Error::LTFSDM_GENERAL_ERROR);
 	}
 
 	while (terminate == false) {

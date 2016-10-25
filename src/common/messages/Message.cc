@@ -26,7 +26,7 @@ void Message::init()
 	}
 	catch(...) {
 		std::cerr << messages[LTFSDMX0003E];
-		exit((int) LTFSDMErr::LTFSDM_GENERAL_ERROR);
+		exit((int) Error::LTFSDM_GENERAL_ERROR);
 	}
 }
 
@@ -50,6 +50,6 @@ void Message::writeLog(std::string msgstr)
 	catch(...) {
 		mtx.unlock();
 		std::cerr << messages[LTFSDMX0004E];
-		exit((int) LTFSDMErr::LTFSDM_GENERAL_ERROR);
+		exit((int) Error::LTFSDM_GENERAL_ERROR);
 	}
 }

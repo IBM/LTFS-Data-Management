@@ -43,7 +43,7 @@ void InfoFilesCommand::talkToBackend(std::stringstream *parmList)
 	}
 	catch(...) {
 		MSG(LTFSDMC0027E);
-		throw LTFSDMErr::LTFSDM_GENERAL_ERROR;
+		throw Error::LTFSDM_GENERAL_ERROR;
 	}
 
 	try {
@@ -51,7 +51,7 @@ void InfoFilesCommand::talkToBackend(std::stringstream *parmList)
 	}
 	catch(...) {
 		MSG(LTFSDMC0028E);
-		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+		throw(Error::LTFSDM_GENERAL_ERROR);
 	}
 
 	const LTFSDmProtocol::LTFSDmInfoFilesRequestResp infofilesreqresp = commCommand.infofilesrequestresp();
@@ -61,19 +61,19 @@ void InfoFilesCommand::talkToBackend(std::stringstream *parmList)
 			MSG(LTFSDMC0036E);
 			TRACE(Trace::error, getpid());
 			TRACE(Trace::error, infofilesreqresp.pid());
-			throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+			throw(Error::LTFSDM_GENERAL_ERROR);
 		}
 		if ( requestNumber !=  infofilesreqresp.reqnumber() ) {
 			MSG(LTFSDMC0037E);
 			TRACE(Trace::error, requestNumber);
 			TRACE(Trace::error, infofilesreqresp.reqnumber());
-			throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+			throw(Error::LTFSDM_GENERAL_ERROR);
 		}
 	}
 
 	else {
 		MSG(LTFSDMC0029E);
-		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+		throw(Error::LTFSDM_GENERAL_ERROR);
 	}
 
 	sendObjects(parmList);
@@ -85,7 +85,7 @@ void InfoFilesCommand::doCommand(int argc, char **argv)
 
 	if ( argc == 1 ) {
 		INFO(LTFSDMC0018E);
-		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+		throw(Error::LTFSDM_GENERAL_ERROR);
 
 	}
 

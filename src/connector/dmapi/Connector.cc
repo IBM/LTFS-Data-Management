@@ -36,7 +36,7 @@ void dmapiSessionCleanup()
 
 	if ( sidbufp == NULL ) {
 		MSG(LTFSDMD0001E);
-		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+		throw(Error::LTFSDM_GENERAL_ERROR);
 	}
 
 	while ( dm_getall_sessions(num_sessions, sidbufp, &num_sessions_res) == -1 ) {
@@ -44,7 +44,7 @@ void dmapiSessionCleanup()
 
         if ( errno != E2BIG ) {
             TRACE(Trace::error, errno);
-			throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+			throw(Error::LTFSDM_GENERAL_ERROR);
         }
 
 		sidbufp = NULL;
@@ -52,7 +52,7 @@ void dmapiSessionCleanup()
 
 		if ( !sidbufp ) {
             MSG(LTFSDMD0001E);
-			throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+			throw(Error::LTFSDM_GENERAL_ERROR);
         }
 
 		num_sessions = num_sessions_res;
@@ -67,7 +67,7 @@ void dmapiSessionCleanup()
         if ( dm_query_session(sidbufp[i], sizeof( buffer ), buffer, &rseslenp) == -1 ) {
             MSG(LTFSDMD0001E);
 			free(sidbufp);
-			throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+			throw(Error::LTFSDM_GENERAL_ERROR);
         }
 		else if (Const::DMAPI_SESSION_NAME.compare(buffer) == 0) {
 			TRACE(Trace::error, i);
@@ -77,13 +77,13 @@ void dmapiSessionCleanup()
 			if ( !tokbufp ) {
 				MSG(LTFSDMD0001E);
 				free(sidbufp);
-				throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+				throw(Error::LTFSDM_GENERAL_ERROR);
 			}
 
 			while (dm_getall_tokens(sidbufp[i], num_tokens, tokbufp, &rtoklenp) == -1) {
 				if ( errno != E2BIG ) {
 					TRACE(Trace::error, errno);
-					throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+					throw(Error::LTFSDM_GENERAL_ERROR);
 				}
 				free(tokbufp);
 				tokbufp = NULL;
@@ -91,7 +91,7 @@ void dmapiSessionCleanup()
 				if ( !tokbufp ) {
 					MSG(LTFSDMD0001E);
 					free(sidbufp);
-					throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+					throw(Error::LTFSDM_GENERAL_ERROR);
 				}
 			}
 
@@ -304,7 +304,7 @@ void FsObj::unlock()
 
 	if ( isLocked == false ) {
 		TRACE(Trace::error, isLocked);
-		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+		throw(Error::LTFSDM_GENERAL_ERROR);
 	}
 
 	rc = dm_release_right(dmapiSession, handle, handleLength, dmapiToken);

@@ -23,7 +23,7 @@ int main(int argc, char **argv)
 
 {
  	Server ltfsdmd;
-	int err = LTFSDMErr::LTFSDM_OK;
+	int err = Error::LTFSDM_OK;
 	bool detach = true;
 	int opt;
 
@@ -36,7 +36,7 @@ int main(int argc, char **argv)
 				break;
 			default:
 				std::cerr << messages[LTFSDMC0013E] << std::endl;
-				err = LTFSDMErr::LTFSDM_GENERAL_ERROR;
+				err = Error::LTFSDM_GENERAL_ERROR;
 				goto end;
 		}
 	}
@@ -45,7 +45,7 @@ int main(int argc, char **argv)
 		LTFSDM::init();
 	}
 	catch(...) {
-		err = LTFSDMErr::LTFSDM_GENERAL_ERROR;
+		err = Error::LTFSDM_GENERAL_ERROR;
 		goto end;
 	}
 

@@ -43,7 +43,7 @@ void MigrationCommand::queryResults()
 		}
 		catch(...) {
 			MSG(LTFSDMC0027E);
-			throw LTFSDMErr::LTFSDM_GENERAL_ERROR;
+			throw Error::LTFSDM_GENERAL_ERROR;
 		}
 
 		try {
@@ -51,7 +51,7 @@ void MigrationCommand::queryResults()
 		}
 		catch(...) {
 			MSG(LTFSDMC0028E);
-			throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+			throw(Error::LTFSDM_GENERAL_ERROR);
 		}
 
 		const LTFSDmProtocol::LTFSDmMigStatusResp migstatusresp = commCommand.migstatusresp();
@@ -61,13 +61,13 @@ void MigrationCommand::queryResults()
 				MSG(LTFSDMC0036E);
 				TRACE(Trace::error, getpid());
 				TRACE(Trace::error, migstatusresp.pid());
-				throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+				throw(Error::LTFSDM_GENERAL_ERROR);
 			}
 			if ( requestNumber !=  migstatusresp.reqnumber() ) {
 				MSG(LTFSDMC0037E);
 				TRACE(Trace::error, requestNumber);
 				TRACE(Trace::error, migstatusresp.reqnumber());
-				throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+				throw(Error::LTFSDM_GENERAL_ERROR);
 			}
 			resident =  migstatusresp.resident();
 			premigrated =  migstatusresp.premigrated();
@@ -77,7 +77,7 @@ void MigrationCommand::queryResults()
 		}
 		else {
 			MSG(LTFSDMC0029E);
-			throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+			throw(Error::LTFSDM_GENERAL_ERROR);
 		}
 	} while (!done);
 }
@@ -116,7 +116,7 @@ void MigrationCommand::talkToBackend(std::stringstream *parmList)
 	}
 	catch(...) {
 		MSG(LTFSDMC0027E);
-		throw LTFSDMErr::LTFSDM_GENERAL_ERROR;
+		throw Error::LTFSDM_GENERAL_ERROR;
 	}
 
 	try {
@@ -124,7 +124,7 @@ void MigrationCommand::talkToBackend(std::stringstream *parmList)
 	}
 	catch(...) {
 		MSG(LTFSDMC0028E);
-		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+		throw(Error::LTFSDM_GENERAL_ERROR);
 	}
 
 	const LTFSDmProtocol::LTFSDmMigRequestResp migreqresp = commCommand.migrequestresp();
@@ -134,18 +134,18 @@ void MigrationCommand::talkToBackend(std::stringstream *parmList)
 			MSG(LTFSDMC0036E);
 			TRACE(Trace::error, getpid());
 			TRACE(Trace::error, migreqresp.pid());
-			throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+			throw(Error::LTFSDM_GENERAL_ERROR);
 		}
 		if ( requestNumber !=  migreqresp.reqnumber() ) {
 			MSG(LTFSDMC0037E);
 			TRACE(Trace::error, requestNumber);
 			TRACE(Trace::error, migreqresp.reqnumber());
-			throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+			throw(Error::LTFSDM_GENERAL_ERROR);
 		}
 	}
 	else {
 		MSG(LTFSDMC0029E);
-		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+		throw(Error::LTFSDM_GENERAL_ERROR);
 	}
 
 	sendObjects(parmList);
@@ -159,7 +159,7 @@ void MigrationCommand::doCommand(int argc, char **argv)
 
 	if ( argc == 1 ) {
 		INFO(LTFSDMC0018E);
-		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+		throw(Error::LTFSDM_GENERAL_ERROR);
 
 	}
 

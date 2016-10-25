@@ -20,7 +20,7 @@ void StatusCommand::doCommand(int argc, char **argv)
 
 	if ( argc > 1 ) {
 		printUsage();
-		throw LTFSDMErr::LTFSDM_GENERAL_ERROR;
+		throw Error::LTFSDM_GENERAL_ERROR;
 	}
 
 	try {
@@ -42,7 +42,7 @@ void StatusCommand::doCommand(int argc, char **argv)
 	}
 	catch(...) {
 		MSG(LTFSDMC0027E);
-		throw LTFSDMErr::LTFSDM_GENERAL_ERROR;
+		throw Error::LTFSDM_GENERAL_ERROR;
 	}
 
 	try {
@@ -50,7 +50,7 @@ void StatusCommand::doCommand(int argc, char **argv)
 	}
 	catch(...) {
 		MSG(LTFSDMC0028E);
-		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+		throw(Error::LTFSDM_GENERAL_ERROR);
 	}
 
 	const LTFSDmProtocol::LTFSDmStatusResp statusresp = commCommand.statusresp();
@@ -61,6 +61,6 @@ void StatusCommand::doCommand(int argc, char **argv)
 	}
 	else {
 		MSG(LTFSDMC0029E);
-		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+		throw(Error::LTFSDM_GENERAL_ERROR);
 	}
 }

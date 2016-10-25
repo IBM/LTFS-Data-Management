@@ -19,7 +19,7 @@ void LTFSDmCommClient::connect()
 
 	if ( (socRefFd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
 		TRACE(Trace::error, errno);
-		throw(LTFSDMErr::LTFSDM_COMM_ERROR);
+		throw(Error::LTFSDM_COMM_ERROR);
 	}
 
 	memset(&addr, 0, sizeof(addr));
@@ -30,7 +30,7 @@ void LTFSDmCommClient::connect()
 		TRACE(Trace::error, errno);
 		close(socRefFd);
 		socRefFd = Const::UNSET;
-		throw(LTFSDMErr::LTFSDM_COMM_ERROR);
+		throw(Error::LTFSDM_COMM_ERROR);
 	}
 
 	GOOGLE_PROTOBUF_VERIFY_VERSION;
@@ -43,7 +43,7 @@ void LTFSDmCommServer::listen()
 
 	if ( (socRefFd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
 		TRACE(Trace::error, errno);
-		throw(LTFSDMErr::LTFSDM_COMM_ERROR);
+		throw(Error::LTFSDM_COMM_ERROR);
 	}
 
 	memset(&addr, 0, sizeof(addr));
@@ -56,14 +56,14 @@ void LTFSDmCommServer::listen()
 		TRACE(Trace::error, errno);
 		::close(socRefFd);
 		socRefFd = Const::UNSET;
-		throw(LTFSDMErr::LTFSDM_COMM_ERROR);
+		throw(Error::LTFSDM_COMM_ERROR);
 	}
 
 	if (::listen(socRefFd, SOMAXCONN) == -1) {
 		TRACE(Trace::error, errno);
 		::close(socRefFd);
 		socRefFd = Const::UNSET;
-		throw(LTFSDMErr::LTFSDM_COMM_ERROR);
+		throw(Error::LTFSDM_COMM_ERROR);
 	}
 }
 
@@ -73,7 +73,7 @@ void LTFSDmCommServer::accept()
 	if ( (socAccFd = ::accept(socRefFd, NULL, NULL)) == -1) {
 		TRACE(Trace::error, errno);
 		socRefFd = Const::UNSET;
-		throw(LTFSDMErr::LTFSDM_COMM_ERROR);
+		throw(Error::LTFSDM_COMM_ERROR);
 	}
 }
 
@@ -92,7 +92,7 @@ void LTFSDmComm::send(int fd)
 
 	if ( this->SerializeToArray(buffer + sizeof(long), MessageSize) == false ) {
 		TRACE(Trace::error, buffer);
-		throw(LTFSDMErr::LTFSDM_COMM_ERROR);
+		throw(Error::LTFSDM_COMM_ERROR);
 	}
 
 	TRACE(Trace::much, strlen(buffer));
@@ -107,7 +107,7 @@ void LTFSDmComm::send(int fd)
 		TRACE(Trace::error, errno);
 		TRACE(Trace::error, sizeof(long));
 		MSG(LTFSDMX0008E);
-		throw(LTFSDMErr::LTFSDM_COMM_ERROR);
+		throw(Error::LTFSDM_COMM_ERROR);
 	}
 
 	free(buffer);
@@ -143,7 +143,7 @@ void LTFSDmComm::recv(int fd)
 	if (rsize != sizeof(long)) {
 		TRACE(Trace::error, rsize);
 		TRACE(Trace::error, sizeof(long));
-		throw(LTFSDMErr::LTFSDM_COMM_ERROR);
+		throw(Error::LTFSDM_COMM_ERROR);
 	}
 
 	TRACE(Trace::much, MessageSize);
@@ -157,7 +157,7 @@ void LTFSDmComm::recv(int fd)
 		TRACE(Trace::error, rsize);
 		TRACE(Trace::error, MessageSize);
 		free(buffer);
-		throw(LTFSDMErr::LTFSDM_COMM_ERROR);
+		throw(Error::LTFSDM_COMM_ERROR);
 	}
 
 	this->ParseFromArray(buffer, MessageSize);

@@ -42,14 +42,14 @@ void DataBase::open()
 
 	if ( rc != SQLITE_OK ) {
 		TRACE(Trace::error, rc);
-		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+		throw(Error::LTFSDM_GENERAL_ERROR);
 	}
 
 	rc = sqlite3_initialize();
 
 	if ( rc != SQLITE_OK ) {
 		TRACE(Trace::error, rc);
-		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+		throw(Error::LTFSDM_GENERAL_ERROR);
 	}
 
 	rc = sqlite3_open_v2(uri.c_str(), &db, SQLITE_OPEN_READWRITE |
@@ -59,14 +59,14 @@ void DataBase::open()
 	if ( rc != SQLITE_OK ) {
 		TRACE(Trace::error, rc);
 		TRACE(Trace::error, uri);
-		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+		throw(Error::LTFSDM_GENERAL_ERROR);
 	}
 
 	rc = sqlite3_extended_result_codes(db, 1);
 
 	if ( rc != SQLITE_OK ) {
 		TRACE(Trace::error, rc);
-		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+		throw(Error::LTFSDM_GENERAL_ERROR);
 	}
 
 	dbNeedsClosed = true;

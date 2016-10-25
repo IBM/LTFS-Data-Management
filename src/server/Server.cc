@@ -41,19 +41,19 @@ void Server::lockServer()
 		MSG(LTFSDMS0001E);
 		TRACE(Trace::error, Const::SERVER_LOCK_FILE);
 		TRACE(Trace::error, errno);
-		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+		throw(Error::LTFSDM_GENERAL_ERROR);
 	}
 
 	if ( flock(lockfd, LOCK_EX | LOCK_NB) == -1 ) {
 		TRACE(Trace::error, errno);
 		if ( errno == EWOULDBLOCK ) {
 			MSG(LTFSDMS0002I);
-			throw(LTFSDMErr::LTFSDM_OK);
+			throw(Error::LTFSDM_OK);
 		}
 		else {
 			MSG(LTFSDMS0001E);
 			TRACE(Trace::error, errno);
-			throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+			throw(Error::LTFSDM_GENERAL_ERROR);
 		}
 	}
 }
@@ -70,7 +70,7 @@ void Server::writeKey()
 	}
 	catch(...) {
 		MSG(LTFSDMS0003E);
-		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+		throw(Error::LTFSDM_GENERAL_ERROR);
 	}
 
 	srandom(time(NULL));
@@ -110,13 +110,13 @@ void Server::daemonize()
 	}
 
 	if (pid > 0) {
-		throw(LTFSDMErr::LTFSDM_OK);
+		throw(Error::LTFSDM_OK);
 	}
 
 	sid = setsid();
 	if (sid < 0) {
 		MSG(LTFSDMS0012E);
-		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+		throw(Error::LTFSDM_GENERAL_ERROR);
 	}
 
 	TRACE(Trace::little, "Server started");
@@ -127,7 +127,7 @@ void Server::daemonize()
 	/* redirect stdout to log file */
 	if ( (dev_null = open("/dev/null", O_RDWR)) == -1 ) {
 		MSG(LTFSDMS0013E);
-		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+		throw(Error::LTFSDM_GENERAL_ERROR);
 	}
 	dup2(dev_null, STDIN_FILENO);
 	dup2(dev_null, STDOUT_FILENO);

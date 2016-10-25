@@ -50,7 +50,7 @@ void preMigrate(std::string fileName, std::string tapeId)
 		if ( fd == -1 ) {
 			TRACE(Trace::error, errno);
 			MSG(LTFSDMS0021E, target.str().c_str());
-			throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+			throw(Error::LTFSDM_GENERAL_ERROR);
 		}
 
 		source.lock();
@@ -71,7 +71,7 @@ void preMigrate(std::string fileName, std::string tapeId)
 				TRACE(Trace::error, rsize);
 				MSG(LTFSDMS0022E, target.str().c_str());
 				close(fd);
-				throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+				throw(Error::LTFSDM_GENERAL_ERROR);
 			}
 			offset += rsize;
 		}
@@ -115,7 +115,7 @@ void migrationStep(int reqNum, int colGrp, std::string tapeId, int fromState, in
 
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 
-	std::cout << "Processing files for request " << reqNum << " and colocation group " << colGrp << std::endl;
+	//std::cout << "Processing files for request " << reqNum << " and colocation group " << colGrp << std::endl;
 
 	previous = time(NULL);
 
@@ -129,7 +129,7 @@ void migrationStep(int reqNum, int colGrp, std::string tapeId, int fromState, in
 			if (!cstr)
 				continue;
 
-			std::cout << "Processing of " << cstr  << " to " << tapeId << std::endl;
+			//std::cout << "Processing of " << cstr  << " to " << tapeId << std::endl;
 
 			if ( toState == DataBase::PREMIGRATED )
 				preMigrate(std::string(cstr), tapeId);
@@ -178,10 +178,12 @@ void migration(int reqNum, int tgtState, int colGrp, std::string tapeId)
 
 	tapePath << Const::LTFS_PATH << "/" << tapeId;
 
-	if ( setxattr(tapePath.str().c_str(), Const::LTFS_SYNC_ATTR.c_str(), Const::LTFS_SYNC_VAL.c_str(), Const::LTFS_SYNC_VAL.length(), 0) ) {
-		TRACE(Trace::error, errno);
-		MSG(LTFSDMS0024E, tapeId);
-		throw(errno);
+	if ( setxattr(tapePath.str().c_str(), Const::LTFS_SYNC_ATTR.c_str(), Const::LTFS_SYNC_VAL.c_str(), Const::LTFS_SYNC_VAL.length(), 0) == -1 ) {
+		if ( errno != ENODATA ) {
+			TRACE(Trace::error, errno);
+			MSG(LTFSDMS0024E, tapeId);
+			throw(errno);
+		}
 	}
 
 	if ( tgtState != LTFSDmProtocol::LTFSDmMigRequest::PREMIGRATED )

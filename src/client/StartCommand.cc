@@ -42,14 +42,14 @@ void StartCommand::determineServerPath()
 
 	if ( readlink(exelnk, exepath, PATH_MAX) == -1 ) {
 		MSG(LTFSDMC0021E);
-		throw LTFSDMErr::LTFSDM_GENERAL_ERROR;
+		throw Error::LTFSDM_GENERAL_ERROR;
 	}
 #elif __APPLE__
 	uint32_t size = PATH_MAX;
 	if ( _NSGetExecutablePath(exepath, &size) != 0 ) {
 		MSG(LTFSDMC0021E);
 		TRACE(Trace::error, errno);
-		throw LTFSDMErr::LTFSDM_GENERAL_ERROR;
+		throw Error::LTFSDM_GENERAL_ERROR;
 	}
 #else
 #error "unsupported platform"
@@ -72,7 +72,7 @@ void StartCommand::startServer()
 		MSG(LTFSDMC0021E);
 		TRACE(Trace::error, serverPath.str());
 		TRACE(Trace::error, errno);
-		throw LTFSDMErr::LTFSDM_GENERAL_ERROR;
+		throw Error::LTFSDM_GENERAL_ERROR;
 	}
 
 	ltfsdmd = popen(serverPath.str().c_str(), "r");
@@ -80,7 +80,7 @@ void StartCommand::startServer()
 	if( !ltfsdmd ) {
 		MSG(LTFSDMC0022E);
 		TRACE(Trace::error, errno);
-		throw LTFSDMErr::LTFSDM_GENERAL_ERROR;
+		throw Error::LTFSDM_GENERAL_ERROR;
 	}
 
     while( fgets(line, sizeof(line), ltfsdmd) ) {
@@ -95,7 +95,7 @@ void StartCommand::startServer()
 		TRACE(Trace::error, ret);
 		TRACE(Trace::error, WIFEXITED(ret));
 		TRACE(Trace::error, WEXITSTATUS(ret));
-		throw LTFSDMErr::LTFSDM_GENERAL_ERROR;
+		throw Error::LTFSDM_GENERAL_ERROR;
 	}
 }
 
@@ -104,7 +104,7 @@ void StartCommand::doCommand(int argc, char **argv)
 {
 	if ( argc > 1 ) {
 		printUsage();
-		throw LTFSDMErr::LTFSDM_GENERAL_ERROR;
+		throw Error::LTFSDM_GENERAL_ERROR;
 	}
 
 	determineServerPath();

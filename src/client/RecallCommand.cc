@@ -48,7 +48,7 @@ void RecallCommand::talkToBackend(std::stringstream *parmList)
 	}
 	catch(...) {
 		MSG(LTFSDMC0027E);
-		throw LTFSDMErr::LTFSDM_GENERAL_ERROR;
+		throw Error::LTFSDM_GENERAL_ERROR;
 	}
 
 	try {
@@ -56,7 +56,7 @@ void RecallCommand::talkToBackend(std::stringstream *parmList)
 	}
 	catch(...) {
 		MSG(LTFSDMC0028E);
-		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+		throw(Error::LTFSDM_GENERAL_ERROR);
 	}
 
 	const LTFSDmProtocol::LTFSDmSelRecRequestResp recreqresp = commCommand.selrecrequestresp();
@@ -66,18 +66,18 @@ void RecallCommand::talkToBackend(std::stringstream *parmList)
 			MSG(LTFSDMC0036E);
 			TRACE(Trace::error, getpid());
 			TRACE(Trace::error, recreqresp.pid());
-			throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+			throw(Error::LTFSDM_GENERAL_ERROR);
 		}
 		if ( requestNumber !=  recreqresp.reqnumber() ) {
 			MSG(LTFSDMC0037E);
 			TRACE(Trace::error, requestNumber);
 			TRACE(Trace::error, recreqresp.reqnumber());
-			throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+			throw(Error::LTFSDM_GENERAL_ERROR);
 		}
 	}
 	else {
 		MSG(LTFSDMC0029E);
-		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+		throw(Error::LTFSDM_GENERAL_ERROR);
 	}
 
 	sendObjects(parmList);
@@ -89,7 +89,7 @@ void RecallCommand::doCommand(int argc, char **argv)
 
 	if ( argc == 1 ) {
 		INFO(LTFSDMC0018E);
-		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+		throw(Error::LTFSDM_GENERAL_ERROR);
 
 	}
 

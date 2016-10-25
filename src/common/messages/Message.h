@@ -106,7 +106,7 @@ public:
 		}
 		catch(...) {
 			std::cerr << messages[LTFSDMX0005E] << " (" << filename << ":" << linenr << ")" << std::endl;
-			exit((int) LTFSDMErr::LTFSDM_GENERAL_ERROR);
+			exit((int) Error::LTFSDM_GENERAL_ERROR);
 		}
 	}
 };

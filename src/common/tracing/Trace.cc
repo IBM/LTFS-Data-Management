@@ -41,6 +41,6 @@ void Trace::init()
 	}
 	catch(...) {
 		MSG(LTFSDMX0001E);
-		exit((int) LTFSDMErr::LTFSDM_GENERAL_ERROR);
+		exit((int) Error::LTFSDM_GENERAL_ERROR);
 	}
 }

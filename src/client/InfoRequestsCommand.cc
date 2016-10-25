@@ -26,11 +26,11 @@ void InfoRequestsCommand::doCommand(int argc, char **argv)
 
 	if( argc != optind ) {
 		printUsage();
-		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+		throw(Error::LTFSDM_GENERAL_ERROR);
 	}
 	else if (requestNumber < 0 && waitForCompletion) {
 		printUsage();
-		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+		throw(Error::LTFSDM_GENERAL_ERROR);
 	}
 
 	return;

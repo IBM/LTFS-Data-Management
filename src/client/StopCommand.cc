@@ -23,7 +23,7 @@ void StopCommand::doCommand(int argc, char **argv)
 
 	if ( argc > 1 ) {
 		printUsage();
-		throw LTFSDMErr::LTFSDM_GENERAL_ERROR;
+		throw Error::LTFSDM_GENERAL_ERROR;
 	}
 
 	try {
@@ -31,7 +31,7 @@ void StopCommand::doCommand(int argc, char **argv)
 	}
 	catch(...) {
 		MSG(LTFSDMC0026E);
-		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+		throw(Error::LTFSDM_GENERAL_ERROR);
 	}
 
 	TRACE(Trace::error, requestNumber);
@@ -45,7 +45,7 @@ void StopCommand::doCommand(int argc, char **argv)
 	}
 	catch(...) {
 		MSG(LTFSDMC0027E);
-		throw LTFSDMErr::LTFSDM_GENERAL_ERROR;
+		throw Error::LTFSDM_GENERAL_ERROR;
 	}
 
 	try {
@@ -53,21 +53,21 @@ void StopCommand::doCommand(int argc, char **argv)
 	}
 	catch(...) {
 		MSG(LTFSDMC0028E);
-		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+		throw(Error::LTFSDM_GENERAL_ERROR);
 	}
 
 	const LTFSDmProtocol::LTFSDmStopResp stopresp = commCommand.stopresp();
 
 	if( stopresp.success() != true ) {
 		MSG(LTFSDMC0029E);
-		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+		throw(Error::LTFSDM_GENERAL_ERROR);
 	}
 
 	if ( (lockfd = open(Const::SERVER_LOCK_FILE.c_str(), O_RDWR | O_CREAT, 0600)) == -1 ) {
 		MSG(LTFSDMC0033E);
 		TRACE(Trace::error, Const::SERVER_LOCK_FILE);
 		TRACE(Trace::error, errno);
-		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+		throw(Error::LTFSDM_GENERAL_ERROR);
 	}
 
 	while ( flock(lockfd, LOCK_EX | LOCK_NB) == -1 ) {

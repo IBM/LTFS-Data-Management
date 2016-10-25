@@ -194,7 +194,7 @@ bool Migration::queryResult(long reqNumber, long *resident, long *premigrated, l
 				break;
 			default:
 				TRACE(Trace::error, sqlite3_column_int(stmt, 0));
-				throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+				throw(Error::LTFSDM_GENERAL_ERROR);
 		}
 	}
 
