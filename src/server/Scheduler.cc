@@ -1,4 +1,5 @@
 #include <sys/types.h>
+#include <sys/xattr.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 
@@ -171,8 +172,17 @@ void migration(int reqNum, int tgtState, int colGrp, std::string tapeId)
 	sqlite3_stmt *stmt;
 	std::stringstream ssql;
 	int rc;
+	std::stringstream tapePath;
 
 	migrationStep(reqNum, colGrp, tapeId,  DataBase::RESIDENT, DataBase::PREMIGRATED);
+
+	tapePath << Const::LTFS_PATH << "/" << tapeId;
+
+	if ( setxattr(tapePath.str().c_str(), Const::LTFS_SYNC_ATTR.c_str(), Const::LTFS_SYNC_VAL.c_str(), Const::LTFS_SYNC_VAL.length(), 0) ) {
+		TRACE(Trace::error, errno);
+		MSG(LTFSDMS0024E, tapeId);
+		throw(errno);
+	}
 
 	if ( tgtState != LTFSDmProtocol::LTFSDmMigRequest::PREMIGRATED )
 		migrationStep(reqNum, colGrp, tapeId,  DataBase::PREMIGRATED, DataBase::MIGRATED);
