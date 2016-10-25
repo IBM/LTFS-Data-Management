@@ -25,6 +25,7 @@ void MigrationCommand::queryResults()
 	long migrated = 0;
 	bool first = true;
 	bool done = false;
+	long starttime = time(NULL);
 
 	do {
 		if (first)
@@ -73,7 +74,7 @@ void MigrationCommand::queryResults()
 			premigrated =  migstatusresp.premigrated();
 			migrated =  migstatusresp.migrated();
 			done = migstatusresp.done();
-			INFO(LTFSDMC0045I, resident, premigrated, migrated);
+			INFO(LTFSDMC0045I, time(NULL) - starttime, resident, premigrated, migrated);
 		}
 		else {
 			MSG(LTFSDMC0029E);
