@@ -76,3 +76,38 @@ std::string FsObj::getTapeId()
 
 	return sstr.str();
 }
+
+void FsObj::lock()
+
+{
+}
+
+void FsObj::unlock()
+
+{
+}
+
+
+bool FsObj::read(unsigned long size, char *buffer, long *rsize)
+
+{
+	return true;
+}
+
+
+void FsObj::addAttribute(std::string key, std::string value)
+
+{
+}
+
+
+void FsObj::finishPremigration()
+
+{
+}
+
+
+void FsObj::stub()
+
+{
+}

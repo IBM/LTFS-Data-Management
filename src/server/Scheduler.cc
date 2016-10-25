@@ -1,4 +1,6 @@
-#include "limits.h"
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include <string>
 #include <sstream>
@@ -24,21 +26,66 @@ std::condition_variable Scheduler::cond;
 void preMigrate(std::string fileName, std::string tapeId)
 
 {
-	// getHandle
-	// requestRights (exclusive)
-	// copy data (dm_reas_invis()))
-	// add attribute
-	// create managed region
-	// release right
+	std::stringstream target;
+	char buffer[256*1024];
+	long rsize;
+	long wsize;
+	int fd = -1;
+
+	try {
+		FsObj source(fileName);
+
+		target << Const::LTFS_PATH
+			   << "/" << tapeId << "/"
+			   << Const::LTFS_NAME << "."
+			   << source.getFsId() << "."
+			   << source.getIGen() << "."
+			   << source.getINode();
+
+		fd = open(target.str().c_str(), O_RDWR | O_CREAT);
+
+		if ( fd == -1 ) {
+			TRACE(Trace::error, errno);
+			MSG(LTFSDMS0021E, target.str().c_str());
+			throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+		}
+
+		source.lock();
+
+		while (source.read(sizeof(buffer), buffer, &rsize)) {
+			wsize = write(fd, buffer, rsize);
+			if ( wsize != rsize ) {
+				TRACE(Trace::error, errno);
+				TRACE(Trace::error, wsize);
+				TRACE(Trace::error, rsize);
+				MSG(LTFSDMS0021E, target.str().c_str());
+				close(fd);
+				throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+			}
+		}
+
+		close(fd);
+		source.finishPremigration();
+		source.unlock();
+	}
+	catch ( int error ) {
+		if ( fd != -1 )
+			close(fd);
+	}
 }
 
 void stub(std::string fileName)
 
 {
-	// getHandle
-	// requestRights (exclusive)
-	// punchHole
-	// release right
+	try {
+		FsObj source(fileName);
+
+		source.lock();
+		source.stub();
+		source.unlock();
+	}
+	catch ( int error ) {
+	}
 }
 
 void migrationStep(int reqNum, int colGrp, std::string tapeId, int fromState, int toState)
@@ -66,8 +113,16 @@ void migrationStep(int reqNum, int colGrp, std::string tapeId, int fromState, in
 
 		if ( rc == SQLITE_ROW ) {
 			const char *cstr = reinterpret_cast<const char*>(sqlite3_column_text (stmt, 2));
-			std::cout << "Processing of " << (cstr ? std::string(cstr) : std::string("")) << " to " << tapeId << std::endl;
-			usleep(random() % 100000);
+
+			if (!cstr)
+				continue;
+
+			std::cout << "Processing of " << cstr  << " to " << tapeId << std::endl;
+
+			if ( toState == DataBase::PREMIGRATED )
+				preMigrate(std::string(cstr), tapeId);
+			else
+				stub(std::string(cstr));
 
 			group_end = sqlite3_column_int(stmt, 0);
 			if ( group_begin == -1 )

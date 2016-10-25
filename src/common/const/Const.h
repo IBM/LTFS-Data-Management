@@ -16,6 +16,8 @@ namespace Const {
 	const int MAX_RECEIVER_THREADS = 40;
 	const int MAX_OBJECTS_SEND = 11;
 	const std::string DMAPI_SESSION_NAME = std::string("ltfsdm");
+	const std::string LTFS_PATH = std::string("/mnt/ltfs");
+	const std::string LTFS_NAME = std::string("ltfsdm");
 }
 
 #endif /* _CONST_H */

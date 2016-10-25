@@ -164,7 +164,7 @@ Connector::~Connector()
 	dm_destroy_session(dmapiSession);
 }
 
-FsObj::FsObj(std::string fileName) : handle(NULL), handleLength(0)
+FsObj::FsObj(std::string fileName) : handle(NULL), handleLength(0), isLocked(false)
 
 {
 	char *fname = (char *) fileName.c_str();
@@ -175,7 +175,8 @@ FsObj::FsObj(std::string fileName) : handle(NULL), handleLength(0)
 	}
 }
 
-FsObj::FsObj(unsigned long long fsId, unsigned int iGen, unsigned long long iNode) : handle(NULL), handleLength(0)
+FsObj::FsObj(unsigned long long fsId, unsigned int iGen, unsigned long long iNode)
+	: handle(NULL), handleLength(0), isLocked(false), offset(0)
 
 {
 	if ( dm_make_handle(&fsId, &iNode, &iGen, &handle, &handleLength) != 0 ) {
@@ -279,4 +280,123 @@ std::string FsObj::getTapeId()
 	sstr << "DV148" << random() % 2 <<  "L6";
 
 	return sstr.str();
+}
+
+void FsObj::lock()
+
+{
+	int rc;
+
+	rc = dm_request_right(dmapiSession, handle, handleLength, dmapiToken, DM_RR_WAIT, DM_RIGHT_EXCL);
+
+	if ( rc == -1 ) {
+		TRACE(Trace::error, errno);
+		throw(errno);
+	}
+
+	isLocked = true;
+}
+
+void FsObj::unlock()
+
+{
+	int rc;
+
+	if ( isLocked == false ) {
+		TRACE(Trace::error, isLocked);
+		throw(LTFSDMErr::LTFSDM_GENERAL_ERROR);
+	}
+
+	rc = dm_release_right(dmapiSession, handle, handleLength, dmapiToken);
+
+	if ( rc == -1 ) {
+		TRACE(Trace::error, errno);
+		throw(errno);
+	}
+
+	isLocked = false;
+}
+
+bool FsObj::read(unsigned long size, char *buffer, long *rsize)
+
+{
+	dm_stat_t dmstatbuf;
+
+	*rsize = dm_read_invis(dmapiSession, handle, handleLength, dmapiToken, offset, size, buffer);
+
+	TRACE(Trace::much, offset);
+	TRACE(Trace::much, size);
+	TRACE(Trace::much, rsize);
+
+	if ( *rsize == -1 ) {
+		TRACE(Trace::error, errno);
+		throw(errno);
+	}
+
+	if ( *rsize == 0 ) {
+		if ( dm_get_fileattr(dmapiSession, handle, handleLength, dmapiToken, DM_AT_STAT, &dmstatbuf) != 0 ) {
+			TRACE(Trace::error, errno);
+			throw(errno);
+		}
+
+		if ( offset == dmstatbuf.dt_size )
+			return false;
+	}
+
+	offset += *rsize;
+
+	return true;
+}
+
+
+void FsObj::addAttribute(std::string key, std::string value)
+
+{
+	int rc;
+
+	rc = dm_set_dmattr(dmapiSession, handle, handleLength, dmapiToken, (dm_attrname_t *) key.c_str(),
+					   0, value.length(), (void *) value.c_str());
+
+	if ( rc == -1 ) {
+		TRACE(Trace::error, errno);
+		throw(errno);
+	}
+}
+
+
+void FsObj::finishPremigration()
+
+{
+	int rc;
+	dm_region_t reg;
+	dm_boolean_t exact;
+
+
+	/* Always remove entire file */
+	reg.rg_offset = 0;
+	reg.rg_size = 0;;         /* 0 = infinity */
+
+	/* Mark the region as off-line */
+	reg.rg_flags = DM_REGION_READ | DM_REGION_WRITE | DM_REGION_TRUNCATE;
+	rc = dm_set_region(dmapiSession, handle, handleLength, dmapiToken, 1, &reg, &exact);
+
+	if ( rc == -1 ) {
+		TRACE(Trace::error, errno);
+		throw(errno);
+	}
+}
+
+
+void FsObj::stub()
+
+{
+	int rc;
+
+	/* Remove online data within the region */
+	rc = dm_punch_hole(dmapiSession, handle, handleLength, dmapiToken, 0, 0);
+
+	if ( rc == -1 ) {
+		TRACE(Trace::error, errno);
+		throw(errno);
+	}
 }
