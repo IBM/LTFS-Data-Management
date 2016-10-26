@@ -29,7 +29,7 @@ void preMigrate(std::string fileName, std::string tapeId)
 {
 	std::stringstream target;
 	struct stat statbuf;
-	char buffer[256*1024];
+	char buffer[8*1024];
 	long rsize;
 	long wsize;
 	int fd = -1;

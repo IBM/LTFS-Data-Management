@@ -195,5 +195,23 @@ bool Migration::queryResult(long reqNumber, long *resident, long *premigrated, l
 
 	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 
+	if ( done ) {
+		ssql.str("");
+		ssql.clear();
+
+		ssql << "DELETE FROM JOB_QUEUE WHERE REQ_NUM=" << reqNumber;
+		sqlite3_statement::prepare(ssql.str(), &stmt);
+		rc = sqlite3_statement::step(stmt);
+		sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+
+		ssql.str("");
+		ssql.clear();
+
+		ssql << "DELETE FROM REQUEST_QUEUE WHERE REQ_NUM=" << reqNumber;
+		sqlite3_statement::prepare(ssql.str(), &stmt);
+		rc = sqlite3_statement::step(stmt);
+		sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+	}
+
 	return done;
 }
