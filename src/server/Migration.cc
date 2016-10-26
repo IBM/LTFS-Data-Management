@@ -104,9 +104,6 @@ void Migration::addRequest()
 	sqlite3_stmt *stmt;
 	int colNumber;
 	std::string tapeId;
-	bool requestAdded = false;
-
-	std::unique_lock<std::mutex> lock(Scheduler::mtx);
 
 	ssql << "SELECT COLOC_GRP FROM JOB_QUEUE WHERE REQ_NUM=" << reqNumber << " GROUP BY COLOC_GRP";
 
@@ -139,14 +136,12 @@ void Migration::addRequest()
 
 		sqlite3_statement::checkRcAndFinalize(stmt2, rc, SQLITE_DONE);
 
-		requestAdded = true;
+
+		std::unique_lock<std::mutex> lock(Scheduler::mtx);
+		Scheduler::cond.notify_one();
 	}
 
 	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
-
-	if (requestAdded) {
-		Scheduler::cond.notify_one();
-	}
 }
 
 bool Migration::queryResult(long reqNumber, long *resident, long *premigrated, long *migrated)

@@ -143,13 +143,11 @@ void Server::run()
 	SubServer subs;
 	Scheduler sched;
 	Receiver recv;
-	Responder resp;
 
 	terminate = false;
 
 	subs.enqueue("Scheduler", &Scheduler::run, &sched, key);
 	subs.enqueue("Receiver", &Receiver::run, &recv, key);
-	subs.enqueue("Responder", &Responder::run, &resp, key);
 
 	subs.waitAllRemaining();
 }

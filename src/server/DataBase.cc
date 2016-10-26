@@ -150,6 +150,7 @@ void sqlite3_statement::prepare(std::string sql, sqlite3_stmt **stmt)
 	rc = sqlite3_prepare_v2(DB.getDB(), sql.c_str(), -1, stmt, NULL);
 
 	if( rc != SQLITE_OK ) {
+		TRACE(Trace::error, sql);
 		TRACE(Trace::error, rc);
 		throw(rc);
 	}
