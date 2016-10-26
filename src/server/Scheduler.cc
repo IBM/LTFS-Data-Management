@@ -76,7 +76,15 @@ void preMigrate(std::string fileName, std::string tapeId)
 			offset += rsize;
 		}
 
+		if ( fsetxattr(fd, Const::LTFS_ATTR.c_str(), fileName.c_str(), fileName.length(), 0) == -1 ) {
+			TRACE(Trace::error, errno);
+			MSG(LTFSDMS0025E, Const::LTFS_ATTR, target.str());
+			throw(errno);
+		}
+
 		close(fd);
+
+		source.addAttribute(Const::DMAPI_ATTR, tapeId);
 		source.finishPremigration();
 		source.unlock();
 	}
@@ -293,4 +301,5 @@ void Scheduler::run(long key)
 		}
 		sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 	}
+	subs.waitAllRemaining();
 }

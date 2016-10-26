@@ -21,6 +21,8 @@ namespace Const {
 	const std::string LTFS_NAME = std::string("ltfsdm");
 	const std::string LTFS_SYNC_ATTR = std::string("ltfs.sync");
 	const std::string LTFS_SYNC_VAL = std::string("1");
+	const std::string DMAPI_ATTR = std::string("TAPE_ID");
+	const std::string LTFS_ATTR = std::string("user.FILE_PATH");
 }
 
 #endif /* _CONST_H */
