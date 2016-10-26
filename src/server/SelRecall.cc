@@ -56,7 +56,7 @@ void SelRecall::addFileName(std::string fileName)
 		ssql << statbuf.st_mtime << ", ";                         // MTIME
 		ssql << time(NULL) << ", ";                               // LAST_UPD
 		ssql << "'" << fso.getTapeId() << "', ";                  // TAPE_ID
-		ssql << DataBase::MIGRATED << ", ";                       // FILE_STATE
+		ssql << FsObj::MIGRATED << ", ";                       // FILE_STATE
 		ssql << 0 << ");";                                        // FAILED
 	}
 	catch ( int error ) {

@@ -53,17 +53,17 @@ void Migration::addFileName(std::string fileName)
 		ssql << fso.getFsId() << ", ";                            // FS_ID
 		ssql << fso.getIGen() << ", ";                            // I_GEN
 		ssql << fso.getINode() << ", ";                           // I_NUM
+		ssql << statbuf.st_mtime << ", ";                             // MTIME
+		ssql << time(NULL) << ", ";                                   // LAST_UPD
+		ssql << "NULL" << ", ";                                       // TAPE_ID
+		ssql << fso.getMigState() << ", ";                            // FILE_STATE
+		ssql << 0 << ");";                                            // FAILED
 	}
 	catch ( int error ) {
 		MSG(LTFSDMS0017E, fileName.c_str());
 		return;
 	}
 
-	ssql << statbuf.st_mtime << ", ";                             // MTIME
-	ssql << time(NULL) << ", ";                                   // LAST_UPD
-	ssql << "NULL" << ", ";                                       // TAPE_ID
-	ssql << DataBase::RESIDENT << ", ";                           // FILE_STATE
-	ssql << 0 << ");";                                            // FAILED
 
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 
@@ -178,13 +178,13 @@ bool Migration::queryResult(long reqNumber, long *resident, long *premigrated, l
 
 	while ( (rc = sqlite3_statement::step(stmt)) == SQLITE_ROW ) {
 		switch ( sqlite3_column_int(stmt, 0) ) {
-			case DataBase::RESIDENT:
+			case FsObj::RESIDENT:
 				*resident = sqlite3_column_int(stmt, 1);
 				break;
-			case DataBase::PREMIGRATED:
+			case FsObj::PREMIGRATED:
 				*premigrated = sqlite3_column_int(stmt, 1);
 				break;
-			case DataBase::MIGRATED:
+			case FsObj::MIGRATED:
 				*migrated = sqlite3_column_int(stmt, 1);
 				break;
 			default:

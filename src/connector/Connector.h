@@ -13,6 +13,11 @@ private:
 	unsigned long handleLength;
 	bool isLocked;
 public:
+	enum file_state {
+		RESIDENT,
+		PREMIGRATED,
+		MIGRATED
+	};
 	FsObj(std::string fileName);
 	FsObj(unsigned long long fsId, unsigned int iGen, unsigned long long iNode);
 	~FsObj();
@@ -26,7 +31,9 @@ public:
 	long read(long offset, unsigned long size, char *buffer);
 	void addAttribute(std::string key, std::string value);
 	void finishPremigration();
+	void prepareStubbing();
 	void stub();
+	file_state getMigState();
 };
 
 #endif /* _CONNECTOR_H */

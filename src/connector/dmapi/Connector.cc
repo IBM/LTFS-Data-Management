@@ -360,6 +360,28 @@ void FsObj::finishPremigration()
 	reg.rg_size = 0;;         /* 0 = infinity */
 
 	/* Mark the region as off-line */
+	reg.rg_flags = DM_REGION_WRITE | DM_REGION_TRUNCATE;
+	rc = dm_set_region(dmapiSession, handle, handleLength, dmapiToken, 1, &reg, &exact);
+
+	if ( rc == -1 ) {
+		TRACE(Trace::error, errno);
+		throw(errno);
+	}
+}
+
+void FsObj::prepareStubbing()
+
+{
+	int rc;
+	dm_region_t reg;
+	dm_boolean_t exact;
+
+
+	/* Always remove entire file */
+	reg.rg_offset = 0;
+	reg.rg_size = 0;;         /* 0 = infinity */
+
+	/* Mark the region as off-line */
 	reg.rg_flags = DM_REGION_READ | DM_REGION_WRITE | DM_REGION_TRUNCATE;
 	rc = dm_set_region(dmapiSession, handle, handleLength, dmapiToken, 1, &reg, &exact);
 
@@ -382,4 +404,42 @@ void FsObj::stub()
 		TRACE(Trace::error, errno);
 		throw(errno);
 	}
+}
+
+
+FsObj::file_state FsObj::getMigState()
+{
+    unsigned int nelem = 2;
+    dm_region_t regbuf[2];
+	std::stringstream infos;
+	int rc;
+	unsigned int i;
+
+
+
+    memset(regbuf, 0, sizeof( regbuf ));
+
+    rc = dm_get_region(dmapiSession, handle, handleLength, DM_NO_TOKEN, nelem, regbuf, &nelem);
+
+	if ( rc == -1 ) {
+		TRACE(Trace::error, errno);
+		throw(errno);
+    }
+
+    for (i = 0; i < nelem; i++ ) {
+		infos << "region nr: " << i << ", offset: " << regbuf[i].rg_offset << ", size: " << regbuf[i].rg_size << ", flag: " << regbuf[i].rg_size;
+		TRACE(Trace::much, infos.str());
+	}
+
+	if ( nelem > 1 ) {
+		TRACE(Trace::error, nelem);
+		throw(nelem);
+    }
+
+	if ( nelem == 0 )
+		return FsObj::RESIDENT;
+	else if ( regbuf[0].rg_flags == (DM_REGION_READ | DM_REGION_WRITE | DM_REGION_TRUNCATE) )
+		return FsObj::MIGRATED;
+	else
+		return FsObj::PREMIGRATED;
 }

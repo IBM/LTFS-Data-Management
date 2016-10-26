@@ -20,11 +20,6 @@ public:
 		TAPE_FREE,
 		TAPE_INUSE
 	};
-	enum file_state {
-		RESIDENT,
-		PREMIGRATED,
-		MIGRATED
-	};
 	DataBase() : db(NULL), dbNeedsClosed(false) {}
 	~DataBase();
 	void cleanup();

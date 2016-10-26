@@ -106,8 +106,18 @@ void FsObj::finishPremigration()
 {
 }
 
+void FsObj::prepareStubbing()
+
+{
+}
 
 void FsObj::stub()
 
 {
+}
+
+FsObj::file_state FsObj::getMigState()
+
+{
+	return FsObj::RESIDENT;
 }

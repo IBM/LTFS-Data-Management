@@ -101,6 +101,7 @@ void stub(std::string fileName)
 		FsObj source(fileName);
 
 		source.lock();
+		source.prepareStubbing();
 		source.stub();
 		source.unlock();
 	}
@@ -135,7 +136,7 @@ void migrationStep(int reqNum, int colGrp, std::string tapeId, int fromState, in
 			if (!cstr)
 				continue;
 
-			if ( toState == DataBase::PREMIGRATED )
+			if ( toState == FsObj::PREMIGRATED )
 				preMigrate(std::string(cstr), tapeId);
 			else
 				stub(std::string(cstr));
@@ -183,7 +184,7 @@ void migration(int reqNum, int tgtState, int colGrp, std::string tapeId)
 	numPremig++;
 	assert(numPremig<3);
 
-	migrationStep(reqNum, colGrp, tapeId,  DataBase::RESIDENT, DataBase::PREMIGRATED);
+	migrationStep(reqNum, colGrp, tapeId,  FsObj::RESIDENT, FsObj::PREMIGRATED);
 
 	tapePath << Const::LTFS_PATH << "/" << tapeId;
 
@@ -206,7 +207,7 @@ void migration(int reqNum, int tgtState, int colGrp, std::string tapeId)
 	lock.unlock();
 
 	if ( tgtState != LTFSDmProtocol::LTFSDmMigRequest::PREMIGRATED )
-		migrationStep(reqNum, colGrp, tapeId,  DataBase::PREMIGRATED, DataBase::MIGRATED);
+		migrationStep(reqNum, colGrp, tapeId,  FsObj::PREMIGRATED, FsObj::MIGRATED);
 
 	ssql.str("");
 	ssql.clear();
