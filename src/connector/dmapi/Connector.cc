@@ -6,6 +6,7 @@
 
 #include <string>
 #include <sstream>
+#include <atomic>
 
 #include "src/common/util/util.h"
 #include "src/common/messages/Message.h"
@@ -17,8 +18,8 @@
 
 #include "src/connector/Connector.h"
 
-dm_sessid_t dmapiSession;
-dm_token_t dmapiToken;
+std::atomic<dm_sessid_t> dmapiSession;
+std::atomic<dm_token_t> dmapiToken;
 
 void dmapiSessionCleanup()
 
@@ -126,6 +127,8 @@ Connector::Connector()
 	char          *version          = NULL;
     size_t         msglen           = 8;
     char           msgdatap[8];
+	dm_sessid_t dmapiSessionLoc;
+	dm_token_t dmapiTokenLoc;
 
 	memset((char *) msgdatap, 0, sizeof(msgdatap));
 
@@ -136,17 +139,19 @@ Connector::Connector()
 
 	dmapiSessionCleanup();
 
-	if (dm_create_session(DM_NO_SESSION, (char *) Const::DMAPI_SESSION_NAME.c_str(), &dmapiSession)) {
+	if (dm_create_session(DM_NO_SESSION, (char *) Const::DMAPI_SESSION_NAME.c_str(), &dmapiSessionLoc)) {
 		TRACE(Trace::error, errno);
 		goto failed;
 	}
 
-    if(dm_create_userevent(dmapiSession, msglen, (void*)msgdatap, &dmapiToken)) {
-        dm_destroy_session(dmapiSession);
+    if(dm_create_userevent(dmapiSessionLoc, msglen, (void*)msgdatap, &dmapiTokenLoc)) {
+        dm_destroy_session(dmapiSessionLoc);
 		TRACE(Trace::error, errno);
 		goto failed;
 	}
 
+	dmapiSession = dmapiSessionLoc;
+	dmapiToken = dmapiTokenLoc;
 	return;
 
 failed:
