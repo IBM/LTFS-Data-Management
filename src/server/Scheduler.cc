@@ -258,10 +258,13 @@ void Scheduler::run(long key)
 
 			ssql.str("");
 			ssql.clear();
-			ssql << "SELECT TAPE_ID FROM TAPE_LIST WHERE STATE="
-				 << DataBase::TAPE_FREE << " AND TAPE_ID='" << tapeId << "';";
+			ssql << "SELECT STATE FROM TAPE_LIST WHERE TAPE_ID='" << tapeId << "';";
+
 			sqlite3_statement::prepare(ssql.str(), &stmt2);
 			while ( (rc = sqlite3_statement::step(stmt2)) == SQLITE_ROW ) {
+				if ( sqlite3_column_int(stmt2, 0) != DataBase::TAPE_FREE )
+					continue;
+
 				sqlite3_stmt *stmt3;
 
 				ssql.str("");
