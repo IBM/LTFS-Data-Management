@@ -5,6 +5,7 @@ class FileOperation {
 public:
 	virtual void addFileName(std::string fileName) {}
 	virtual void start() {}
+	bool queryResult(long reqNumber, long *resident, long *premigrated, long *migrated);
 };
 
 

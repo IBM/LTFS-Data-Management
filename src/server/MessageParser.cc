@@ -88,6 +88,62 @@ void MessageParser::getObjects(LTFSDmCommServer *command, long localReqNumber, u
 	}
 }
 
+void MessageParser::reqStatusMessage(long key, LTFSDmCommServer *command, FileOperation *fopt)
+
+{
+	long resident = 0;
+	long premigrated = 0;
+	long migrated = 0;
+	bool done;
+	unsigned long pid;
+	long requestNumber;
+	long keySent;
+
+
+	do {
+		try {
+			command->recv();
+		}
+		catch(...) {
+			TRACE(Trace::error, errno);
+			MSG(LTFSDMS0006E);
+			return;
+		}
+
+		const LTFSDmProtocol::LTFSDmReqStatusRequest reqstatus = command->reqstatusrequest();
+
+		keySent = reqstatus.key();
+		if ( key != keySent ) {
+			MSG(LTFSDMS0008E, keySent);
+			return;
+		}
+
+		requestNumber = reqstatus.reqnumber();
+		pid = reqstatus.pid();
+
+		done = fopt->queryResult(requestNumber, &resident, &premigrated, &migrated);
+
+		LTFSDmProtocol::LTFSDmReqStatusResp *reqstatusresp = command->mutable_reqstatusresp();
+
+		reqstatusresp->set_success(true);
+		reqstatusresp->set_reqnumber(requestNumber);
+		reqstatusresp->set_pid(pid);
+		reqstatusresp->set_resident(resident);
+		reqstatusresp->set_premigrated(premigrated);
+		reqstatusresp->set_migrated(migrated);
+		reqstatusresp->set_done(done);
+
+		try {
+			command->send();
+		}
+		catch(...) {
+			TRACE(Trace::error, errno);
+			MSG(LTFSDMS0007E);
+			return;
+		}
+	} while (!done);
+}
+
 void MessageParser::migrationMessage(long key, LTFSDmCommServer *command, long localReqNumber)
 
 {
@@ -128,53 +184,7 @@ void MessageParser::migrationMessage(long key, LTFSDmCommServer *command, long l
 
 	mig.addRequest();
 
-	long resident = 0;
-	long premigrated = 0;
-	long migrated = 0;
-	bool done;
-
-	do {
-		try {
-			command->recv();
-		}
-		catch(...) {
-			TRACE(Trace::error, errno);
-			MSG(LTFSDMS0006E);
-			return;
-		}
-
-		const LTFSDmProtocol::LTFSDmMigStatusRequest migstatus = command->migstatusrequest();
-
-		keySent = migstatus.key();
-		if ( key != keySent ) {
-			MSG(LTFSDMS0008E, keySent);
-			return;
-		}
-
-		requestNumber = migstatus.reqnumber();
-		pid = migstatus.pid();
-
-		done = mig.queryResult(requestNumber, &resident, &premigrated, &migrated);
-
-		LTFSDmProtocol::LTFSDmMigStatusResp *migstatusresp = command->mutable_migstatusresp();
-
-		migstatusresp->set_success(true);
-		migstatusresp->set_reqnumber(requestNumber);
-		migstatusresp->set_pid(pid);
-		migstatusresp->set_resident(resident);
-		migstatusresp->set_premigrated(premigrated);
-		migstatusresp->set_migrated(migrated);
-		migstatusresp->set_done(done);
-
-		try {
-			command->send();
-		}
-		catch(...) {
-			TRACE(Trace::error, errno);
-			MSG(LTFSDMS0007E);
-			return;
-		}
-	} while (!done);
+	reqStatusMessage(key, command, dynamic_cast<FileOperation*> (&mig));
 }
 
 void  MessageParser::selRecallMessage(long key, LTFSDmCommServer *command, long localReqNumber)
@@ -216,6 +226,8 @@ void  MessageParser::selRecallMessage(long key, LTFSDmCommServer *command, long 
 	getObjects(command, localReqNumber, pid, requestNumber, dynamic_cast<FileOperation*> (&srec));
 
 	srec.addRequest();
+
+	reqStatusMessage(key, command, dynamic_cast<FileOperation*> (&srec));
 }
 
 void MessageParser::infoFilesMessage(long key, LTFSDmCommServer *command, long localReqNumber)

@@ -48,16 +48,16 @@ void SelRecall::addFileName(std::string fileName)
 			return;
 		}
 
-		ssql << statbuf.st_size << ", ";                          // FILE_SIZE
+		ssql << statbuf.st_size << ", ";                               // FILE_SIZE
 
-		ssql << fso.getFsId() << ", ";                            // FS_ID
-		ssql << fso.getIGen() << ", ";                            // I_GEN
-		ssql << fso.getINode() << ", ";                           // I_NUM
-		ssql << statbuf.st_mtime << ", ";                         // MTIME
-		ssql << time(NULL) << ", ";                               // LAST_UPD
-		ssql << "'" << fso.getTapeId() << "', ";                  // TAPE_ID
-		ssql << FsObj::MIGRATED << ", ";                       // FILE_STATE
-		ssql << 0 << ");";                                        // FAILED
+		ssql << fso.getFsId() << ", ";                                 // FS_ID
+		ssql << fso.getIGen() << ", ";                                 // I_GEN
+		ssql << fso.getINode() << ", ";                                // I_NUM
+		ssql << statbuf.st_mtime << ", ";                              // MTIME
+		ssql << time(NULL) << ", ";                                    // LAST_UPD
+		ssql << "'" << fso.getAttribute(Const::DMAPI_ATTR) << "', ";   // TAPE_ID
+		ssql << fso.getMigState() << ", ";                             // FILE_STATE
+		ssql << 0 << ");";                                             // FAILED
 	}
 	catch ( int error ) {
 		MSG(LTFSDMS0017E, fileName.c_str());
@@ -79,9 +79,6 @@ void SelRecall::addRequest()
 	int rc;
 	std::stringstream ssql;
 	sqlite3_stmt *stmt;
-	bool requestAdded = false;
-
-	std::unique_lock<std::mutex> lock(Scheduler::mtx);
 
 	ssql.str("");
 	ssql.clear();
@@ -110,10 +107,10 @@ void SelRecall::addRequest()
 		rc = sqlite3_statement::step(stmt2);
 
 		sqlite3_statement::checkRcAndFinalize(stmt2, rc, SQLITE_DONE);
+
+		std::unique_lock<std::mutex> lock(Scheduler::mtx);
+		Scheduler::cond.notify_one();
 	}
 
 	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
-
-	if (requestAdded)
-		Scheduler::cond.notify_one();
 }

@@ -81,6 +81,8 @@ void RecallCommand::talkToBackend(std::stringstream *parmList)
 	}
 
 	sendObjects(parmList);
+
+	queryResults();
 }
 
 void RecallCommand::doCommand(int argc, char **argv)

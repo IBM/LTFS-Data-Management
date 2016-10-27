@@ -93,13 +93,13 @@ message LTFSDmStatusResp {
 	required int64 pid = 2;
 }
 
-message LTFSDmMigStatusRequest {
+message LTFSDmReqStatusRequest {
 	required uint64 key = 1;
 	required int64 reqNumber = 2;
 	required int64 pid = 3;
 }
 
-message LTFSDmMigStatusResp {
+message LTFSDmReqStatusResp {
 	required bool success = 1;
 	required int64 reqNumber = 2;
 	required int64 pid = 3;
@@ -125,7 +125,7 @@ message Command {
 		LTFSDmSelRecRequestResp selrecrequestresp = 12;
 		LTFSDmInfoFilesRequest infofilesrequest = 13;
 		LTFSDmInfoFilesRequestResp infofilesrequestresp = 14;
-		LTFSDmMigStatusRequest migstatusrequest = 15;
-		LTFSDmMigStatusResp migstatusresp = 16;
+		LTFSDmReqStatusRequest reqstatusrequest = 15;
+		LTFSDmReqStatusResp reqstatusresp = 16;
 	}
 }

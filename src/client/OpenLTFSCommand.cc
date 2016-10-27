@@ -264,6 +264,72 @@ void OpenLTFSCommand::sendObjects(std::stringstream *parmList)
 	}
 }
 
+void OpenLTFSCommand::queryResults()
+
+{
+	long resident = 0;
+	long premigrated = 0;
+	long migrated = 0;
+	bool first = true;
+	bool done = false;
+	long starttime = time(NULL);
+
+	do {
+		if (first)
+			first = false;
+		else
+			sleep(10);
+
+		LTFSDmProtocol::LTFSDmReqStatusRequest *reqstatus = commCommand.mutable_reqstatusrequest();
+
+		reqstatus->set_key(key);
+		reqstatus->set_reqnumber(requestNumber);
+		reqstatus->set_pid(getpid());
+
+		try {
+			commCommand.send();
+		}
+		catch(...) {
+			MSG(LTFSDMC0027E);
+			throw Error::LTFSDM_GENERAL_ERROR;
+		}
+
+		try {
+			commCommand.recv();
+		}
+		catch(...) {
+			MSG(LTFSDMC0028E);
+			throw(Error::LTFSDM_GENERAL_ERROR);
+		}
+
+		const LTFSDmProtocol::LTFSDmReqStatusResp reqstatusresp = commCommand.reqstatusresp();
+
+		if( reqstatusresp.success() == true ) {
+			if ( getpid() != reqstatusresp.pid() ) {
+				MSG(LTFSDMC0036E);
+				TRACE(Trace::error, getpid());
+				TRACE(Trace::error, reqstatusresp.pid());
+				throw(Error::LTFSDM_GENERAL_ERROR);
+			}
+			if ( requestNumber !=  reqstatusresp.reqnumber() ) {
+				MSG(LTFSDMC0037E);
+				TRACE(Trace::error, requestNumber);
+				TRACE(Trace::error, reqstatusresp.reqnumber());
+				throw(Error::LTFSDM_GENERAL_ERROR);
+			}
+			resident =  reqstatusresp.resident();
+			premigrated =  reqstatusresp.premigrated();
+			migrated =  reqstatusresp.migrated();
+			done = reqstatusresp.done();
+			INFO(LTFSDMC0045I, time(NULL) - starttime, resident, premigrated, migrated);
+		}
+		else {
+			MSG(LTFSDMC0029E);
+			throw(Error::LTFSDM_GENERAL_ERROR);
+		}
+	} while (!done);
+}
+
 
 void OpenLTFSCommand::isValidRegularFile()
 

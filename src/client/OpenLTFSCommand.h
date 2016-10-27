@@ -29,6 +29,7 @@ protected:
 	LTFSDmCommClient commCommand;
 
 	void getRequestNumber();
+	void queryResults();
 
 	void checkOptions(int argc, char **argv);
  	virtual void talkToBackend(std::stringstream *parmList) {}

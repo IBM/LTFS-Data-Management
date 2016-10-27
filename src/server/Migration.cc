@@ -31,6 +31,7 @@ void Migration::addFileName(std::string fileName)
 	int rc;
 	struct stat statbuf;
 	std::stringstream ssql;
+	sqlite3_stmt *stmt;
 
 	ssql << "INSERT INTO JOB_QUEUE (OPERATION, FILE_NAME, REQ_NUM, TARGET_STATE, COLOC_GRP, FILE_SIZE, FS_ID, I_GEN, I_NUM, MTIME, LAST_UPD, TAPE_ID, FILE_STATE, FAILED) ";
 	ssql << "VALUES (" << DataBase::MIGRATION << ", ";            // OPERATION
@@ -136,82 +137,9 @@ void Migration::addRequest()
 
 		sqlite3_statement::checkRcAndFinalize(stmt2, rc, SQLITE_DONE);
 
-
 		std::unique_lock<std::mutex> lock(Scheduler::mtx);
 		Scheduler::cond.notify_one();
 	}
 
 	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
-}
-
-bool Migration::queryResult(long reqNumber, long *resident, long *premigrated, long *migrated)
-
-{
-	int rc;
-	std::stringstream ssql;
-	bool done = true;
-
-	ssql << "SELECT STATE FROM REQUEST_QUEUE WHERE REQ_NUM=" << reqNumber;
-
-	sqlite3_statement::prepare(ssql.str(), &stmt);
-
-	while ( (rc = sqlite3_statement::step(stmt)) == SQLITE_ROW ) {
-		if ( sqlite3_column_int(stmt, 0) != DataBase::REQ_COMPLETED ) {
-			done = false;
-		}
-	}
-
-	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
-
-	ssql.str("");
-	ssql.clear();
-
-	ssql << "SELECT FILE_STATE, COUNT(*) FROM JOB_QUEUE WHERE REQ_NUM=" << reqNumber << " GROUP BY FILE_STATE";
-
-	sqlite3_stmt *stmt;
-
-	sqlite3_statement::prepare(ssql.str(), &stmt);
-
-	*resident = 0;
-	*premigrated = 0;
-	*migrated = 0;
-
-	while ( (rc = sqlite3_statement::step(stmt)) == SQLITE_ROW ) {
-		switch ( sqlite3_column_int(stmt, 0) ) {
-			case FsObj::RESIDENT:
-				*resident = sqlite3_column_int(stmt, 1);
-				break;
-			case FsObj::PREMIGRATED:
-				*premigrated = sqlite3_column_int(stmt, 1);
-				break;
-			case FsObj::MIGRATED:
-				*migrated = sqlite3_column_int(stmt, 1);
-				break;
-			default:
-				TRACE(Trace::error, sqlite3_column_int(stmt, 0));
-				throw(Error::LTFSDM_GENERAL_ERROR);
-		}
-	}
-
-	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
-
-	if ( done ) {
-		ssql.str("");
-		ssql.clear();
-
-		ssql << "DELETE FROM JOB_QUEUE WHERE REQ_NUM=" << reqNumber;
-		sqlite3_statement::prepare(ssql.str(), &stmt);
-		rc = sqlite3_statement::step(stmt);
-		sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
-
-		ssql.str("");
-		ssql.clear();
-
-		ssql << "DELETE FROM REQUEST_QUEUE WHERE REQ_NUM=" << reqNumber;
-		sqlite3_statement::prepare(ssql.str(), &stmt);
-		rc = sqlite3_statement::step(stmt);
-		sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
-	}
-
-	return done;
 }

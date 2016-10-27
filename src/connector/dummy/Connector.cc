@@ -100,6 +100,11 @@ void FsObj::addAttribute(std::string key, std::string value)
 {
 }
 
+std::string FsObj::getAttribute(std::string key)
+
+{
+	return std::string("");
+}
 
 void FsObj::finishPremigration()
 

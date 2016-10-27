@@ -351,6 +351,37 @@ void FsObj::addAttribute(std::string key, std::string value)
 	}
 }
 
+std::string FsObj::getAttribute(std::string key)
+
+{
+	int rc;
+	char *buffer;
+	unsigned long rsize;
+	std::string value;
+
+	buffer = (char *) malloc(1024);
+	memset(buffer, 0, 1024);
+
+	rc = dm_get_dmattr(dmapiSession, handle, handleLength, DM_NO_TOKEN,
+					   (dm_attrname_t *) key.c_str(), 1024, buffer, &rsize);
+
+	if ( rc == -1 && errno == E2BIG) {
+		free(buffer);
+		buffer = (char *) malloc(rsize);
+		memset(buffer, 0, rsize);
+		rc = dm_get_dmattr(dmapiSession, handle, handleLength, DM_NO_TOKEN,
+						   (dm_attrname_t *) key.c_str(), rsize, buffer, &rsize);
+	}
+
+	if ( rc == -1 ) {
+		TRACE(Trace::error, errno);
+		throw(errno);
+	}
+
+	value = std::string(buffer);
+	free(buffer);
+	return buffer;
+}
 
 void FsObj::finishPremigration()
 

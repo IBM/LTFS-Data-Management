@@ -30,6 +30,7 @@ public:
 	void unlock();
 	long read(long offset, unsigned long size, char *buffer);
 	void addAttribute(std::string key, std::string value);
+	std::string getAttribute(std::string key);
 	void finishPremigration();
 	void prepareStubbing();
 	void stub();
