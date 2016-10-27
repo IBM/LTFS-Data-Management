@@ -31,8 +31,9 @@ void SelRecall::addFileName(std::string fileName)
 	struct stat statbuf;
 	std::stringstream ssql;
 	sqlite3_stmt *stmt;
+	int state;
 
-	ssql << "INSERT INTO JOB_QUEUE (OPERATION, FILE_NAME, REQ_NUM, TARGET_STATE, COLOC_GRP, FILE_SIZE, FS_ID, I_GEN, I_NUM, MTIME, LAST_UPD, TAPE_ID, FILE_STATE, FAILED) ";
+	ssql << "INSERT INTO JOB_QUEUE (OPERATION, FILE_NAME, REQ_NUM, TARGET_STATE, COLOC_GRP, FILE_SIZE, FS_ID, I_GEN, I_NUM, MTIME, LAST_UPD, FILE_STATE, TAPE_ID, FAILED) ";
 	ssql << "VALUES (" << DataBase::SELRECALL << ", ";            // OPERATION
 	ssql << "'" << fileName << "', ";                             // FILE_NAME
 	ssql << reqNumber << ", ";                                    // REQ_NUM
@@ -55,13 +56,17 @@ void SelRecall::addFileName(std::string fileName)
 		ssql << fso.getINode() << ", ";                                // I_NUM
 		ssql << statbuf.st_mtime << ", ";                              // MTIME
 		ssql << time(NULL) << ", ";                                    // LAST_UPD
+		state = fso.getMigState();
+		if ( fso.getMigState() == FsObj::RESIDENT ) {
+			MSG(LTFSDMS0026I, fileName.c_str());
+			return;
+		}
+		ssql << state << ", ";                                         // FILE_STATE
 		ssql << "'" << fso.getAttribute(Const::DMAPI_ATTR) << "', ";   // TAPE_ID
-		ssql << fso.getMigState() << ", ";                             // FILE_STATE
 		ssql << 0 << ");";                                             // FAILED
 	}
 	catch ( int error ) {
 		MSG(LTFSDMS0017E, fileName.c_str());
-		return;
 	}
 
 	sqlite3_statement::prepare(ssql.str(), &stmt);
