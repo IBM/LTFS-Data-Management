@@ -380,7 +380,7 @@ std::string FsObj::getAttribute(std::string key)
 
 	value = std::string(buffer);
 	free(buffer);
-	return buffer;
+	return value;
 }
 
 void FsObj::finishPremigration()
