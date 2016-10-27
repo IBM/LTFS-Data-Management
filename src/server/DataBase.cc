@@ -165,7 +165,10 @@ int sqlite3_statement::step(sqlite3_stmt *stmt)
 void sqlite3_statement::checkRcAndFinalize(sqlite3_stmt *stmt, int rc, int expected)
 
 {
+	std::string statement(sqlite3_sql(stmt));
+
 	if ( rc != expected ) {
+		TRACE(Trace::error, statement);
 		TRACE(Trace::error, rc);
 		throw(rc);
 	}
@@ -173,6 +176,7 @@ void sqlite3_statement::checkRcAndFinalize(sqlite3_stmt *stmt, int rc, int expec
 	rc = sqlite3_finalize(stmt);
 
 	if ( rc != SQLITE_OK ) {
+		TRACE(Trace::error, statement);
 		TRACE(Trace::error, rc);
 		throw(rc);
 	}
