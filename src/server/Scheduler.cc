@@ -120,7 +120,8 @@ void migrationStep(int reqNum, int colGrp, std::string tapeId, int fromState, in
 	long previous;
 	long current;
 
-	ssql << "SELECT ROWID, * FROM JOB_QUEUE WHERE REQ_NUM=" << reqNum << " AND COLOC_GRP=" << colGrp << " AND FILE_STATE=" << fromState;
+	ssql << "SELECT ROWID, FILE_NAME FROM JOB_QUEUE WHERE REQ_NUM=" << reqNum;
+	ssql << " AND COLOC_GRP=" << colGrp << " AND FILE_STATE=" << fromState;
 
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 
@@ -131,7 +132,7 @@ void migrationStep(int reqNum, int colGrp, std::string tapeId, int fromState, in
 			break;
 
 		if ( rc == SQLITE_ROW ) {
-			const char *cstr = reinterpret_cast<const char*>(sqlite3_column_text (stmt, 2));
+			const char *cstr = reinterpret_cast<const char*>(sqlite3_column_text (stmt, 1));
 
 			if (!cstr)
 				continue;
@@ -239,7 +240,8 @@ void Scheduler::run(long key)
 
 		ssql.str("");
 		ssql.clear();
-		ssql << "SELECT * FROM REQUEST_QUEUE WHERE STATE=" << DataBase::REQ_NEW;
+		ssql << "SELECT OPERATION, REQ_NUM, TARGET_STATE, COLOC_GRP, TAPE_ID";
+		ssql << " FROM REQUEST_QUEUE WHERE STATE=" << DataBase::REQ_NEW;
 		ssql << " ORDER BY OPERATION,REQ_NUM;";
 
 		sqlite3_statement::prepare(ssql.str(), &stmt);
@@ -256,7 +258,7 @@ void Scheduler::run(long key)
 
 			ssql.str("");
 			ssql.clear();
-			ssql << "SELECT * FROM TAPE_LIST WHERE STATE="
+			ssql << "SELECT TAPE_ID FROM TAPE_LIST WHERE STATE="
 				 << DataBase::TAPE_FREE << " AND TAPE_ID='" << tapeId << "';";
 			sqlite3_statement::prepare(ssql.str(), &stmt2);
 			while ( (rc = sqlite3_statement::step(stmt2)) == SQLITE_ROW ) {
