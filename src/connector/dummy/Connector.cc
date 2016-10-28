@@ -94,8 +94,18 @@ long FsObj::read(long offset, unsigned long size, char *buffer)
 	return 0;
 }
 
+long FsObj::write(long offset, unsigned long size, char *buffer)
+
+{
+	return 0;
+}
 
 void FsObj::addAttribute(std::string key, std::string value)
+
+{
+}
+
+void FsObj::remAttribute(std::string key)
 
 {
 }
@@ -107,6 +117,11 @@ std::string FsObj::getAttribute(std::string key)
 }
 
 void FsObj::finishPremigration()
+
+{
+}
+
+void FsObj::finishRecall(file_state fstate)
 
 {
 }

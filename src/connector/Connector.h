@@ -29,9 +29,12 @@ public:
 	void lock();
 	void unlock();
 	long read(long offset, unsigned long size, char *buffer);
+	long write(long offset, unsigned long size, char *buffer);
 	void addAttribute(std::string key, std::string value);
+	void remAttribute(std::string key);
 	std::string getAttribute(std::string key);
 	void finishPremigration();
+	void finishRecall(file_state fstate);
 	void prepareStubbing();
 	void stub();
 	file_state getMigState();

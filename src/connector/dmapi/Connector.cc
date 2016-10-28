@@ -336,6 +336,19 @@ long FsObj::read(long offset, unsigned long size, char *buffer)
 	return rsize;
 }
 
+long FsObj::write(long offset, unsigned long size, char *buffer)
+
+{
+	long wsize;
+
+	wsize = dm_write_invis(dmapiSession, handle, handleLength, dmapiToken, DM_WRITE_SYNC, offset, size, buffer);
+	TRACE(Trace::much, offset);
+	TRACE(Trace::much, size);
+	TRACE(Trace::much, wsize);
+
+	return wsize;
+}
+
 
 void FsObj::addAttribute(std::string key, std::string value)
 
@@ -344,6 +357,19 @@ void FsObj::addAttribute(std::string key, std::string value)
 
 	rc = dm_set_dmattr(dmapiSession, handle, handleLength, dmapiToken, (dm_attrname_t *) key.c_str(),
 					   0, value.length(), (void *) value.c_str());
+
+	if ( rc == -1 ) {
+		TRACE(Trace::error, errno);
+		throw(errno);
+	}
+}
+
+void FsObj::remAttribute(std::string key)
+
+{
+	int rc;
+
+	rc = dm_remove_dmattr(dmapiSession, handle, handleLength, dmapiToken, 0, (dm_attrname_t *) key.c_str());
 
 	if ( rc == -1 ) {
 		TRACE(Trace::error, errno);
@@ -393,7 +419,7 @@ void FsObj::finishPremigration()
 
 	/* Always remove entire file */
 	reg.rg_offset = 0;
-	reg.rg_size = 0;;         /* 0 = infinity */
+	reg.rg_size = 0;         /* 0 = infinity */
 
 	/* Mark the region as off-line */
 	reg.rg_flags = DM_REGION_WRITE | DM_REGION_TRUNCATE;
@@ -404,6 +430,42 @@ void FsObj::finishPremigration()
 		throw(errno);
 	}
 }
+
+void FsObj::finishRecall(FsObj::file_state fstate)
+
+{
+	int rc;
+	dm_region_t reg;
+	dm_boolean_t exact;
+
+	if ( fstate == FsObj::PREMIGRATED ) {
+		/* Always remove entire file */
+		reg.rg_offset = 0;
+		reg.rg_size = 0;;         /* 0 = infinity */
+
+		/* Mark the region as off-line */
+		reg.rg_flags = DM_REGION_WRITE | DM_REGION_TRUNCATE;
+		rc = dm_set_region(dmapiSession, handle, handleLength, dmapiToken, 1, &reg, &exact);
+
+		if ( rc == -1 ) {
+			TRACE(Trace::error, errno);
+			throw(errno);
+		}
+	}
+	else {
+		memset(&reg, 0, sizeof(reg));
+		reg.rg_flags = DM_REGION_NOEVENT;
+
+		rc = dm_set_region(dmapiSession, handle, handleLength, dmapiToken, 1, &reg, &exact);
+
+		if ( rc == -1 ) {
+			TRACE(Trace::error, errno);
+			throw(errno);
+		}
+	}
+
+}
+
 
 void FsObj::prepareStubbing()
 
