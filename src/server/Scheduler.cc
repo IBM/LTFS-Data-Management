@@ -239,7 +239,7 @@ void migration(int reqNum, int tgtState, int colGrp, std::string tapeId)
 }
 
 
-void recall(std::string fileName, std::string tapeId, FsObj::file_state toState)
+void recall(std::string fileName, std::string tapeId, FsObj::file_state state, FsObj::file_state toState)
 
 {
 	std::stringstream source;
@@ -253,45 +253,47 @@ void recall(std::string fileName, std::string tapeId, FsObj::file_state toState)
 	try {
 		FsObj target(fileName);
 
-		source << Const::LTFS_PATH
-			   << "/" << tapeId << "/"
-			   << Const::LTFS_NAME << "."
-			   << target.getFsId() << "."
-			   << target.getIGen() << "."
-			   << target.getINode();
-
-		fd = open(source.str().c_str(), O_RDWR);
-
-		if ( fd == -1 ) {
-			TRACE(Trace::error, errno);
-			MSG(LTFSDMS0021E, source.str().c_str());
-			throw(Error::LTFSDM_GENERAL_ERROR);
-		}
-
 		target.lock();
 
-		statbuf = target.stat();
+		if ( state == FsObj::MIGRATED ) {
+			source << Const::LTFS_PATH
+				   << "/" << tapeId << "/"
+				   << Const::LTFS_NAME << "."
+				   << target.getFsId() << "."
+				   << target.getIGen() << "."
+				   << target.getINode();
 
-		while ( offset < statbuf.st_size ) {
-			rsize = read(fd, buffer, sizeof(buffer));
-			if ( rsize == -1 ) {
+			fd = open(source.str().c_str(), O_RDWR);
+
+			if ( fd == -1 ) {
 				TRACE(Trace::error, errno);
-				MSG(LTFSDMS0023E, fileName);
-				throw(errno);
-			}
-			wsize = target.write(offset, sizeof(buffer), buffer);
-			if ( wsize != rsize ) {
-				TRACE(Trace::error, errno);
-				TRACE(Trace::error, wsize);
-				TRACE(Trace::error, rsize);
-				MSG(LTFSDMS0027E, fileName.c_str());
-				close(fd);
+				MSG(LTFSDMS0021E, source.str().c_str());
 				throw(Error::LTFSDM_GENERAL_ERROR);
 			}
-			offset += rsize;
-		}
 
-		close(fd);
+			statbuf = target.stat();
+
+			while ( offset < statbuf.st_size ) {
+				rsize = read(fd, buffer, sizeof(buffer));
+				if ( rsize == -1 ) {
+					TRACE(Trace::error, errno);
+					MSG(LTFSDMS0023E, fileName);
+					throw(errno);
+				}
+				wsize = target.write(offset, sizeof(buffer), buffer);
+				if ( wsize != rsize ) {
+					TRACE(Trace::error, errno);
+					TRACE(Trace::error, wsize);
+					TRACE(Trace::error, rsize);
+					MSG(LTFSDMS0027E, fileName.c_str());
+					close(fd);
+					throw(Error::LTFSDM_GENERAL_ERROR);
+				}
+				offset += rsize;
+			}
+
+			close(fd);
+		}
 
 		target.finishRecall(toState);
 		if ( toState == FsObj::RESIDENT )
@@ -315,8 +317,8 @@ void recallStep(int reqNum, std::string tapeId, FsObj::file_state toState)
 	long previous;
 	long current;
 
-	ssql << "SELECT ROWID, FILE_NAME FROM JOB_QUEUE WHERE REQ_NUM=" << reqNum;
-	ssql << " AND TAPE_ID='" << tapeId << "' AND FILE_STATE=" << FsObj::MIGRATED;
+	ssql << "SELECT ROWID, FILE_NAME, FILE_STATE FROM JOB_QUEUE WHERE REQ_NUM=" << reqNum;
+	ssql << " AND TAPE_ID='" << tapeId << "'";
 
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 
@@ -334,7 +336,15 @@ void recallStep(int reqNum, std::string tapeId, FsObj::file_state toState)
 			if (!cstr)
 				continue;
 
-			recall(std::string(cstr), tapeId, toState);
+			FsObj::file_state state = (FsObj::file_state) sqlite3_column_int(stmt, 2);
+
+			if ( state == FsObj::RESIDENT )
+				continue;
+
+			if ( state == toState )
+				continue;
+
+			recall(std::string(cstr), tapeId, state, toState);
 
 			group_end = sqlite3_column_int(stmt, 0);
 			if ( group_begin == -1 )

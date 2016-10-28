@@ -456,7 +456,7 @@ void FsObj::finishRecall(FsObj::file_state fstate)
 		memset(&reg, 0, sizeof(reg));
 		reg.rg_flags = DM_REGION_NOEVENT;
 
-		rc = dm_set_region(dmapiSession, handle, handleLength, dmapiToken, 1, &reg, &exact);
+		rc = dm_set_region(dmapiSession, handle, handleLength, dmapiToken, 0, &reg, &exact);
 
 		if ( rc == -1 ) {
 			TRACE(Trace::error, errno);
