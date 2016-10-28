@@ -272,7 +272,11 @@ void OpenLTFSCommand::queryResults()
 	long migrated = 0;
 	bool first = true;
 	bool done = false;
-	long starttime = time(NULL);
+	struct timeval curtime;
+	struct tm tmval;;
+	char curctime[26];
+
+	INFO(LTFSDMC0046I);
 
 	do {
 		if (first)
@@ -321,7 +325,11 @@ void OpenLTFSCommand::queryResults()
 			premigrated =  reqstatusresp.premigrated();
 			migrated =  reqstatusresp.migrated();
 			done = reqstatusresp.done();
-			INFO(LTFSDMC0045I, time(NULL) - starttime, resident, premigrated, migrated);
+
+			gettimeofday(&curtime, NULL);
+			localtime_r(&(curtime.tv_sec), &tmval);
+			strftime(curctime, 26, "%H:%M:%S", &tmval);
+			INFO(LTFSDMC0045I, curctime, resident, premigrated, migrated);
 		}
 		else {
 			MSG(LTFSDMC0029E);
