@@ -116,6 +116,8 @@ void Migration::addRequest()
 	getTapes();
 
 	while ( (rc = sqlite3_statement::step(stmt)) == SQLITE_ROW ) {
+		std::unique_lock<std::mutex> lock(Scheduler::mtx);
+
 		ssql2.str("");
 		ssql2.clear();
 
@@ -137,7 +139,6 @@ void Migration::addRequest()
 
 		sqlite3_statement::checkRcAndFinalize(stmt2, rc, SQLITE_DONE);
 
-		std::unique_lock<std::mutex> lock(Scheduler::mtx);
 		Scheduler::cond.notify_one();
 	}
 

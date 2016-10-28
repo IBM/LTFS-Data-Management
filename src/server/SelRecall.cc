@@ -93,6 +93,8 @@ void SelRecall::addRequest()
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 
 	while ( (rc = sqlite3_statement::step(stmt)) == SQLITE_ROW ) {
+		std::unique_lock<std::mutex> lock(Scheduler::mtx);
+
 		std::stringstream ssql2;
 		sqlite3_stmt *stmt2;
 
@@ -113,7 +115,6 @@ void SelRecall::addRequest()
 
 		sqlite3_statement::checkRcAndFinalize(stmt2, rc, SQLITE_DONE);
 
-		std::unique_lock<std::mutex> lock(Scheduler::mtx);
 		Scheduler::cond.notify_one();
 	}
 
