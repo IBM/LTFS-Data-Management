@@ -1,4 +1,7 @@
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include <string>
 
 #include "src/common/messages/Message.h"
@@ -7,6 +10,8 @@
 
 #include "src/common/comm/ltfsdm.pb.h"
 #include "src/common/comm/LTFSDmComm.h"
+
+#include "src/connector/Connector.h"
 
 #include "OpenLTFSCommand.h"
 #include "InfoFilesCommand.h"
@@ -19,69 +24,17 @@ void InfoFilesCommand::printUsage()
 void InfoFilesCommand::talkToBackend(std::stringstream *parmList)
 
 {
-	try {
-		connect();
-	}
-	catch (...) {
-		MSG(LTFSDMC0026E);
-		return;
-	}
-
-	LTFSDmProtocol::LTFSDmInfoFilesRequest *infofilesreq = commCommand.mutable_infofilesrequest();
-
-	infofilesreq->set_key(key);
-	infofilesreq->set_reqnumber(requestNumber);
-	infofilesreq->set_pid(getpid());
-
-	if (!directoryName.compare(""))
-		infofilesreq->set_directory(true);
-	else
-		infofilesreq->set_directory(false);
-
-	try {
-		commCommand.send();
-	}
-	catch(...) {
-		MSG(LTFSDMC0027E);
-		throw Error::LTFSDM_GENERAL_ERROR;
-	}
-
-	try {
-		commCommand.recv();
-	}
-	catch(...) {
-		MSG(LTFSDMC0028E);
-		throw(Error::LTFSDM_GENERAL_ERROR);
-	}
-
-	const LTFSDmProtocol::LTFSDmInfoFilesRequestResp infofilesreqresp = commCommand.infofilesrequestresp();
-
-	if( infofilesreqresp.success() == true ) {
-		if ( getpid() != infofilesreqresp.pid() ) {
-			MSG(LTFSDMC0036E);
-			TRACE(Trace::error, getpid());
-			TRACE(Trace::error, infofilesreqresp.pid());
-			throw(Error::LTFSDM_GENERAL_ERROR);
-		}
-		if ( requestNumber !=  infofilesreqresp.reqnumber() ) {
-			MSG(LTFSDMC0037E);
-			TRACE(Trace::error, requestNumber);
-			TRACE(Trace::error, infofilesreqresp.reqnumber());
-			throw(Error::LTFSDM_GENERAL_ERROR);
-		}
-	}
-
-	else {
-		MSG(LTFSDMC0029E);
-		throw(Error::LTFSDM_GENERAL_ERROR);
-	}
-
-	sendObjects(parmList);
 }
 
 void InfoFilesCommand::doCommand(int argc, char **argv)
 {
 	std::stringstream parmList;
+	Connector connector(false);
+	struct stat statbuf;
+	char migstate;
+	std::istream *input;
+	std::string line;
+	char *file_name;
 
 	if ( argc == 1 ) {
 		INFO(LTFSDMC0018E);
@@ -108,5 +61,35 @@ void InfoFilesCommand::doCommand(int argc, char **argv)
 
 	isValidRegularFile();
 
-	talkToBackend(&parmList);
+	if ( fileList.compare("") ) {
+		fileListStrm.open(fileList);
+		input =  dynamic_cast<std::istream*>(&fileListStrm);
+	}
+	else {
+		input = dynamic_cast<std::istream*>(&parmList);
+	}
+
+	INFO(LTFSDMC0048I);
+
+	while ( std::getline(*input, line) ) {
+		try {
+			file_name = canonicalize_file_name(line.c_str());
+			if ( file_name == NULL ) {
+				INFO(LTFSDMC0049I, line);
+				continue;
+			}
+			FsObj fso(file_name);
+			statbuf = fso.stat();
+			switch(fso.getMigState()) {
+				case FsObj::MIGRATED: migstate='m'; break;
+				case FsObj::PREMIGRATED: migstate='p'; break;
+				case FsObj::RESIDENT: migstate='r'; break;
+				default: migstate=' ';
+			}
+			INFO(LTFSDMC0050I, migstate, statbuf.st_size, statbuf.st_blocks, file_name);
+		}
+		catch ( int error ) {
+			MSG(LTFSDMC0047I, file_name);
+		}
+	}
 }

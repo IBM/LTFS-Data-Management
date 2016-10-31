@@ -138,7 +138,7 @@ void Server::daemonize()
 void Server::run()
 
 {
-	Connector connector;
+	Connector connector(true);
 
 	SubServer subs;
 	Scheduler sched;

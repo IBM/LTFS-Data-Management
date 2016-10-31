@@ -3,7 +3,7 @@
 
 class Connector {
 public:
-	Connector();
+	Connector(bool cleanup);
 	~Connector();
 };
 

@@ -121,7 +121,7 @@ void dmapiSessionCleanup()
 		free(tokbufp);
 }
 
-Connector::Connector()
+Connector::Connector(bool cleanup)
 
 {
 	char          *version          = NULL;
@@ -137,7 +137,8 @@ Connector::Connector()
 		goto failed;
 	}
 
-	dmapiSessionCleanup();
+	if ( cleanup )
+		dmapiSessionCleanup();
 
 	if (dm_create_session(DM_NO_SESSION, (char *) Const::DMAPI_SESSION_NAME.c_str(), &dmapiSessionLoc)) {
 		TRACE(Trace::error, errno);
@@ -163,8 +164,6 @@ Connector::~Connector()
 {
 	if ( dm_respond_event(dmapiSession, dmapiToken, DM_RESP_ABORT, EINTR, 0, NULL) == 1 )
 		TRACE(Trace::error, errno);
-	else
-		MSG(LTFSDMD0003I);
 
 	dm_destroy_session(dmapiSession);
 }

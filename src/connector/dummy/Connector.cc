@@ -8,7 +8,7 @@
 
 #include "src/connector/Connector.h"
 
-Connector::Connector()
+Connector::Connector(bool cleanup)
 
 {
 }
