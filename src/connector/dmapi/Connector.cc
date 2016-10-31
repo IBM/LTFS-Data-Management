@@ -398,7 +398,7 @@ std::string FsObj::getAttribute(std::string key)
 						   (dm_attrname_t *) key.c_str(), rsize, buffer, &rsize);
 	}
 
-	if ( rc == -1 ) {
+	if ( rc == -1 && errno != ENOENT) {
 		TRACE(Trace::error, errno);
 		throw(errno);
 	}

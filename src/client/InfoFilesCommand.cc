@@ -35,6 +35,7 @@ void InfoFilesCommand::doCommand(int argc, char **argv)
 	std::istream *input;
 	std::string line;
 	char *file_name;
+	std::string tapeId;
 
 	if ( argc == 1 ) {
 		INFO(LTFSDMC0018E);
@@ -69,7 +70,7 @@ void InfoFilesCommand::doCommand(int argc, char **argv)
 		input = dynamic_cast<std::istream*>(&parmList);
 	}
 
-	INFO(LTFSDMC0048I);
+	INFO(LTFSDMC0047I);
 
 	while ( std::getline(*input, line) ) {
 		try {
@@ -80,16 +81,24 @@ void InfoFilesCommand::doCommand(int argc, char **argv)
 			}
 			FsObj fso(file_name);
 			statbuf = fso.stat();
-			switch(fso.getMigState()) {
-				case FsObj::MIGRATED: migstate='m'; break;
-				case FsObj::PREMIGRATED: migstate='p'; break;
-				case FsObj::RESIDENT: migstate='r'; break;
-				default: migstate=' ';
+			tapeId = fso.getAttribute(Const::DMAPI_ATTR);
+			if ( tapeId.compare("") == 0 )
+				tapeId = std::string("-");
+			if ( !S_ISREG(statbuf.st_mode ) ) {
+				INFO(LTFSDMC0049I, '-', statbuf.st_size, statbuf.st_blocks, tapeId, file_name);
 			}
-			INFO(LTFSDMC0050I, migstate, statbuf.st_size, statbuf.st_blocks, file_name);
+			else {
+				switch(fso.getMigState()) {
+					case FsObj::MIGRATED: migstate='m'; break;
+					case FsObj::PREMIGRATED: migstate='p'; break;
+					case FsObj::RESIDENT: migstate='r'; break;
+					default: migstate=' ';
+				}
+				INFO(LTFSDMC0049I, migstate, statbuf.st_size, statbuf.st_blocks, tapeId, file_name);
+			}
 		}
 		catch ( int error ) {
-			MSG(LTFSDMC0047I, file_name);
+			INFO(LTFSDMC0048I, file_name);
 		}
 	}
 }

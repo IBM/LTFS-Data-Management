@@ -261,8 +261,6 @@ void recall(std::string fileName, std::string tapeId, FsObj::file_state state, F
 	int fd = -1;
 	long offset = 0;
 
-	//std::cout << "recalling: " << fileName << std::endl;
-
 	try {
 		FsObj target(fileName);
 
