@@ -27,11 +27,27 @@ std::condition_variable Scheduler::cond;
 
 std::map<std::string, std::atomic<bool>> suspend_map;
 
+std::string Scheduler::getTapeName(std::string fileName, std::string tapeId)
+
+{
+	FsObj diskFile(fileName);
+	std::stringstream tapeName;
+
+	tapeName << Const::LTFS_PATH
+			 << "/" << tapeId << "/"
+			 << Const::LTFS_NAME << "."
+			 << diskFile.getFsId() << "."
+			 << diskFile.getIGen() << "."
+			 << diskFile.getINode();
+
+	return tapeName.str();
+}
+
 void preMigrate(std::string fileName, std::string tapeId)
 
 {
-	std::stringstream target;
 	struct stat statbuf;
+	std::string tapeName;
 	char buffer[8*1024];
 	long rsize;
 	long wsize;
@@ -41,18 +57,13 @@ void preMigrate(std::string fileName, std::string tapeId)
 	try {
 		FsObj source(fileName);
 
-		target << Const::LTFS_PATH
-			   << "/" << tapeId << "/"
-			   << Const::LTFS_NAME << "."
-			   << source.getFsId() << "."
-			   << source.getIGen() << "."
-			   << source.getINode();
+		tapeName = Scheduler::getTapeName(fileName, tapeId);
 
-		fd = open(target.str().c_str(), O_RDWR | O_CREAT);
+		fd = open(tapeName.c_str(), O_RDWR | O_CREAT);
 
 		if ( fd == -1 ) {
 			TRACE(Trace::error, errno);
-			MSG(LTFSDMS0021E, target.str().c_str());
+			MSG(LTFSDMS0021E, tapeName.c_str());
 			throw(Error::LTFSDM_GENERAL_ERROR);
 		}
 
@@ -72,7 +83,7 @@ void preMigrate(std::string fileName, std::string tapeId)
 				TRACE(Trace::error, errno);
 				TRACE(Trace::error, wsize);
 				TRACE(Trace::error, rsize);
-				MSG(LTFSDMS0022E, target.str().c_str());
+				MSG(LTFSDMS0022E, tapeName.c_str());
 				close(fd);
 				throw(Error::LTFSDM_GENERAL_ERROR);
 			}
@@ -81,7 +92,7 @@ void preMigrate(std::string fileName, std::string tapeId)
 
 		if ( fsetxattr(fd, Const::LTFS_ATTR.c_str(), fileName.c_str(), fileName.length(), 0) == -1 ) {
 			TRACE(Trace::error, errno);
-			MSG(LTFSDMS0025E, Const::LTFS_ATTR, target.str());
+			MSG(LTFSDMS0025E, Const::LTFS_ATTR, tapeName);
 			throw(errno);
 		}
 
@@ -242,13 +253,15 @@ void migration(int reqNum, int tgtState, int colGrp, std::string tapeId)
 void recall(std::string fileName, std::string tapeId, FsObj::file_state state, FsObj::file_state toState)
 
 {
-	std::stringstream source;
 	struct stat statbuf;
+	std::string tapeName;
 	char buffer[8*1024];
 	long rsize;
 	long wsize;
 	int fd = -1;
 	long offset = 0;
+
+	//std::cout << "recalling: " << fileName << std::endl;
 
 	try {
 		FsObj target(fileName);
@@ -256,18 +269,12 @@ void recall(std::string fileName, std::string tapeId, FsObj::file_state state, F
 		target.lock();
 
 		if ( state == FsObj::MIGRATED ) {
-			source << Const::LTFS_PATH
-				   << "/" << tapeId << "/"
-				   << Const::LTFS_NAME << "."
-				   << target.getFsId() << "."
-				   << target.getIGen() << "."
-				   << target.getINode();
-
-			fd = open(source.str().c_str(), O_RDWR);
+			tapeName = Scheduler::getTapeName(fileName, tapeId);
+			fd = open(tapeName.c_str(), O_RDWR);
 
 			if ( fd == -1 ) {
 				TRACE(Trace::error, errno);
-				MSG(LTFSDMS0021E, source.str().c_str());
+				MSG(LTFSDMS0021E, tapeName.c_str());
 				throw(Error::LTFSDM_GENERAL_ERROR);
 			}
 
@@ -318,7 +325,7 @@ void recallStep(int reqNum, std::string tapeId, FsObj::file_state toState)
 	long current;
 
 	ssql << "SELECT ROWID, FILE_NAME, FILE_STATE FROM JOB_QUEUE WHERE REQ_NUM=" << reqNum;
-	ssql << " AND TAPE_ID='" << tapeId << "'";
+	ssql << " AND TAPE_ID='" << tapeId << "' ORDER BY START_BLOCK";
 
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 

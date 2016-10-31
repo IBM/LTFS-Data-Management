@@ -1,4 +1,5 @@
 #include <sys/types.h>
+#include <sys/xattr.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -24,6 +25,28 @@
 #include "Scheduler.h"
 #include "SelRecall.h"
 
+long SelRecall::getStartBlock(std::string tapeName)
+
+{
+	long size;
+	char startBlockStr[32];
+	long startBlock;
+
+	memset(startBlockStr, 0, sizeof(startBlockStr));
+
+	size = getxattr(tapeName.c_str(), Const::LTFS_START_BLOCK.c_str(), startBlockStr, sizeof(startBlockStr));
+
+	if ( size == -1 )
+		return Const::UNSET;
+
+	startBlock = strtol(startBlockStr, NULL, 0);
+
+	if ( startBlock == LONG_MIN || startBlock == LONG_MAX )
+		return Const::UNSET;
+	else
+		return startBlock;
+}
+
 void SelRecall::addFileName(std::string fileName)
 
 {
@@ -31,14 +54,15 @@ void SelRecall::addFileName(std::string fileName)
 	struct stat statbuf;
 	std::stringstream ssql;
 	sqlite3_stmt *stmt;
+	std::string tapeName;
+	std::string tapeId;
 	int state;
 
-	ssql << "INSERT INTO JOB_QUEUE (OPERATION, FILE_NAME, REQ_NUM, TARGET_STATE, COLOC_GRP, FILE_SIZE, FS_ID, I_GEN, I_NUM, MTIME, LAST_UPD, FILE_STATE, TAPE_ID, FAILED) ";
+	ssql << "INSERT INTO JOB_QUEUE (OPERATION, FILE_NAME, REQ_NUM, TARGET_STATE, FILE_SIZE, FS_ID, I_GEN, I_NUM, MTIME, LAST_UPD, FILE_STATE, TAPE_ID, START_BLOCK, FAILED) ";
 	ssql << "VALUES (" << DataBase::SELRECALL << ", ";            // OPERATION
 	ssql << "'" << fileName << "', ";                             // FILE_NAME
 	ssql << reqNumber << ", ";                                    // REQ_NUM
 	ssql << targetState << ", ";                                  // MIGRATION_STATE
-	ssql << "NULL" << ", ";                                       // COLOC_GRP
 
 	try {
 		FsObj fso(fileName);
@@ -62,7 +86,10 @@ void SelRecall::addFileName(std::string fileName)
 			return;
 		}
 		ssql << state << ", ";                                         // FILE_STATE
-		ssql << "'" << fso.getAttribute(Const::DMAPI_ATTR) << "', ";   // TAPE_ID
+		tapeId = fso.getAttribute(Const::DMAPI_ATTR);
+		ssql << "'" << tapeId << "', ";                                // TAPE_ID
+		tapeName = Scheduler::getTapeName(fileName, tapeId);
+		ssql << getStartBlock(tapeName) << ", ";                       // START_BLOCK
 		ssql << 0 << ");";                                             // FAILED
 	}
 	catch ( int error ) {

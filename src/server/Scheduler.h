@@ -7,6 +7,7 @@ class Scheduler
 public:
 	static std::mutex mtx;
 	static std::condition_variable cond;
+	static std::string getTapeName(std::string fileName, std::string tapeId);
 	Scheduler() {}
 	~Scheduler() {};
 	void run(long key);

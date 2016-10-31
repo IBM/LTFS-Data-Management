@@ -23,6 +23,7 @@ namespace Const {
 	const std::string LTFS_SYNC_VAL = std::string("1");
 	const std::string DMAPI_ATTR = std::string("TAPE_ID");
 	const std::string LTFS_ATTR = std::string("user.FILE_PATH");
+	const std::string LTFS_START_BLOCK = std::string("user.ltfs.startblock");
 }
 
 #endif /* _CONST_H */
