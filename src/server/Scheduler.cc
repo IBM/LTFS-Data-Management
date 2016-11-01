@@ -24,6 +24,8 @@
 
 std::mutex Scheduler::mtx;
 std::condition_variable Scheduler::cond;
+std::mutex Scheduler::updmtx;
+std::condition_variable Scheduler::updcond;
 
 std::map<std::string, std::atomic<bool>> suspend_map;
 
@@ -43,16 +45,17 @@ std::string Scheduler::getTapeName(std::string fileName, std::string tapeId)
 	return tapeName.str();
 }
 
-void preMigrate(std::string fileName, std::string tapeId)
+unsigned long preMigrate(std::string fileName, std::string tapeId)
 
 {
 	struct stat statbuf;
 	std::string tapeName;
-	char buffer[8*1024];
+	char buffer[Const::READ_BUFFER_SIZE];
 	long rsize;
 	long wsize;
 	int fd = -1;
 	long offset = 0;
+
 
 	try {
 		FsObj source(fileName);
@@ -72,7 +75,8 @@ void preMigrate(std::string fileName, std::string tapeId)
 		statbuf = source.stat();
 
 		while ( offset < statbuf.st_size ) {
-			rsize = source.read(offset, sizeof(buffer), buffer);
+			rsize = source.read(offset, statbuf.st_size - offset > Const::READ_BUFFER_SIZE ?
+								Const::READ_BUFFER_SIZE : statbuf.st_size - offset , buffer);
 			if ( rsize == -1 ) {
 				TRACE(Trace::error, errno);
 				MSG(LTFSDMS0023E, fileName);
@@ -106,6 +110,7 @@ void preMigrate(std::string fileName, std::string tapeId)
 		if ( fd != -1 )
 			close(fd);
 	}
+	return statbuf.st_size;
 }
 
 void stub(std::string fileName)
@@ -132,16 +137,17 @@ bool migrationStep(int reqNum, int colGrp, std::string tapeId, int fromState, in
 	int rc, rc2;
     int group_end = 0;
     int group_begin = -1;
-	long previous;
-	long current;
 	bool suspended = false;
+	int accumSize = 0;
+	std::unique_lock<std::mutex> lock(Scheduler::updmtx);
+
+	lock.unlock();
 
 	ssql << "SELECT ROWID, FILE_NAME FROM JOB_QUEUE WHERE REQ_NUM=" << reqNum;
 	ssql << " AND COLOC_GRP=" << colGrp << " AND FILE_STATE=" << fromState;
 
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 
-	previous = time(NULL);
 
 	while ( (rc = sqlite3_statement::step(stmt) ) ) {
 		if ( rc != SQLITE_ROW && rc != SQLITE_DONE )
@@ -160,7 +166,7 @@ bool migrationStep(int reqNum, int colGrp, std::string tapeId, int fromState, in
 					sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_ROW);
 					return suspended;
 				}
-				preMigrate(std::string(cstr), tapeId);
+				accumSize += preMigrate(std::string(cstr), tapeId);
 			}
 			else {
 				stub(std::string(cstr));
@@ -169,10 +175,9 @@ bool migrationStep(int reqNum, int colGrp, std::string tapeId, int fromState, in
 			group_end = sqlite3_column_int(stmt, 0);
 			if ( group_begin == -1 )
 				group_begin = group_end;
-			current = time(NULL);
-			if ( current - previous < 10 )
+			if ( accumSize < Const::UPDATE_SIZE )
 				continue;
-			previous = current;
+			accumSize = 0;
 		}
 
 		ssql.str("");
@@ -183,9 +188,14 @@ bool migrationStep(int reqNum, int colGrp, std::string tapeId, int fromState, in
 
 		sqlite3_stmt *stmt2;
 
+		lock.lock();
+
 		sqlite3_statement::prepare(ssql.str(), &stmt2);
 		rc2 = sqlite3_statement::step(stmt2);
 		sqlite3_statement::checkRcAndFinalize(stmt2, rc2, SQLITE_DONE);
+
+		Scheduler::updcond.notify_one();
+		lock.unlock();
 
 		if ( rc == SQLITE_DONE )
 			break;
@@ -237,6 +247,8 @@ void migration(int reqNum, int tgtState, int colGrp, std::string tapeId)
 	if ( tgtState != LTFSDmProtocol::LTFSDmMigRequest::PREMIGRATED )
 		migrationStep(reqNum, colGrp, tapeId,  FsObj::PREMIGRATED, FsObj::MIGRATED);
 
+	std::unique_lock<std::mutex> updlock(Scheduler::updmtx);
+
 	ssql.str("");
 	ssql.clear();
 	if ( suspended )
@@ -247,15 +259,17 @@ void migration(int reqNum, int tgtState, int colGrp, std::string tapeId)
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 	rc = sqlite3_statement::step(stmt);
 	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+
+	Scheduler::updcond.notify_one();
 }
 
 
-void recall(std::string fileName, std::string tapeId, FsObj::file_state state, FsObj::file_state toState)
+unsigned long recall(std::string fileName, std::string tapeId, FsObj::file_state state, FsObj::file_state toState)
 
 {
 	struct stat statbuf;
 	std::string tapeName;
-	char buffer[8*1024];
+	char buffer[Const::READ_BUFFER_SIZE];
 	long rsize;
 	long wsize;
 	int fd = -1;
@@ -285,7 +299,7 @@ void recall(std::string fileName, std::string tapeId, FsObj::file_state state, F
 					MSG(LTFSDMS0023E, fileName);
 					throw(errno);
 				}
-				wsize = target.write(offset, sizeof(buffer), buffer);
+				wsize = target.write(offset, (unsigned long) rsize, buffer);
 				if ( wsize != rsize ) {
 					TRACE(Trace::error, errno);
 					TRACE(Trace::error, wsize);
@@ -309,6 +323,8 @@ void recall(std::string fileName, std::string tapeId, FsObj::file_state state, F
 		if ( fd != -1 )
 			close(fd);
 	}
+
+	return statbuf.st_size;
 }
 
 void recallStep(int reqNum, std::string tapeId, FsObj::file_state toState)
@@ -319,15 +335,15 @@ void recallStep(int reqNum, std::string tapeId, FsObj::file_state toState)
 	int rc, rc2;
     int group_end = 0;
     int group_begin = -1;
-	long previous;
-	long current;
+	int accumSize = 0;
+	std::unique_lock<std::mutex> lock(Scheduler::updmtx);
+
+	lock.unlock();
 
 	ssql << "SELECT ROWID, FILE_NAME, FILE_STATE FROM JOB_QUEUE WHERE REQ_NUM=" << reqNum;
 	ssql << " AND TAPE_ID='" << tapeId << "' ORDER BY START_BLOCK";
 
 	sqlite3_statement::prepare(ssql.str(), &stmt);
-
-	previous = time(NULL);
 
 	//recall(std::string fileName, std::string tapeId, int toState)
 
@@ -349,15 +365,14 @@ void recallStep(int reqNum, std::string tapeId, FsObj::file_state toState)
 			if ( state == toState )
 				continue;
 
-			recall(std::string(cstr), tapeId, state, toState);
+			accumSize += recall(std::string(cstr), tapeId, state, toState);
 
 			group_end = sqlite3_column_int(stmt, 0);
 			if ( group_begin == -1 )
 				group_begin = group_end;
-			current = time(NULL);
-			if ( current - previous < 10 )
+			if ( accumSize < Const::UPDATE_SIZE )
 				continue;
-			previous = current;
+			accumSize = 0;
 		}
 
 		ssql.str("");
@@ -369,9 +384,14 @@ void recallStep(int reqNum, std::string tapeId, FsObj::file_state toState)
 
 		sqlite3_stmt *stmt2;
 
+		lock.lock();
+
 		sqlite3_statement::prepare(ssql.str(), &stmt2);
 		rc2 = sqlite3_statement::step(stmt2);
 		sqlite3_statement::checkRcAndFinalize(stmt2, rc2, SQLITE_DONE);
+
+		Scheduler::updcond.notify_one();
+		lock.unlock();
 
 		if ( rc == SQLITE_DONE )
 			break;
@@ -402,6 +422,8 @@ void selrecall(int reqNum, int tgtState, std::string tapeId)
 	Scheduler::cond.notify_one();
 	lock.unlock();
 
+	std::unique_lock<std::mutex> updlock(Scheduler::updmtx);
+
 	ssql.str("");
 	ssql.clear();
 	ssql << "UPDATE REQUEST_QUEUE SET STATE=" << DataBase::REQ_COMPLETED;
@@ -409,6 +431,8 @@ void selrecall(int reqNum, int tgtState, std::string tapeId)
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 	rc = sqlite3_statement::step(stmt);
 	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+
+	Scheduler::updcond.notify_one();
 }
 
 void Scheduler::run(long key)

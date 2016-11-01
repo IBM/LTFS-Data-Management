@@ -1,5 +1,7 @@
 #include <string>
 #include <sstream>
+#include <mutex>
+#include <condition_variable>
 
 #include <sqlite3.h>
 #include "src/common/comm/ltfsdm.pb.h"
@@ -13,6 +15,7 @@
 #include "src/connector/Connector.h"
 
 #include "DataBase.h"
+#include "Scheduler.h"
 #include "FileOperation.h"
 
 bool FileOperation::queryResult(long reqNumber, long *resident, long *premigrated, long *migrated)
@@ -22,6 +25,7 @@ bool FileOperation::queryResult(long reqNumber, long *resident, long *premigrate
 	std::stringstream ssql;
 	sqlite3_stmt *stmt;
 	bool done = true;
+	std::unique_lock<std::mutex> lock(Scheduler::updmtx);
 
 	ssql << "SELECT STATE FROM REQUEST_QUEUE WHERE REQ_NUM=" << reqNumber;
 
@@ -32,8 +36,10 @@ bool FileOperation::queryResult(long reqNumber, long *resident, long *premigrate
 			done = false;
 		}
 	}
-
 	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+
+	if ( done == false )
+		Scheduler::updcond.wait(lock);
 
 	ssql.str("");
 	ssql.clear();

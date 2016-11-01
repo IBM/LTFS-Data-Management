@@ -188,6 +188,8 @@ void OpenLTFSCommand::sendObjects(std::stringstream *parmList)
 	bool cont = true;
 	int i;
 
+	INFO(LTFSDMC0050I);
+
 	if ( fileList.compare("") ) {
 		fileListStrm.open(fileList);
 		input =  dynamic_cast<std::istream*>(&fileListStrm);
@@ -261,7 +263,9 @@ void OpenLTFSCommand::sendObjects(std::stringstream *parmList)
 			MSG(LTFSDMC0029E);
 			throw(Error::LTFSDM_GENERAL_ERROR);
 		}
+		INFO(LTFSDMC0051I);
 	}
+	INFO(LTFSDMC0052I);
 }
 
 void OpenLTFSCommand::queryResults()
@@ -276,14 +280,7 @@ void OpenLTFSCommand::queryResults()
 	struct tm tmval;;
 	char curctime[26];
 
-	INFO(LTFSDMC0046I);
-
 	do {
-		if (first)
-			first = false;
-		else
-			sleep(10);
-
 		LTFSDmProtocol::LTFSDmReqStatusRequest *reqstatus = commCommand.mutable_reqstatusrequest();
 
 		reqstatus->set_key(key);
@@ -328,7 +325,11 @@ void OpenLTFSCommand::queryResults()
 
 			gettimeofday(&curtime, NULL);
 			localtime_r(&(curtime.tv_sec), &tmval);
-			strftime(curctime, 26, "%H:%M:%S", &tmval);
+			strftime(curctime, sizeof(curctime) - 1, "%H:%M:%S", &tmval);
+			if ( first ) {
+				INFO(LTFSDMC0046I);
+				first = false;
+			}
 			INFO(LTFSDMC0045I, curctime, resident, premigrated, migrated);
 		}
 		else {

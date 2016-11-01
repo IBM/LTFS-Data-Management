@@ -34,7 +34,7 @@ void Message::writeOut(std::string msgstr)
 
 {
 	mtx.lock();
-	std::cout << msgstr;
+	std::cout << msgstr << std::flush;
 	mtx.unlock();
 }
 

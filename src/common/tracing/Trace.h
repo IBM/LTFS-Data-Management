@@ -51,7 +51,7 @@ public:
 		if ( tl <= getTrclevel()) {
 			gettimeofday(&curtime, NULL);
 			localtime_r(&(curtime.tv_sec), &tmval);
-			strftime(curctime, 26, "%Y-%m-%dT%H:%M:%S", &tmval);
+			strftime(curctime, sizeof(curctime) - 1, "%Y-%m-%dT%H:%M:%S", &tmval);
 
 			try {
 				mtx.lock();
