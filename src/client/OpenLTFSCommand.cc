@@ -190,7 +190,6 @@ void OpenLTFSCommand::sendObjects(std::stringstream *parmList)
 	long startTime;
 	unsigned int count = 0;
 
-	INFO(LTFSDMC0050I);
 	startTime = time(NULL);
 
 	if ( fileList.compare("") ) {
@@ -267,9 +266,9 @@ void OpenLTFSCommand::sendObjects(std::stringstream *parmList)
 			MSG(LTFSDMC0029E);
 			throw(Error::LTFSDM_GENERAL_ERROR);
 		}
-		INFO(LTFSDMC0051I, count);
+		INFO(LTFSDMC0050I, count);
 	}
-	INFO(LTFSDMC0052I, time(NULL) - startTime);
+	INFO(LTFSDMC0051I, time(NULL) - startTime);
 }
 
 void OpenLTFSCommand::queryResults()
