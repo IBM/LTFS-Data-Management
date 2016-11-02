@@ -188,6 +188,7 @@ void OpenLTFSCommand::sendObjects(std::stringstream *parmList)
 	bool cont = true;
 	int i;
 	long startTime;
+	unsigned int count = 0;
 
 	INFO(LTFSDMC0050I);
 	startTime = time(NULL);
@@ -210,6 +211,7 @@ void OpenLTFSCommand::sendObjects(std::stringstream *parmList)
 				filenames = sendobjects->add_filenames();
 				filenames->set_filename(file_name);
 				free(file_name);
+				count++;
 			}
 			else  {
 				MSG(LTFSDMC0043E, line.c_str());
@@ -265,7 +267,7 @@ void OpenLTFSCommand::sendObjects(std::stringstream *parmList)
 			MSG(LTFSDMC0029E);
 			throw(Error::LTFSDM_GENERAL_ERROR);
 		}
-		INFO(LTFSDMC0051I);
+		INFO(LTFSDMC0051I, count);
 	}
 	INFO(LTFSDMC0052I, time(NULL) - startTime);
 }
