@@ -25,7 +25,6 @@
 #include "src/connector/Connector.h"
 #include "DataBase.h"
 #include "Receiver.h"
-#include "Responder.h"
 #include "SubServer.h"
 #include "Scheduler.h"
 #include "Server.h"
