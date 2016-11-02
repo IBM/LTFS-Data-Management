@@ -142,6 +142,8 @@ bool migrationStep(int reqNum, int colGrp, std::string tapeId, int fromState, in
 	int accumSize = 0;
 	std::unique_lock<std::mutex> lock(Scheduler::updmtx);
 
+	Scheduler::updReq = reqNum;
+	Scheduler::updcond.notify_all();
 	lock.unlock();
 
 	ssql << "SELECT ROWID, FILE_NAME FROM JOB_QUEUE WHERE REQ_NUM=" << reqNum;
@@ -196,7 +198,6 @@ bool migrationStep(int reqNum, int colGrp, std::string tapeId, int fromState, in
 		sqlite3_statement::checkRcAndFinalize(stmt2, rc2, SQLITE_DONE);
 
 		Scheduler::updReq = reqNum;
-
 		Scheduler::updcond.notify_all();
 		lock.unlock();
 
@@ -341,6 +342,8 @@ void recallStep(int reqNum, std::string tapeId, FsObj::file_state toState)
 	int accumSize = 0;
 	std::unique_lock<std::mutex> lock(Scheduler::updmtx);
 
+	Scheduler::updReq = reqNum;
+	Scheduler::updcond.notify_all();
 	lock.unlock();
 
 	ssql << "SELECT ROWID, FILE_NAME, FILE_STATE FROM JOB_QUEUE WHERE REQ_NUM=" << reqNum;
@@ -394,8 +397,7 @@ void recallStep(int reqNum, std::string tapeId, FsObj::file_state toState)
 		sqlite3_statement::checkRcAndFinalize(stmt2, rc2, SQLITE_DONE);
 
 		Scheduler::updReq = reqNum;
-
-		Scheduler::updcond.notify_one();
+		Scheduler::updcond.notify_all();
 		lock.unlock();
 
 		if ( rc == SQLITE_DONE )
