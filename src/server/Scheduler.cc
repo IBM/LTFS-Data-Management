@@ -181,7 +181,7 @@ bool migrationStep(int reqNum, int colGrp, std::string tapeId, int fromState, in
 			group_end = sqlite3_column_int(stmt, 0);
 			if ( group_begin == -1 )
 				group_begin = group_end;
-			updateSize = (8000*accumSize)/(count+1)+200000000L;
+			updateSize = (20000L*accumSize)/(count+1)+200000000L;
 			if ( accumSize < (updateSize > 4000000000L ? 4000000000L : updateSize) )
 				continue;
 			accumSize = 0;
