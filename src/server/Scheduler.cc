@@ -26,6 +26,7 @@ std::mutex Scheduler::mtx;
 std::condition_variable Scheduler::cond;
 std::mutex Scheduler::updmtx;
 std::condition_variable Scheduler::updcond;
+std::atomic<int> Scheduler::updReq(Const::UNSET);
 
 std::map<std::string, std::atomic<bool>> suspend_map;
 
@@ -194,7 +195,9 @@ bool migrationStep(int reqNum, int colGrp, std::string tapeId, int fromState, in
 		rc2 = sqlite3_statement::step(stmt2);
 		sqlite3_statement::checkRcAndFinalize(stmt2, rc2, SQLITE_DONE);
 
-		Scheduler::updcond.notify_one();
+		Scheduler::updReq = reqNum;
+
+		Scheduler::updcond.notify_all();
 		lock.unlock();
 
 		if ( rc == SQLITE_DONE )
@@ -389,6 +392,8 @@ void recallStep(int reqNum, std::string tapeId, FsObj::file_state toState)
 		sqlite3_statement::prepare(ssql.str(), &stmt2);
 		rc2 = sqlite3_statement::step(stmt2);
 		sqlite3_statement::checkRcAndFinalize(stmt2, rc2, SQLITE_DONE);
+
+		Scheduler::updReq = reqNum;
 
 		Scheduler::updcond.notify_one();
 		lock.unlock();

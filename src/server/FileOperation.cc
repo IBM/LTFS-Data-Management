@@ -39,7 +39,9 @@ bool FileOperation::queryResult(long reqNumber, long *resident, long *premigrate
 	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 
 	if ( done == false )
-		Scheduler::updcond.wait(lock);
+		Scheduler::updcond.wait(lock, [reqNumber]{return Scheduler::updReq == reqNumber;});
+
+	Scheduler::updReq = Const::UNSET;
 
 	ssql.str("");
 	ssql.clear();
