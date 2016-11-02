@@ -139,7 +139,9 @@ bool migrationStep(int reqNum, int colGrp, std::string tapeId, int fromState, in
     int group_end = 0;
     int group_begin = -1;
 	bool suspended = false;
-	int accumSize = 0;
+	long accumSize = 0;
+	long count = 0;
+	long updateSize;
 	std::unique_lock<std::mutex> lock(Scheduler::updmtx);
 
 	Scheduler::updReq = reqNum;
@@ -170,6 +172,7 @@ bool migrationStep(int reqNum, int colGrp, std::string tapeId, int fromState, in
 					return suspended;
 				}
 				accumSize += preMigrate(std::string(cstr), tapeId);
+				count++;
 			}
 			else {
 				stub(std::string(cstr));
@@ -178,9 +181,11 @@ bool migrationStep(int reqNum, int colGrp, std::string tapeId, int fromState, in
 			group_end = sqlite3_column_int(stmt, 0);
 			if ( group_begin == -1 )
 				group_begin = group_end;
-			if ( accumSize < Const::UPDATE_SIZE )
+			updateSize = (8000*accumSize)/(count+1)+200000000L;
+			if ( accumSize < (updateSize > 4000000000L ? 4000000000L : updateSize) )
 				continue;
 			accumSize = 0;
+			count = 0;
 		}
 
 		ssql.str("");

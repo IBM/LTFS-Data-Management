@@ -25,7 +25,7 @@ namespace Const {
 	const std::string LTFS_ATTR = std::string("user.FILE_PATH");
 	const std::string LTFS_START_BLOCK = std::string("user.ltfs.startblock");
 	const int READ_BUFFER_SIZE = 128*1024;
-	const int UPDATE_SIZE = 200*1024*1024;
+	const long UPDATE_SIZE = 200*1024*1024;
 }
 
 #endif /* _CONST_H */
