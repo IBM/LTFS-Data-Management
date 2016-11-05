@@ -190,7 +190,7 @@ bool migrationStep(int reqNum, int colGrp, std::string tapeId, int fromState, in
 		ssql.clear();
 
 		ssql << "UPDATE JOB_QUEUE SET FILE_STATE = " <<  toState;
-		ssql << " WHERE COLOC_GRP = " << colGrp << " AND (ROWID BETWEEN " << group_begin << " AND " << group_end << ")";
+		ssql << " WHERE REQ_NUM=" << reqNum << " AND COLOC_GRP = " << colGrp << " AND (ROWID BETWEEN " << group_begin << " AND " << group_end << ")";
 
 		sqlite3_stmt *stmt2;
 
@@ -203,6 +203,8 @@ bool migrationStep(int reqNum, int colGrp, std::string tapeId, int fromState, in
 		Scheduler::updReq = reqNum;
 		Scheduler::updcond.notify_all();
 		lock.unlock();
+
+		group_begin = -1;
 
 		if ( rc == SQLITE_DONE )
 			break;
@@ -388,7 +390,7 @@ void recallStep(int reqNum, std::string tapeId, FsObj::file_state toState)
 		ssql.clear();
 
 		ssql << "UPDATE JOB_QUEUE SET FILE_STATE = " <<  toState;
-		ssql << " WHERE TAPE_ID ='" << tapeId << "' AND (ROWID BETWEEN ";
+		ssql << " WHERE REQ_NUM=" << reqNum << " AND TAPE_ID ='" << tapeId << "' AND (ROWID BETWEEN ";
 		ssql << group_begin << " AND " << group_end << ")";
 
 		sqlite3_stmt *stmt2;
@@ -402,6 +404,8 @@ void recallStep(int reqNum, std::string tapeId, FsObj::file_state toState)
 		Scheduler::updReq = reqNum;
 		Scheduler::updcond.notify_all();
 		lock.unlock();
+
+		group_begin = -1;
 
 		if ( rc == SQLITE_DONE )
 			break;
