@@ -11,6 +11,7 @@ LIB_SRC_FILES += FileOperation.cc
 LIB_SRC_FILES += Migration.cc
 LIB_SRC_FILES += SelRecall.cc
 LIB_SRC_FILES += InfoFiles.cc
+LIB_SRC_FILES += Updater.cc
 LIB_SRC_FILES += Scheduler.cc
 
 CLEANUP_FILES := ltfsdmd
