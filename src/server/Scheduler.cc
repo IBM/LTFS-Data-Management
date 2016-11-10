@@ -71,9 +71,9 @@ void Scheduler::run(long key)
 
 		ssql.str("");
 		ssql.clear();
-		ssql << "SELECT OPERATION, REQ_NUM, TARGET_STATE, COLOC_GRP, TAPE_ID";
-		ssql << " FROM REQUEST_QUEUE WHERE STATE=" << DataBase::REQ_NEW;
-		ssql << " ORDER BY OPERATION,REQ_NUM;";
+		ssql << "SELECT OPERATION, REQ_NUM, TARGET_STATE, COLOC_GRP, TAPE_ID"
+			 << " FROM REQUEST_QUEUE WHERE STATE=" << DataBase::REQ_NEW
+			 << " ORDER BY OPERATION,REQ_NUM;";
 
 		sqlite3_statement::prepare(ssql.str(), &stmt);
 
@@ -104,8 +104,8 @@ void Scheduler::run(long key)
 
 				ssql.str("");
 				ssql.clear();
-				ssql << "UPDATE TAPE_LIST SET STATE=" << DataBase::TAPE_INUSE;
-				ssql << " WHERE TAPE_ID='" << tapeId << "';";
+				ssql << "UPDATE TAPE_LIST SET STATE=" << DataBase::TAPE_INUSE
+					 << " WHERE TAPE_ID='" << tapeId << "';";
 				sqlite3_statement::prepare(ssql.str(), &stmt3);
 				rc = sqlite3_statement::step(stmt3);
 				sqlite3_statement::checkRcAndFinalize(stmt3, rc, SQLITE_DONE);
@@ -121,8 +121,8 @@ void Scheduler::run(long key)
 					case DataBase::MIGRATION:
 						ssql.str("");
 						ssql.clear();
-						ssql << "UPDATE REQUEST_QUEUE SET STATE=" << DataBase::REQ_INPROGRESS;
-						ssql << " WHERE REQ_NUM=" << reqNum << " AND COLOC_GRP=" << colGrp << ";";
+						ssql << "UPDATE REQUEST_QUEUE SET STATE=" << DataBase::REQ_INPROGRESS
+							 << " WHERE REQ_NUM=" << reqNum << " AND COLOC_GRP=" << colGrp << ";";
 						sqlite3_statement::prepare(ssql.str(), &stmt3);
 						rc = sqlite3_statement::step(stmt3);
 						sqlite3_statement::checkRcAndFinalize(stmt3, rc, SQLITE_DONE);
@@ -133,8 +133,8 @@ void Scheduler::run(long key)
 					case DataBase::SELRECALL:
 						ssql.str("");
 						ssql.clear();
-						ssql << "UPDATE REQUEST_QUEUE SET STATE=" << DataBase::REQ_INPROGRESS;
-						ssql << " WHERE REQ_NUM=" << reqNum << " AND TAPE_ID='" << tapeId << "';";
+						ssql << "UPDATE REQUEST_QUEUE SET STATE=" << DataBase::REQ_INPROGRESS
+							 << " WHERE REQ_NUM=" << reqNum << " AND TAPE_ID='" << tapeId << "';";
 						sqlite3_statement::prepare(ssql.str(), &stmt3);
 						rc = sqlite3_statement::step(stmt3);
 						sqlite3_statement::checkRcAndFinalize(stmt3, rc, SQLITE_DONE);
