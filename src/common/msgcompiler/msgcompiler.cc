@@ -25,7 +25,9 @@ int main(int argc, char **argv)
 	std::ofstream outfile;
 
 	if ( argc != 3 ) {
-		std::cout << "usage: " << argv[0] << " <message text file name> <compiled message header>" << std::endl;
+		std::cout << "usage: " << argv[0]
+				  << " <message text file name> <compiled message header>"
+				  << std::endl;
 		return -1;
 	}
 
@@ -98,9 +100,11 @@ int main(int argc, char **argv)
 	outfile << "const message_t messages = {" << std::endl;
 	for (it = messages.begin(); it != messages.end(); ++it) {
 		if ( it + 1 != messages.end() )
-			outfile << "    " << "/* " << it->msgname << " */  " << it->msgtxt << "," << std::endl;
+			outfile << "    " << "/* " << it->msgname
+					<< " */  " << it->msgtxt << "," << std::endl;
 		else
-			outfile << "    " << "/* " << it->msgname << " */  " << it->msgtxt << std::endl;
+			outfile << "    " << "/* " << it->msgname
+					<< " */  " << it->msgtxt << std::endl;
 	}
 	outfile << "};" << std::endl;
 	outfile << std::endl;

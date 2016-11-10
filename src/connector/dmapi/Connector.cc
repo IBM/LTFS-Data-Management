@@ -206,7 +206,8 @@ struct stat FsObj::stat()
 	if ( handle == NULL )
 		return statbuf;
 
- 	if ( dm_get_fileattr(dmapiSession, handle, handleLength, DM_NO_TOKEN, DM_AT_STAT, &dmstatbuf) != 0 ) {
+ 	if ( dm_get_fileattr(dmapiSession, handle, handleLength,
+						 DM_NO_TOKEN, DM_AT_STAT, &dmstatbuf) != 0 ) {
 		TRACE(Trace::error, errno);
 	    throw(errno);
 	}
@@ -291,7 +292,8 @@ void FsObj::lock()
 {
 	int rc;
 
-	rc = dm_request_right(dmapiSession, handle, handleLength, dmapiToken, DM_RR_WAIT, DM_RIGHT_EXCL);
+	rc = dm_request_right(dmapiSession, handle, handleLength,
+						  dmapiToken, DM_RR_WAIT, DM_RIGHT_EXCL);
 
 	if ( rc == -1 ) {
 		TRACE(Trace::error, errno);
@@ -326,7 +328,8 @@ long FsObj::read(long offset, unsigned long size, char *buffer)
 {
 	long rsize;
 
-	rsize = dm_read_invis(dmapiSession, handle, handleLength, dmapiToken, offset, size, buffer);
+	rsize = dm_read_invis(dmapiSession, handle, handleLength,
+						  dmapiToken, offset, size, buffer);
 
 	TRACE(Trace::much, offset);
 	TRACE(Trace::much, size);
@@ -340,7 +343,8 @@ long FsObj::write(long offset, unsigned long size, char *buffer)
 {
 	long wsize;
 
-	wsize = dm_write_invis(dmapiSession, handle, handleLength, dmapiToken, DM_WRITE_SYNC, offset, size, buffer);
+	wsize = dm_write_invis(dmapiSession, handle, handleLength, dmapiToken,
+						   DM_WRITE_SYNC, offset, size, buffer);
 	TRACE(Trace::much, offset);
 	TRACE(Trace::much, size);
 	TRACE(Trace::much, wsize);
@@ -354,7 +358,8 @@ void FsObj::addAttribute(std::string key, std::string value)
 {
 	int rc;
 
-	rc = dm_set_dmattr(dmapiSession, handle, handleLength, dmapiToken, (dm_attrname_t *) key.c_str(),
+	rc = dm_set_dmattr(dmapiSession, handle, handleLength,
+					   dmapiToken, (dm_attrname_t *) key.c_str(),
 					   0, value.length(), (void *) value.c_str());
 
 	if ( rc == -1 ) {
@@ -368,7 +373,8 @@ void FsObj::remAttribute(std::string key)
 {
 	int rc;
 
-	rc = dm_remove_dmattr(dmapiSession, handle, handleLength, dmapiToken, 0, (dm_attrname_t *) key.c_str());
+	rc = dm_remove_dmattr(dmapiSession, handle, handleLength,
+						  dmapiToken, 0, (dm_attrname_t *) key.c_str());
 
 	if ( rc == -1 ) {
 		TRACE(Trace::error, errno);
@@ -444,7 +450,8 @@ void FsObj::finishRecall(FsObj::file_state fstate)
 
 		/* Mark the region as off-line */
 		reg.rg_flags = DM_REGION_WRITE | DM_REGION_TRUNCATE;
-		rc = dm_set_region(dmapiSession, handle, handleLength, dmapiToken, 1, &reg, &exact);
+		rc = dm_set_region(dmapiSession, handle, handleLength,
+						   dmapiToken, 1, &reg, &exact);
 
 		if ( rc == -1 ) {
 			TRACE(Trace::error, errno);
@@ -455,7 +462,8 @@ void FsObj::finishRecall(FsObj::file_state fstate)
 		memset(&reg, 0, sizeof(reg));
 		reg.rg_flags = DM_REGION_NOEVENT;
 
-		rc = dm_set_region(dmapiSession, handle, handleLength, dmapiToken, 0, &reg, &exact);
+		rc = dm_set_region(dmapiSession, handle, handleLength,
+						   dmapiToken, 0, &reg, &exact);
 
 		if ( rc == -1 ) {
 			TRACE(Trace::error, errno);
@@ -516,7 +524,8 @@ FsObj::file_state FsObj::getMigState()
 
     memset(regbuf, 0, sizeof( regbuf ));
 
-    rc = dm_get_region(dmapiSession, handle, handleLength, DM_NO_TOKEN, nelem, regbuf, &nelem);
+    rc = dm_get_region(dmapiSession, handle, handleLength,
+					   DM_NO_TOKEN, nelem, regbuf, &nelem);
 
 	if ( rc == -1 ) {
 		TRACE(Trace::error, errno);
@@ -524,7 +533,8 @@ FsObj::file_state FsObj::getMigState()
     }
 
     for (i = 0; i < nelem; i++ ) {
-		infos << "region nr: " << i << ", offset: " << regbuf[i].rg_offset << ", size: " << regbuf[i].rg_size << ", flag: " << regbuf[i].rg_size;
+		infos << "region nr: " << i << ", offset: " << regbuf[i].rg_offset
+			  << ", size: " << regbuf[i].rg_size << ", flag: " << regbuf[i].rg_size;
 		TRACE(Trace::much, infos.str());
 	}
 

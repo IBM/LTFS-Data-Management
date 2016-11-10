@@ -26,7 +26,8 @@
 
 #include "MessageParser.h"
 
-void MessageParser::getObjects(LTFSDmCommServer *command, long localReqNumber, unsigned long pid, long requestNumber, FileOperation *fopt)
+void MessageParser::getObjects(LTFSDmCommServer *command, long localReqNumber,
+							   unsigned long pid, long requestNumber, FileOperation *fopt)
 
 {
 	bool cont = true;

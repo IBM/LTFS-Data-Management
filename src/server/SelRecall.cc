@@ -60,11 +60,12 @@ void SelRecall::addFileName(std::string fileName)
 	std::string tapeId;
 	int state;
 
-	ssql << "INSERT INTO JOB_QUEUE (OPERATION, FILE_NAME, REQ_NUM, TARGET_STATE, FILE_SIZE, FS_ID, I_GEN, I_NUM, MTIME, LAST_UPD, FILE_STATE, TAPE_ID, START_BLOCK, FAILED) ";
-	ssql << "VALUES (" << DataBase::SELRECALL << ", ";            // OPERATION
-	ssql << "'" << fileName << "', ";                             // FILE_NAME
-	ssql << reqNumber << ", ";                                    // REQ_NUM
-	ssql << targetState << ", ";                                  // MIGRATION_STATE
+	ssql << "INSERT INTO JOB_QUEUE (OPERATION, FILE_NAME, REQ_NUM, TARGET_STATE, FILE_SIZE, "
+		 << "FS_ID, I_GEN, I_NUM, MTIME, LAST_UPD, FILE_STATE, TAPE_ID, START_BLOCK, FAILED) "
+		 << "VALUES (" << DataBase::SELRECALL << ", "            // OPERATION
+		 << "'" << fileName << "', "                             // FILE_NAME
+		 << reqNumber << ", "                                    // REQ_NUM
+		 << targetState << ", ";                                 // MIGRATION_STATE
 
 	try {
 		FsObj fso(fileName);
@@ -75,24 +76,23 @@ void SelRecall::addFileName(std::string fileName)
 			return;
 		}
 
-		ssql << statbuf.st_size << ", ";                               // FILE_SIZE
-
-		ssql << fso.getFsId() << ", ";                                 // FS_ID
-		ssql << fso.getIGen() << ", ";                                 // I_GEN
-		ssql << fso.getINode() << ", ";                                // I_NUM
-		ssql << statbuf.st_mtime << ", ";                              // MTIME
-		ssql << time(NULL) << ", ";                                    // LAST_UPD
+		ssql << statbuf.st_size << ", "                          // FILE_SIZE
+			 << fso.getFsId() << ", "                            // FS_ID
+			 << fso.getIGen() << ", "                            // I_GEN
+			 << fso.getINode() << ", "                           // I_NUM
+			 << statbuf.st_mtime << ", "                         // MTIME
+			 << time(NULL) << ", ";                              // LAST_UPD
 		state = fso.getMigState();
 		if ( fso.getMigState() == FsObj::RESIDENT ) {
 			MSG(LTFSDMS0026I, fileName.c_str());
 			return;
 		}
-		ssql << state << ", ";                                         // FILE_STATE
+		ssql << state << ", ";                                   // FILE_STATE
 		tapeId = fso.getAttribute(Const::DMAPI_ATTR);
-		ssql << "'" << tapeId << "', ";                                // TAPE_ID
+		ssql << "'" << tapeId << "', ";                          // TAPE_ID
 		tapeName = Scheduler::getTapeName(fileName, tapeId);
-		ssql << getStartBlock(tapeName) << ", ";                       // START_BLOCK
-		ssql << 0 << ");";                                             // FAILED
+		ssql << getStartBlock(tapeName) << ", "                  // START_BLOCK
+			 << 0 << ");";                                       // FAILED
 	}
 	catch ( int error ) {
 		MSG(LTFSDMS0017E, fileName.c_str());
@@ -117,7 +117,8 @@ void SelRecall::addRequest()
 	ssql.str("");
 	ssql.clear();
 
-	ssql << "SELECT TAPE_ID FROM JOB_QUEUE WHERE REQ_NUM=" << reqNumber << " GROUP BY TAPE_ID";
+	ssql << "SELECT TAPE_ID FROM JOB_QUEUE WHERE REQ_NUM="
+		 << reqNumber << " GROUP BY TAPE_ID";
 
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 
@@ -129,14 +130,15 @@ void SelRecall::addRequest()
 
 		const char *cstr = reinterpret_cast<const char*>(sqlite3_column_text (stmt, 0));
 
-		ssql2 << "INSERT INTO REQUEST_QUEUE (OPERATION, REQ_NUM, TARGET_STATE, COLOC_GRP, TAPE_ID, TIME_ADDED, STATE) ";
-		ssql2 << "VALUES (" << DataBase::SELRECALL << ", ";                                     // OPERATION
-		ssql2 << reqNumber << ", ";                                                             // FILE_NAME
-		ssql2 << targetState << ", ";                                                           // TARGET_STATE
-		ssql2 << "NULL" << ", ";                                                                // COLOC_GRP
-		ssql2 << "'" << (cstr ? std::string(cstr) : std::string("")) << "', ";                  // TAPE_ID
-		ssql2 << time(NULL) << ", ";                                                            // TIME_ADDED
-		ssql2 << DataBase::REQ_NEW << ");";                                                     // STATE
+		ssql2 << "INSERT INTO REQUEST_QUEUE (OPERATION, REQ_NUM, TARGET_STATE, "
+			  << "COLOC_GRP, TAPE_ID, TIME_ADDED, STATE) "
+			  << "VALUES (" << DataBase::SELRECALL << ", "                          // OPERATION
+			  << reqNumber << ", "                                                  // FILE_NAME
+			  << targetState << ", "                                                // TARGET_STATE
+			  << "NULL" << ", "                                                     // COLOC_GRP
+			  << "'" << (cstr ? std::string(cstr) : std::string("")) << "', "       // TAPE_ID
+			  << time(NULL) << ", "                                                 // TIME_ADDED
+			  << DataBase::REQ_NEW << ");";                                         // STATE
 
 		sqlite3_statement::prepare(ssql2.str(), &stmt2);
 
@@ -151,7 +153,8 @@ void SelRecall::addRequest()
 }
 
 
-unsigned long recall(std::string fileName, std::string tapeId, FsObj::file_state state, FsObj::file_state toState)
+unsigned long recall(std::string fileName, std::string tapeId,
+					 FsObj::file_state state, FsObj::file_state toState)
 
 {
 	struct stat statbuf;
@@ -229,8 +232,8 @@ void recallStep(int reqNum, std::string tapeId, FsObj::file_state toState)
 	Scheduler::updcond.notify_all();
 	lock.unlock();
 
-	ssql << "SELECT ROWID, FILE_NAME, FILE_STATE FROM JOB_QUEUE WHERE REQ_NUM=" << reqNum;
-	ssql << " AND TAPE_ID='" << tapeId << "' ORDER BY START_BLOCK";
+	ssql << "SELECT ROWID, FILE_NAME, FILE_STATE FROM JOB_QUEUE WHERE REQ_NUM="
+		 << reqNum << " AND TAPE_ID='" << tapeId << "' ORDER BY START_BLOCK";
 
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 
@@ -265,9 +268,9 @@ void recallStep(int reqNum, std::string tapeId, FsObj::file_state toState)
 		ssql.str("");
 		ssql.clear();
 
-		ssql << "UPDATE JOB_QUEUE SET FILE_STATE = " <<  toState;
-		ssql << " WHERE REQ_NUM=" << reqNum << " AND TAPE_ID ='" << tapeId << "' AND (ROWID BETWEEN ";
-		ssql << group_begin << " AND " << group_end << ")";
+		ssql << "UPDATE JOB_QUEUE SET FILE_STATE = " <<  toState
+			 << " WHERE REQ_NUM=" << reqNum << " AND TAPE_ID ='" << tapeId
+			 << "' AND (ROWID BETWEEN " << group_begin << " AND " << group_end << ")";
 
 		sqlite3_stmt *stmt2;
 
@@ -303,8 +306,8 @@ void SelRecall::execRequest(int reqNum, int tgtState, std::string tapeId)
 		recallStep(reqNum, tapeId, FsObj::RESIDENT);
 
 	std::unique_lock<std::mutex> lock(Scheduler::mtx);
-	ssql << "UPDATE TAPE_LIST SET STATE=" << DataBase::TAPE_FREE;
-	ssql << " WHERE TAPE_ID='" << tapeId << "';";
+	ssql << "UPDATE TAPE_LIST SET STATE=" << DataBase::TAPE_FREE
+		 << " WHERE TAPE_ID='" << tapeId << "';";
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 	rc = sqlite3_statement::step(stmt);
 	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
@@ -315,8 +318,8 @@ void SelRecall::execRequest(int reqNum, int tgtState, std::string tapeId)
 
 	ssql.str("");
 	ssql.clear();
-	ssql << "UPDATE REQUEST_QUEUE SET STATE=" << DataBase::REQ_COMPLETED;
-	ssql << " WHERE REQ_NUM=" << reqNum << " AND TAPE_ID='" << tapeId << "';";
+	ssql << "UPDATE REQUEST_QUEUE SET STATE=" << DataBase::REQ_COMPLETED
+		 << " WHERE REQ_NUM=" << reqNum << " AND TAPE_ID='" << tapeId << "';";
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 	rc = sqlite3_statement::step(stmt);
 	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);

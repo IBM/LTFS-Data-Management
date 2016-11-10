@@ -18,7 +18,8 @@
 #include "Scheduler.h"
 #include "FileOperation.h"
 
-bool FileOperation::queryResult(long reqNumber, long *resident, long *premigrated, long *migrated)
+bool FileOperation::queryResult(long reqNumber, long *resident,
+								long *premigrated, long *migrated)
 
 {
 	int rc;
@@ -46,7 +47,8 @@ bool FileOperation::queryResult(long reqNumber, long *resident, long *premigrate
 	ssql.str("");
 	ssql.clear();
 
-	ssql << "SELECT FILE_STATE, COUNT(*) FROM JOB_QUEUE WHERE REQ_NUM=" << reqNumber << " GROUP BY FILE_STATE";
+	ssql << "SELECT FILE_STATE, COUNT(*) FROM JOB_QUEUE WHERE REQ_NUM="
+		 << reqNumber << " GROUP BY FILE_STATE";
 
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 

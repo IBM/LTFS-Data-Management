@@ -8,7 +8,8 @@ private:
 	LTFSDmProtocol::LTFSDmSelRecRequest::State targetState;
 	long getStartBlock(std::string tapeName);
 public:
-	SelRecall(unsigned long _pid, long _reqNumber, LTFSDmProtocol::LTFSDmSelRecRequest::State _targetState) :
+	SelRecall(unsigned long _pid, long _reqNumber,
+			  LTFSDmProtocol::LTFSDmSelRecRequest::State _targetState) :
 		pid(_pid), reqNumber(_reqNumber), targetState(_targetState) {}
 	void addFileName(std::string fileName);
 	void addRequest();

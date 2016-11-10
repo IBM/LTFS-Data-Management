@@ -36,12 +36,13 @@ void Migration::addFileName(std::string fileName)
 	std::stringstream ssql;
 	sqlite3_stmt *stmt;
 
-	ssql << "INSERT INTO JOB_QUEUE (OPERATION, FILE_NAME, REQ_NUM, TARGET_STATE, COLOC_GRP, FILE_SIZE, FS_ID, I_GEN, I_NUM, MTIME, LAST_UPD, FILE_STATE, FAILED) ";
-	ssql << "VALUES (" << DataBase::MIGRATION << ", ";            // OPERATION
-	ssql << "'" << fileName << "', ";                             // FILE_NAME
-	ssql << reqNumber << ", ";                                    // REQ_NUM
-	ssql << targetState << ", ";                                  // MIGRATION_STATE
-	ssql << jobnum % colFactor << ", ";                           // COLOC_GRP
+	ssql << "INSERT INTO JOB_QUEUE (OPERATION, FILE_NAME, REQ_NUM, TARGET_STATE, "
+		 << "COLOC_GRP, FILE_SIZE, FS_ID, I_GEN, I_NUM, MTIME, LAST_UPD, FILE_STATE, FAILED) "
+		 << "VALUES (" << DataBase::MIGRATION << ", "            // OPERATION
+		 << "'" << fileName << "', "                             // FILE_NAME
+		 << reqNumber << ", "                                    // REQ_NUM
+		 << targetState << ", "                                  // MIGRATION_STATE
+		 << jobnum % colFactor << ", ";                          // COLOC_GRP
 
 	try {
 		FsObj fso(fileName);
@@ -52,15 +53,14 @@ void Migration::addFileName(std::string fileName)
 			return;
 		}
 
-		ssql << statbuf.st_size << ", ";                          // FILE_SIZE
-
-		ssql << fso.getFsId() << ", ";                            // FS_ID
-		ssql << fso.getIGen() << ", ";                            // I_GEN
-		ssql << fso.getINode() << ", ";                           // I_NUM
-		ssql << statbuf.st_mtime << ", ";                             // MTIME
-		ssql << time(NULL) << ", ";                                   // LAST_UPD
-		ssql << fso.getMigState() << ", ";                            // FILE_STATE
-		ssql << 0 << ");";                                            // FAILED
+		ssql << statbuf.st_size << ", "                          // FILE_SIZE
+			 << fso.getFsId() << ", "                            // FS_ID
+			 << fso.getIGen() << ", "                            // I_GEN
+			 << fso.getINode() << ", "                           // I_NUM
+			 << statbuf.st_mtime << ", "                         // MTIME
+			 << time(NULL) << ", "                               // LAST_UPD
+			 << fso.getMigState() << ", "                        // FILE_STATE
+			ssql << 0 << ");";                                   // FAILED
 	}
 	catch ( int error ) {
 		MSG(LTFSDMS0017E, fileName.c_str());
@@ -108,7 +108,8 @@ void Migration::addRequest()
 	int colNumber;
 	std::string tapeId;
 
-	ssql << "SELECT COLOC_GRP FROM JOB_QUEUE WHERE REQ_NUM=" << reqNumber << " GROUP BY COLOC_GRP";
+	ssql << "SELECT COLOC_GRP FROM JOB_QUEUE WHERE REQ_NUM="
+		 << reqNumber << " GROUP BY COLOC_GRP";
 
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 
@@ -126,14 +127,15 @@ void Migration::addRequest()
 		colNumber = sqlite3_column_int (stmt, 0);
 		tapeId = tapeList[colNumber %tapeList.size()];
 
-		ssql2 << "INSERT INTO REQUEST_QUEUE (OPERATION, REQ_NUM, TARGET_STATE, COLOC_GRP, TAPE_ID, TIME_ADDED, STATE) ";
-		ssql2 << "VALUES (" << DataBase::MIGRATION << ", ";                                     // OPERATION
-		ssql2 << reqNumber << ", ";                                                             // FILE_NAME
-		ssql2 << targetState << ", ";                                                           // TARGET_STATE
-		ssql2 << colNumber << ", ";                                                             // COLOC_GRP
-		ssql2 << "'" << tapeId << "', ";                                                        // TAPE_ID
-		ssql2 << time(NULL) << ", ";                                                            // TIME_ADDED
-		ssql2 << DataBase::REQ_NEW << ");";                                                     // STATE
+		ssql2 << "INSERT INTO REQUEST_QUEUE (OPERATION, REQ_NUM, TARGET_STATE, "
+			  << "COLOC_GRP, TAPE_ID, TIME_ADDED, STATE) "
+			  << "VALUES (" << DataBase::MIGRATION << ", "                         // OPERATION
+			  << reqNumber << ", "                                                 // FILE_NAME
+			  << targetState << ", "                                               // TARGET_STATE
+			  << colNumber << ", "                                                 // COLOC_GRP
+			  << "'" << tapeId << "', "                                            // TAPE_ID
+			  << time(NULL) << ", "                                                // TIME_ADDED
+			  << DataBase::REQ_NEW << ");";                                        // STATE
 
 		sqlite3_statement::prepare(ssql2.str(), &stmt2);
 
@@ -248,8 +250,8 @@ bool migrationStep(int reqNum, int colGrp, std::string tapeId, int fromState, in
 	Scheduler::updcond.notify_all();
 	lock.unlock();
 
-	ssql << "SELECT ROWID, FILE_NAME FROM JOB_QUEUE WHERE REQ_NUM=" << reqNum;
-	ssql << " AND COLOC_GRP=" << colGrp << " AND FILE_STATE=" << fromState;
+	ssql << "SELECT ROWID, FILE_NAME FROM JOB_QUEUE WHERE REQ_NUM=" << reqNum
+		 << " AND COLOC_GRP=" << colGrp << " AND FILE_STATE=" << fromState;
 
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 
@@ -291,8 +293,9 @@ bool migrationStep(int reqNum, int colGrp, std::string tapeId, int fromState, in
 		ssql.str("");
 		ssql.clear();
 
-		ssql << "UPDATE JOB_QUEUE SET FILE_STATE = " <<  toState;
-		ssql << " WHERE REQ_NUM=" << reqNum << " AND COLOC_GRP = " << colGrp << " AND (ROWID BETWEEN " << group_begin << " AND " << group_end << ")";
+		ssql << "UPDATE JOB_QUEUE SET FILE_STATE = " <<  toState
+			 << " WHERE REQ_NUM=" << reqNum << " AND COLOC_GRP = " << colGrp
+			 << " AND (ROWID BETWEEN " << group_begin << " AND " << group_end << ")";
 
 		sqlite3_stmt *stmt2;
 
@@ -337,7 +340,8 @@ void Migration::execRequest(int reqNum, int tgtState, int colGrp, std::string ta
 
 	tapePath << Const::LTFS_PATH << "/" << tapeId;
 
-	if ( setxattr(tapePath.str().c_str(), Const::LTFS_SYNC_ATTR.c_str(), Const::LTFS_SYNC_VAL.c_str(), Const::LTFS_SYNC_VAL.length(), 0) == -1 ) {
+	if ( setxattr(tapePath.str().c_str(), Const::LTFS_SYNC_ATTR.c_str(),
+				  Const::LTFS_SYNC_VAL.c_str(), Const::LTFS_SYNC_VAL.length(), 0) == -1 ) {
 		if ( errno != ENODATA ) {
 			TRACE(Trace::error, errno);
 			MSG(LTFSDMS0024E, tapeId);
@@ -346,8 +350,8 @@ void Migration::execRequest(int reqNum, int tgtState, int colGrp, std::string ta
 	}
 
 	std::unique_lock<std::mutex> lock(Scheduler::mtx);
-	ssql << "UPDATE TAPE_LIST SET STATE=" << DataBase::TAPE_FREE;
-	ssql << " WHERE TAPE_ID='" << tapeId << "';";
+	ssql << "UPDATE TAPE_LIST SET STATE=" << DataBase::TAPE_FREE
+		 << " WHERE TAPE_ID='" << tapeId << "';";
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 	rc = sqlite3_statement::step(stmt);
 	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);

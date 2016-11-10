@@ -55,21 +55,13 @@ public:
 
 			try {
 				mtx.lock();
-				tracefile << curctime << ".";
-				tracefile << std::setfill('0') << std::setw(6) << curtime.tv_usec << ":[";
-				tracefile << std::setfill('0') << std::setw(6) << getpid() << ":";
-#ifdef __linux__
-				tracefile << std::setfill('0') << std::setw(6) << syscall(SYS_gettid) << "]:";
-#elif __APPLE__
-				uint64_t tid;
-				pthread_threadid_np(pthread_self(), &tid);
-				tracefile << std::setfill('0') << std::setw(6) << tid << "]:";
-#else
-#error "unsupported platform"
-#endif
-				tracefile << std::setfill('-') << std::setw(20) << basename((char *) filename);
-				tracefile << "(" << std::setfill('0') << std::setw(4) << linenr << "):";
-				tracefile << varname << "(" << s << ")" << std::endl;
+				tracefile << curctime << "."
+						  << std::setfill('0') << std::setw(6) << curtime.tv_usec << ":["
+						  << std::setfill('0') << std::setw(6) << getpid() << ":"
+						  << std::setfill('0') << std::setw(6) << syscall(SYS_gettid) << "]:"
+						  << std::setfill('-') << std::setw(20) << basename((char *) filename)
+						  << "(" << std::setfill('0') << std::setw(4) << linenr << "):"
+						  << varname << "(" << s << ")" << std::endl;
 				tracefile.flush();
 				mtx.unlock();
 			}
