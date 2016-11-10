@@ -13,6 +13,7 @@
 #include <fstream>
 #include <condition_variable>
 #include <thread>
+#include <map>
 
 #include <sqlite3.h>
 

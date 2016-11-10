@@ -1,16 +1,19 @@
+#ifndef _UPDATER_H
+#define _UPDATER_H
+
 class Updater {
 protected:
 	static std::mutex updmutex;
 	static std::condition_variable updcond;
-	static std::atomic<bool> done;
 	long reqNum;
+	static std::atomic<bool> done;
 	struct updateInfo {
 		int start;
 		int end;
 		FsObj::file_state state;
 	};
 public:
-	MigrationUpdater(int _reqNum) : reqNum(_reqNum), done(false) {}
+	Updater(int _reqNum) : reqNum(_reqNum) { done=false; }
 	virtual void run() {}
 };
 
@@ -33,3 +36,5 @@ public:
 	updateInfo getUpdate(std::string tapeId);
 	void run();
 };
+
+#endif /* _UPDATER_H */

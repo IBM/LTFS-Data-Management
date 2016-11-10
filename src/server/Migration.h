@@ -15,6 +15,7 @@ public:
 		pid(_pid), reqNumber(_reqNumber), colFactor(_colFactor), targetState(_targetState), jobnum(0) {}
 	void addFileName(std::string fileName);
 	void addRequest();
+	static void execRequest(int reqNum, int tgtState, int colGrp, std::string tapeId);
 };
 
 #endif /* _MIGRATION_H */

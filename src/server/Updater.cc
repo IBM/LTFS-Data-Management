@@ -1,11 +1,17 @@
 #include <string>
+#include <sstream>
 #include <atomic>
 #include <mutex>
 #include <condition_variable>
 #include <map>
 #include <chrono>
 
+#include <sqlite3.h>
+
+#include "src/common/const/Const.h"
 #include "src/connector/Connector.h"
+#include "DataBase.h"
+#include "Scheduler.h"
 #include "Updater.h"
 
 
@@ -13,7 +19,7 @@ void MigrationUpdater::setUpdate(int colGrp, int end, FsObj::file_state state)
 
 {
     std::unique_lock<std::mutex> lock(MigrationUpdater::updmutex);
-	if ( statusMap[colGrp].start = Const::UNSET )
+	if ( statusMap[colGrp].start == Const::UNSET )
 		statusMap[colGrp].start = end;
 	statusMap[colGrp].end = end;
 	statusMap[colGrp].state = state;
@@ -40,6 +46,7 @@ void MigrationUpdater::run()
 	std::stringstream ssql;
 	std::unique_lock<std::mutex> slck(Scheduler::updmtx);
 	std::unique_lock<std::mutex> lock(MigrationUpdater::updmutex);
+	int rc;
 
 	while ( !MigrationUpdater::done ) {
 		updcond.wait_for(lock, std::chrono::seconds(10), [](){return  MigrationUpdater::done == true;});
@@ -54,8 +61,8 @@ void MigrationUpdater::run()
 			slck.lock();
 
 			sqlite3_statement::prepare(ssql.str(), &stmt);
-			rc2 = sqlite3_statement::step(stmt);
-			sqlite3_statement::checkRcAndFinalize(stmt, rc2, SQLITE_DONE);
+			rc = sqlite3_statement::step(stmt);
+			sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 
 			it->second.start = Const::UNSET;
 

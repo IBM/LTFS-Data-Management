@@ -12,6 +12,7 @@ public:
 		pid(_pid), reqNumber(_reqNumber), targetState(_targetState) {}
 	void addFileName(std::string fileName);
 	void addRequest();
+	static void execRequest(int reqNum, int tgtState, std::string tapeId);
 };
 
 #endif /* _SELRECALL_H */

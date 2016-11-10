@@ -10,6 +10,7 @@ public:
 	static std::mutex updmtx;
 	static std::condition_variable updcond;
 	static std::atomic<int> updReq;
+	static std::map<std::string, std::atomic<bool>> suspend_map;
 	static std::string getTapeName(std::string fileName, std::string tapeId);
 	Scheduler() {}
 	~Scheduler() {};
