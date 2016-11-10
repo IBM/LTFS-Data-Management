@@ -60,7 +60,7 @@ void Migration::addFileName(std::string fileName)
 			 << statbuf.st_mtime << ", "                         // MTIME
 			 << time(NULL) << ", "                               // LAST_UPD
 			 << fso.getMigState() << ", "                        // FILE_STATE
-			ssql << 0 << ");";                                   // FAILED
+			 << 0 << ");";                                       // FAILED
 	}
 	catch ( int error ) {
 		MSG(LTFSDMS0017E, fileName.c_str());
