@@ -357,7 +357,6 @@ void Migration::execRequest(int reqNum, int tgtState, int colGrp, std::string ta
 	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 	numPremig--;
 	Scheduler::cond.notify_one();
-	lock.unlock();
 
 	if ( tgtState != LTFSDmProtocol::LTFSDmMigRequest::PREMIGRATED )
 		migrationStep(reqNum, colGrp, tapeId,  FsObj::PREMIGRATED, FsObj::MIGRATED);
@@ -374,6 +373,8 @@ void Migration::execRequest(int reqNum, int tgtState, int colGrp, std::string ta
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 	rc = sqlite3_statement::step(stmt);
 	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+
+	lock.unlock();
 
 	Scheduler::updcond.notify_one();
 }

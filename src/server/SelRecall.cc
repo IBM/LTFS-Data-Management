@@ -312,7 +312,6 @@ void SelRecall::execRequest(int reqNum, int tgtState, std::string tapeId)
 	rc = sqlite3_statement::step(stmt);
 	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 	Scheduler::cond.notify_one();
-	lock.unlock();
 
 	std::unique_lock<std::mutex> updlock(Scheduler::updmtx);
 
