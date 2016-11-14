@@ -29,6 +29,11 @@ std::mutex Scheduler::mtx;
 std::condition_variable Scheduler::cond;
 std::mutex Scheduler::updmtx;
 std::condition_variable Scheduler::updcond;
+
+std::mutex Scheduler::reqmtx;
+std::condition_variable Scheduler::reqcond;
+reqIdent_t Scheduler::reqIdent;
+
 std::atomic<int> Scheduler::updReq(Const::UNSET);
 std::map<std::string, std::atomic<bool>> Scheduler::suspend_map;
 
@@ -57,7 +62,6 @@ void Scheduler::run(long key)
 	sqlite3_stmt *stmt;
 	std::stringstream ssql;
 	std::unique_lock<std::mutex> lock(mtx);
-	SubServer subs;
 	int rc;
 
 	suspend_map["DV1480L6"] = false;
@@ -111,11 +115,9 @@ void Scheduler::run(long key)
 				sqlite3_statement::checkRcAndFinalize(stmt3, rc, SQLITE_DONE);
 
 				int reqNum = sqlite3_column_int(stmt, 1);
-				int tgtState = sqlite3_column_int(stmt, 2);
 				int colGrp = sqlite3_column_int(stmt, 3);
 
-
-				std::stringstream thrdinfo;
+				std::unique_lock<std::mutex> reqlock(Scheduler::reqmtx);
 
 				switch (sqlite3_column_int(stmt, 0)) {
 					case DataBase::MIGRATION:
@@ -127,8 +129,8 @@ void Scheduler::run(long key)
 						rc = sqlite3_statement::step(stmt3);
 						sqlite3_statement::checkRcAndFinalize(stmt3, rc, SQLITE_DONE);
 
-						thrdinfo << "Migration(" << reqNum << "," << colGrp << ")";
-						subs.enqueue(thrdinfo.str(), Migration::execRequest, reqNum, tgtState, colGrp, tapeId);
+						Scheduler::reqIdent = (reqIdent_t) {reqNum, colGrp, std::string("")};
+						Scheduler::reqcond.notify_all();
 						break;
 					case DataBase::SELRECALL:
 						ssql.str("");
@@ -139,8 +141,8 @@ void Scheduler::run(long key)
 						rc = sqlite3_statement::step(stmt3);
 						sqlite3_statement::checkRcAndFinalize(stmt3, rc, SQLITE_DONE);
 
-						thrdinfo << "S.Recall(" << reqNum << ")";
-						subs.enqueue(thrdinfo.str(), SelRecall::execRequest, reqNum, tgtState, tapeId);
+						Scheduler::reqIdent = (reqIdent_t) {reqNum, Const::UNSET, tapeId};
+						Scheduler::reqcond.notify_all();
 						break;
 					default:
 						TRACE(Trace::error, sqlite3_column_int(stmt, 0));
@@ -150,5 +152,4 @@ void Scheduler::run(long key)
 		}
 		sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 	}
-	subs.waitAllRemaining();
 }

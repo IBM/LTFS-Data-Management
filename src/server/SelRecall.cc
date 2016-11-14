@@ -8,6 +8,7 @@
 #include <iostream>
 #include <sstream>
 
+#include <thread>
 #include <mutex>
 #include <condition_variable>
 
@@ -22,6 +23,7 @@
 
 #include "src/connector/Connector.h"
 
+#include "SubServer.h"
 #include "DataBase.h"
 #include "FileOperation.h"
 #include "Scheduler.h"
@@ -113,6 +115,8 @@ void SelRecall::addRequest()
 	int rc;
 	std::stringstream ssql;
 	sqlite3_stmt *stmt;
+	SubServer subs;
+	std::string tapeId;
 
 	ssql.str("");
 	ssql.clear();
@@ -129,6 +133,7 @@ void SelRecall::addRequest()
 		sqlite3_stmt *stmt2;
 
 		const char *cstr = reinterpret_cast<const char*>(sqlite3_column_text (stmt, 0));
+		tapeId = std::string(cstr ? cstr : "");
 
 		ssql2 << "INSERT INTO REQUEST_QUEUE (OPERATION, REQ_NUM, TARGET_STATE, "
 			  << "COLOC_GRP, TAPE_ID, TIME_ADDED, STATE) "
@@ -136,7 +141,7 @@ void SelRecall::addRequest()
 			  << reqNumber << ", "                                                  // FILE_NAME
 			  << targetState << ", "                                                // TARGET_STATE
 			  << "NULL" << ", "                                                     // COLOC_GRP
-			  << "'" << (cstr ? std::string(cstr) : std::string("")) << "', "       // TAPE_ID
+			  << "'" << tapeId << "', "                                             // TAPE_ID
 			  << time(NULL) << ", "                                                 // TIME_ADDED
 			  << DataBase::REQ_NEW << ");";                                         // STATE
 
@@ -145,6 +150,10 @@ void SelRecall::addRequest()
 		rc = sqlite3_statement::step(stmt2);
 
 		sqlite3_statement::checkRcAndFinalize(stmt2, rc, SQLITE_DONE);
+
+		std::stringstream thrdinfo;
+		thrdinfo << "S.Recall(" << reqNumber << ")";
+		subs.enqueue(thrdinfo.str(), SelRecall::execRequest, reqNumber, targetState, tapeId);
 
 		Scheduler::cond.notify_one();
 	}
@@ -299,6 +308,12 @@ void SelRecall::execRequest(int reqNum, int tgtState, std::string tapeId)
 	std::stringstream ssql;
 	sqlite3_stmt *stmt;
 	int rc;
+
+	std::unique_lock<std::mutex> reqlock(Scheduler::reqmtx);
+	Scheduler::reqcond.wait(reqlock, [reqNum, tapeId]() {
+			return ((Scheduler::reqIdent.reqNum == reqNum) &&
+					(Scheduler::reqIdent.tapeId.compare(tapeId) == 0));
+		});
 
 	if ( tgtState == LTFSDmProtocol::LTFSDmMigRequest::PREMIGRATED )
 		recallStep(reqNum, tapeId, FsObj::PREMIGRATED);
