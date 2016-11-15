@@ -25,7 +25,7 @@ bool FileOperation::queryResult(long reqNumber, long *resident,
 	int rc;
 	std::stringstream ssql;
 	sqlite3_stmt *stmt;
-	bool done = false;
+	bool done = true;
 	std::unique_lock<std::mutex> lock(Scheduler::updmtx);
 
 	ssql << "SELECT STATE FROM REQUEST_QUEUE WHERE REQ_NUM=" << reqNumber;
@@ -33,8 +33,8 @@ bool FileOperation::queryResult(long reqNumber, long *resident,
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 
 	while ( (rc = sqlite3_statement::step(stmt)) == SQLITE_ROW ) {
-		if ( sqlite3_column_int(stmt, 0) == DataBase::REQ_COMPLETED ) {
-			done = true;
+		if ( sqlite3_column_int(stmt, 0) != DataBase::REQ_COMPLETED ) {
+			done = false;
 		}
 	}
 	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);

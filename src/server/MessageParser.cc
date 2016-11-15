@@ -18,7 +18,6 @@
 #include "src/server/Server.h"
 #include "src/server/Receiver.h"
 
-#include "SubServer.h"
 #include "FileOperation.h"
 #include "Scheduler.h"
 #include "Migration.h"
@@ -90,7 +89,7 @@ void MessageParser::getObjects(LTFSDmCommServer *command, long localReqNumber,
 	}
 }
 
-void reqStatusMessage(long key, LTFSDmCommServer *command, FileOperation *fopt)
+void MessageParser::reqStatusMessage(long key, LTFSDmCommServer *command, FileOperation *fopt)
 
 {
 	long resident = 0;
@@ -153,8 +152,6 @@ void MessageParser::migrationMessage(long key, LTFSDmCommServer *command, long l
 	long requestNumber;
 	const LTFSDmProtocol::LTFSDmMigRequest migreq = command->migrequest();
 	long keySent = migreq.key();
-	std::stringstream thrdinfo;
-	SubServer subs;
 
 	TRACE(Trace::much, __PRETTY_FUNCTION__);
 	TRACE(Trace::little, keySent);
@@ -186,15 +183,9 @@ void MessageParser::migrationMessage(long key, LTFSDmCommServer *command, long l
 
 	getObjects(command, localReqNumber, pid, requestNumber, dynamic_cast<FileOperation*> (&mig));
 
-	thrdinfo << "StatusRequest(" << requestNumber << ")";
-
-	subs.enqueue(thrdinfo.str(), reqStatusMessage, key, command, dynamic_cast<FileOperation*> (&mig));
-
 	mig.addRequest();
 
-	//	reqStatusMessage(key, command, dynamic_cast<FileOperation*> (&mig));
-
-	subs.waitAllRemaining();
+	reqStatusMessage(key, command, dynamic_cast<FileOperation*> (&mig));
 }
 
 void  MessageParser::selRecallMessage(long key, LTFSDmCommServer *command, long localReqNumber)
@@ -204,8 +195,6 @@ void  MessageParser::selRecallMessage(long key, LTFSDmCommServer *command, long 
 	long requestNumber;
 	const LTFSDmProtocol::LTFSDmSelRecRequest recreq = command->selrecrequest();
 	long keySent = recreq.key();
-	std::stringstream thrdinfo;
-	SubServer subs;
 
 	TRACE(Trace::much, __PRETTY_FUNCTION__);
 	TRACE(Trace::little, keySent);
@@ -237,13 +226,9 @@ void  MessageParser::selRecallMessage(long key, LTFSDmCommServer *command, long 
 
 	getObjects(command, localReqNumber, pid, requestNumber, dynamic_cast<FileOperation*> (&srec));
 
-	thrdinfo << "StatusRequest(" << requestNumber << ")";
-	subs.enqueue(thrdinfo.str(), reqStatusMessage, key, command, dynamic_cast<FileOperation*> (&srec));
-
 	srec.addRequest();
 
-	//reqStatusMessage(key, command, dynamic_cast<FileOperation*> (&srec));
-	subs.waitAllRemaining();
+	reqStatusMessage(key, command, dynamic_cast<FileOperation*> (&srec));
 }
 
 void MessageParser::infoFilesMessage(long key, LTFSDmCommServer *command, long localReqNumber)

@@ -159,8 +159,6 @@ void SelRecall::addRequest()
 	}
 
 	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
-
-	subs.waitAllRemaining();
 }
 
 
@@ -316,8 +314,6 @@ void SelRecall::execRequest(int reqNum, int tgtState, std::string tapeId)
 			return ((Scheduler::reqIdent.reqNum == reqNum) &&
 					(Scheduler::reqIdent.tapeId.compare(tapeId) == 0));
 		});
-
-	reqlock.unlock();
 
 	if ( tgtState == LTFSDmProtocol::LTFSDmMigRequest::PREMIGRATED )
 		recallStep(reqNum, tapeId, FsObj::PREMIGRATED);
