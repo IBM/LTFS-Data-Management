@@ -75,7 +75,7 @@ void Scheduler::run(long key)
 
 		ssql.str("");
 		ssql.clear();
-		ssql << "SELECT OPERATION, REQ_NUM, TARGET_STATE, COLOC_GRP, TAPE_ID"
+		ssql << "SELECT OPERATION, REQ_NUM, COLOC_GRP, TAPE_ID"
 			 << " FROM REQUEST_QUEUE WHERE STATE=" << DataBase::REQ_NEW
 			 << " ORDER BY OPERATION,REQ_NUM;";
 
@@ -84,7 +84,7 @@ void Scheduler::run(long key)
 		while ( (rc = sqlite3_statement::step(stmt)) == SQLITE_ROW ) {
 			sqlite3_stmt *stmt2;
 
-			const char *tape_id = reinterpret_cast<const char*>(sqlite3_column_text (stmt, 4));
+			const char *tape_id = reinterpret_cast<const char*>(sqlite3_column_text (stmt, 3));
 			if (tape_id == NULL) {
 				MSG(LTFSDMS0020E);
 				continue;
@@ -115,7 +115,7 @@ void Scheduler::run(long key)
 				sqlite3_statement::checkRcAndFinalize(stmt3, rc, SQLITE_DONE);
 
 				int reqNum = sqlite3_column_int(stmt, 1);
-				int colGrp = sqlite3_column_int(stmt, 3);
+				int colGrp = sqlite3_column_int(stmt, 2);
 
 				std::unique_lock<std::mutex> reqlock(Scheduler::reqmtx);
 
@@ -131,6 +131,8 @@ void Scheduler::run(long key)
 
 						Scheduler::reqIdent = (reqIdent_t) {reqNum, colGrp, std::string("")};
 						Scheduler::reqcond.notify_all();
+						TRACE(Trace::little, reqNum);
+						TRACE(Trace::little, colGrp);
 						break;
 					case DataBase::SELRECALL:
 						ssql.str("");
@@ -143,6 +145,8 @@ void Scheduler::run(long key)
 
 						Scheduler::reqIdent = (reqIdent_t) {reqNum, Const::UNSET, tapeId};
 						Scheduler::reqcond.notify_all();
+						TRACE(Trace::little, reqNum);
+						TRACE(Trace::little, tapeId);
 						break;
 					default:
 						TRACE(Trace::error, sqlite3_column_int(stmt, 0));
