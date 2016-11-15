@@ -225,7 +225,7 @@ void recallStep(int reqNum, std::string tapeId, FsObj::file_state toState)
 	int rc, rc2;
     int group_end = 0;
     int group_begin = -1;
-	int accumSize = 0;
+	time_t start;
 	std::unique_lock<std::mutex> lock(Scheduler::updmtx);
 
 	Scheduler::updReq = reqNum;
@@ -236,6 +236,8 @@ void recallStep(int reqNum, std::string tapeId, FsObj::file_state toState)
 		 << reqNum << " AND TAPE_ID='" << tapeId << "' ORDER BY START_BLOCK";
 
 	sqlite3_statement::prepare(ssql.str(), &stmt);
+
+	start = time(NULL);
 
 	while ( (rc = sqlite3_statement::step(stmt) ) ) {
 		if ( rc != SQLITE_ROW && rc != SQLITE_DONE )
@@ -255,14 +257,14 @@ void recallStep(int reqNum, std::string tapeId, FsObj::file_state toState)
 			if ( state == toState )
 				continue;
 
-			accumSize += recall(std::string(cstr), tapeId, state, toState);
+			recall(std::string(cstr), tapeId, state, toState);
 
 			group_end = sqlite3_column_int(stmt, 0);
 			if ( group_begin == -1 )
 				group_begin = group_end;
-			if ( accumSize < Const::UPDATE_SIZE )
+			if ( time(NULL) - start < 10 )
 				continue;
-			accumSize = 0;
+			start = time(NULL);
 		}
 
 		ssql.str("");
@@ -323,5 +325,6 @@ void SelRecall::execRequest(int reqNum, int tgtState, std::string tapeId)
 	rc = sqlite3_statement::step(stmt);
 	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 
+	Scheduler::updReq = reqNum;
 	Scheduler::updcond.notify_one();
 }

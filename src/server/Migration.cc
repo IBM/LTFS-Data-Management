@@ -376,5 +376,6 @@ void Migration::execRequest(int reqNum, int tgtState, int colGrp, std::string ta
 
 	lock.unlock();
 
+	Scheduler::updReq = reqNum;
 	Scheduler::updcond.notify_one();
 }

@@ -25,24 +25,30 @@ bool FileOperation::queryResult(long reqNumber, long *resident,
 	int rc;
 	std::stringstream ssql;
 	sqlite3_stmt *stmt;
-	bool done = true;
-	std::unique_lock<std::mutex> lock(Scheduler::updmtx);
+	bool done;
+	long starttime = time(NULL);
 
-	ssql << "SELECT STATE FROM REQUEST_QUEUE WHERE REQ_NUM=" << reqNumber;
+	do {
+		ssql.str("");
+		ssql.clear();
+		done = true;
 
-	sqlite3_statement::prepare(ssql.str(), &stmt);
+		std::unique_lock<std::mutex> lock(Scheduler::updmtx);
 
-	while ( (rc = sqlite3_statement::step(stmt)) == SQLITE_ROW ) {
-		if ( sqlite3_column_int(stmt, 0) != DataBase::REQ_COMPLETED ) {
-			done = false;
+		ssql << "SELECT STATE FROM REQUEST_QUEUE WHERE REQ_NUM=" << reqNumber;
+
+		sqlite3_statement::prepare(ssql.str(), &stmt);
+
+		while ( (rc = sqlite3_statement::step(stmt)) == SQLITE_ROW ) {
+			if ( sqlite3_column_int(stmt, 0) != DataBase::REQ_COMPLETED ) {
+				done = false;
+			}
 		}
-	}
-	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+		sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 
-	if ( done == false )
-		Scheduler::updcond.wait(lock, [reqNumber]{return Scheduler::updReq == reqNumber;});
-
-	Scheduler::updReq = Const::UNSET;
+		if ( done == false )
+			Scheduler::updcond.wait(lock, [reqNumber]{return Scheduler::updReq == reqNumber;});
+	} while(!done && time(NULL) - starttime < 10);
 
 	ssql.str("");
 	ssql.clear();
