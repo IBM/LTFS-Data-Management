@@ -9,7 +9,6 @@
 #include <sstream>
 #include <vector>
 
-#include <thread>
 #include <mutex>
 #include <condition_variable>
 
@@ -24,7 +23,6 @@
 
 #include "src/connector/Connector.h"
 
-#include "SubServer.h"
 #include "DataBase.h"
 #include "FileOperation.h"
 #include "Scheduler.h"
@@ -107,10 +105,8 @@ void Migration::addRequest()
 	int rc;
 	std::stringstream ssql;
 	sqlite3_stmt *stmt;
-	int colGrp;
+	int colNumber;
 	std::string tapeId;
-	SubServer subs;
-
 
 	ssql << "SELECT COLOC_GRP FROM JOB_QUEUE WHERE REQ_NUM="
 		 << reqNumber << " GROUP BY COLOC_GRP";
@@ -128,15 +124,15 @@ void Migration::addRequest()
 		ssql2.str("");
 		ssql2.clear();
 
-		colGrp = sqlite3_column_int (stmt, 0);
-		tapeId = tapeList[colGrp %tapeList.size()];
+		colNumber = sqlite3_column_int (stmt, 0);
+		tapeId = tapeList[colNumber %tapeList.size()];
 
 		ssql2 << "INSERT INTO REQUEST_QUEUE (OPERATION, REQ_NUM, TARGET_STATE, "
 			  << "COLOC_GRP, TAPE_ID, TIME_ADDED, STATE) "
 			  << "VALUES (" << DataBase::MIGRATION << ", "                         // OPERATION
 			  << reqNumber << ", "                                                 // FILE_NAME
 			  << targetState << ", "                                               // TARGET_STATE
-			  << colGrp << ", "                                                    // COLOC_GRP
+			  << colNumber << ", "                                                 // COLOC_GRP
 			  << "'" << tapeId << "', "                                            // TAPE_ID
 			  << time(NULL) << ", "                                                // TIME_ADDED
 			  << DataBase::REQ_NEW << ");";                                        // STATE
@@ -147,16 +143,10 @@ void Migration::addRequest()
 
 		sqlite3_statement::checkRcAndFinalize(stmt2, rc, SQLITE_DONE);
 
-		std::stringstream thrdinfo;
-		thrdinfo << "Migration(" << reqNumber << "," << colGrp << ")";
-		subs.enqueue(thrdinfo.str(), Migration::execRequest, reqNumber, targetState, colGrp, tapeId);
-
 		Scheduler::cond.notify_one();
 	}
 
 	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
-
-	subs.waitAllRemaining();
 }
 
 
@@ -254,13 +244,6 @@ bool migrationStep(int reqNum, int colGrp, std::string tapeId, int fromState, in
     int group_begin = -1;
 	bool suspended = false;
 	time_t start;
-
-	std::unique_lock<std::mutex> reqlock(Scheduler::reqmtx);
-	Scheduler::reqcond.wait(reqlock, [reqNum, colGrp]() {
-			return ((Scheduler::reqIdent.reqNum == reqNum) &&
-					(Scheduler::reqIdent.colGrp == colGrp));
-		});
-
 	std::unique_lock<std::mutex> lock(Scheduler::updmtx);
 
 	Scheduler::updReq = reqNum;
