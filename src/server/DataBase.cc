@@ -85,7 +85,7 @@ void DataBase::createTables()
 		 << "FILE_NAME CHAR(4096) UNIQUE, "
 		 << "REQ_NUM INT NOT NULL, "
 		 << "TARGET_STATE INT NOT NULL, "
-		 << "REPL_NUM, "
+		 << "REPL_NUM INT, "
 		 << "COLOC_GRP INT, "
 		 << "FILE_SIZE INT NOT NULL, "
 		 << "FS_ID INT NOT NULL, "
@@ -113,10 +113,12 @@ void DataBase::createTables()
 		 << "OPERATION INT NOT NULL, "
 		 << "REQ_NUM INT NOT NULL, "
 		 << "TARGET_STATE INT, "
+		 << "REPL_NUM INT, "
 		 << "COLOC_GRP INT, "
 		 << "TAPE_ID CHAR(9), "
 		 << "TIME_ADDED INT NOT NULL, "
-		 << "STATE INT NOT NULL);";
+		 << "STATE INT NOT NULL, "
+		 << "CONSTRAINT REQUEST_QUEUE_UNIQUE UNIQUE(REQ_NUM, REPL_NUM, COLOC_GRP));";
 
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 
