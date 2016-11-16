@@ -75,54 +75,63 @@ void DataBase::open()
 void DataBase::createTables()
 
 {
-	std::string sql;
+	std::stringstream ssql;
 	sqlite3_stmt *stmt;
 	int rc;
 
-	sql = std::string("CREATE TABLE JOB_QUEUE(")
-		+ std::string("OPERATION INT NOT NULL, ")
-// "NULLs are still distinct in a UNIQUE column" => good for transparent recall
-		+ std::string("FILE_NAME CHAR(4096) UNIQUE PRIMARY KEY, ")
-		+ std::string("REQ_NUM INT NOT NULL, ")
-		+ std::string("TARGET_STATE INT NOT NULL, ")
-		+ std::string("COLOC_GRP INT, ")
-		+ std::string("FILE_SIZE INT NOT NULL, ")
-		+ std::string("FS_ID INT NOT NULL, ")
-		+ std::string("I_GEN INT NOT NULL, ")
-		+ std::string("I_NUM INT NOT NULL, ")
-		+ std::string("MTIME INT NOT NULL, ")
-		+ std::string("LAST_UPD INT NOT NULL, ")
-		+ std::string("TAPE_ID CHAR(9), ")
-		+ std::string("FILE_STATE INT NOT NULL, ")
-		+ std::string("START_BLOCK INT, ")
-		+ std::string("FAILED INT NOT NULL);");
+	ssql << "CREATE TABLE JOB_QUEUE("
+		 << "OPERATION INT NOT NULL, "
+		// "NULLs are still distinct in a UNIQUE column" => good for transparent recall
+		 << "FILE_NAME CHAR(4096) UNIQUE, "
+		 << "REQ_NUM INT NOT NULL, "
+		 << "TARGET_STATE INT NOT NULL, "
+		 << "REPL_NUM, "
+		 << "COLOC_GRP INT, "
+		 << "FILE_SIZE INT NOT NULL, "
+		 << "FS_ID INT NOT NULL, "
+		 << "I_GEN INT NOT NULL, "
+		 << "I_NUM INT NOT NULL, "
+		 << "MTIME INT NOT NULL, "
+		 << "LAST_UPD INT NOT NULL, "
+		 << "TAPE_ID CHAR(9), "
+		 << "FILE_STATE INT NOT NULL, "
+		 << "START_BLOCK INT, "
+		 << "FAILED INT NOT NULL, "
+		 << "CONSTRAINT JOB_QUEUE_UNIQUE_FILE_NAME UNIQUE (FILE_NAME, REPL_NUM), "
+		 << "CONSTRAINT JOB_QUEUE_UNIQUE_UID UNIQUE (FS_ID, I_GEN, I_NUM, REPL_NUM));";
 
-	sqlite3_statement::prepare(sql, &stmt);
-
-	rc = sqlite3_statement::step(stmt);
-
-	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
-
-	sql = std::string("CREATE TABLE REQUEST_QUEUE(")
-		+ std::string("OPERATION INT NOT NULL, ")
-		+ std::string("REQ_NUM INT NOT NULL, ")
-		+ std::string("TARGET_STATE INT, ")
-		+ std::string("COLOC_GRP INT, ")
-		+ std::string("TAPE_ID CHAR(9), ")
-		+ std::string("TIME_ADDED INT NOT NULL, ")
-		+ std::string("STATE INT NOT NULL);");
-
-	sqlite3_statement::prepare(sql, &stmt);
+	sqlite3_statement::prepare(ssql.str(), &stmt);
 
 	rc = sqlite3_statement::step(stmt);
 
 	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 
-	sql = std::string("CREATE TABLE TAPE_LIST(")
-		+ std::string("TAPE_ID CHAR(9), ")
-		+ std::string("STATE INT NOT NULL);");
+	ssql.str("");
+	ssql.clear();
 
-	sqlite3_statement::prepare(sql, &stmt);
+	ssql << "CREATE TABLE REQUEST_QUEUE("
+		 << "OPERATION INT NOT NULL, "
+		 << "REQ_NUM INT NOT NULL, "
+		 << "TARGET_STATE INT, "
+		 << "COLOC_GRP INT, "
+		 << "TAPE_ID CHAR(9), "
+		 << "TIME_ADDED INT NOT NULL, "
+		 << "STATE INT NOT NULL);";
+
+	sqlite3_statement::prepare(ssql.str(), &stmt);
+
+	rc = sqlite3_statement::step(stmt);
+
+	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+
+	ssql.str("");
+	ssql.clear();
+
+	ssql << "CREATE TABLE TAPE_LIST("
+		 << "TAPE_ID CHAR(9), "
+		 << "STATE INT NOT NULL);";
+
+	sqlite3_statement::prepare(ssql.str(), &stmt);
 
 	rc = sqlite3_statement::step(stmt);
 
@@ -130,11 +139,12 @@ void DataBase::createTables()
 
 	/* temporary for this prototype add two specific tapes initalially */
 
-	std::stringstream ssql;
+	ssql.str("");
+	ssql.clear();
 
-	ssql << "INSERT INTO TAPE_LIST (TAPE_ID, STATE) VALUES ";
-	ssql << "('DV1480L6', " << DataBase::TAPE_FREE << "), ";
-	ssql << "('DV1481L6', " << DataBase::TAPE_FREE << ");";
+	ssql << "INSERT INTO TAPE_LIST (TAPE_ID, STATE) VALUES "
+		 << "('DV1480L6', " << DataBase::TAPE_FREE << "), "
+		 << "('DV1481L6', " << DataBase::TAPE_FREE << ");";
 
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 
