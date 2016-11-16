@@ -49,7 +49,7 @@ long SelRecall::getStartBlock(std::string tapeName)
 		return startBlock;
 }
 
-void SelRecall::addFileName(std::string fileName)
+void SelRecall::addJob(std::string fileName)
 
 {
 	int rc;

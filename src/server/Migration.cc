@@ -28,7 +28,7 @@
 #include "Scheduler.h"
 #include "Migration.h"
 
-void Migration::addFileName(std::string fileName)
+void Migration::addJob(std::string fileName)
 
 {
 	int rc;

@@ -57,7 +57,7 @@ void MessageParser::getObjects(LTFSDmCommServer *command, long localReqNumber,
 			const LTFSDmProtocol::LTFSDmSendObjects::FileName& filename = sendobjects.filenames(j);
 			if ( filename.filename().compare("") != 0 ) {
 				try {
-					fopt->addFileName(filename.filename());
+					fopt->addJob(filename.filename());
 				}
 				catch(int error) {
 					if ( error == SQLITE_CONSTRAINT_PRIMARYKEY ||
