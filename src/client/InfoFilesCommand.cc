@@ -51,13 +51,10 @@ void InfoFilesCommand::doCommand(int argc, char **argv)
 	TRACE(Trace::little, optind);
 	traceParms();
 
-	if ( !fileList.compare("") && !directoryName.compare("") ) {
+	if ( !fileList.compare("") ) {
 		for ( int i=optind; i<argc; i++ ) {
 			parmList << argv[i] << std::endl;
 		}
-	}
-	else if ( directoryName.compare("") ) {
-		parmList << directoryName << std::endl;
 	}
 
 	isValidRegularFile();

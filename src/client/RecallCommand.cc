@@ -38,11 +38,6 @@ void RecallCommand::talkToBackend(std::stringstream *parmList)
 	else
 		recreq->set_state(LTFSDmProtocol::LTFSDmSelRecRequest::PREMIGRATED);
 
-	if (!directoryName.compare(""))
-		recreq->set_directory(true);
-	else
-		recreq->set_directory(false);
-
 	try {
 		commCommand.send();
 	}
@@ -103,13 +98,10 @@ void RecallCommand::doCommand(int argc, char **argv)
 	TRACE(Trace::little, optind);
 	traceParms();
 
-	if ( !fileList.compare("") && !directoryName.compare("") ) {
+	if ( !fileList.compare("") ) {
 		for ( int i=optind; i<argc; i++ ) {
 			parmList << argv[i] << std::endl;
 		}
-	}
-	else if ( directoryName.compare("") ) {
-		parmList << directoryName << std::endl;
 	}
 
 	isValidRegularFile();

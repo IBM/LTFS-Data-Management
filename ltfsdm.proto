@@ -33,7 +33,7 @@ message LTFSDmMigRequest {
 		MIGRATED = 1;
 	}
 	required State state = 4;
-	required bool directory = 5;
+	required int64 numReplica = 5;
 	required int64 colFactor = 6;
 }
 
@@ -52,23 +52,9 @@ message LTFSDmSelRecRequest {
 		RESIDENT = 1;
 	}
 	required State state = 4;
-	required bool directory = 5;
 }
 
 message LTFSDmSelRecRequestResp {
-	required bool success = 1;
-	required int64 reqNumber = 2;
-	required int64 pid = 3;
-}
-
-message LTFSDmInfoFilesRequest {
-	required uint64 key = 1;
-	required int64 reqNumber = 2;
-	required uint64 pid = 3;
-	required bool directory = 5;
-}
-
-message LTFSDmInfoFilesRequestResp {
 	required bool success = 1;
 	required int64 reqNumber = 2;
 	required int64 pid = 3;
@@ -123,9 +109,7 @@ message Command {
 		LTFSDmMigRequestResp migrequestresp = 10;
 		LTFSDmSelRecRequest selrecrequest = 11;
 		LTFSDmSelRecRequestResp selrecrequestresp = 12;
-		LTFSDmInfoFilesRequest infofilesrequest = 13;
-		LTFSDmInfoFilesRequestResp infofilesrequestresp = 14;
-		LTFSDmReqStatusRequest reqstatusrequest = 15;
-		LTFSDmReqStatusResp reqstatusresp = 16;
+		LTFSDmReqStatusRequest reqstatusrequest = 13;
+		LTFSDmReqStatusResp reqstatusresp = 14;
 	}
 }

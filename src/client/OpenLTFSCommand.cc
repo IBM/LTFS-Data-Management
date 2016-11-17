@@ -34,7 +34,7 @@ void OpenLTFSCommand::processOptions(int argc, char **argv)
 		switch( opt ) {
 			case 'h':
 				printUsage();
-				return;
+				throw(Error::LTFSDM_OK);
 			case 'w':
 				waitForCompletion = true;
 				break;
@@ -45,16 +45,16 @@ void OpenLTFSCommand::processOptions(int argc, char **argv)
 				recToResident = true;
 				break;
 			case 'n':
-				requestNumber = strtoul(optarg, NULL, 0);;
+				requestNumber = strtoul(optarg, NULL, 0);
 				break;
 			case 'c':
-				collocationFactor = strtoul(optarg, NULL, 0);;
+				collocationFactor = strtoul(optarg, NULL, 0);
 				break;
 			case 'f':
 				fileList = std::string(optarg);
 				break;
 			case 'R':
-				directoryName = std::string(optarg);
+				numReplica = strtoul(optarg, NULL, 0);
 				break;
 			case ':':
 				INFO(LTFSDMC0014E);
@@ -77,7 +77,7 @@ void OpenLTFSCommand::traceParms()
 	TRACE(Trace::little, requestNumber);
 	TRACE(Trace::little, collocationFactor);
 	TRACE(Trace::little, fileList);
-	TRACE(Trace::little, directoryName);
+	TRACE(Trace::little, numReplica);
 	TRACE(Trace::little, command);
 	TRACE(Trace::little, optionStr);
 	TRACE(Trace::little, key);
@@ -155,25 +155,15 @@ void OpenLTFSCommand::connect()
 void OpenLTFSCommand::checkOptions(int argc, char **argv)
 
 {
-	if ( fileList.compare("") && directoryName.compare("") ) {
-		INFO(LTFSDMC0015E);
-		MSG(LTFSDMC0029E);
-		throw(Error::LTFSDM_GENERAL_ERROR);
-
+	if ( numReplica < 1 || numReplica > 3 ) {
+			INFO(LTFSDMC0015E);
+			throw(Error::LTFSDM_GENERAL_ERROR);
 	}
 
 	if (optind != argc) {
 		if (fileList.compare("")) {
 			INFO(LTFSDMC0016E);
-			MSG(LTFSDMC0029E);
 			throw(Error::LTFSDM_GENERAL_ERROR);
-
-		}
-		if (directoryName.compare("")) {
-			INFO(LTFSDMC0017E);
-			MSG(LTFSDMC0029E);
-			throw(Error::LTFSDM_GENERAL_ERROR);
-
 		}
 	}
 }

@@ -11,7 +11,7 @@ protected:
 		requestNumber(Const::UNSET),
 		collocationFactor(1),
 		fileList(""),
-		directoryName(""),
+		numReplica(1),
 	    command(command_),
 		optionStr(optionStr_),
 	    key(Const::UNSET) {};
@@ -21,7 +21,7 @@ protected:
 	long requestNumber;
 	unsigned long collocationFactor;
 	std::string fileList;
-	std::string directoryName;
+	long numReplica;
 	std::string command;
 	std::string optionStr;
 	std::ifstream fileListStrm;

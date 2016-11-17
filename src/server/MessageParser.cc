@@ -231,47 +231,6 @@ void  MessageParser::selRecallMessage(long key, LTFSDmCommServer *command, long 
 	reqStatusMessage(key, command, dynamic_cast<FileOperation*> (&srec));
 }
 
-void MessageParser::infoFilesMessage(long key, LTFSDmCommServer *command, long localReqNumber)
-
-{
-	unsigned long pid;
-	long requestNumber;
-	const LTFSDmProtocol::LTFSDmInfoFilesRequest infofilesreq = command->infofilesrequest();
-	long keySent = infofilesreq.key();
-
-	TRACE(Trace::much, __PRETTY_FUNCTION__);
-	TRACE(Trace::little, keySent);
-
-	if ( key != keySent ) {
-		MSG(LTFSDMS0008E, keySent);
-		return;
-	}
-
-	requestNumber = infofilesreq.reqnumber();
-	pid = infofilesreq.pid();
-
-	InfoFiles infofiles( pid, requestNumber);
-
-	LTFSDmProtocol::LTFSDmInfoFilesRequestResp *infofilesreqresp = command->mutable_infofilesrequestresp();
-
-	infofilesreqresp->set_success(true);
-	infofilesreqresp->set_reqnumber(requestNumber);
-	infofilesreqresp->set_pid(pid);
-
-	try {
-		command->send();
-	}
-	catch(...) {
-		TRACE(Trace::error, errno);
-		MSG(LTFSDMS0007E);
-		return;
-	}
-
-	getObjects(command, localReqNumber, pid, requestNumber, dynamic_cast<FileOperation*> (&infofiles));
-
-	infofiles.start();
-}
-
 void MessageParser::requestNumber(long key, LTFSDmCommServer *command, long *localReqNumber)
 
 {
@@ -408,9 +367,6 @@ void MessageParser::run(long key, LTFSDmCommServer command)
 			}
 			else if ( command.has_selrecrequest() ) {
 				selRecallMessage(key, &command, localReqNumber);
-			}
-			else if ( command.has_infofilesrequest() ) {
-				infoFilesMessage(key, &command, localReqNumber);
 			}
 			else if ( command.has_statusrequest() ) {
 				statusMessage(key, &command, localReqNumber);

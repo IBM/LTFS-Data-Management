@@ -71,7 +71,6 @@ int main(int argc, char *argv[]) {
 	migreq->set_reqnumber(4321);
 	migreq->set_pid(getpid());
 	migreq->set_state(LTFSDmProtocol::LTFSDmMigRequest::MIGRATED);
-	migreq->set_directory(false);
 
 	printf("send:\n");
 
