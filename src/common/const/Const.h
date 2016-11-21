@@ -21,11 +21,13 @@ namespace Const {
 	const std::string LTFS_NAME = std::string("ltfsdm");
 	const std::string LTFS_SYNC_ATTR = std::string("ltfs.sync");
 	const std::string LTFS_SYNC_VAL = std::string("1");
-	const std::string DMAPI_ATTR = std::string("TAPE_ID");
+	const std::string DMAPI_ATTR = std::string("LTFSDM");
 	const std::string LTFS_ATTR = std::string("user.FILE_PATH");
 	const std::string LTFS_START_BLOCK = std::string("user.ltfs.startblock");
-	const int READ_BUFFER_SIZE = 128*1024;
+	const int READ_BUFFER_SIZE = 512*1024;
 	const long UPDATE_SIZE = 200*1024*1024;
+	const int maxReplica = 3;
+	const int tapeIdLength = 8;
 }
 
 #endif /* _CONST_H */

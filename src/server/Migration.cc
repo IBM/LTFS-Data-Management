@@ -107,6 +107,7 @@ void Migration::addRequest()
 	sqlite3_stmt *stmt;
 	int colNumber;
 	std::string tapeId;
+	int i;
 
 	ssql << "SELECT COLOC_GRP FROM JOB_QUEUE WHERE REQ_NUM="
 		 << reqNumber << " GROUP BY COLOC_GRP";
@@ -118,32 +119,42 @@ void Migration::addRequest()
 
 	getTapes();
 
+	TRACE(Trace::little, reqNumber);
+	TRACE(Trace::little, numReplica);
+	TRACE(Trace::little, colFactor);
+
 	while ( (rc = sqlite3_statement::step(stmt)) == SQLITE_ROW ) {
-		std::unique_lock<std::mutex> lock(Scheduler::mtx);
-
-		ssql2.str("");
-		ssql2.clear();
-
 		colNumber = sqlite3_column_int (stmt, 0);
-		tapeId = tapeList[colNumber %tapeList.size()];
 
-		ssql2 << "INSERT INTO REQUEST_QUEUE (OPERATION, REQ_NUM, TARGET_STATE, "
-			  << "COLOC_GRP, TAPE_ID, TIME_ADDED, STATE) "
-			  << "VALUES (" << DataBase::MIGRATION << ", "                         // OPERATION
-			  << reqNumber << ", "                                                 // FILE_NAME
-			  << targetState << ", "                                               // TARGET_STATE
-			  << colNumber << ", "                                                 // COLOC_GRP
-			  << "'" << tapeId << "', "                                            // TAPE_ID
-			  << time(NULL) << ", "                                                // TIME_ADDED
-			  << DataBase::REQ_NEW << ");";                                        // STATE
+		for (i=0; i < numReplica; i++) {
+			std::unique_lock<std::mutex> lock(Scheduler::mtx);
 
-		sqlite3_statement::prepare(ssql2.str(), &stmt2);
+			ssql2.str("");
+			ssql2.clear();
 
-		rc = sqlite3_statement::step(stmt2);
+			tapeId = tapeList[(colNumber + i) % tapeList.size()];
 
-		sqlite3_statement::checkRcAndFinalize(stmt2, rc, SQLITE_DONE);
+			ssql2 << "INSERT INTO REQUEST_QUEUE (OPERATION, REQ_NUM, TARGET_STATE, "
+				  << "REPL_NUM, COLOC_GRP, TAPE_ID, TIME_ADDED, STATE) "
+				  << "VALUES (" << DataBase::MIGRATION << ", "                         // OPERATION
+				  << reqNumber << ", "                                                 // FILE_NAME
+				  << targetState << ", "                                               // TARGET_STATE
+				  << numReplica << ", "                                                // REPL_NUM
+				  << colNumber << ", "                                                 // COLOC_GRP
+				  << "'" << tapeId << "', "                                            // TAPE_ID
+				  << time(NULL) << ", "                                                // TIME_ADDED
+				  << DataBase::REQ_NEW << ");";                                        // STATE
 
-		Scheduler::cond.notify_one();
+			sqlite3_statement::prepare(ssql2.str(), &stmt2);
+
+			rc = sqlite3_statement::step(stmt2);
+
+			sqlite3_statement::checkRcAndFinalize(stmt2, rc, SQLITE_DONE);
+
+			Scheduler::cond.notify_one();
+			// lock.unlock();
+			// sleep(10);
+		}
 	}
 
 	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
@@ -160,7 +171,7 @@ unsigned long preMigrate(std::string fileName, std::string tapeId)
 	long wsize;
 	int fd = -1;
 	long offset = 0;
-
+	FsObj::attr_t attr;
 
 	try {
 		FsObj source(fileName);
@@ -207,7 +218,11 @@ unsigned long preMigrate(std::string fileName, std::string tapeId)
 
 		close(fd);
 
-		source.addAttribute(Const::DMAPI_ATTR, tapeId);
+		attr = source.getAttribute();
+		memset(attr.tapeId[attr.copies], 0, Const::tapeIdLength+1);
+		strncpy(attr.tapeId[attr.copies], tapeId.c_str(), Const::tapeIdLength);
+		attr.copies++;
+		source.addAttribute(attr);
 		source.finishPremigration();
 		source.unlock();
 	}
@@ -218,15 +233,19 @@ unsigned long preMigrate(std::string fileName, std::string tapeId)
 	return statbuf.st_size;
 }
 
-void stub(std::string fileName)
+void stub(std::string fileName, int numRepl)
 
 {
 	try {
 		FsObj source(fileName);
+		FsObj::attr_t attr;
 
 		source.lock();
-		source.prepareStubbing();
-		source.stub();
+		attr = source.getAttribute();
+		if ( attr.copies == numRepl ) {
+			source.prepareStubbing();
+			source.stub();
+		}
 		source.unlock();
 	}
 	catch ( int error ) {
@@ -234,7 +253,7 @@ void stub(std::string fileName)
 }
 
 
-bool migrationStep(int reqNum, int colGrp, std::string tapeId, int fromState, int toState)
+bool migrationStep(int reqNum, int numRepl, int colGrp, std::string tapeId, int fromState, int toState)
 
 {
 	sqlite3_stmt *stmt;
@@ -278,7 +297,7 @@ bool migrationStep(int reqNum, int colGrp, std::string tapeId, int fromState, in
 				preMigrate(std::string(cstr), tapeId);
 			}
 			else {
-				stub(std::string(cstr));
+				stub(std::string(cstr), numRepl);
 			}
 
 			group_end = sqlite3_column_int(stmt, 0);
@@ -322,7 +341,7 @@ bool migrationStep(int reqNum, int colGrp, std::string tapeId, int fromState, in
 
 std::atomic<int> numPremig(0);
 
-void Migration::execRequest(int reqNum, int tgtState, int colGrp, std::string tapeId)
+void Migration::execRequest(int reqNum, int tgtState, int numRepl, int colGrp, std::string tapeId)
 
 {
 	TRACE(Trace::much, __PRETTY_FUNCTION__);
@@ -336,7 +355,7 @@ void Migration::execRequest(int reqNum, int tgtState, int colGrp, std::string ta
 	numPremig++;
 	assert(numPremig<3);
 
-	suspended = migrationStep(reqNum, colGrp, tapeId,  FsObj::RESIDENT, FsObj::PREMIGRATED);
+	suspended = migrationStep(reqNum, numRepl, colGrp, tapeId,  FsObj::RESIDENT, FsObj::PREMIGRATED);
 
 	tapePath << Const::LTFS_PATH << "/" << tapeId;
 
@@ -359,7 +378,7 @@ void Migration::execRequest(int reqNum, int tgtState, int colGrp, std::string ta
 	Scheduler::cond.notify_one();
 
 	if ( tgtState != LTFSDmProtocol::LTFSDmMigRequest::PREMIGRATED )
-		migrationStep(reqNum, colGrp, tapeId,  FsObj::PREMIGRATED, FsObj::MIGRATED);
+		migrationStep(reqNum, numRepl, colGrp, tapeId,  FsObj::PREMIGRATED, FsObj::MIGRATED);
 
 	std::unique_lock<std::mutex> updlock(Scheduler::updmtx);
 

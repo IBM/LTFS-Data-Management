@@ -13,6 +13,11 @@ private:
 	unsigned long handleLength;
 	bool isLocked;
 public:
+	struct attr_t {
+		unsigned long typeId;
+		int copies;
+		char tapeId[Const::maxReplica][Const::tapeIdLength];
+	};
 	enum file_state {
 		RESIDENT,
 		PREMIGRATED,
@@ -30,9 +35,9 @@ public:
 	void unlock();
 	long read(long offset, unsigned long size, char *buffer);
 	long write(long offset, unsigned long size, char *buffer);
-	void addAttribute(std::string key, std::string value);
-	void remAttribute(std::string key);
-	std::string getAttribute(std::string key);
+	void addAttribute(attr_t value);
+	void remAttribute();
+	attr_t getAttribute();
 	void finishPremigration();
 	void finishRecall(file_state fstate);
 	void prepareStubbing();

@@ -7,6 +7,7 @@
 #include <string>
 #include <sstream>
 #include <atomic>
+#include <typeinfo>
 
 #include "src/common/util/util.h"
 #include "src/common/messages/Message.h"
@@ -353,14 +354,16 @@ long FsObj::write(long offset, unsigned long size, char *buffer)
 }
 
 
-void FsObj::addAttribute(std::string key, std::string value)
+void FsObj::addAttribute(attr_t value)
 
 {
 	int rc;
 
+	value.typeId = typeid(attr_t).hash_code();
+
 	rc = dm_set_dmattr(dmapiSession, handle, handleLength,
-					   dmapiToken, (dm_attrname_t *) key.c_str(),
-					   0, value.length(), (void *) value.c_str());
+					   dmapiToken, (dm_attrname_t *) Const::DMAPI_ATTR.c_str(),
+					   0, sizeof(attr_t), (void *) &value);
 
 	if ( rc == -1 ) {
 		TRACE(Trace::error, errno);
@@ -368,13 +371,13 @@ void FsObj::addAttribute(std::string key, std::string value)
 	}
 }
 
-void FsObj::remAttribute(std::string key)
+void FsObj::remAttribute()
 
 {
 	int rc;
 
 	rc = dm_remove_dmattr(dmapiSession, handle, handleLength,
-						  dmapiToken, 0, (dm_attrname_t *) key.c_str());
+						  dmapiToken, 0, (dm_attrname_t *) Const::DMAPI_ATTR.c_str());
 
 	if ( rc == -1 ) {
 		TRACE(Trace::error, errno);
@@ -382,36 +385,31 @@ void FsObj::remAttribute(std::string key)
 	}
 }
 
-std::string FsObj::getAttribute(std::string key)
+FsObj::attr_t FsObj::getAttribute()
 
 {
 	int rc;
-	char *buffer;
 	unsigned long rsize;
-	std::string value;
+	FsObj::attr_t attr;
 
-	buffer = (char *) malloc(1024);
-	memset(buffer, 0, 1024);
+	memset(&attr, 0, sizeof(attr_t));
 
 	rc = dm_get_dmattr(dmapiSession, handle, handleLength, DM_NO_TOKEN,
-					   (dm_attrname_t *) key.c_str(), 1024, buffer, &rsize);
+					   (dm_attrname_t *) Const::DMAPI_ATTR.c_str(), sizeof(attr), &attr, &rsize);
 
-	if ( rc == -1 && errno == E2BIG) {
-		free(buffer);
-		buffer = (char *) malloc(rsize);
-		memset(buffer, 0, rsize);
-		rc = dm_get_dmattr(dmapiSession, handle, handleLength, DM_NO_TOKEN,
-						   (dm_attrname_t *) key.c_str(), rsize, buffer, &rsize);
+	if ( rc == -1 && errno == ENOENT ) {
+		return attr;
 	}
-
-	if ( rc == -1 && errno != ENOENT) {
+	else if ( rc == -1 ) {
 		TRACE(Trace::error, errno);
 		throw(errno);
 	}
+	else if ( attr.typeId != typeid(attr).hash_code() ) {
+		TRACE(Trace::error, attr.typeId);
+		throw(Error::LTFSDM_ATTR_FORMAT);
+	}
 
-	value = std::string(buffer);
-	free(buffer);
-	return value;
+	return attr;
 }
 
 void FsObj::finishPremigration()
@@ -426,7 +424,7 @@ void FsObj::finishPremigration()
 	reg.rg_offset = 0;
 	reg.rg_size = 0;         /* 0 = infinity */
 
-	/* Mark the region as off-line */
+	/* Mark the region as premigrated */
 	reg.rg_flags = DM_REGION_WRITE | DM_REGION_TRUNCATE;
 	rc = dm_set_region(dmapiSession, handle, handleLength, dmapiToken, 1, &reg, &exact);
 

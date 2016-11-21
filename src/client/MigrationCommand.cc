@@ -34,6 +34,7 @@ void MigrationCommand::talkToBackend(std::stringstream *parmList)
 	migreq->set_key(key);
 	migreq->set_reqnumber(requestNumber);
 	migreq->set_pid(getpid());
+	migreq->set_numreplica(numReplica);
 	migreq->set_colfactor(collocationFactor);
 
 

@@ -35,7 +35,8 @@ void InfoFilesCommand::doCommand(int argc, char **argv)
 	std::istream *input;
 	std::string line;
 	char *file_name;
-	std::string tapeId;
+	std::stringstream tapeIds;
+	FsObj::attr_t attr;
 
 	if ( argc == 1 ) {
 		INFO(LTFSDMC0018E);
@@ -78,11 +79,20 @@ void InfoFilesCommand::doCommand(int argc, char **argv)
 			}
 			FsObj fso(file_name);
 			statbuf = fso.stat();
-			tapeId = fso.getAttribute(Const::DMAPI_ATTR);
-			if ( tapeId.compare("") == 0 )
-				tapeId = std::string("-");
+			attr = fso.getAttribute();
+			tapeIds.str("");
+			tapeIds.clear();
+			if ( attr.copies == 0 ) {
+				tapeIds << "-";
+			}
+			else {
+				for (int i=0; i<attr.copies; i++) {
+					if ( i != 0 ) tapeIds << ",";
+					tapeIds << attr.tapeId[i];
+				}
+			}
 			if ( !S_ISREG(statbuf.st_mode ) ) {
-				INFO(LTFSDMC0049I, '-', statbuf.st_size, statbuf.st_blocks, tapeId, file_name);
+				INFO(LTFSDMC0049I, '-', statbuf.st_size, statbuf.st_blocks, tapeIds.str(), file_name);
 			}
 			else {
 				switch(fso.getMigState()) {
@@ -91,7 +101,7 @@ void InfoFilesCommand::doCommand(int argc, char **argv)
 					case FsObj::RESIDENT: migstate='r'; break;
 					default: migstate=' ';
 				}
-				INFO(LTFSDMC0049I, migstate, statbuf.st_size, statbuf.st_blocks, tapeId, file_name);
+				INFO(LTFSDMC0049I, migstate, statbuf.st_size, statbuf.st_blocks, tapeIds.str(), file_name);
 			}
 		}
 		catch ( int error ) {

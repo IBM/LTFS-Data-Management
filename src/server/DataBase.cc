@@ -118,7 +118,7 @@ void DataBase::createTables()
 		 << "TAPE_ID CHAR(9), "
 		 << "TIME_ADDED INT NOT NULL, "
 		 << "STATE INT NOT NULL, "
-		 << "CONSTRAINT REQUEST_QUEUE_UNIQUE UNIQUE(REQ_NUM, REPL_NUM, COLOC_GRP));";
+		 << "CONSTRAINT REQUEST_QUEUE_UNIQUE UNIQUE(REQ_NUM, REPL_NUM, COLOC_GRP, TAPE_ID));";
 
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 

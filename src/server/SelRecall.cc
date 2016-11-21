@@ -59,6 +59,7 @@ void SelRecall::addJob(std::string fileName)
 	std::string tapeName;
 	std::string tapeId;
 	int state;
+	FsObj::attr_t attr;
 
 	ssql << "INSERT INTO JOB_QUEUE (OPERATION, FILE_NAME, REQ_NUM, TARGET_STATE, FILE_SIZE, "
 		 << "FS_ID, I_GEN, I_NUM, MTIME, LAST_UPD, FILE_STATE, TAPE_ID, START_BLOCK, FAILED) "
@@ -88,8 +89,8 @@ void SelRecall::addJob(std::string fileName)
 			return;
 		}
 		ssql << state << ", ";                                   // FILE_STATE
-		tapeId = fso.getAttribute(Const::DMAPI_ATTR);
-		ssql << "'" << tapeId << "', ";                          // TAPE_ID
+		attr = fso.getAttribute();
+		ssql << "'" << attr.tapeId[0] << "', ";                  // TAPE_ID
 		tapeName = Scheduler::getTapeName(fileName, tapeId);
 		ssql << getStartBlock(tapeName) << ", "                  // START_BLOCK
 			 << 0 << ");";                                       // FAILED
@@ -206,7 +207,7 @@ unsigned long recall(std::string fileName, std::string tapeId,
 
 		target.finishRecall(toState);
 		if ( toState == FsObj::RESIDENT )
-			target.remAttribute(Const::DMAPI_ATTR);
+			target.remAttribute();
 		target.unlock();
 	}
 	catch ( int error ) {

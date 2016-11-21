@@ -164,7 +164,7 @@ void MessageParser::migrationMessage(long key, LTFSDmCommServer *command, long l
 	requestNumber = migreq.reqnumber();
 	pid = migreq.pid();
 
-	Migration mig( pid, requestNumber, migreq.colfactor(), migreq.state());
+	Migration mig( pid, requestNumber, migreq.numreplica(), migreq.colfactor(), migreq.state());
 
 	LTFSDmProtocol::LTFSDmMigRequestResp *migreqresp = command->mutable_migrequestresp();
 

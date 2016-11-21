@@ -6,6 +6,7 @@
 #include <string>
 #include <sstream>
 
+#include "src/common/const/Const.h"
 #include "src/connector/Connector.h"
 
 Connector::Connector(bool cleanup)
@@ -100,20 +101,23 @@ long FsObj::write(long offset, unsigned long size, char *buffer)
 	return 0;
 }
 
-void FsObj::addAttribute(std::string key, std::string value)
+void FsObj::addAttribute(attr_t value)
 
 {
 }
 
-void FsObj::remAttribute(std::string key)
+void FsObj::remAttribute()
 
 {
 }
 
-std::string FsObj::getAttribute(std::string key)
+FsObj::attr_t  FsObj::getAttribute()
 
 {
-	return std::string("");
+	FsObj::attr_t attr;
+
+	memset(&attr, 0, sizeof(attr));
+	return attr;
 }
 
 void FsObj::finishPremigration()
