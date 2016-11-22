@@ -139,7 +139,7 @@ void Scheduler::run(long key)
 						rc = sqlite3_statement::step(stmt3);
 						sqlite3_statement::checkRcAndFinalize(stmt3, rc, SQLITE_DONE);
 
-						thrdinfo << "Migration(" << reqNum << "," << colGrp << ")";
+						thrdinfo << "Mig(" << reqNum << "," << replNum << "," << colGrp << ")";
 						subs.enqueue(thrdinfo.str(), Migration::execRequest, reqNum, tgtState, numRepl, replNum, colGrp, tapeId);
 						break;
 					case DataBase::SELRECALL:
@@ -152,7 +152,7 @@ void Scheduler::run(long key)
 						rc = sqlite3_statement::step(stmt3);
 						sqlite3_statement::checkRcAndFinalize(stmt3, rc, SQLITE_DONE);
 
-						thrdinfo << "S.Recall(" << reqNum << ")";
+						thrdinfo << "SelRec(" << reqNum << ")";
 						subs.enqueue(thrdinfo.str(), SelRecall::execRequest, reqNum, tgtState, tapeId);
 						break;
 					default:
