@@ -82,7 +82,7 @@ void DataBase::createTables()
 	ssql << "CREATE TABLE JOB_QUEUE("
 		 << "OPERATION INT NOT NULL, "
 		// "NULLs are still distinct in a UNIQUE column" => good for transparent recall
-		 << "FILE_NAME CHAR(4096) UNIQUE, "
+		 << "FILE_NAME CHAR(4096), "
 		 << "REQ_NUM INT NOT NULL, "
 		 << "TARGET_STATE INT NOT NULL, "
 		 << "REPL_NUM INT, "
@@ -113,6 +113,7 @@ void DataBase::createTables()
 		 << "OPERATION INT NOT NULL, "
 		 << "REQ_NUM INT NOT NULL, "
 		 << "TARGET_STATE INT, "
+		 << "NUM_REPL, "
 		 << "REPL_NUM INT, "
 		 << "COLOC_GRP INT, "
 		 << "TAPE_ID CHAR(9), "

@@ -16,7 +16,7 @@ public:
 	struct attr_t {
 		unsigned long typeId;
 		int copies;
-		char tapeId[Const::maxReplica][Const::tapeIdLength];
+		char tapeId[Const::maxReplica][Const::tapeIdLength+1];
 	};
 	enum file_state {
 		RESIDENT,

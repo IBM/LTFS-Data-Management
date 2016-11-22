@@ -71,7 +71,8 @@ void Scheduler::run(long key)
 
 		ssql.str("");
 		ssql.clear();
-		ssql << "SELECT OPERATION, REQ_NUM, TARGET_STATE, REPL_NUM, COLOC_GRP, TAPE_ID"
+		ssql << "SELECT OPERATION, REQ_NUM, TARGET_STATE, NUM_REPL,"
+			 << " REPL_NUM, COLOC_GRP, TAPE_ID"
 			 << " FROM REQUEST_QUEUE WHERE STATE=" << DataBase::REQ_NEW
 			 << " ORDER BY OPERATION,REQ_NUM;";
 
@@ -80,7 +81,7 @@ void Scheduler::run(long key)
 		while ( (rc = sqlite3_statement::step(stmt)) == SQLITE_ROW ) {
 			sqlite3_stmt *stmt2;
 
-			const char *tape_id = reinterpret_cast<const char*>(sqlite3_column_text (stmt, 5));
+			const char *tape_id = reinterpret_cast<const char*>(sqlite3_column_text (stmt, 6));
 			if (tape_id == NULL) {
 				MSG(LTFSDMS0020E);
 				continue;
@@ -113,11 +114,13 @@ void Scheduler::run(long key)
 				int reqNum = sqlite3_column_int(stmt, 1);
 				int tgtState = sqlite3_column_int(stmt, 2);
 				int numRepl = sqlite3_column_int(stmt, 3);
-				int colGrp = sqlite3_column_int(stmt, 4);
+				int replNum = sqlite3_column_int(stmt, 4);
+				int colGrp = sqlite3_column_int(stmt, 5);
 
 				TRACE(Trace::little, reqNum);
 				TRACE(Trace::little, tgtState);
 				TRACE(Trace::little, numRepl);
+				TRACE(Trace::little, replNum);
 				TRACE(Trace::little, colGrp);
 				TRACE(Trace::little, tape_id);
 
@@ -129,19 +132,22 @@ void Scheduler::run(long key)
 						ssql.str("");
 						ssql.clear();
 						ssql << "UPDATE REQUEST_QUEUE SET STATE=" << DataBase::REQ_INPROGRESS
-							 << " WHERE REQ_NUM=" << reqNum << " AND COLOC_GRP=" << colGrp << ";";
+							 << " WHERE REQ_NUM=" << reqNum
+							 << " AND REPL_NUM=" << replNum
+							 << " AND COLOC_GRP=" << colGrp << ";";
 						sqlite3_statement::prepare(ssql.str(), &stmt3);
 						rc = sqlite3_statement::step(stmt3);
 						sqlite3_statement::checkRcAndFinalize(stmt3, rc, SQLITE_DONE);
 
 						thrdinfo << "Migration(" << reqNum << "," << colGrp << ")";
-						subs.enqueue(thrdinfo.str(), Migration::execRequest, reqNum, tgtState, numRepl, colGrp, tapeId);
+						subs.enqueue(thrdinfo.str(), Migration::execRequest, reqNum, tgtState, numRepl, replNum, colGrp, tapeId);
 						break;
 					case DataBase::SELRECALL:
 						ssql.str("");
 						ssql.clear();
 						ssql << "UPDATE REQUEST_QUEUE SET STATE=" << DataBase::REQ_INPROGRESS
-							 << " WHERE REQ_NUM=" << reqNum << " AND TAPE_ID='" << tapeId << "';";
+							 << " WHERE REQ_NUM=" << reqNum
+							 << " AND TAPE_ID='" << tapeId << "';";
 						sqlite3_statement::prepare(ssql.str(), &stmt3);
 						rc = sqlite3_statement::step(stmt3);
 						sqlite3_statement::checkRcAndFinalize(stmt3, rc, SQLITE_DONE);

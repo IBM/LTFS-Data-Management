@@ -19,7 +19,7 @@ public:
 	void addJob(std::string fileName);
 	void addRequest();
 	static void execRequest(int reqNum, int tgtState,  int numRepl,
-							int colGrp, std::string tapeId);
+							int replNum, int colGrp, std::string tapeId);
 };
 
 #endif /* _MIGRATION_H */
