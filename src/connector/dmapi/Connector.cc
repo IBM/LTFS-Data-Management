@@ -8,6 +8,8 @@
 #include <sstream>
 #include <atomic>
 #include <typeinfo>
+#include <map>
+#include <mutex>
 
 #include "src/common/util/util.h"
 #include "src/common/messages/Message.h"
@@ -21,6 +23,25 @@
 
 std::atomic<dm_sessid_t> dmapiSession;
 std::atomic<dm_token_t> dmapiToken;
+
+
+typedef struct {
+	unsigned long long fsid;
+	unsigned int igen;
+	unsigned long long ino;
+} fuid_t;
+
+struct ltstr
+{
+	bool operator()(const fuid_t fuid1, const fuid_t fuid2) const
+	{
+		return fuid1.fsid < fuid2.fsid || fuid1.igen < fuid2.igen || fuid1.ino < fuid2.ino;
+	}
+};
+
+std::map<fuid_t, int, ltstr> fuidMap;
+
+std::mutex mtx;
 
 void dmapiSessionCleanup()
 
@@ -292,13 +313,25 @@ void FsObj::lock()
 
 {
 	int rc;
+	fuid_t fuid = (fuid_t) {getFsId(), getIGen(), getINode()};
 
-	rc = dm_request_right(dmapiSession, handle, handleLength,
-						  dmapiToken, DM_RR_WAIT, DM_RIGHT_EXCL);
+	std::unique_lock<std::mutex> lock(mtx);
 
-	if ( rc == -1 ) {
-		TRACE(Trace::error, errno);
-		throw(errno);
+	if ( fuidMap.count(fuid) == 0 ) {
+		rc = dm_request_right(dmapiSession, handle, handleLength,
+							  dmapiToken, DM_RR_WAIT, DM_RIGHT_EXCL);
+
+		if ( rc == -1 ) {
+			TRACE(Trace::error, errno);
+			throw(errno);
+		}
+
+		fuidMap[fuid] = 1;
+		TRACE(Trace::much,  fuidMap[fuid]);
+	}
+	else {
+		fuidMap[fuid]++;
+		TRACE(Trace::much,  fuidMap[fuid]);
 	}
 
 	isLocked = true;
@@ -308,17 +341,31 @@ void FsObj::unlock()
 
 {
 	int rc;
+	fuid_t fuid = (fuid_t) {getFsId(), getIGen(), getINode()};
+
+	std::unique_lock<std::mutex> lock(mtx);
 
 	if ( isLocked == false ) {
 		TRACE(Trace::error, isLocked);
 		throw(Error::LTFSDM_GENERAL_ERROR);
 	}
 
-	rc = dm_release_right(dmapiSession, handle, handleLength, dmapiToken);
+	assert ( fuidMap.count(fuid) == 1 );
 
-	if ( rc == -1 ) {
-		TRACE(Trace::error, errno);
-		throw(errno);
+	if ( fuidMap[fuid] == 1 ) {
+		rc = dm_release_right(dmapiSession, handle, handleLength, dmapiToken);
+
+		if ( rc == -1 ) {
+			TRACE(Trace::error, errno);
+			throw(errno);
+		}
+
+		fuidMap.erase(fuid);
+		TRACE(Trace::much,  fuidMap.count(fuid));
+	}
+	else {
+		fuidMap[fuid]--;
+		TRACE(Trace::much,  fuidMap[fuid]);
 	}
 
 	isLocked = false;
