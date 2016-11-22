@@ -35,7 +35,11 @@ struct ltstr
 {
 	bool operator()(const fuid_t fuid1, const fuid_t fuid2) const
 	{
-		return fuid1.fsid < fuid2.fsid || fuid1.igen < fuid2.igen || fuid1.ino < fuid2.ino;
+        return ( fuid1.ino < fuid2.ino )
+			|| (( fuid1.ino == fuid2.ino )
+				&& (( fuid1.igen < fuid2.igen )
+					|| (( fuid1.igen == fuid2.igen )
+						&& (( fuid1.fsid < fuid2.fsid )))));
 	}
 };
 
@@ -314,6 +318,7 @@ void FsObj::lock()
 {
 	int rc;
 	fuid_t fuid = (fuid_t) {getFsId(), getIGen(), getINode()};
+	std::stringstream sstream;
 
 	std::unique_lock<std::mutex> lock(mtx);
 
@@ -327,11 +332,13 @@ void FsObj::lock()
 		}
 
 		fuidMap[fuid] = 1;
-		TRACE(Trace::much,  fuidMap[fuid]);
+		sstream << "new(" << fuidMap[fuid] << "): " << fuid.fsid << ", " << fuid.igen << ", " << fuid.ino;
+		TRACE(Trace::much, sstream.str());
 	}
 	else {
 		fuidMap[fuid]++;
-		TRACE(Trace::much,  fuidMap[fuid]);
+		sstream << "inc(" << fuidMap[fuid] << "): " << fuid.fsid << ", " << fuid.igen << ", " << fuid.ino;
+		TRACE(Trace::much, sstream.str());
 	}
 
 	isLocked = true;
@@ -342,12 +349,20 @@ void FsObj::unlock()
 {
 	int rc;
 	fuid_t fuid = (fuid_t) {getFsId(), getIGen(), getINode()};
+	std::stringstream sstream;
 
 	std::unique_lock<std::mutex> lock(mtx);
 
 	if ( isLocked == false ) {
 		TRACE(Trace::error, isLocked);
 		throw(Error::LTFSDM_GENERAL_ERROR);
+	}
+
+	if  ( fuidMap.count(fuid) != 1 ) {
+		TRACE(Trace::error, fuidMap.count(fuid));
+		TRACE(Trace::error, fuid.fsid);
+		TRACE(Trace::error, fuid.igen);
+		TRACE(Trace::error, fuid.ino);
 	}
 
 	assert ( fuidMap.count(fuid) == 1 );
@@ -361,11 +376,13 @@ void FsObj::unlock()
 		}
 
 		fuidMap.erase(fuid);
-		TRACE(Trace::much,  fuidMap.count(fuid));
+		sstream << "rem(" << fuidMap.count(fuid) << "): " << fuid.fsid << ", " << fuid.igen << ", " << fuid.ino;
+		TRACE(Trace::much, sstream.str());
 	}
 	else {
 		fuidMap[fuid]--;
-		TRACE(Trace::much,  fuidMap[fuid]);
+		sstream << "dec(" << fuidMap[fuid] << "): " << fuid.fsid << ", " << fuid.igen << ", " << fuid.ino;
+		TRACE(Trace::much, sstream.str());
 	}
 
 	isLocked = false;
