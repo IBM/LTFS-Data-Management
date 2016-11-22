@@ -46,8 +46,10 @@ bool FileOperation::queryResult(long reqNumber, long *resident,
 		}
 		sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 
-		if ( done == false )
+		if ( done == false ) {
 			Scheduler::updcond.wait(lock, [reqNumber]{return Scheduler::updReq == reqNumber;});
+			Scheduler::updReq = Const::UNSET;
+		}
 	} while(!done && time(NULL) - starttime < 10);
 
 	ssql.str("");
