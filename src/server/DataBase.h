@@ -25,6 +25,8 @@ public:
 	void cleanup();
 	void open();
 	void createTables();
+	void beginTransaction();
+	void endTransaction();
 	sqlite3 *getDB() { return db; }
 };
 

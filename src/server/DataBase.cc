@@ -155,6 +155,30 @@ void DataBase::createTables()
 	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 }
 
+void DataBase::beginTransaction()
+{
+	int rc;
+
+	rc = sqlite3_exec(db, "BEGIN TRANSACTION;", NULL, NULL, NULL);
+
+	if( rc != SQLITE_OK ) {
+		TRACE(Trace::error, rc);
+		throw(rc);
+	}
+}
+
+void DataBase::endTransaction()
+{
+	int rc;
+
+	rc = sqlite3_exec(db, "END TRANSACTION;", NULL, NULL, NULL);
+
+	if( rc != SQLITE_OK ) {
+		TRACE(Trace::error, rc);
+		throw(rc);
+	}
+}
+
 void sqlite3_statement::prepare(std::string sql, sqlite3_stmt **stmt)
 
 {
