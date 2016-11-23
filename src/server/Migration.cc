@@ -36,47 +36,49 @@ void Migration::addJob(std::string fileName)
 	std::stringstream ssql;
 	sqlite3_stmt *stmt;
 
-	for ( int replNum = 0; replNum < numReplica; replNum++ ) {
-		ssql.str("");
-		ssql.clear();
-		ssql << "INSERT INTO JOB_QUEUE (OPERATION, FILE_NAME, REQ_NUM, TARGET_STATE, REPL_NUM, "
-			 << "COLOC_GRP, FILE_SIZE, FS_ID, I_GEN, I_NUM, MTIME, LAST_UPD, FILE_STATE, FAILED) "
-			 << "VALUES (" << DataBase::MIGRATION << ", "            // OPERATION
-			 << "'" << fileName << "', "                             // FILE_NAME
-			 << reqNumber << ", "                                    // REQ_NUM
-			 << targetState << ", "                                  // MIGRATION_STATE
-			 << replNum << ", "                                      // REPL_NUM
-			 << jobnum % colFactor << ", ";                          // COLOC_GRP
+	ssql.str("");
+	ssql.clear();
+	ssql << "INSERT INTO JOB_QUEUE (OPERATION, FILE_NAME, REQ_NUM, TARGET_STATE, REPL_NUM, "
+		 << "COLOC_GRP, FILE_SIZE, FS_ID, I_GEN, I_NUM, MTIME, LAST_UPD, FILE_STATE, FAILED) "
+		 << "VALUES (" << DataBase::MIGRATION << ", "            // OPERATION
+		 << "'" << fileName << "', "                             // FILE_NAME
+		 << reqNumber << ", "                                    // REQ_NUM
+		 << targetState << ", "                                  // MIGRATION_STATE
+		 << "?, "                                                // REPL_NUM
+		 << jobnum % colFactor << ", ";                          // COLOC_GRP
 
-		try {
-			FsObj fso(fileName);
-			statbuf = fso.stat();
+	try {
+		FsObj fso(fileName);
+		statbuf = fso.stat();
 
-			if (!S_ISREG(statbuf.st_mode)) {
-				MSG(LTFSDMS0018E, fileName.c_str());
-				return;
-			}
-
-			ssql << statbuf.st_size << ", "                          // FILE_SIZE
-				 << fso.getFsId() << ", "                            // FS_ID
-				 << fso.getIGen() << ", "                            // I_GEN
-				 << fso.getINode() << ", "                           // I_NUM
-				 << statbuf.st_mtime << ", "                         // MTIME
-				 << time(NULL) << ", "                               // LAST_UPD
-				 << fso.getMigState() << ", "                        // FILE_STATE
-				 << 0 << ");";                                       // FAILED
-		}
-		catch ( int error ) {
-			MSG(LTFSDMS0017E, fileName.c_str());
+		if (!S_ISREG(statbuf.st_mode)) {
+			MSG(LTFSDMS0018E, fileName.c_str());
 			return;
 		}
 
+		ssql << statbuf.st_size << ", "                          // FILE_SIZE
+			 << fso.getFsId() << ", "                            // FS_ID
+			 << fso.getIGen() << ", "                            // I_GEN
+			 << fso.getINode() << ", "                           // I_NUM
+			 << statbuf.st_mtime << ", "                         // MTIME
+			 << time(NULL) << ", "                               // LAST_UPD
+			 << fso.getMigState() << ", "                        // FILE_STATE
+			 << 0 << ");";                                       // FAILED
+	}
+	catch ( int error ) {
+		MSG(LTFSDMS0017E, fileName.c_str());
+		return;
+	}
+
+	for ( int replNum = 0; replNum < numReplica; replNum++ ) {
 		TRACE(Trace::much, ssql.str());
-
 		sqlite3_statement::prepare(ssql.str(), &stmt);
-
+		if ( (rc = sqlite3_bind_int(stmt, 1, replNum)) != SQLITE_OK ) {
+			TRACE(Trace::error, rc);
+			MSG(LTFSDMS0028E, fileName.c_str());
+			return;
+		}
 		rc = sqlite3_step(stmt);
-
 		sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 	}
 
