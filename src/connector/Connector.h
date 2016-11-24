@@ -3,8 +3,16 @@
 
 class Connector {
 public:
+	struct rec_info_t {
+		void *evinfo;
+		int evinfolen;
+		unsigned long long fsid;
+        unsigned int igen;
+        unsigned long long ino;
+	};
 	Connector(bool cleanup);
 	~Connector();
+	rec_info_t getEvents();
 };
 
 class FsObj {
