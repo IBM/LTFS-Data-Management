@@ -4,14 +4,15 @@
 class Connector {
 public:
 	struct rec_info_t {
-		void *evinfo;
-		int evinfolen;
+		struct conn_info_t *conn_info;
+		bool toresident;
 		unsigned long long fsid;
         unsigned int igen;
         unsigned long long ino;
 	};
 	Connector(bool cleanup);
 	~Connector();
+	void initTransRecalls();
 	rec_info_t getEvents();
 };
 
