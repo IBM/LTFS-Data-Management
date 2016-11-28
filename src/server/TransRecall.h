@@ -7,7 +7,7 @@ class TransRecall
 public:
 	TransRecall() {}
 	~TransRecall() {};
-	void run(Connector connector);
+	void run(Connector *connector);
 };
 
 

@@ -150,7 +150,7 @@ void Server::run()
 
 	subs.enqueue("Scheduler", &Scheduler::run, &sched, key);
 	subs.enqueue("Receiver", &Receiver::run, &recv, key);
-	subs.enqueue("TRecall", &TransRecall::run, &trec, connector);
+	subs.enqueue("TRecall", &TransRecall::run, &trec, &connector);
 
 	subs.waitAllRemaining();
 }

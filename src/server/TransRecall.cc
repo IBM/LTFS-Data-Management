@@ -17,7 +17,7 @@
 #include "TransRecall.h"
 
 
-void TransRecall::run(Connector connector)
+void TransRecall::run(Connector *connector)
 
 {
 /*
