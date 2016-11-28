@@ -19,6 +19,11 @@ Connector::~Connector()
 {
 }
 
+void Connector::initTransRecalls()
+
+{
+}
+
 Connector::rec_info_t Connector::getEvents()
 
 {

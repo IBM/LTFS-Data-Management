@@ -24,6 +24,10 @@
 std::atomic<dm_sessid_t> dmapiSession;
 std::atomic<dm_token_t> dmapiToken;
 
+struct conn_info_t {
+	conn_info_t(dm_token_t _token) : token(_token) {}
+	dm_token_t token;
+};
 
 typedef struct {
 	unsigned long long fsid;
@@ -194,11 +198,289 @@ Connector::~Connector()
 	dm_destroy_session(dmapiSession);
 }
 
+void recoverDisposition()
+
+{
+	int rc = 0;
+	size_t bufLen = 4096;
+	size_t rLen;
+	char *bufP = NULL;
+	dm_dispinfo_t *dispP;
+	void *hp;
+	size_t hlen;
+	size_t mountBufLen = 4096;
+	size_t mlen;
+	char *mountBufP = NULL;
+	dm_mount_event_t *mountEventP;
+	dm_eventset_t eventSet;
+	void *hand1P;
+	size_t hand1Len;
+	char *name1P;
+	char *name2P;
+	size_t name1Len;
+	size_t name2Len;
+	char sgName[256], nameBuf[256];
+
+retry:
+	/* Allocate buffer space */
+	bufP =  (char *)malloc( bufLen );
+	if (bufP == NULL) {
+		MSG(LTFSDMD0001E);
+		throw(Error::LTFSDM_GENERAL_ERROR);
+	}
+
+	/* get all prior dispositions */
+	rc = dm_getall_disp(dmapiSession, bufLen, bufP, &rLen);
+	if (rc != 0) {
+		if (errno == E2BIG) {
+			bufLen = rLen;
+			free (bufP);
+			bufP = NULL;
+			goto retry;
+		}
+		TRACE(Trace::error, errno);
+		goto exit;
+	}
+	if (rLen == 0)
+		goto exit;
+
+	/* Parse returned buffer */
+	for (dispP = (dm_dispinfo_t *) bufP; dispP != NULL;
+		 dispP = DM_STEP_TO_NEXT(dispP, dm_dispinfo_t *)) {
+
+		/* get fs handle */
+		hp = DM_GET_VALUE(dispP, di_fshandle, u_char *);
+		hlen = DM_GET_LEN(dispP, di_fshandle);
+
+		/* There are no dispositions if there is no handle */
+		if (dm_handle_is_valid(hp, hlen) == DM_FALSE)
+			break;
+
+retry2:
+		/* Allocate buffer for mount info for this disposition */
+		if (mountBufP == NULL) {
+			mountBufP =  (char *)malloc( mountBufLen );
+			if (mountBufP == NULL) {
+				rc = 1;
+				TRACE(Trace::error, errno);
+				goto exit;
+			}
+		}
+
+		/* Recover mount information for this disposition */
+		rc = dm_get_mountinfo(dmapiSession, hp, hlen, DM_NO_TOKEN,
+							  mountBufLen, mountBufP, &mlen);
+		if (rc != 0) {
+			if (errno == E2BIG) {
+				mountBufLen = mlen;
+				free (mountBufP);
+				mountBufP = NULL;
+				goto retry2;
+			}
+			if ((errno == EBADF) ||
+				(errno == EINVAL)) {
+				rc = 0;
+				continue;
+			}
+			else if (errno == EPERM) {
+				rc = 0;
+				continue;
+			}
+			TRACE(Trace::error, errno);
+			goto exit;
+		}
+
+		mountEventP = (dm_mount_event_t *)mountBufP;
+		hand1P = DM_GET_VALUE(mountEventP , me_handle1, void *);
+		hand1Len = DM_GET_LEN(mountEventP, me_handle1);
+		name1P = DM_GET_VALUE(mountEventP, me_name1, char *);
+		name1Len = DM_GET_LEN(mountEventP, me_name1);
+		name2P = DM_GET_VALUE(mountEventP, me_name2, char *);
+		name2Len = DM_GET_LEN(mountEventP, me_name2);
+
+		if ((name1Len >= sizeof(nameBuf)) ||
+			(name2Len >= sizeof(sgName))) {
+			rc = -1;
+			TRACE(Trace::error, name1Len);
+			TRACE(Trace::error, name2Len);
+			goto exit;
+		}
+
+		memcpy(nameBuf, name1P, name1Len);
+		nameBuf[name1Len] = '\0';
+		memcpy(sgName, name2P, name2Len);
+		sgName[name2Len] = '\0';
+
+		/* Set dm disposition for events. */
+		DMEV_ZERO(eventSet);
+		DMEV_SET(DM_EVENT_READ, eventSet);
+		DMEV_SET(DM_EVENT_WRITE, eventSet);
+		DMEV_SET(DM_EVENT_TRUNCATE, eventSet);
+
+		rc = dm_set_disp(dmapiSession, hand1P, hand1Len,
+						 DM_NO_TOKEN, &eventSet, DM_EVENT_MAX);
+		if (rc < 0) {
+			TRACE(Trace::error, errno);
+			goto exit;
+		}
+	}
+
+exit:
+
+	if (bufP != NULL)
+		free (bufP);
+	if (mountBufP != NULL)
+		free (mountBufP);
+	if ( rc != 0 ) {
+		MSG(LTFSDMD0006E);
+		throw(Error::LTFSDM_GENERAL_ERROR);
+	}
+}
+
+
+void Connector::initTransRecalls()
+
+{
+	dm_eventset_t eventSet;
+
+	recoverDisposition();
+
+	/* Register for mount events */
+	DMEV_ZERO(eventSet);
+	DMEV_SET(DM_EVENT_MOUNT, eventSet);
+	if ( dm_set_disp(dmapiSession, DM_GLOBAL_HANP, DM_GLOBAL_HLEN, DM_NO_TOKEN,
+					 &eventSet, DM_EVENT_MAX) == -1 ) {
+		TRACE(Trace::error, errno);
+		throw(Error::LTFSDM_GENERAL_ERROR);
+	}
+}
 
 Connector::rec_info_t Connector::getEvents()
 
 {
 	rec_info_t recinfo;
+	dm_eventset_t eventSet;
+	char eventBuf[8192];
+	dm_eventmsg_t *eventMsgP;
+	dm_mount_event_t *mountEventP;
+	dm_data_event_t *dataEventP;
+	char nameBuf[PATH_MAX];
+	char sgName[PATH_MAX];
+	void *hand1P;
+	size_t hand1Len;
+	char *name1P;
+	char *name2P;
+	size_t name1Len;
+	size_t name2Len;
+	bool toresident;
+	size_t rlen;
+	dm_token_t token;
+
+	memset(&recinfo, 0, sizeof(recinfo));
+
+    if ( dm_get_events(dmapiSession, 1, DM_EV_WAIT, sizeof(eventBuf), eventBuf, &rlen) == -1 ) {
+		TRACE(Trace::error, errno);
+		throw(Error::LTFSDM_GENERAL_ERROR);
+	}
+
+    /* Process event */
+    eventMsgP = (dm_eventmsg_t *) eventBuf;
+    token = eventMsgP->ev_token;
+
+	switch (eventMsgP->ev_type)
+	{
+        case DM_EVENT_MOUNT:
+			mountEventP = DM_GET_VALUE(eventMsgP, ev_data, dm_mount_event_t*);
+			hand1P = DM_GET_VALUE(mountEventP , me_handle1, void *);
+			hand1Len = DM_GET_LEN(mountEventP, me_handle1);
+			name1P = DM_GET_VALUE(mountEventP, me_name1, char *);
+			name1Len = DM_GET_LEN(mountEventP, me_name1);
+			name2P = DM_GET_VALUE(mountEventP, me_name2, char *);
+			name2Len = DM_GET_LEN(mountEventP, me_name2);
+
+			if ((name1Len >= sizeof(nameBuf)) ||
+				(name2Len >= sizeof(sgName)))
+			{
+				TRACE(Trace::error, name1Len);
+				TRACE(Trace::error, name2Len);
+				throw(Error::LTFSDM_GENERAL_ERROR);
+			}
+
+			memcpy(nameBuf, name1P, name1Len);
+			nameBuf[name1Len] = '\0';
+			memcpy(sgName, name2P, name2Len);
+			sgName[name2Len] = '\0';
+
+			std::cout << "mount event, name 1:" << nameBuf << std::endl;
+			std::cout << "mount event, name 2:" << sgName << std::endl;
+
+			/* For now, all dmapi enabled file systems are managed */
+
+			/* Set dm disposition for events. Note there is a mount
+			   event from each node that mounts the file system. Rather
+			   than tracking the number of mounts & unmounts, simply
+			   set the disposition on every mount */
+			DMEV_ZERO(eventSet);
+			DMEV_SET(DM_EVENT_READ, eventSet);
+			DMEV_SET(DM_EVENT_WRITE, eventSet);
+			DMEV_SET(DM_EVENT_TRUNCATE, eventSet);
+
+			if ( dm_set_disp(dmapiSession, hand1P, hand1Len, DM_NO_TOKEN, &eventSet, DM_EVENT_MAX) == -1 ) {
+				TRACE(Trace::error, errno);
+				throw(Error::LTFSDM_GENERAL_ERROR);
+			}
+
+			/* Respond w/ continue to indicate we are managing this fs */
+			if ( dm_respond_event(dmapiSession, token, DM_RESP_CONTINUE, 0, 0, NULL) == -1 ) {
+				TRACE(Trace::error, errno);
+				throw(Error::LTFSDM_GENERAL_ERROR);
+			}
+			break;  /* end of case DM_EVENT_MOUNT */
+		case DM_EVENT_READ:
+		case DM_EVENT_WRITE:
+		case DM_EVENT_TRUNCATE:
+			/* Determine the type of recall */
+			if (eventMsgP->ev_type == DM_EVENT_READ)
+				toresident = false;
+			else
+				toresident = true;
+
+			/* Get a handle to the file being accessed */
+			dataEventP = DM_GET_VALUE(eventMsgP, ev_data,
+									  dm_data_event_t *);
+			hand1P = DM_GET_VALUE(dataEventP, de_handle, void *);
+			hand1Len = DM_GET_LEN(dataEventP, de_handle);
+
+			/* Recall file data on-line */
+			/*
+			rc = handleDataEvents(eventMsgP->ev_type, sid, token, coresidentRecall,
+								  hand1P, hand1Len,
+								  dataEventP->de_offset, dataEventP->de_length);
+			*/
+			recinfo.toresident = toresident;
+			recinfo.conn_info = new conn_info_t(token);
+
+			if (dm_handle_to_fsid(hand1P, hand1Len, &recinfo.fsid)) {
+				TRACE(Trace::error, errno);
+				throw(Error::LTFSDM_GENERAL_ERROR);
+			}
+
+			if (dm_handle_to_igen(hand1P, hand1Len, &recinfo.igen)) {
+				TRACE(Trace::error, errno);
+				throw(Error::LTFSDM_GENERAL_ERROR);
+			}
+
+			if (dm_handle_to_ino(hand1P, hand1Len, &recinfo.ino)) {
+				TRACE(Trace::error, errno);
+				throw(Error::LTFSDM_GENERAL_ERROR);
+			}
+
+			break;
+		default:
+			TRACE(Trace::error, eventMsgP->ev_type);
+			break;
+
+	} /* end of switch on all event types */
 
 	return recinfo;
 }
