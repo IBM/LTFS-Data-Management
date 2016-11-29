@@ -14,6 +14,7 @@ public:
 	~Connector();
 	void initTransRecalls();
 	rec_info_t getEvents();
+	static void respondRecallEvent(rec_info_t recinfo);
 };
 
 class FsObj {

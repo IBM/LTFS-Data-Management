@@ -23,6 +23,7 @@
 #include "FileOperation.h"
 #include "Migration.h"
 #include "SelRecall.h"
+#include "TransRecall.h"
 #include "Scheduler.h"
 
 std::mutex Scheduler::mtx;
@@ -47,6 +48,46 @@ std::string Scheduler::getTapeName(std::string fileName, std::string tapeId)
 			 << diskFile.getINode();
 
 	return tapeName.str();
+}
+
+
+std::string Scheduler::getTapeName(unsigned long long fsid, unsigned int igen,
+								   unsigned long long ino, std::string tapeId)
+
+{
+	std::stringstream tapeName;
+
+	tapeName << Const::LTFS_PATH
+			 << "/" << tapeId << "/"
+			 << Const::LTFS_NAME << "."
+			 << fsid << "."
+			 << igen << "."
+			 << ino;
+
+	return tapeName.str();
+}
+
+
+long Scheduler::getStartBlock(std::string tapeName)
+
+{
+	long size;
+	char startBlockStr[32];
+	long startBlock;
+
+	memset(startBlockStr, 0, sizeof(startBlockStr));
+
+	size = getxattr(tapeName.c_str(), Const::LTFS_START_BLOCK.c_str(), startBlockStr, sizeof(startBlockStr));
+
+	if ( size == -1 )
+		return Const::UNSET;
+
+	startBlock = strtol(startBlockStr, NULL, 0);
+
+	if ( startBlock == LONG_MIN || startBlock == LONG_MAX )
+		return Const::UNSET;
+	else
+		return startBlock;
 }
 
 
@@ -154,6 +195,19 @@ void Scheduler::run(long key)
 
 						thrdinfo << "SelRec(" << reqNum << ")";
 						subs.enqueue(thrdinfo.str(), SelRecall::execRequest, reqNum, tgtState, tapeId);
+						break;
+					case DataBase::TRARECALL:
+						ssql.str("");
+						ssql.clear();
+						ssql << "UPDATE REQUEST_QUEUE SET STATE=" << DataBase::REQ_INPROGRESS
+							 << " WHERE REQ_NUM=" << reqNum
+							 << " AND TAPE_ID='" << tapeId << "';";
+						sqlite3_statement::prepare(ssql.str(), &stmt3);
+						rc = sqlite3_statement::step(stmt3);
+						sqlite3_statement::checkRcAndFinalize(stmt3, rc, SQLITE_DONE);
+
+						thrdinfo << "TraRec(" << reqNum << ")";
+						subs.enqueue(thrdinfo.str(), TransRecall::execRequest, reqNum, tapeId);
 						break;
 					default:
 						TRACE(Trace::error, sqlite3_column_int(stmt, 0));

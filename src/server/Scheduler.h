@@ -12,6 +12,9 @@ public:
 	static std::atomic<int> updReq;
 	static std::map<std::string, std::atomic<bool>> suspend_map;
 	static std::string getTapeName(std::string fileName, std::string tapeId);
+	static std::string getTapeName(unsigned long long fsid, unsigned int igen,
+								   unsigned long long ino, std::string tapeId);
+	static long getStartBlock(std::string tapeName);
 	Scheduler() {}
 	~Scheduler() {};
 	void run(long key);

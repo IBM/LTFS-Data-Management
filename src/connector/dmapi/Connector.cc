@@ -387,6 +387,8 @@ Connector::rec_info_t Connector::getEvents()
     eventMsgP = (dm_eventmsg_t *) eventBuf;
     token = eventMsgP->ev_token;
 
+	TRACE(Trace::little, eventMsgP->ev_type);
+
 	switch (eventMsgP->ev_type)
 	{
         case DM_EVENT_MOUNT:
@@ -411,8 +413,8 @@ Connector::rec_info_t Connector::getEvents()
 			memcpy(sgName, name2P, name2Len);
 			sgName[name2Len] = '\0';
 
-			std::cout << "mount event, name 1:" << nameBuf << std::endl;
-			std::cout << "mount event, name 2:" << sgName << std::endl;
+			TRACE(Trace::little, nameBuf);
+			TRACE(Trace::little, sgName);
 
 			/* For now, all dmapi enabled file systems are managed */
 
@@ -483,6 +485,17 @@ Connector::rec_info_t Connector::getEvents()
 	} /* end of switch on all event types */
 
 	return recinfo;
+}
+
+void Connector::respondRecallEvent(rec_info_t recinfo)
+
+{
+	dm_token_t token = recinfo.conn_info->token;
+
+	if ( dm_respond_event(dmapiSession, token, DM_RESP_CONTINUE, 0, 0, NULL) == -1 ) {
+		TRACE(Trace::error, errno);
+		throw(Error::LTFSDM_GENERAL_ERROR);
+	}
 }
 
 FsObj::FsObj(std::string fileName) : handle(NULL), handleLength(0), isLocked(false)

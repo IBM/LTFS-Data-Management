@@ -27,28 +27,6 @@
 #include "Scheduler.h"
 #include "SelRecall.h"
 
-long SelRecall::getStartBlock(std::string tapeName)
-
-{
-	long size;
-	char startBlockStr[32];
-	long startBlock;
-
-	memset(startBlockStr, 0, sizeof(startBlockStr));
-
-	size = getxattr(tapeName.c_str(), Const::LTFS_START_BLOCK.c_str(), startBlockStr, sizeof(startBlockStr));
-
-	if ( size == -1 )
-		return Const::UNSET;
-
-	startBlock = strtol(startBlockStr, NULL, 0);
-
-	if ( startBlock == LONG_MIN || startBlock == LONG_MAX )
-		return Const::UNSET;
-	else
-		return startBlock;
-}
-
 void SelRecall::addJob(std::string fileName)
 
 {
@@ -92,7 +70,7 @@ void SelRecall::addJob(std::string fileName)
 		attr = fso.getAttribute();
 		ssql << "'" << attr.tapeId[0] << "', ";                  // TAPE_ID
 		tapeName = Scheduler::getTapeName(fileName, tapeId);
-		ssql << getStartBlock(tapeName) << ", "                  // START_BLOCK
+		ssql << Scheduler::getStartBlock(tapeName) << ", "       // START_BLOCK
 			 << 0 << ");";                                       // FAILED
 	}
 	catch ( int error ) {
@@ -134,7 +112,7 @@ void SelRecall::addRequest()
 		ssql2 << "INSERT INTO REQUEST_QUEUE (OPERATION, REQ_NUM, TARGET_STATE, "
 			  << "COLOC_GRP, TAPE_ID, TIME_ADDED, STATE) "
 			  << "VALUES (" << DataBase::SELRECALL << ", "                          // OPERATION
-			  << reqNumber << ", "                                                  // FILE_NAME
+			  << reqNumber << ", "                                                  // REQ_NUM
 			  << targetState << ", "                                                // TARGET_STATE
 			  << "NULL" << ", "                                                     // COLOC_GRP
 			  << "'" << (cstr ? std::string(cstr) : std::string("")) << "', "       // TAPE_ID
@@ -187,7 +165,7 @@ unsigned long recall(std::string fileName, std::string tapeId,
 				rsize = read(fd, buffer, sizeof(buffer));
 				if ( rsize == -1 ) {
 					TRACE(Trace::error, errno);
-					MSG(LTFSDMS0023E, fileName);
+					MSG(LTFSDMS0023E,  tapeName.c_str());
 					throw(errno);
 				}
 				wsize = target.write(offset, (unsigned long) rsize, buffer);

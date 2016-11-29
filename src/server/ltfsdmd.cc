@@ -49,7 +49,7 @@ int main(int argc, char **argv)
 		goto end;
 	}
 
-	traceObject.setTrclevel(Trace::error);
+	traceObject.setTrclevel(Trace::much);
 	TRACE(Trace::little, getpid());
 
 	try {
