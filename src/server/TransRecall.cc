@@ -182,9 +182,16 @@ void TransRecall::recall(Connector::rec_info_t recinfo, std::string tapeId, long
 			sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 			break;
 		}
-		else if ( reqCompleted == true )
+		else if ( reqCompleted == true ) {
+			ssql.str("");
+			ssql.clear();
+			ssql << "UPDATE REQUEST_QUEUE SET STATE=" << DataBase::REQ_NEW
+				 << " WHERE REQ_NUM=" << reqNum << " AND TAPE_ID='" << tapeId << "';";
+			sqlite3_statement::prepare(ssql.str(), &stmt);
+			rc = sqlite3_statement::step(stmt);
+			sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 			Scheduler::cond.notify_one();
-
+		}
 		lock.unlock();
 
 		sleep(1);
@@ -372,9 +379,6 @@ void TransRecall::execRequest(int reqNum, std::string tapeId)
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 	rc = sqlite3_statement::step(stmt);
 	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
-	Scheduler::cond.notify_one();
-
-	std::unique_lock<std::mutex> updlock(Scheduler::updmtx);
 
 	ssql.str("");
 	ssql.clear();
@@ -385,5 +389,5 @@ void TransRecall::execRequest(int reqNum, std::string tapeId)
 	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 
 	Scheduler::updReq = reqNum;
-	Scheduler::updcond.notify_one();
+	Scheduler::cond.notify_one();
 }
