@@ -378,9 +378,10 @@ Connector::rec_info_t Connector::getEvents()
 
 	memset(&recinfo, 0, sizeof(recinfo));
 
-    if ( dm_get_events(dmapiSession, 1, DM_EV_WAIT, sizeof(eventBuf), eventBuf, &rlen) == -1 ) {
+	while ( dm_get_events(dmapiSession, 1, DM_EV_WAIT, sizeof(eventBuf), eventBuf, &rlen) == -1 ) {
 		TRACE(Trace::error, errno);
-		throw(Error::LTFSDM_GENERAL_ERROR);
+		if ( errno != EINTR && errno != EAGAIN )
+			throw(Error::LTFSDM_GENERAL_ERROR);
 	}
 
     /* Process event */
