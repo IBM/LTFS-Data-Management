@@ -254,13 +254,23 @@ unsigned long recall(unsigned long long fsid,unsigned int igen,	unsigned long lo
 	long wsize;
 	int fd = -1;
 	long offset = 0;
+	FsObj::file_state curstate;
 
 	try {
 		FsObj target(fsid, igen, ino);
 
 		target.lock();
 
-		if ( state == FsObj::MIGRATED ) {
+		curstate = target.getMigState();
+
+		if ( curstate != state ) {
+			MSG(LTFSDMS0034I, ino);
+			state = curstate;
+		}
+		if ( state == FsObj::RESIDENT ) {
+			return 0;
+		}
+		else if ( state == FsObj::MIGRATED ) {
 			tapeName = Scheduler::getTapeName(fsid, igen, ino, tapeId);
 			fd = open(tapeName.c_str(), O_RDWR);
 

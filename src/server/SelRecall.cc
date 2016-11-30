@@ -143,13 +143,23 @@ unsigned long recall(std::string fileName, std::string tapeId,
 	long wsize;
 	int fd = -1;
 	long offset = 0;
+	FsObj::file_state curstate;
 
 	try {
 		FsObj target(fileName);
 
 		target.lock();
 
-		if ( state == FsObj::MIGRATED ) {
+		curstate = target.getMigState();
+
+		if ( curstate != state ) {
+			MSG(LTFSDMS0035I, fileName);
+			state = curstate;
+		}
+		if ( state == FsObj::RESIDENT ) {
+			return 0;
+		}
+		else if ( state == FsObj::MIGRATED ) {
 			tapeName = Scheduler::getTapeName(fileName, tapeId);
 			fd = open(tapeName.c_str(), O_RDWR);
 
