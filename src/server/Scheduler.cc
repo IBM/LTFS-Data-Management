@@ -79,8 +79,11 @@ long Scheduler::getStartBlock(std::string tapeName)
 
 	size = getxattr(tapeName.c_str(), Const::LTFS_START_BLOCK.c_str(), startBlockStr, sizeof(startBlockStr));
 
-	if ( size == -1 )
+	if ( size == -1 ) {
+		TRACE(Trace::error, tapeName.c_str());
+		TRACE(Trace::error, errno);
 		return Const::UNSET;
+	}
 
 	startBlock = strtol(startBlockStr, NULL, 0);
 
@@ -136,7 +139,8 @@ void Scheduler::run(long key)
 			sqlite3_statement::prepare(ssql.str(), &stmt2);
 			while ( (rc = sqlite3_statement::step(stmt2)) == SQLITE_ROW ) {
 				if ( sqlite3_column_int(stmt2, 0) != DataBase::TAPE_FREE ) {
-					if ( sqlite3_column_int(stmt, 0) == DataBase::SELRECALL ) {
+					if ( sqlite3_column_int(stmt, 0) == DataBase::SELRECALL ||
+						 sqlite3_column_int(stmt, 0) == DataBase::TRARECALL) {
 						suspend_map[tapeId] = true;
 					}
 					continue;

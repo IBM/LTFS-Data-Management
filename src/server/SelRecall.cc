@@ -35,7 +35,6 @@ void SelRecall::addJob(std::string fileName)
 	std::stringstream ssql;
 	sqlite3_stmt *stmt;
 	std::string tapeName;
-	std::string tapeId;
 	int state;
 	FsObj::attr_t attr;
 
@@ -69,7 +68,7 @@ void SelRecall::addJob(std::string fileName)
 		ssql << state << ", ";                                   // FILE_STATE
 		attr = fso.getAttribute();
 		ssql << "'" << attr.tapeId[0] << "', ";                  // TAPE_ID
-		tapeName = Scheduler::getTapeName(fileName, tapeId);
+		tapeName = Scheduler::getTapeName(fileName, attr.tapeId[0]);
 		ssql << Scheduler::getStartBlock(tapeName) << ", "       // START_BLOCK
 			 << 0 << ");";                                       // FAILED
 	}
