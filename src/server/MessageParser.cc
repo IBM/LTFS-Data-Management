@@ -35,14 +35,6 @@ void MessageParser::getObjects(LTFSDmCommServer *command, long localReqNumber,
 
 	TRACE(Trace::much, __PRETTY_FUNCTION__);
 
-	try {
-		DB.beginTransaction();
-	}
-	catch ( int error ) {
-		MSG(LTFSDMS0029E, sqlite3_errstr(error));
-		return;
-	}
-
 	while (cont) {
 		try {
 			command->recv();
@@ -50,14 +42,12 @@ void MessageParser::getObjects(LTFSDmCommServer *command, long localReqNumber,
 		catch(...) {
 			TRACE(Trace::error, errno);
 			MSG(LTFSDMS0006E);
-			DB.endTransaction();
 			return;
 		}
 
 		if ( ! command->has_sendobjects() ) {
 			TRACE(Trace::error, command->has_sendobjects());
 			MSG(LTFSDMS0011E);
-			DB.endTransaction();
 			return;
 		}
 
@@ -94,17 +84,8 @@ void MessageParser::getObjects(LTFSDmCommServer *command, long localReqNumber,
 		catch(...) {
 			TRACE(Trace::error, errno);
 			MSG(LTFSDMS0007E);
-			DB.endTransaction();
 			return;
 		}
-	}
-
-	try {
-		DB.endTransaction();
-	}
-	catch ( int error ) {
-		MSG(LTFSDMS0029E, sqlite3_errstr(error));
-		return;
 	}
 }
 

@@ -32,6 +32,11 @@ Connector::rec_info_t Connector::getEvents()
 	return recinfo;
 }
 
+void Connector::terminate()
+
+{
+}
+
 FsObj::FsObj(std::string fileName)
 
 {

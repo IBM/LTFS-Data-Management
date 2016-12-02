@@ -15,6 +15,7 @@ public:
 	void initTransRecalls();
 	rec_info_t getEvents();
 	static void respondRecallEvent(rec_info_t recinfo);
+	void terminate();
 };
 
 class FsObj {

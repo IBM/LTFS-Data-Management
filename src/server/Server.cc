@@ -149,7 +149,7 @@ void Server::run()
 	terminate = false;
 
 	subs.enqueue("Scheduler", &Scheduler::run, &sched, key);
-	subs.enqueue("Receiver", &Receiver::run, &recv, key);
+	subs.enqueue("Receiver", &Receiver::run, &recv, key, &connector);
 	subs.enqueue("RecallD", &TransRecall::run, &trec, &connector);
 
 	subs.waitAllRemaining();

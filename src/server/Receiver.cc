@@ -20,7 +20,7 @@
 
 std::atomic<long> globalReqNumber;
 
-void Receiver::run(long key)
+void Receiver::run(long key, Connector *connector)
 
 {
 	MessageParser mproc;
@@ -59,6 +59,8 @@ void Receiver::run(long key)
 
 		mproc.termcond.wait_for(lock, std::chrono::seconds(30));
 	}
+
+	connector->terminate();
 
 	command.closeRef();
 

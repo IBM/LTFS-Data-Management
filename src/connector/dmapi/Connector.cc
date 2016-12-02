@@ -364,6 +364,8 @@ Connector::rec_info_t Connector::getEvents()
 	dm_eventmsg_t *eventMsgP;
 	dm_mount_event_t *mountEventP;
 	dm_data_event_t *dataEventP;
+	char *msg;
+	unsigned int msglen;
 	char nameBuf[PATH_MAX];
 	char sgName[PATH_MAX];
 	void *hand1P;
@@ -416,6 +418,8 @@ Connector::rec_info_t Connector::getEvents()
 
 			TRACE(Trace::little, nameBuf);
 			TRACE(Trace::little, sgName);
+
+			MSG(LTFSDMD0009I, nameBuf);
 
 			/* For now, all dmapi enabled file systems are managed */
 
@@ -479,6 +483,12 @@ Connector::rec_info_t Connector::getEvents()
 			}
 
 			break;
+		case DM_EVENT_USER:
+			msg = DM_GET_VALUE(eventMsgP, ev_data, char *);
+			msglen = DM_GET_LEN(eventMsgP, ev_data);
+			msg[msglen] = 0;
+			MSG(LTFSDMD0008I, msg);
+			break;
 		default:
 			TRACE(Trace::error, eventMsgP->ev_type);
 			break;
@@ -496,6 +506,17 @@ void Connector::respondRecallEvent(rec_info_t recinfo)
 	if ( dm_respond_event(dmapiSession, token, DM_RESP_CONTINUE, 0, 0, NULL) == -1 ) {
 		TRACE(Trace::error, errno);
 		throw(Error::LTFSDM_GENERAL_ERROR);
+	}
+}
+
+void Connector::terminate()
+
+{
+	if ( dm_send_msg(dmapiSession, DM_MSGTYPE_ASYNC,
+					 Const::DMAPI_TERMINATION_MESSAGE.size(),
+					 (void *) Const::DMAPI_TERMINATION_MESSAGE.c_str()) == -1 ) {
+		TRACE(Trace::error, errno);
+		MSG(LTFSDMD0007E);
 	}
 }
 

@@ -28,6 +28,7 @@ namespace Const {
 	const long UPDATE_SIZE = 200*1024*1024;
 	const int maxReplica = 3;
 	const int tapeIdLength = 8;
+	const std::string DMAPI_TERMINATION_MESSAGE = std::string("termination message");
 }
 
 #endif /* _CONST_H */
