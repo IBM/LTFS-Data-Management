@@ -110,6 +110,7 @@ void Scheduler::run(long key)
 	while (true) {
 		cond.wait(lock);
 		if(terminate == true) {
+			lock.unlock();
 			break;
 		}
 
