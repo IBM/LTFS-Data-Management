@@ -15,6 +15,7 @@ namespace Const {
 	const std::string DB_FILE = LTFSDM_TMP_DIR + DELIM + std::string("OpenLTFS.db");
 	//const std::string DB_FILE = std::string(":memory:");
 	const int MAX_RECEIVER_THREADS = 40;
+	const int MAX_TRANSPARENT_RECALL_THREADS = 8192;
 	const int MAX_OBJECTS_SEND = 100000;
 	const std::string DMAPI_SESSION_NAME = std::string("ltfsdm");
 	const std::string LTFS_PATH = std::string("/mnt/ltfs");

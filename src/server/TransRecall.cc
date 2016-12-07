@@ -203,7 +203,7 @@ void TransRecall::recall(Connector::rec_info_t recinfo, std::string tapeId, long
 void TransRecall::run(Connector *connector)
 
 {
-	SubServer subs;
+	SubServer subs(Const::MAX_TRANSPARENT_RECALL_THREADS);
 	Connector::rec_info_t recinfo;
 	std::map<std::string, long> reqmap;
 	bool newReq;
@@ -329,7 +329,7 @@ void recallStep(int reqNum, std::string tapeId)
 	unsigned long long fsid;
 	unsigned int igen;
 	unsigned long long ino;
-
+	int numFiles = 0;
 
 	ssql << "SELECT FS_ID, I_GEN, I_NUM, FILE_STATE, TARGET_STATE  FROM JOB_QUEUE "
 		 << "WHERE REQ_NUM=" << reqNum << " AND TAPE_ID='" << tapeId << "' ORDER BY START_BLOCK";
@@ -339,6 +339,8 @@ void recallStep(int reqNum, std::string tapeId)
 	while ( (rc = sqlite3_statement::step(stmt) ) ) {
 		if ( rc != SQLITE_ROW )
 			break;
+
+		numFiles++;
 
 		fsid = (unsigned long long) sqlite3_column_int64(stmt, 0);
 		igen = (unsigned int) sqlite3_column_int(stmt, 1);
@@ -369,6 +371,8 @@ void recallStep(int reqNum, std::string tapeId)
 		rc2 = sqlite3_statement::step(stmt2);
 		sqlite3_statement::checkRcAndFinalize(stmt2, rc2, SQLITE_DONE);
 	}
+
+	TRACE(Trace::medium, numFiles);
 
 	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 }
