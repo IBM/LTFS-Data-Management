@@ -393,6 +393,7 @@ void TransRecall::execRequest(int reqNum, std::string tapeId)
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 	rc = sqlite3_statement::step(stmt);
 	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+	Scheduler::cond.notify_one();
 
 	ssql.str("");
 	ssql.clear();
