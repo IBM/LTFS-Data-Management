@@ -30,7 +30,7 @@ std::mutex Scheduler::mtx;
 std::condition_variable Scheduler::cond;
 std::mutex Scheduler::updmtx;
 std::condition_variable Scheduler::updcond;
-std::atomic<int> Scheduler::updReq(Const::UNSET);
+std::map<int, std::atomic<bool>> Scheduler::updReq;
 std::map<std::string, std::atomic<bool>> Scheduler::suspend_map;
 
 

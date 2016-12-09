@@ -130,6 +130,8 @@ void Migration::addRequest()
 	TRACE(Trace::little, numReplica);
 	TRACE(Trace::little, colFactor);
 
+	Scheduler::updReq[reqNumber] = false;
+
 	while ( (rc = sqlite3_statement::step(stmt)) == SQLITE_ROW ) {
 		colNumber = sqlite3_column_int (stmt, 0);
 
@@ -269,9 +271,10 @@ bool migrationStep(int reqNum, int numRepl, int replNum, int colGrp, std::string
     int group_begin = -1;
 	bool suspended = false;
 	time_t start;
-	std::unique_lock<std::mutex> lock(Scheduler::updmtx);
 
-	Scheduler::updReq = reqNum;
+	std::unique_lock<std::mutex> lock(Scheduler::updmtx);
+	TRACE(Trace::much, reqNum);
+	Scheduler::updReq[reqNum] = true;
 	Scheduler::updcond.notify_all();
 	lock.unlock();
 
@@ -335,7 +338,7 @@ bool migrationStep(int reqNum, int numRepl, int replNum, int colGrp, std::string
 		rc2 = sqlite3_statement::step(stmt2);
 		sqlite3_statement::checkRcAndFinalize(stmt2, rc2, SQLITE_DONE);
 
-		Scheduler::updReq = reqNum;
+		Scheduler::updReq[reqNum] = true;
 		Scheduler::updcond.notify_all();
 		lock.unlock();
 
@@ -409,6 +412,6 @@ void Migration::execRequest(int reqNum, int tgtState, int numRepl, int replNum, 
 
 	lock.unlock();
 
-	Scheduler::updReq = reqNum;
-	Scheduler::updcond.notify_one();
+	Scheduler::updReq[reqNum] = true;
+	Scheduler::updcond.notify_all();
 }

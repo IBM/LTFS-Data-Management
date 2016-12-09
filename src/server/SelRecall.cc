@@ -100,6 +100,8 @@ void SelRecall::addRequest()
 
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 
+	Scheduler::updReq[reqNumber] = false;
+
 	while ( (rc = sqlite3_statement::step(stmt)) == SQLITE_ROW ) {
 		std::unique_lock<std::mutex> lock(Scheduler::mtx);
 
@@ -214,9 +216,10 @@ void recallStep(int reqNum, std::string tapeId, FsObj::file_state toState)
     int group_end = 0;
     int group_begin = -1;
 	time_t start;
-	std::unique_lock<std::mutex> lock(Scheduler::updmtx);
 
-	Scheduler::updReq = reqNum;
+	std::unique_lock<std::mutex> lock(Scheduler::updmtx);
+	TRACE(Trace::much, reqNum);
+	Scheduler::updReq[reqNum] = true;
 	Scheduler::updcond.notify_all();
 	lock.unlock();
 
@@ -270,7 +273,7 @@ void recallStep(int reqNum, std::string tapeId, FsObj::file_state toState)
 		rc2 = sqlite3_statement::step(stmt2);
 		sqlite3_statement::checkRcAndFinalize(stmt2, rc2, SQLITE_DONE);
 
-		Scheduler::updReq = reqNum;
+		Scheduler::updReq[reqNum] = true;
 		Scheduler::updcond.notify_all();
 		lock.unlock();
 
@@ -313,6 +316,6 @@ void SelRecall::execRequest(int reqNum, int tgtState, std::string tapeId)
 	rc = sqlite3_statement::step(stmt);
 	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 
-	Scheduler::updReq = reqNum;
-	Scheduler::updcond.notify_one();
+	Scheduler::updReq[reqNum] = true;
+	Scheduler::updcond.notify_all();
 }

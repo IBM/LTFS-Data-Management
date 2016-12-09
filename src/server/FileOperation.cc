@@ -47,8 +47,10 @@ bool FileOperation::queryResult(long reqNumber, long *resident,
 		sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 
 		if ( done == false ) {
-			Scheduler::updcond.wait(lock, [reqNumber]{return Scheduler::updReq == reqNumber;});
-			Scheduler::updReq = Const::UNSET;
+			TRACE(Trace::much, reqNumber);
+			TRACE(Trace::much, (bool) Scheduler::updReq[reqNumber]);
+			Scheduler::updcond.wait(lock, [reqNumber]{return Scheduler::updReq[reqNumber] == true;});
+			Scheduler::updReq[reqNumber] = false;
 		}
 	} while(!done && time(NULL) - starttime < 10);
 
@@ -86,6 +88,8 @@ bool FileOperation::queryResult(long reqNumber, long *resident,
 	if ( done ) {
 		ssql.str("");
 		ssql.clear();
+
+		Scheduler::updReq.erase(Scheduler::updReq.find(reqNumber));
 
 		ssql << "DELETE FROM JOB_QUEUE WHERE REQ_NUM=" << reqNumber;
 		sqlite3_statement::prepare(ssql.str(), &stmt);
