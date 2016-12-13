@@ -14,7 +14,7 @@ public:
 	~Connector();
 	void initTransRecalls();
 	rec_info_t getEvents();
-	static void respondRecallEvent(rec_info_t recinfo);
+	static void respondRecallEvent(rec_info_t recinfo, bool success);
 	void terminate();
 };
 
@@ -26,13 +26,15 @@ private:
 public:
 	struct attr_t {
 		unsigned long typeId;
+		bool added;
 		int copies;
 		char tapeId[Const::maxReplica][Const::tapeIdLength+1];
 	};
 	enum file_state {
 		RESIDENT,
 		PREMIGRATED,
-		MIGRATED
+		MIGRATED,
+		FAILED
 	};
 	FsObj(std::string fileName);
 	FsObj(unsigned long long fsId, unsigned int iGen, unsigned long long iNode);
@@ -49,7 +51,7 @@ public:
 	void addAttribute(attr_t value);
 	void remAttribute();
 	attr_t getAttribute();
-	void finishPremigration();
+	void preparePremigration();
 	void finishRecall(file_state fstate);
 	void prepareStubbing();
 	void stub();

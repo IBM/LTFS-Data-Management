@@ -267,6 +267,7 @@ void OpenLTFSCommand::queryResults()
 	long resident = 0;
 	long premigrated = 0;
 	long migrated = 0;
+	long failed = 0;
 	bool first = true;
 	bool done = false;
 	struct timeval curtime;
@@ -314,6 +315,7 @@ void OpenLTFSCommand::queryResults()
 			resident =  reqstatusresp.resident();
 			premigrated =  reqstatusresp.premigrated();
 			migrated =  reqstatusresp.migrated();
+			failed = reqstatusresp.failed();
 			done = reqstatusresp.done();
 
 			gettimeofday(&curtime, NULL);
@@ -323,7 +325,7 @@ void OpenLTFSCommand::queryResults()
 				INFO(LTFSDMC0046I);
 				first = false;
 			}
-			INFO(LTFSDMC0045I, curctime, resident, premigrated, migrated);
+			INFO(LTFSDMC0045I, curctime, resident, premigrated, migrated, failed);
 		}
 		else {
 			MSG(LTFSDMC0029E);

@@ -19,7 +19,8 @@
 #include "FileOperation.h"
 
 bool FileOperation::queryResult(long reqNumber, long *resident,
-								long *premigrated, long *migrated)
+								long *premigrated, long *migrated,
+								long *failed)
 
 {
 	int rc;
@@ -65,6 +66,7 @@ bool FileOperation::queryResult(long reqNumber, long *resident,
 	*resident = 0;
 	*premigrated = 0;
 	*migrated = 0;
+	*failed = 0;
 
 	while ( (rc = sqlite3_statement::step(stmt)) == SQLITE_ROW ) {
 		switch ( sqlite3_column_int(stmt, 0) ) {
@@ -76,6 +78,9 @@ bool FileOperation::queryResult(long reqNumber, long *resident,
 				break;
 			case FsObj::MIGRATED:
 				*migrated = sqlite3_column_int(stmt, 1);
+				break;
+			case FsObj::FAILED:
+				*failed = sqlite3_column_int(stmt, 1);
 				break;
 			default:
 				TRACE(Trace::error, sqlite3_column_int(stmt, 0));

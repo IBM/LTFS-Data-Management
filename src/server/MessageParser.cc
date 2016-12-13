@@ -95,6 +95,7 @@ void MessageParser::reqStatusMessage(long key, LTFSDmCommServer *command, FileOp
 	long resident = 0;
 	long premigrated = 0;
 	long migrated = 0;
+	long failed = 0;
 	bool done;
 	unsigned long pid;
 	long requestNumber;
@@ -122,7 +123,7 @@ void MessageParser::reqStatusMessage(long key, LTFSDmCommServer *command, FileOp
 		requestNumber = reqstatus.reqnumber();
 		pid = reqstatus.pid();
 
-		done = fopt->queryResult(requestNumber, &resident, &premigrated, &migrated);
+		done = fopt->queryResult(requestNumber, &resident, &premigrated, &migrated, &failed);
 
 		LTFSDmProtocol::LTFSDmReqStatusResp *reqstatusresp = command->mutable_reqstatusresp();
 
@@ -132,6 +133,7 @@ void MessageParser::reqStatusMessage(long key, LTFSDmCommServer *command, FileOp
 		reqstatusresp->set_resident(resident);
 		reqstatusresp->set_premigrated(premigrated);
 		reqstatusresp->set_migrated(migrated);
+		reqstatusresp->set_failed(failed);
 		reqstatusresp->set_done(done);
 
 		try {

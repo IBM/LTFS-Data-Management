@@ -92,7 +92,8 @@ message LTFSDmReqStatusResp {
 	required int64 resident = 4;
 	required int64 premigrated = 5;
 	required int64 migrated = 6;
-	required bool done = 7;
+	required int64 failed = 7;
+	required bool done = 8;
 }
 
 message Command {

@@ -38,8 +38,8 @@ void Migration::addJob(std::string fileName)
 
 	ssql.str("");
 	ssql.clear();
-	ssql << "INSERT INTO JOB_QUEUE (OPERATION, FILE_NAME, REQ_NUM, TARGET_STATE, REPL_NUM, "
-		 << "COLOC_GRP, FILE_SIZE, FS_ID, I_GEN, I_NUM, MTIME, LAST_UPD, FILE_STATE, FAILED) "
+	ssql << "INSERT INTO JOB_QUEUE (OPERATION, FILE_NAME, REQ_NUM, TARGET_STATE, REPL_NUM, COLOC_GRP, "
+		 << "FILE_SIZE, FS_ID, I_GEN, I_NUM, MTIME_SEC, MTIME_NSEC, LAST_UPD, FILE_STATE, FAILED) "
 		 << "VALUES (" << DataBase::MIGRATION << ", "            // OPERATION
 		 << "'" << fileName << "', "                             // FILE_NAME
 		 << reqNumber << ", "                                    // REQ_NUM
@@ -49,7 +49,7 @@ void Migration::addJob(std::string fileName)
 
 	try {
 		FsObj fso(fileName);
-		statbuf = fso.stat();
+		stat(fileName.c_str(), &statbuf);
 
 		if (!S_ISREG(statbuf.st_mode)) {
 			MSG(LTFSDMS0018E, fileName.c_str());
@@ -60,7 +60,8 @@ void Migration::addJob(std::string fileName)
 			 << fso.getFsId() << ", "                            // FS_ID
 			 << fso.getIGen() << ", "                            // I_GEN
 			 << fso.getINode() << ", "                           // I_NUM
-			 << statbuf.st_mtime << ", "                         // MTIME
+			 << statbuf.st_mtim.tv_sec << ", "                   // MTIME_SEC
+			 << statbuf.st_mtim.tv_nsec << ", "                  // MTIME_NSEC
 			 << time(NULL) << ", "                               // LAST_UPD
 			 << fso.getMigState() << ", "                        // FILE_STATE
 			 << 0 << ");";                                       // FAILED
@@ -169,7 +170,7 @@ void Migration::addRequest()
 }
 
 
-unsigned long preMigrate(std::string fileName, std::string tapeId)
+unsigned long preMigrate(std::string fileName, std::string tapeId, long secs, long nsecs)
 
 {
 	struct stat statbuf;
@@ -196,7 +197,21 @@ unsigned long preMigrate(std::string fileName, std::string tapeId)
 
 		source.lock();
 
-		statbuf = source.stat();
+		source.preparePremigration();
+
+		if ( stat(fileName.c_str(), &statbuf) == -1 ) {
+			TRACE(Trace::error, errno);
+			MSG(LTFSDMS0040E, fileName);
+			throw(Error::LTFSDM_GENERAL_ERROR);
+		}
+		if ( statbuf.st_mtim.tv_sec != secs || statbuf.st_mtim.tv_nsec != nsecs ) {
+			TRACE(Trace::error, statbuf.st_mtim.tv_sec);
+			TRACE(Trace::error, secs);
+			TRACE(Trace::error, statbuf.st_mtim.tv_nsec);
+			TRACE(Trace::error, nsecs);
+			MSG(LTFSDMS0041W, fileName);
+			throw(Error::LTFSDM_GENERAL_ERROR);
+		}
 
 		while ( offset < statbuf.st_size ) {
 			rsize = source.read(offset, statbuf.st_size - offset > Const::READ_BUFFER_SIZE ?
@@ -216,6 +231,19 @@ unsigned long preMigrate(std::string fileName, std::string tapeId)
 				throw(Error::LTFSDM_GENERAL_ERROR);
 			}
 			offset += rsize;
+			if ( stat(fileName.c_str(), &statbuf) == -1 ) {
+				TRACE(Trace::error, errno);
+				MSG(LTFSDMS0040E, fileName);
+				throw(Error::LTFSDM_GENERAL_ERROR);
+			}
+			if ( statbuf.st_mtim.tv_sec != secs || statbuf.st_mtim.tv_nsec != nsecs ) {
+				TRACE(Trace::error, statbuf.st_mtim.tv_sec);
+				TRACE(Trace::error, secs);
+				TRACE(Trace::error, statbuf.st_mtim.tv_nsec);
+				TRACE(Trace::error, nsecs);
+				MSG(LTFSDMS0041W, fileName);
+				throw(Error::LTFSDM_GENERAL_ERROR);
+			}
 		}
 
 		if ( fsetxattr(fd, Const::LTFS_ATTR.c_str(), fileName.c_str(), fileName.length(), 0) == -1 ) {
@@ -231,12 +259,12 @@ unsigned long preMigrate(std::string fileName, std::string tapeId)
 		strncpy(attr.tapeId[attr.copies], tapeId.c_str(), Const::tapeIdLength);
 		attr.copies++;
 		source.addAttribute(attr);
-		source.finishPremigration();
 		source.unlock();
 	}
 	catch ( int error ) {
 		if ( fd != -1 )
 			close(fd);
+		throw(error);
 	}
 	return statbuf.st_size;
 }
@@ -271,6 +299,9 @@ bool migrationStep(int reqNum, int numRepl, int replNum, int colGrp, std::string
     int group_begin = -1;
 	bool suspended = false;
 	time_t start;
+	long secs;
+	long nsecs;
+
 
 	std::unique_lock<std::mutex> lock(Scheduler::updmtx);
 	TRACE(Trace::much, reqNum);
@@ -278,7 +309,7 @@ bool migrationStep(int reqNum, int numRepl, int replNum, int colGrp, std::string
 	Scheduler::updcond.notify_all();
 	lock.unlock();
 
-	ssql << "SELECT ROWID, FILE_NAME FROM JOB_QUEUE WHERE"
+	ssql << "SELECT ROWID, FILE_NAME, MTIME_SEC, MTIME_NSEC FROM JOB_QUEUE WHERE"
 		 << " REQ_NUM=" << reqNum
 		 << " AND COLOC_GRP=" << colGrp
 		 << " AND FILE_STATE=" << fromState
@@ -295,24 +326,47 @@ bool migrationStep(int reqNum, int numRepl, int replNum, int colGrp, std::string
 
 		if ( rc == SQLITE_ROW ) {
 			const char *cstr = reinterpret_cast<const char*>(sqlite3_column_text (stmt, 1));
+			secs = sqlite3_column_int64(stmt, 2);
+			nsecs = sqlite3_column_int64(stmt, 3);
 
 			if (!cstr)
 				continue;
 
-			if ( toState == FsObj::PREMIGRATED ) {
-				if ( Scheduler::suspend_map[tapeId] == true ) {
-					suspended = true;
-					Scheduler::suspend_map[tapeId] = false;
-					sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_ROW);
-					return suspended;
+			try {
+				if ( toState == FsObj::PREMIGRATED ) {
+					if ( Scheduler::suspend_map[tapeId] == true ) {
+						suspended = true;
+						Scheduler::suspend_map[tapeId] = false;
+						sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_ROW);
+						return suspended;
+					}
+					preMigrate(std::string(cstr), tapeId, secs, nsecs);
 				}
-				preMigrate(std::string(cstr), tapeId);
+				else {
+					stub(std::string(cstr), numRepl);
+				}
+				group_end = sqlite3_column_int(stmt, 0);
 			}
-			else {
-				stub(std::string(cstr), numRepl);
-			}
+			catch(int error) {
+				ssql.str("");
+				ssql.clear();
+				ssql << "UPDATE JOB_QUEUE SET FILE_STATE = " <<  FsObj::FAILED
+					 << " WHERE REQ_NUM=" << reqNum
+					 << " AND COLOC_GRP = " << colGrp
+					 << " AND REPL_NUM=" << replNum
+					 << " AND ROWID=" << sqlite3_column_int(stmt, 0);;
+				TRACE(Trace::error, ssql.str());
+				sqlite3_stmt *stmt2;
+				sqlite3_statement::prepare(ssql.str(), &stmt2);
+				rc2 = sqlite3_statement::step(stmt2);
+				sqlite3_statement::checkRcAndFinalize(stmt2, rc2, SQLITE_DONE);
 
-			group_end = sqlite3_column_int(stmt, 0);
+				if ( group_begin == -1 ) {
+					start = time(NULL);
+					continue;
+				}
+				start = 0;
+			}
 			if ( group_begin == -1 )
 				group_begin = group_end;
 
@@ -327,8 +381,10 @@ bool migrationStep(int reqNum, int numRepl, int replNum, int colGrp, std::string
 		ssql << "UPDATE JOB_QUEUE SET FILE_STATE = " <<  toState
 			 << " WHERE REQ_NUM=" << reqNum
 			 << " AND COLOC_GRP = " << colGrp
+			 << " AND FILE_STATE=" << fromState
 			 << " AND REPL_NUM=" << replNum
 			 << " AND (ROWID BETWEEN " << group_begin << " AND " << group_end << ")";
+		TRACE(Trace::much, ssql.str());
 
 		sqlite3_stmt *stmt2;
 

@@ -38,8 +38,8 @@ void SelRecall::addJob(std::string fileName)
 	int state;
 	FsObj::attr_t attr;
 
-	ssql << "INSERT INTO JOB_QUEUE (OPERATION, FILE_NAME, REQ_NUM, TARGET_STATE, FILE_SIZE, "
-		 << "FS_ID, I_GEN, I_NUM, MTIME, LAST_UPD, FILE_STATE, TAPE_ID, START_BLOCK, FAILED) "
+	ssql << "INSERT INTO JOB_QUEUE (OPERATION, FILE_NAME, REQ_NUM, TARGET_STATE, FILE_SIZE, FS_ID, I_GEN, "
+		 << "I_NUM, MTIME_SEC, MTIME_NSEC, LAST_UPD, FILE_STATE, TAPE_ID, START_BLOCK, FAILED) "
 		 << "VALUES (" << DataBase::SELRECALL << ", "            // OPERATION
 		 << "'" << fileName << "', "                             // FILE_NAME
 		 << reqNumber << ", "                                    // REQ_NUM
@@ -47,7 +47,7 @@ void SelRecall::addJob(std::string fileName)
 
 	try {
 		FsObj fso(fileName);
-		statbuf = fso.stat();
+		stat(fileName.c_str(), &statbuf);
 
 		if (!S_ISREG(statbuf.st_mode)) {
 			MSG(LTFSDMS0018E, fileName.c_str());
@@ -58,7 +58,8 @@ void SelRecall::addJob(std::string fileName)
 			 << fso.getFsId() << ", "                            // FS_ID
 			 << fso.getIGen() << ", "                            // I_GEN
 			 << fso.getINode() << ", "                           // I_NUM
-			 << statbuf.st_mtime << ", "                         // MTIME
+			 << statbuf.st_mtim.tv_sec << ", "                   // MTIME_SEC
+			 << statbuf.st_mtim.tv_nsec << ", "                  // MTIME_NSEC
 			 << time(NULL) << ", ";                              // LAST_UPD
 		state = fso.getMigState();
 		if ( fso.getMigState() == FsObj::RESIDENT ) {

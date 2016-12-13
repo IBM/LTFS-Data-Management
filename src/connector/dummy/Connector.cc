@@ -138,7 +138,7 @@ FsObj::attr_t  FsObj::getAttribute()
 	return attr;
 }
 
-void FsObj::finishPremigration()
+void FsObj::preparePremigration()
 
 {
 }

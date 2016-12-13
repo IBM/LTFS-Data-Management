@@ -39,8 +39,8 @@ void TransRecall::recall(Connector::rec_info_t recinfo, std::string tapeId, long
 	int toState;
 	FsObj::attr_t attr;
 
-	ssql << "INSERT INTO JOB_QUEUE (OPERATION, REQ_NUM, TARGET_STATE, FILE_SIZE, "
-		 << "FS_ID, I_GEN, I_NUM, MTIME, LAST_UPD, FILE_STATE, TAPE_ID, START_BLOCK, FAILED) "
+	ssql << "INSERT INTO JOB_QUEUE (OPERATION, REQ_NUM, TARGET_STATE, FILE_SIZE, FS_ID, I_GEN, "
+		 << "I_NUM, MTIME_SEC, MTIME_NSEC, LAST_UPD, FILE_STATE, TAPE_ID, START_BLOCK, FAILED) "
 		 << "VALUES (" << DataBase::TRARECALL << ", "            // OPERATION
 		 << reqNum << ", "                                       // REQ_NUM
 		 << ( recinfo.toresident ?
@@ -59,7 +59,8 @@ void TransRecall::recall(Connector::rec_info_t recinfo, std::string tapeId, long
 			 << recinfo.fsid << ", "                             // FS_ID
 			 << recinfo.igen << ", "                             // I_GEN
 			 << recinfo.ino << ", "                              // I_NUM
-			 << statbuf.st_mtime << ", "                         // MTIME
+			 << statbuf.st_mtime << ", "                         // MTIME_SEC
+			 << 0 << ", "                                        // MTIME_NSEC
 			 << time(NULL) << ", ";                              // LAST_UPD
 		state = fso.getMigState();
 		if ( fso.getMigState() == FsObj::RESIDENT ) {
@@ -197,7 +198,7 @@ void TransRecall::recall(Connector::rec_info_t recinfo, std::string tapeId, long
 		sleep(1);
 	}
 
-	Connector::respondRecallEvent(recinfo);
+	Connector::respondRecallEvent(recinfo, true);
 }
 
 void TransRecall::run(Connector *connector)
@@ -217,12 +218,36 @@ void TransRecall::run(Connector *connector)
 	}
 
 	while (terminate == false) {
-		recinfo = connector->getEvents();
+		try {
+			recinfo = connector->getEvents();
+		}
+		catch (int error ) {
+			MSG(LTFSDMS0036W, error);
+		}
 
 		if ( recinfo.ino == 0 )
 			continue;
 
 		FsObj fso(recinfo.fsid, recinfo.igen, recinfo.ino);
+
+		// error case: managed region set but no attrs
+		try {
+			if ( fso.getMigState() ==  FsObj::RESIDENT ) {
+				fso.finishRecall(FsObj::RESIDENT);
+				MSG(LTFSDMS0039I, recinfo.ino);
+				connector->respondRecallEvent(recinfo, true);
+				continue;
+			}
+		}
+		catch ( int error ) {
+			if ( error == Error::LTFSDM_ATTR_FORMAT )
+				MSG(LTFSDMS0037W, recinfo.ino);
+			else
+				MSG(LTFSDMS0038W, recinfo.ino, error);
+			connector->respondRecallEvent(recinfo, false);
+			continue;
+		}
+
 		std::string tapeId = fso.getAttribute().tapeId[0];
 
 		std::stringstream thrdinfo;

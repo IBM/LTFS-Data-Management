@@ -498,14 +498,22 @@ Connector::rec_info_t Connector::getEvents()
 	return recinfo;
 }
 
-void Connector::respondRecallEvent(rec_info_t recinfo)
+void Connector::respondRecallEvent(rec_info_t recinfo, bool success)
 
 {
 	dm_token_t token = recinfo.conn_info->token;
 
-	if ( dm_respond_event(dmapiSession, token, DM_RESP_CONTINUE, 0, 0, NULL) == -1 ) {
-		TRACE(Trace::error, errno);
-		throw(Error::LTFSDM_GENERAL_ERROR);
+	if ( success == true ) {
+		if ( dm_respond_event(dmapiSession, token, DM_RESP_CONTINUE, 0, 0, NULL) == -1 ) {
+			TRACE(Trace::error, errno);
+			throw(Error::LTFSDM_GENERAL_ERROR);
+		}
+	}
+	else {
+		if ( dm_respond_event(dmapiSession, token, DM_RESP_ABORT, EIO, 0, NULL) == -1 ) {
+			TRACE(Trace::error, errno);
+			throw(Error::LTFSDM_GENERAL_ERROR);
+		}
 	}
 }
 
@@ -750,6 +758,7 @@ void FsObj::addAttribute(attr_t value)
 	int rc;
 
 	value.typeId = typeid(attr_t).hash_code();
+	value.added = true;
 
 	rc = dm_set_dmattr(dmapiSession, handle, handleLength,
 					   dmapiToken, (dm_attrname_t *) Const::DMAPI_ATTR.c_str(),
@@ -788,6 +797,7 @@ FsObj::attr_t FsObj::getAttribute()
 					   (dm_attrname_t *) Const::DMAPI_ATTR.c_str(), sizeof(attr), &attr, &rsize);
 
 	if ( rc == -1 && errno == ENOENT ) {
+		attr.added = false;
 		return attr;
 	}
 	else if ( rc == -1 ) {
@@ -802,7 +812,7 @@ FsObj::attr_t FsObj::getAttribute()
 	return attr;
 }
 
-void FsObj::finishPremigration()
+void FsObj::preparePremigration()
 
 {
 	int rc;
@@ -907,8 +917,12 @@ FsObj::file_state FsObj::getMigState()
 	std::stringstream infos;
 	int rc;
 	unsigned int i;
+	FsObj::attr_t attr;
 
+	attr = getAttribute();
 
+	if ( attr.added == false )
+		return FsObj::RESIDENT;
 
     memset(regbuf, 0, sizeof( regbuf ));
 
@@ -931,10 +945,17 @@ FsObj::file_state FsObj::getMigState()
 		throw(nelem);
     }
 
-	if ( nelem == 0 )
+	if ( nelem == 0 ) {
 		return FsObj::RESIDENT;
-	else if ( regbuf[0].rg_flags == (DM_REGION_READ | DM_REGION_WRITE | DM_REGION_TRUNCATE) )
+	}
+	else if ( regbuf[0].rg_flags == (DM_REGION_READ | DM_REGION_WRITE | DM_REGION_TRUNCATE) ) {
 		return FsObj::MIGRATED;
-	else
+	}
+	else if ( regbuf[0].rg_flags == ( DM_REGION_WRITE | DM_REGION_TRUNCATE) ) {
 		return FsObj::PREMIGRATED;
+	}
+	else {
+		TRACE(Trace::error, regbuf[0].rg_flags);
+		throw(Error::LTFSDM_GENERAL_ERROR);
+	}
 }
