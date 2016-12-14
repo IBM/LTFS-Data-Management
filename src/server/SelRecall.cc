@@ -203,6 +203,7 @@ unsigned long recall(std::string fileName, std::string tapeId,
 	catch ( int error ) {
 		if ( fd != -1 )
 			close(fd);
+		throw(error);
 	}
 
 	return statbuf.st_size;
@@ -249,9 +250,29 @@ void recallStep(int reqNum, std::string tapeId, FsObj::file_state toState)
 			if ( state == toState )
 				continue;
 
-			recall(std::string(cstr), tapeId, state, toState);
+			try {
+				recall(std::string(cstr), tapeId, state, toState);
+				group_end = sqlite3_column_int(stmt, 0);
+			}
+			catch (int error) {
+				ssql.str("");
+				ssql.clear();
+				ssql << "UPDATE JOB_QUEUE SET FILE_STATE = " <<  FsObj::FAILED
+					 << " WHERE REQ_NUM=" << reqNum
+					 << " AND TAPE_ID ='" << tapeId << "'"
+					 << " AND ROWID=" << sqlite3_column_int(stmt, 0);
+				TRACE(Trace::error, ssql.str());
+				sqlite3_stmt *stmt2;
+				sqlite3_statement::prepare(ssql.str(), &stmt2);
+				rc2 = sqlite3_statement::step(stmt2);
+				sqlite3_statement::checkRcAndFinalize(stmt2, rc2, SQLITE_DONE);
 
-			group_end = sqlite3_column_int(stmt, 0);
+				if ( group_begin == -1 ) {
+					start = time(NULL);
+					continue;
+				}
+				start = 0;
+			}
 			if ( group_begin == -1 )
 				group_begin = group_end;
 			if ( time(NULL) - start < 10 )
@@ -263,8 +284,10 @@ void recallStep(int reqNum, std::string tapeId, FsObj::file_state toState)
 		ssql.clear();
 
 		ssql << "UPDATE JOB_QUEUE SET FILE_STATE = " <<  toState
-			 << " WHERE REQ_NUM=" << reqNum << " AND TAPE_ID ='" << tapeId
-			 << "' AND (ROWID BETWEEN " << group_begin << " AND " << group_end << ")";
+			 << " WHERE REQ_NUM=" << reqNum
+			 << " AND TAPE_ID ='" << tapeId << "'"
+			 << " AND FILE_STATE!=" << FsObj::FAILED
+			 << " AND (ROWID BETWEEN " << group_begin << " AND " << group_end << ")";
 
 		sqlite3_stmt *stmt2;
 
