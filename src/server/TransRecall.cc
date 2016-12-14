@@ -38,6 +38,7 @@ void TransRecall::recall(Connector::rec_info_t recinfo, std::string tapeId, long
 	int state;
 	int toState;
 	FsObj::attr_t attr;
+	bool succeeded = true;
 
 	ssql << "INSERT INTO JOB_QUEUE (OPERATION, REQ_NUM, TARGET_STATE, FILE_SIZE, FS_ID, I_GEN, "
 		 << "I_NUM, MTIME_SEC, MTIME_NSEC, LAST_UPD, FILE_STATE, TAPE_ID, START_BLOCK, FAILED) "
@@ -163,7 +164,10 @@ void TransRecall::recall(Connector::rec_info_t recinfo, std::string tapeId, long
 			 << " AND REQ_NUM=" << reqNum;
 		sqlite3_statement::prepare(ssql.str(), &stmt);
 		while ( (rc = sqlite3_statement::step(stmt)) == SQLITE_ROW ) {
-			if ( sqlite3_column_int(stmt, 0) != toState ) {
+			if ( sqlite3_column_int(stmt, 0) == FsObj::FAILED ) {
+				succeeded = false;
+			}
+			else if ( sqlite3_column_int(stmt, 0) != toState ) {
 				jobCompleted = false;
 			}
 		}
@@ -198,7 +202,7 @@ void TransRecall::recall(Connector::rec_info_t recinfo, std::string tapeId, long
 		sleep(1);
 	}
 
-	Connector::respondRecallEvent(recinfo, true);
+	Connector::respondRecallEvent(recinfo, succeeded);
 }
 
 void TransRecall::run(Connector *connector)
@@ -337,6 +341,7 @@ unsigned long recall(unsigned long long fsid,unsigned int igen,	unsigned long lo
 	catch ( int error ) {
 		if ( fd != -1 )
 			close(fd);
+		throw(error);
 	}
 
 	return statbuf.st_size;
@@ -379,7 +384,23 @@ void recallStep(int reqNum, std::string tapeId)
 		if ( state == toState )
 			continue;
 
-		recall(fsid, igen, ino, tapeId, state, toState);
+		try {
+			recall(fsid, igen, ino, tapeId, state, toState);
+		}
+		catch(int error) {
+			ssql.str("");
+			ssql.clear();
+			ssql << "UPDATE JOB_QUEUE SET FILE_STATE =" <<  FsObj::FAILED << " WHERE"
+				 << " FS_ID=" << fsid
+				 << " AND I_GEN=" << igen
+				 << " AND I_NUM=" << ino
+				 << " AND REQ_NUM=" << reqNum;
+			sqlite3_stmt *stmt2;
+			sqlite3_statement::prepare(ssql.str(), &stmt2);
+			rc2 = sqlite3_statement::step(stmt2);
+			sqlite3_statement::checkRcAndFinalize(stmt2, rc2, SQLITE_DONE);
+			return;
+		}
 
 		ssql.str("");
 		ssql.clear();
