@@ -5,6 +5,7 @@
 #include <errno.h>
 
 #include <string>
+#include <set>
 #include <condition_variable>
 #include <thread>
 

@@ -2,6 +2,7 @@
 
 #include <string>
 #include <sstream>
+#include <set>
 
 #include <sqlite3.h>
 

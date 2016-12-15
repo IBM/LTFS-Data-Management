@@ -14,6 +14,7 @@
 #include <condition_variable>
 #include <thread>
 #include <map>
+#include <set>
 
 #include <sqlite3.h>
 

@@ -1,5 +1,6 @@
 #include <string>
 #include <sstream>
+#include <set>
 
 #include "src/common/util/util.h"
 #include "src/common/messages/Message.h"
@@ -12,6 +13,7 @@
 #include "OpenLTFSCommand.h"
 #include "StartCommand.h"
 #include "StopCommand.h"
+#include "AddCommand.h"
 #include "MigrationCommand.h"
 #include "RecallCommand.h"
 #include "HelpCommand.h"
@@ -54,6 +56,9 @@ int main(int argc, char *argv[])
 	}
 	else if ( StopCommand().compare(command) ) {
 		openLTFSCommand = dynamic_cast<OpenLTFSCommand*>(new StopCommand());
+	}
+	else if ( AddCommand().compare(command) ) {
+		openLTFSCommand = dynamic_cast<OpenLTFSCommand*>(new AddCommand());
 	}
 	else if ( MigrationCommand().compare(command) ) {
 		openLTFSCommand = dynamic_cast<OpenLTFSCommand*>(new MigrationCommand());

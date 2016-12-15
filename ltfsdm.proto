@@ -96,6 +96,16 @@ message LTFSDmReqStatusResp {
 	required bool done = 8;
 }
 
+message LTFSDmAddRequest {
+	required uint64 key = 1;
+	required int64 reqNumber = 2;
+	required bytes mountpoint = 3;
+}
+
+message LTFSDmAddResp {
+	required bool success = 1;
+}
+
 message Command {
 	oneof commands {
 		LTFSDmReqNumber reqnum = 1;
@@ -112,5 +122,7 @@ message Command {
 		LTFSDmSelRecRequestResp selrecrequestresp = 12;
 		LTFSDmReqStatusRequest reqstatusrequest = 13;
 		LTFSDmReqStatusResp reqstatusresp = 14;
+		LTFSDmAddRequest addrequest = 15;
+		LTFSDmAddResp addresp = 16;
 	}
 }

@@ -8,6 +8,7 @@
 
 namespace LTFSDM {
 	void init();
+	std::set<std::string> getFs();
 }
 
 #endif /*_UTIL_H */

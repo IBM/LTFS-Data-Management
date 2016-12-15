@@ -9,6 +9,7 @@
 #include <atomic>
 #include <typeinfo>
 #include <map>
+#include <set>
 #include <mutex>
 
 #include "src/common/util/util.h"

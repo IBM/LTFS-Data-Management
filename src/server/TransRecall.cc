@@ -4,6 +4,7 @@
 #include <fcntl.h>
 
 #include <map>
+#include <set>
 #include <atomic>
 #include <condition_variable>
 #include <mutex>

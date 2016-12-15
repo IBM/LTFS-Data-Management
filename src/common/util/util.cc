@@ -1,8 +1,11 @@
+#include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <mntent.h>
 
 #include <string>
+#include <set>
 
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
@@ -36,4 +39,36 @@ void LTFSDM::init()
 	mkTmpDir();
 	messageObject.init();
 	traceObject.init();
+}
+
+
+
+std::set<std::string> LTFSDM::getFs()
+
+{
+	unsigned int    buflen = 32 * 1024;
+	char           *buffer = NULL;
+	struct mntent   mntbuf;
+	FILE           *MNTINFO;
+	std::set<std::string> mountList;
+
+	MNTINFO = setmntent("/proc/mounts", "r");
+	if( !MNTINFO ) {
+		throw int(errno);
+	}
+
+	buffer = (char *) malloc(buflen);
+
+	if ( buffer == NULL )
+		throw int(Error::LTFSDM_GENERAL_ERROR);
+
+	while (getmntent_r(MNTINFO, &mntbuf, buffer, buflen))
+		if (!strcmp(mntbuf.mnt_type, "xfs"))
+			mountList.insert(std::string(mntbuf.mnt_dir));
+
+	endmntent(MNTINFO);
+
+	free(buffer);
+
+	return mountList;
 }

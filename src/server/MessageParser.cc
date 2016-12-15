@@ -327,6 +327,35 @@ void MessageParser::statusMessage(long key, LTFSDmCommServer *command, long loca
 	}
 }
 
+void MessageParser::addMessage(long key, LTFSDmCommServer *command, long localReqNumber)
+
+{
+   	const LTFSDmProtocol::LTFSDmAddRequest addreq = command->addrequest();
+	long keySent = addreq.key();
+	std::string mountpoint = addreq.mountpoint();
+
+	TRACE(Trace::much, __PRETTY_FUNCTION__);
+	TRACE(Trace::little, keySent);
+
+	if ( key != keySent ) {
+		MSG(LTFSDMS0008E, keySent);
+		return;
+	}
+
+	MSG(LTFSDMS0042I, mountpoint);
+
+	LTFSDmProtocol::LTFSDmAddResp *addresp = command->mutable_addresp();
+
+	addresp->set_success(true);
+
+	try {
+		command->send();
+	}
+	catch(...) {
+		MSG(LTFSDMS0007E);
+	}
+}
+
 void MessageParser::run(long key, LTFSDmCommServer command)
 
 {
@@ -372,6 +401,9 @@ void MessageParser::run(long key, LTFSDmCommServer command)
 			}
 			else if ( command.has_statusrequest() ) {
 				statusMessage(key, &command, localReqNumber);
+			}
+			else if ( command.has_addrequest() ) {
+				addMessage(key, &command, localReqNumber);
 			}
 			else {
 				TRACE(Trace::error, "unkown command\n");
