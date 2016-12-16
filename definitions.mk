@@ -26,7 +26,7 @@ TARGETCOMP := $(shell perl -e "print '$(CURDIR)' =~ /.*$(PROJECT)\/src\/([^\/]+)
 ARCHIVES ?= $(RELPATH)/lib/$(TARGETCOMP).a $(RELPATH)/lib/common.a
 
 # library source files will be added to the archives
-SOURCE_FILES := $(ARC_SRC_FILES)
+SOURCE_FILES := $(ARC_SRC_FILES) $(SO_SRC_FILES)
 
 DEPDIR := .d
 

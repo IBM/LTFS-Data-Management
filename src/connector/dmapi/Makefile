@@ -3,7 +3,7 @@ RELPATH = ../../..
 LDFLAGS := -ldm
 SHAREDLIB := lib$(notdir $(CURDIR))connector.so
 
-ARC_SRC_FILES :=
+SO_SRC_FILES := Connector.cc
 CLEANUP_FILES := $(SHAREDLIB)
 BINARY := $(SHAREDLIB)
 POSTTARGET :=
