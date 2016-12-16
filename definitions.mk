@@ -26,7 +26,7 @@ TARGETCOMP := $(shell perl -e "print '$(CURDIR)' =~ /.*$(PROJECT)\/src\/([^\/]+)
 ARCHIVES ?= $(RELPATH)/lib/$(TARGETCOMP).a $(RELPATH)/lib/common.a
 
 # library source files will be added to the archives
-SOURCE_FILES := $(LIB_SRC_FILES)
+SOURCE_FILES := $(ARC_SRC_FILES)
 
 DEPDIR := .d
 
@@ -34,7 +34,7 @@ ifneq ($(strip $(SOURCE_FILES)),)
 DEPS := $(DEPDIR)/deps.mk
 endif
 
-ifneq ($(strip $(LIB_SRC_FILES)),)
+ifneq ($(strip $(ARC_SRC_FILES)),)
 TARGETLIB := $(LIBDIR)/$(TARGETCOMP).a
 endif
 
@@ -59,7 +59,7 @@ $(DEPS): $(SOURCE_FILES) | $(DEPDIR)
 libdir: | $(LIBDIR)
 
 # client.a, common.a, and server.a archive files
-$(TARGETLIB): libdir $(TARGETLIB)($(call objfiles, $(LIB_SRC_FILES)))
+$(TARGETLIB): libdir $(TARGETLIB)($(call objfiles, $(ARC_SRC_FILES)))
 
 # link binaries
 $(BINARY): $(ARCHIVES)

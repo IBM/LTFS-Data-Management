@@ -2,7 +2,7 @@ RELPATH = ../../..
 
 MSGDIR := ../messages
 
-LIB_SRC_FILES :=
+ARC_SRC_FILES :=
 CLEANUP_FILES := msgcompiler msgdefs.h
 BINARY := msgcompiler
 POSTTARGET := $(MSGDIR)/msgdefs.h

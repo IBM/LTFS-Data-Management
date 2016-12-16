@@ -1,6 +1,6 @@
 RELPATH = ../../..
 
-LIB_SRC_FILES := Trace.cc
+ARC_SRC_FILES := Trace.cc
 CLEANUP_FILES :=
 BINARYE :=
 POSTTARGET :=
