@@ -119,7 +119,7 @@ long FsObj::write(long offset, unsigned long size, char *buffer)
 	return 0;
 }
 
-void FsObj::addAttribute(attr_t value)
+void FsObj::addAttribute(mig_attr_t value)
 
 {
 }
@@ -129,10 +129,10 @@ void FsObj::remAttribute()
 {
 }
 
-FsObj::attr_t  FsObj::getAttribute()
+FsObj::mig_attr_t  FsObj::getAttribute()
 
 {
-	FsObj::attr_t attr;
+	FsObj::mig_attr_t attr;
 
 	memset(&attr, 0, sizeof(attr));
 	return attr;

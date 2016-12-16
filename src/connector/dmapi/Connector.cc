@@ -753,17 +753,17 @@ long FsObj::write(long offset, unsigned long size, char *buffer)
 }
 
 
-void FsObj::addAttribute(attr_t value)
+void FsObj::addAttribute(mig_attr_t value)
 
 {
 	int rc;
 
-	value.typeId = typeid(attr_t).hash_code();
+	value.typeId = typeid(mig_attr_t).hash_code();
 	value.added = true;
 
 	rc = dm_set_dmattr(dmapiSession, handle, handleLength,
 					   dmapiToken, (dm_attrname_t *) Const::DMAPI_ATTR.c_str(),
-					   0, sizeof(attr_t), (void *) &value);
+					   0, sizeof(mig_attr_t), (void *) &value);
 
 	if ( rc == -1 ) {
 		TRACE(Trace::error, errno);
@@ -785,14 +785,14 @@ void FsObj::remAttribute()
 	}
 }
 
-FsObj::attr_t FsObj::getAttribute()
+FsObj::mig_attr_t FsObj::getAttribute()
 
 {
 	int rc;
 	unsigned long rsize;
-	FsObj::attr_t attr;
+	FsObj::mig_attr_t attr;
 
-	memset(&attr, 0, sizeof(attr_t));
+	memset(&attr, 0, sizeof(mig_attr_t));
 
 	rc = dm_get_dmattr(dmapiSession, handle, handleLength, DM_NO_TOKEN,
 					   (dm_attrname_t *) Const::DMAPI_ATTR.c_str(), sizeof(attr), &attr, &rsize);
@@ -918,7 +918,7 @@ FsObj::file_state FsObj::getMigState()
 	std::stringstream infos;
 	int rc;
 	unsigned int i;
-	FsObj::attr_t attr;
+	FsObj::mig_attr_t attr;
 
 	attr = getAttribute();
 

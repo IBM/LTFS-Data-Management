@@ -38,7 +38,7 @@ void TransRecall::recall(Connector::rec_info_t recinfo, std::string tapeId, long
 	std::string tapeName;
 	int state;
 	int toState;
-	FsObj::attr_t attr;
+	FsObj::mig_attr_t attr;
 	bool succeeded = true;
 
 	ssql << "INSERT INTO JOB_QUEUE (OPERATION, REQ_NUM, TARGET_STATE, FILE_SIZE, FS_ID, I_GEN, "

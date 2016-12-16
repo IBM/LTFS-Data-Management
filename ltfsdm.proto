@@ -103,7 +103,12 @@ message LTFSDmAddRequest {
 }
 
 message LTFSDmAddResp {
-	required bool success = 1;
+	enum AddResp {
+		SUCCESS = 0;
+		ALREADY_ADDED = 1;
+		FAILED = 2;
+	}
+	required AddResp response = 1;
 }
 
 message Command {

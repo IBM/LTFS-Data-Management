@@ -180,7 +180,7 @@ unsigned long preMigrate(std::string fileName, std::string tapeId, long secs, lo
 	long wsize;
 	int fd = -1;
 	long offset = 0;
-	FsObj::attr_t attr;
+	FsObj::mig_attr_t attr;
 
 	try {
 		FsObj source(fileName);
@@ -274,7 +274,7 @@ void stub(std::string fileName, int numRepl)
 {
 	try {
 		FsObj source(fileName);
-		FsObj::attr_t attr;
+		FsObj::mig_attr_t attr;
 
 		source.lock();
 		attr = source.getAttribute();

@@ -346,7 +346,7 @@ void MessageParser::addMessage(long key, LTFSDmCommServer *command, long localRe
 
 	LTFSDmProtocol::LTFSDmAddResp *addresp = command->mutable_addresp();
 
-	addresp->set_success(true);
+	addresp->set_response(LTFSDmProtocol::LTFSDmAddResp::SUCCESS);
 
 	try {
 		command->send();

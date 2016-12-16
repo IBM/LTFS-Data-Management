@@ -24,7 +24,7 @@ private:
 	unsigned long handleLength;
 	bool isLocked;
 public:
-	struct attr_t {
+	struct mig_attr_t {
 		unsigned long typeId;
 		bool added;
 		int copies;
@@ -48,9 +48,9 @@ public:
 	void unlock();
 	long read(long offset, unsigned long size, char *buffer);
 	long write(long offset, unsigned long size, char *buffer);
-	void addAttribute(attr_t value);
+	void addAttribute(mig_attr_t value);
 	void remAttribute();
-	attr_t getAttribute();
+	mig_attr_t getAttribute();
 	void preparePremigration();
 	void finishRecall(file_state fstate);
 	void prepareStubbing();

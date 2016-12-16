@@ -77,8 +77,11 @@ void AddCommand::doCommand(int argc, char **argv)
 
 	const LTFSDmProtocol::LTFSDmAddResp addresp = commCommand.addresp();
 
-	if( addresp.success() != true ) {
-		MSG(LTFSDMC0029E);
+	if( addresp.response() == LTFSDmProtocol::LTFSDmAddResp::FAILED ) {
+		MSG(LTFSDMC0055E, mountPoint);
 		throw(Error::LTFSDM_GENERAL_ERROR);
+	}
+	else if ( addresp.response() == LTFSDmProtocol::LTFSDmAddResp::ALREADY_ADDED ) {
+		MSG(LTFSDMC0054I, mountPoint);
 	}
 }
