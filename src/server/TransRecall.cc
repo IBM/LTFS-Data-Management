@@ -213,6 +213,8 @@ void TransRecall::run(Connector *connector)
 	Connector::rec_info_t recinfo;
 	std::map<std::string, long> reqmap;
 	bool newReq;
+	std::set<std::string> fsList;
+	std::set<std::string>::iterator it;
 
 	try {
 		connector->initTransRecalls();
@@ -220,6 +222,30 @@ void TransRecall::run(Connector *connector)
 	catch ( int error ) {
 		MSG(LTFSDMS0030E);
 		return;
+	}
+
+	fsList = LTFSDM::getFs();
+
+	for ( it = fsList.begin(); it != fsList.end(); ++it ) {
+		try {
+			FsObj fileSystem(*it);
+			if ( fileSystem.isFsManaged() ) {
+				MSG(LTFSDMS0042I, *it);
+				fileSystem.manageFs(true);
+			}
+		}
+		catch ( int error ) {
+			switch ( error ) {
+				case Error::LTFSDM_FS_CHECK_ERROR:
+					MSG(LTFSDMS0044E, *it);
+					break;
+				case Error::LTFSDM_FS_ADD_ERROR:
+					MSG(LTFSDMS0045E, *it);
+					break;
+				default:
+					MSG(LTFSDMS0045E, *it);
+			}
+		}
 	}
 
 	while (terminate == false) {

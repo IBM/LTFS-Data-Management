@@ -333,6 +333,7 @@ void MessageParser::addMessage(long key, LTFSDmCommServer *command, long localRe
    	const LTFSDmProtocol::LTFSDmAddRequest addreq = command->addrequest();
 	long keySent = addreq.key();
 	std::string mountpoint = addreq.mountpoint();
+	LTFSDmProtocol::LTFSDmAddResp_AddResp response =  LTFSDmProtocol::LTFSDmAddResp::SUCCESS;
 
 	TRACE(Trace::much, __PRETTY_FUNCTION__);
 	TRACE(Trace::little, keySent);
@@ -342,11 +343,35 @@ void MessageParser::addMessage(long key, LTFSDmCommServer *command, long localRe
 		return;
 	}
 
-	MSG(LTFSDMS0042I, mountpoint);
+	try {
+		FsObj fileSystem(mountpoint);
+
+		if ( fileSystem.isFsManaged() ) {
+			MSG(LTFSDMS0043W, mountpoint);
+			response =  LTFSDmProtocol::LTFSDmAddResp::ALREADY_ADDED;
+		}
+		else {
+			MSG(LTFSDMS0042I, mountpoint);
+			fileSystem.manageFs(true);
+		}
+	}
+	catch ( int error ) {
+		response = LTFSDmProtocol::LTFSDmAddResp::FAILED;
+		switch ( error ) {
+			case Error::LTFSDM_FS_CHECK_ERROR:
+				MSG(LTFSDMS0044E, mountpoint);
+				break;
+			case Error::LTFSDM_FS_ADD_ERROR:
+				MSG(LTFSDMS0045E, mountpoint);
+				break;
+			default:
+				MSG(LTFSDMS0045E, mountpoint);
+		}
+	}
 
 	LTFSDmProtocol::LTFSDmAddResp *addresp = command->mutable_addresp();
 
-	addresp->set_response(LTFSDmProtocol::LTFSDmAddResp::SUCCESS);
+	addresp->set_response(response);
 
 	try {
 		command->send();

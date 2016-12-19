@@ -23,7 +23,11 @@ private:
 	void *handle;
 	unsigned long handleLength;
 	bool isLocked;
+	bool handleFree;
 public:
+	struct fs_attr_t {
+		bool managed;
+	};
 	struct mig_attr_t {
 		unsigned long typeId;
 		bool added;
@@ -36,9 +40,12 @@ public:
 		MIGRATED,
 		FAILED
 	};
+	FsObj(void *_handle, unsigned long _handleLength) : handle(_handle), handleLength(_handleLength), handleFree(false) {}
 	FsObj(std::string fileName);
 	FsObj(unsigned long long fsId, unsigned int iGen, unsigned long long iNode);
 	~FsObj();
+	bool isFsManaged();
+	void manageFs(bool setDispo);
 	struct stat stat();
 	unsigned long long getFsId();
 	unsigned int getIGen();

@@ -371,6 +371,8 @@ Connector::rec_info_t Connector::getEvents()
 	char sgName[PATH_MAX];
 	void *hand1P;
 	size_t hand1Len;
+	void *handRP;
+	size_t handRLen;
 	char *name1P;
 	char *name2P;
 	size_t name1Len;
@@ -399,6 +401,8 @@ Connector::rec_info_t Connector::getEvents()
 			mountEventP = DM_GET_VALUE(eventMsgP, ev_data, dm_mount_event_t*);
 			hand1P = DM_GET_VALUE(mountEventP , me_handle1, void *);
 			hand1Len = DM_GET_LEN(mountEventP, me_handle1);
+			handRP = DM_GET_VALUE(mountEventP , me_roothandle, void *);
+			handRLen = DM_GET_LEN(mountEventP, me_roothandle);
 			name1P = DM_GET_VALUE(mountEventP, me_name1, char *);
 			name1Len = DM_GET_LEN(mountEventP, me_name1);
 			name2P = DM_GET_VALUE(mountEventP, me_name2, char *);
@@ -421,13 +425,8 @@ Connector::rec_info_t Connector::getEvents()
 			TRACE(Trace::little, sgName);
 
 			MSG(LTFSDMD0009I, nameBuf);
+			MSG(LTFSDMD0010I, nameBuf);
 
-			/* For now, all dmapi enabled file systems are managed */
-
-			/* Set dm disposition for events. Note there is a mount
-			   event from each node that mounts the file system. Rather
-			   than tracking the number of mounts & unmounts, simply
-			   set the disposition on every mount */
 			DMEV_ZERO(eventSet);
 			DMEV_SET(DM_EVENT_READ, eventSet);
 			DMEV_SET(DM_EVENT_WRITE, eventSet);
@@ -443,6 +442,21 @@ Connector::rec_info_t Connector::getEvents()
 				TRACE(Trace::error, errno);
 				throw(Error::LTFSDM_GENERAL_ERROR);
 			}
+
+			try {
+				FsObj fileSystem(handRP, handRLen);
+				fileSystem.manageFs(false);
+			}
+			catch ( int error ) {
+				switch ( error ) {
+					case Error::LTFSDM_FS_ADD_ERROR:
+						MSG(LTFSDMD0011E, nameBuf);
+						break;
+					default:
+						MSG(LTFSDMD0011E, nameBuf);
+				}
+			}
+
 			break;  /* end of case DM_EVENT_MOUNT */
 		case DM_EVENT_READ:
 		case DM_EVENT_WRITE:
@@ -529,7 +543,8 @@ void Connector::terminate()
 	}
 }
 
-FsObj::FsObj(std::string fileName) : handle(NULL), handleLength(0), isLocked(false)
+FsObj::FsObj(std::string fileName)
+	: handle(NULL), handleLength(0), isLocked(false), handleFree(true)
 
 {
 	char *fname = (char *) fileName.c_str();
@@ -541,7 +556,7 @@ FsObj::FsObj(std::string fileName) : handle(NULL), handleLength(0), isLocked(fal
 }
 
 FsObj::FsObj(unsigned long long fsId, unsigned int iGen, unsigned long long iNode)
-	: handle(NULL), handleLength(0), isLocked(false)
+	: handle(NULL), handleLength(0), isLocked(false), handleFree(true)
 
 {
 	if ( dm_make_handle(&fsId, &iNode, &iGen, &handle, &handleLength) != 0 ) {
@@ -553,7 +568,76 @@ FsObj::FsObj(unsigned long long fsId, unsigned int iGen, unsigned long long iNod
 FsObj::~FsObj()
 
 {
+	if ( handleFree )
 	dm_handle_free(handle, handleLength);
+}
+
+bool FsObj::isFsManaged()
+
+{
+	unsigned long rsize;
+	FsObj::fs_attr_t attr;
+	int rc;
+
+	memset(&attr, 0, sizeof(fs_attr_t));
+
+    rc = dm_get_dmattr(dmapiSession, handle, handleLength, DM_NO_TOKEN,
+					   (dm_attrname_t *) Const::DMAPI_ATTR_FS.c_str(), sizeof(attr), &attr, &rsize);
+
+
+	if ( rc == -1 && errno == ENOENT ) {
+		return false;
+	}
+	else if ( rc == -1 ) {
+		TRACE(Trace::error, errno);
+		throw(Error::LTFSDM_FS_CHECK_ERROR);
+	}
+
+	return attr.managed;
+}
+
+void FsObj::manageFs(bool setDispo)
+
+{
+	FsObj::fs_attr_t attr;
+	dm_eventset_t eventSet;
+	memset(&attr, 0, sizeof(fs_attr_t));
+	attr.managed = true;
+	void *fsHandle;
+    unsigned long fsHandleLength;
+
+	lock();
+
+	if ( dm_set_dmattr(dmapiSession, handle, handleLength,
+					   dmapiToken, (dm_attrname_t *) Const::DMAPI_ATTR_FS.c_str(),
+					   0, sizeof(fs_attr_t), (void *) &attr) == -1 ) {
+		unlock();
+		TRACE(Trace::error, errno);
+		throw(Error::LTFSDM_FS_ADD_ERROR);
+	}
+	unlock();
+
+	if ( setDispo ) {
+		DMEV_ZERO(eventSet);
+		DMEV_SET(DM_EVENT_READ, eventSet);
+		DMEV_SET(DM_EVENT_WRITE, eventSet);
+		DMEV_SET(DM_EVENT_TRUNCATE, eventSet);
+
+		if ( dm_handle_to_fshandle(handle, handleLength, &fsHandle, &fsHandleLength) == -1 ) {
+			TRACE(Trace::error, handle);
+			TRACE(Trace::error, fsHandle);
+			TRACE(Trace::error, errno);
+			throw(Error::LTFSDM_FS_ADD_ERROR);
+		}
+
+		if ( dm_set_disp(dmapiSession, fsHandle, fsHandleLength, DM_NO_TOKEN, &eventSet, DM_EVENT_MAX) == -1 ) {
+			dm_handle_free(fsHandle, fsHandleLength);
+			TRACE(Trace::error, errno);
+			throw(Error::LTFSDM_FS_ADD_ERROR);
+		}
+
+		dm_handle_free(fsHandle, fsHandleLength);
+	}
 }
 
 struct stat FsObj::stat()
@@ -762,7 +846,7 @@ void FsObj::addAttribute(mig_attr_t value)
 	value.added = true;
 
 	rc = dm_set_dmattr(dmapiSession, handle, handleLength,
-					   dmapiToken, (dm_attrname_t *) Const::DMAPI_ATTR.c_str(),
+					   dmapiToken, (dm_attrname_t *) Const::DMAPI_ATTR_MIG.c_str(),
 					   0, sizeof(mig_attr_t), (void *) &value);
 
 	if ( rc == -1 ) {
@@ -777,7 +861,7 @@ void FsObj::remAttribute()
 	int rc;
 
 	rc = dm_remove_dmattr(dmapiSession, handle, handleLength,
-						  dmapiToken, 0, (dm_attrname_t *) Const::DMAPI_ATTR.c_str());
+						  dmapiToken, 0, (dm_attrname_t *) Const::DMAPI_ATTR_MIG.c_str());
 
 	if ( rc == -1 ) {
 		TRACE(Trace::error, errno);
@@ -795,7 +879,7 @@ FsObj::mig_attr_t FsObj::getAttribute()
 	memset(&attr, 0, sizeof(mig_attr_t));
 
 	rc = dm_get_dmattr(dmapiSession, handle, handleLength, DM_NO_TOKEN,
-					   (dm_attrname_t *) Const::DMAPI_ATTR.c_str(), sizeof(attr), &attr, &rsize);
+					   (dm_attrname_t *) Const::DMAPI_ATTR_MIG.c_str(), sizeof(attr), &attr, &rsize);
 
 	if ( rc == -1 && errno == ENOENT ) {
 		attr.added = false;
