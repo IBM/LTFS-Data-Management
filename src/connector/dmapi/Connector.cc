@@ -90,7 +90,8 @@ void dmapiSessionCleanup()
 		num_sessions = num_sessions_res;
     }
 
-	MSG(LTFSDMD0002I, num_sessions);
+	if ( num_sessions )
+		MSG(LTFSDMD0002I, num_sessions);
 
 	unsigned int num_tokens = 1024;
 	dm_token_t *tokbufp = NULL;
@@ -188,6 +189,7 @@ Connector::Connector(bool cleanup)
 
 failed:
 	MSG(LTFSDMS0016E);
+	throw(Error::LTFSDM_GENERAL_ERROR);
 }
 
 Connector::~Connector()

@@ -28,6 +28,8 @@ int main(int argc, char **argv)
 	bool detach = true;
 	int opt;
 
+	Connector *connector = NULL;
+
 	opterr = 0;
 
 	while (( opt = getopt(argc, argv, "f")) != -1 ) {
@@ -55,9 +57,10 @@ int main(int argc, char **argv)
 
 	try {
 		ltfsdmd.initialize();
+		connector = new Connector(true);
 		if ( detach )
 			ltfsdmd.daemonize();
-		ltfsdmd.run();
+		ltfsdmd.run(connector);
 	}
 	catch ( int initerr ) {
 		err = initerr;
@@ -65,5 +68,6 @@ int main(int argc, char **argv)
 	}
 
 end:
+	delete(connector);
 	return (int) err;
 }

@@ -10,5 +10,5 @@ public:
 	Server() {};
 	void initialize();
 	void daemonize();
-	void run();
+	void run(Connector *connector);
 };

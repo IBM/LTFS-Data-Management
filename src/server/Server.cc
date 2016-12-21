@@ -137,11 +137,9 @@ void Server::daemonize()
 	close(dev_null);
 }
 
-void Server::run()
+void Server::run(Connector *connector)
 
 {
-	Connector connector(true);
-
 	SubServer subs;
 	Scheduler sched;
 	Receiver recv;
@@ -150,8 +148,8 @@ void Server::run()
 	terminate = false;
 
 	subs.enqueue("Scheduler", &Scheduler::run, &sched, key);
-	subs.enqueue("Receiver", &Receiver::run, &recv, key, &connector);
-	subs.enqueue("RecallD", &TransRecall::run, &trec, &connector);
+	subs.enqueue("Receiver", &Receiver::run, &recv, key, connector);
+	subs.enqueue("RecallD", &TransRecall::run, &trec, connector);
 
 	subs.waitAllRemaining();
 }
