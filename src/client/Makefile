@@ -11,6 +11,7 @@ ARC_SRC_FILES += RecallCommand.cc
 ARC_SRC_FILES += HelpCommand.cc
 ARC_SRC_FILES += InfoRequestsCommand.cc
 ARC_SRC_FILES += InfoFilesCommand.cc
+ARC_SRC_FILES += InfoFsCommand.cc
 ARC_SRC_FILES += StatusCommand.cc
 CLEANUP_FILES := ltfsdm
 BINARY := ltfsdm

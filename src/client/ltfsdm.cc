@@ -20,6 +20,7 @@
 #include "InfoCommand.h"
 #include "InfoRequestsCommand.h"
 #include "InfoFilesCommand.h"
+#include "InfoFsCommand.h"
 #include "StatusCommand.h"
 
 int main(int argc, char *argv[])
@@ -88,6 +89,9 @@ int main(int argc, char *argv[])
 		}
 		else if ( InfoFilesCommand().compare(command) ) {
 			openLTFSCommand = dynamic_cast<OpenLTFSCommand*>(new InfoFilesCommand());
+		}
+		else if ( InfoFsCommand().compare(command) ) {
+			openLTFSCommand = dynamic_cast<OpenLTFSCommand*>(new InfoFsCommand());
 		}
 		else {
 			MSG(LTFSDMC0012E, command.c_str());
