@@ -605,11 +605,10 @@ void FsObj::manageFs(bool setDispo)
 	dm_eventset_t eventSet;
 	memset(&attr, 0, sizeof(fs_attr_t));
 	attr.managed = true;
-	void *fsHandle;
+	void *fsHandle = NULL;
     unsigned long fsHandleLength;
 
 	lock();
-
 	if ( dm_set_dmattr(dmapiSession, handle, handleLength,
 					   dmapiToken, (dm_attrname_t *) Const::DMAPI_ATTR_FS.c_str(),
 					   0, sizeof(fs_attr_t), (void *) &attr) == -1 ) {
@@ -625,19 +624,32 @@ void FsObj::manageFs(bool setDispo)
 		DMEV_SET(DM_EVENT_WRITE, eventSet);
 		DMEV_SET(DM_EVENT_TRUNCATE, eventSet);
 
-		if ( dm_handle_to_fshandle(handle, handleLength, &fsHandle, &fsHandleLength) == -1 ) {
-			TRACE(Trace::error, handle);
-			TRACE(Trace::error, fsHandle);
-			TRACE(Trace::error, errno);
+		try {
+			if ( dm_handle_to_fshandle(handle, handleLength, &fsHandle, &fsHandleLength) == -1 ) {
+				TRACE(Trace::error, handle);
+				TRACE(Trace::error, fsHandle);
+				TRACE(Trace::error, errno);
+				throw(Error::LTFSDM_FS_ADD_ERROR);
+			}
+			if ( dm_set_disp(dmapiSession, fsHandle, fsHandleLength, DM_NO_TOKEN, &eventSet, DM_EVENT_MAX) == -1 ) {
+				dm_handle_free(fsHandle, fsHandleLength);
+				TRACE(Trace::error, errno);
+				throw(Error::LTFSDM_FS_ADD_ERROR);
+			}
+		}
+		catch ( int error ) {
+			lock();
+			attr.managed = false;
+			if ( dm_set_dmattr(dmapiSession, handle, handleLength,
+							   dmapiToken, (dm_attrname_t *) Const::DMAPI_ATTR_FS.c_str(),
+							   0, sizeof(fs_attr_t), (void *) &attr) == -1 ) {
+				unlock();
+				TRACE(Trace::error, errno);
+				throw(Error::LTFSDM_FS_ADD_ERROR);
+			}
+			unlock();
 			throw(Error::LTFSDM_FS_ADD_ERROR);
 		}
-
-		if ( dm_set_disp(dmapiSession, fsHandle, fsHandleLength, DM_NO_TOKEN, &eventSet, DM_EVENT_MAX) == -1 ) {
-			dm_handle_free(fsHandle, fsHandleLength);
-			TRACE(Trace::error, errno);
-			throw(Error::LTFSDM_FS_ADD_ERROR);
-		}
-
 		dm_handle_free(fsHandle, fsHandleLength);
 	}
 }
