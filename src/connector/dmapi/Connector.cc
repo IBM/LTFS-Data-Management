@@ -52,7 +52,7 @@ std::map<fuid_t, int, ltstr> fuidMap;
 
 std::mutex mtx;
 
-void dmapiSessionCleanup()
+void dmapiSessionCleanup(dm_sessid_t *oldSid)
 
 {
 	int i;
@@ -128,6 +128,8 @@ void dmapiSessionCleanup()
 				}
 			}
 
+			TRACE(Trace::little, rtoklenp);
+
 			for (j = 0; j<rtoklenp; j++)
 			{
 				TRACE(Trace::error, j);
@@ -141,6 +143,7 @@ void dmapiSessionCleanup()
 			if ( dm_destroy_session(sidbufp[i]) == -1 ) {
 				TRACE(Trace::error, errno);
 				MSG(LTFSDMD0004E);
+				*oldSid = sidbufp[i];
 			}
 			else {
 				MSG(LTFSDMD0005I, (unsigned long) sidbufp[i]);
@@ -159,8 +162,9 @@ Connector::Connector(bool cleanup)
 	char          *version          = NULL;
     size_t         msglen           = 8;
     char           msgdatap[8];
-	dm_sessid_t dmapiSessionLoc;
-	dm_token_t dmapiTokenLoc;
+	dm_sessid_t    dmapiSessionLoc;
+	dm_token_t     dmapiTokenLoc;
+	dm_sessid_t    oldSid = DM_NO_SESSION;
 
 	memset((char *) msgdatap, 0, sizeof(msgdatap));
 
@@ -170,9 +174,9 @@ Connector::Connector(bool cleanup)
 	}
 
 	if ( cleanup )
-		dmapiSessionCleanup();
+		dmapiSessionCleanup(&oldSid);
 
-	if (dm_create_session(DM_NO_SESSION, (char *) Const::DMAPI_SESSION_NAME.c_str(), &dmapiSessionLoc)) {
+	if (dm_create_session(oldSid, (char *) Const::DMAPI_SESSION_NAME.c_str(), &dmapiSessionLoc)) {
 		TRACE(Trace::error, errno);
 		goto failed;
 	}

@@ -58,9 +58,9 @@ void TransRecall::recall(Connector::rec_info_t recinfo, std::string tapeId, long
 		}
 
 		ssql << statbuf.st_size << ", "                          // FILE_SIZE
-			 << recinfo.fsid << ", "                             // FS_ID
+			 << (long long) recinfo.fsid << ", "                 // FS_ID
 			 << recinfo.igen << ", "                             // I_GEN
-			 << recinfo.ino << ", "                              // I_NUM
+			 << (long long) recinfo.ino << ", "                  // I_NUM
 			 << statbuf.st_mtime << ", "                         // MTIME_SEC
 			 << 0 << ", "                                        // MTIME_NSEC
 			 << time(NULL) << ", ";                              // LAST_UPD
