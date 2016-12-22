@@ -536,6 +536,8 @@ void Connector::respondRecallEvent(rec_info_t recinfo, bool success)
 			throw(Error::LTFSDM_GENERAL_ERROR);
 		}
 	}
+
+	TRACE(Trace::little, recinfo.ino);
 }
 
 void Connector::terminate()

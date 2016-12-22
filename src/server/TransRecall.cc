@@ -159,9 +159,9 @@ void TransRecall::recall(Connector::rec_info_t recinfo, std::string tapeId, long
 		ssql.clear();
 
 		ssql << "SELECT FILE_STATE FROM JOB_QUEUE WHERE"
-			 << " FS_ID=" << recinfo.fsid
+			 << " FS_ID=" << (long long) recinfo.fsid
 			 << " AND I_GEN=" << recinfo.igen
-			 << " AND I_NUM=" << recinfo.ino
+			 << " AND I_NUM=" << (long long) recinfo.ino
 			 << " AND REQ_NUM=" << reqNum;
 		sqlite3_statement::prepare(ssql.str(), &stmt);
 		while ( (rc = sqlite3_statement::step(stmt)) == SQLITE_ROW ) {
@@ -179,9 +179,9 @@ void TransRecall::recall(Connector::rec_info_t recinfo, std::string tapeId, long
 			ssql.clear();
 
 			ssql << "DELETE FROM JOB_QUEUE WHERE"
-				 << " FS_ID=" << recinfo.fsid
+				 << " FS_ID=" << (long long) recinfo.fsid
 				 << " AND I_GEN=" << recinfo.igen
-				 << " AND I_NUM=" << recinfo.ino
+				 << " AND I_NUM=" << (long long) recinfo.ino
 				 << " AND REQ_NUM=" << reqNum;
 			sqlite3_statement::prepare(ssql.str(), &stmt);
 			rc = sqlite3_statement::step(stmt);
@@ -418,9 +418,9 @@ void recallStep(int reqNum, std::string tapeId)
 			ssql.str("");
 			ssql.clear();
 			ssql << "UPDATE JOB_QUEUE SET FILE_STATE =" <<  FsObj::FAILED << " WHERE"
-				 << " FS_ID=" << fsid
+				 << " FS_ID=" << (long long) fsid
 				 << " AND I_GEN=" << igen
-				 << " AND I_NUM=" << ino
+				 << " AND I_NUM=" << (long long) ino
 				 << " AND REQ_NUM=" << reqNum;
 			sqlite3_stmt *stmt2;
 			sqlite3_statement::prepare(ssql.str(), &stmt2);
@@ -433,9 +433,9 @@ void recallStep(int reqNum, std::string tapeId)
 		ssql.clear();
 
 		ssql << "UPDATE JOB_QUEUE SET FILE_STATE =" <<  toState << " WHERE"
-			 << " FS_ID=" << fsid
+			 << " FS_ID=" << (long long) fsid
 			 << " AND I_GEN=" << igen
-			 << " AND I_NUM=" << ino
+			 << " AND I_NUM=" << (long long) ino
 			 << " AND REQ_NUM=" << reqNum;
 
 		sqlite3_stmt *stmt2;

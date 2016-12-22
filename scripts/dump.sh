@@ -1,6 +1,8 @@
 #!/bin/bash
 
-sqlite3 /var/run/ltfsdm/OpenLTFS.db <<EOF
+cp /var/run/ltfsdm/OpenLTFS.db /var/run/ltfsdm/OpenLTFS.db.cpy
+
+sqlite3 /var/run/ltfsdm/OpenLTFS.db.cpy <<EOF
 .mode column
 .headers on
 
@@ -63,3 +65,5 @@ DROP TABLE FILESTATETYPE;
 DROP TABLE TARGETSTATETYPE;
 
 EOF
+
+rm /var/run/ltfsdm/OpenLTFS.db.cpy

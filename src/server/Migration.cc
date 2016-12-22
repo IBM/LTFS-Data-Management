@@ -57,9 +57,9 @@ void Migration::addJob(std::string fileName)
 		}
 
 		ssql << statbuf.st_size << ", "                          // FILE_SIZE
-			 << fso.getFsId() << ", "                            // FS_ID
+			 << (long long) fso.getFsId() << ", "                // FS_ID
 			 << fso.getIGen() << ", "                            // I_GEN
-			 << fso.getINode() << ", "                           // I_NUM
+			 << (long long) fso.getINode() << ", "               // I_NUM
 			 << statbuf.st_mtim.tv_sec << ", "                   // MTIME_SEC
 			 << statbuf.st_mtim.tv_nsec << ", "                  // MTIME_NSEC
 			 << time(NULL) << ", "                               // LAST_UPD
