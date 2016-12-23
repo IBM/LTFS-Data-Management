@@ -421,6 +421,7 @@ void Migration::execRequest(int reqNum, int tgtState, int numRepl, int replNum, 
 	int rc;
 	std::stringstream tapePath;
 	bool suspended = false;
+	bool failed = false;
 
 	numPremig++;
 	assert(numPremig<3);
@@ -434,9 +435,33 @@ void Migration::execRequest(int reqNum, int tgtState, int numRepl, int replNum, 
 		if ( errno != ENODATA ) {
 			TRACE(Trace::error, errno);
 			MSG(LTFSDMS0024E, tapeId);
-			throw(errno);
+
+			ssql.str("");
+			ssql.clear();
+
+			ssql << "UPDATE JOB_QUEUE SET FILE_STATE = " <<  FsObj::FAILED
+				 << " WHERE REQ_NUM=" << reqNum
+				 << " AND COLOC_GRP = " << colGrp
+				 << " AND FILE_STATE=" << FsObj::PREMIGRATED
+				 << " AND REPL_NUM=" << replNum;
+
+			TRACE(Trace::error, ssql.str());
+
+			sqlite3_statement::prepare(ssql.str(), &stmt);
+			rc = sqlite3_statement::step(stmt);
+			sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+
+			std::unique_lock<std::mutex> lock(Scheduler::updmtx);
+			TRACE(Trace::error, reqNum);
+			Scheduler::updReq[reqNum] = true;
+			Scheduler::updcond.notify_all();
+
+			failed = true;
 		}
 	}
+
+	ssql.str("");
+	ssql.clear();
 
 	std::unique_lock<std::mutex> lock(Scheduler::mtx);
 	ssql << "UPDATE TAPE_LIST SET STATE=" << DataBase::TAPE_FREE
@@ -447,7 +472,7 @@ void Migration::execRequest(int reqNum, int tgtState, int numRepl, int replNum, 
 	numPremig--;
 	Scheduler::cond.notify_one();
 
-	if ( tgtState != LTFSDmProtocol::LTFSDmMigRequest::PREMIGRATED )
+	if ( !failed && tgtState != LTFSDmProtocol::LTFSDmMigRequest::PREMIGRATED )
 		migrationStep(reqNum, numRepl, replNum, colGrp, tapeId,  FsObj::PREMIGRATED, FsObj::MIGRATED);
 
 	std::unique_lock<std::mutex> updlock(Scheduler::updmtx);
