@@ -386,6 +386,7 @@ Connector::rec_info_t Connector::getEvents()
 	bool toresident;
 	size_t rlen;
 	dm_token_t token;
+	int retries;
 
 	memset(&recinfo, 0, sizeof(recinfo));
 
@@ -449,19 +450,30 @@ Connector::rec_info_t Connector::getEvents()
 				throw(Error::LTFSDM_GENERAL_ERROR);
 			}
 
-			try {
-				FsObj fileSystem(handRP, handRLen);
-				fileSystem.manageFs(false);
-			}
-			catch ( int error ) {
-				switch ( error ) {
-					case Error::LTFSDM_FS_ADD_ERROR:
-						MSG(LTFSDMD0011E, nameBuf);
-						break;
-					default:
-						MSG(LTFSDMD0011E, nameBuf);
+			retries = 0;
+
+			while ( retries < 4 ) {
+				try {
+					FsObj fileSystem(handRP, handRLen);
+					fileSystem.manageFs(false);
+					break;
+				}
+				catch ( int error ) {
+					switch ( error ) {
+						case Error::LTFSDM_FS_ADD_ERROR:
+							usleep(100000);
+							retries++;
+							break;
+						default:
+							usleep(100000);
+							retries++;
+					}
 				}
 			}
+
+			if ( retries == 4 )
+				MSG(LTFSDMD0011E, nameBuf);
+			TRACE(Trace::little, retries);
 
 			break;  /* end of case DM_EVENT_MOUNT */
 		case DM_EVENT_READ:
