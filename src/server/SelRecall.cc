@@ -74,6 +74,23 @@ void SelRecall::addJob(std::string fileName)
 			 << 0 << ");";                                       // FAILED
 	}
 	catch ( int error ) {
+		ssql.str("");
+		ssql.clear();
+		ssql << "INSERT INTO JOB_QUEUE (OPERATION, FILE_NAME, REQ_NUM, TARGET_STATE, FILE_SIZE, FS_ID, I_GEN, "
+			 << "I_NUM, MTIME_SEC, MTIME_NSEC, LAST_UPD, FILE_STATE, FAILED) "
+			 << "VALUES (" << DataBase::MIGRATION << ", "        // OPERATION
+			 << "'" << fileName << "', "                         // FILE_NAME
+			 << reqNumber << ", "                                // REQ_NUM
+			 << targetState << ", "                              // MIGRATION_STATE
+			 << Const::UNSET  << ", "                            // FILE_SIZE
+			 << Const::UNSET  << ", "                            // FS_ID
+			 << Const::UNSET  << ", "                            // I_GEN
+			 << Const::UNSET  << ", "                            // I_NUM
+			 << Const::UNSET  << ", "                            // MTIME_SEC
+			 << Const::UNSET  << ", "                            // MTIME_NSEC
+			 << time(NULL) << ", "                               // LAST_UPD
+			 << FsObj::FAILED  << ", "                           // FILE_STATE
+			 << 0 << ");";
 		MSG(LTFSDMS0017E, fileName.c_str());
 	}
 

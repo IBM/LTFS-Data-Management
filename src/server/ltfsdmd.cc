@@ -57,9 +57,9 @@ int main(int argc, char **argv)
 
 	try {
 		ltfsdmd.initialize();
-		connector = new Connector(true);
 		if ( detach )
 			ltfsdmd.daemonize();
+		connector = new Connector(true);
 		ltfsdmd.run(connector);
 	}
 	catch ( int initerr ) {
@@ -68,6 +68,7 @@ int main(int argc, char **argv)
 	}
 
 end:
-	delete(connector);
+	if ( connector )
+		delete(connector);
 	return (int) err;
 }
