@@ -77,8 +77,8 @@ void SelRecall::addJob(std::string fileName)
 		ssql.str("");
 		ssql.clear();
 		ssql << "INSERT INTO JOB_QUEUE (OPERATION, FILE_NAME, REQ_NUM, TARGET_STATE, FILE_SIZE, FS_ID, I_GEN, "
-			 << "I_NUM, MTIME_SEC, MTIME_NSEC, LAST_UPD, FILE_STATE, FAILED) "
-			 << "VALUES (" << DataBase::MIGRATION << ", "        // OPERATION
+			 << "I_NUM, MTIME_SEC, MTIME_NSEC, LAST_UPD, FILE_STATE, TAPE_ID, FAILED) "
+			 << "VALUES (" << DataBase::SELRECALL << ", "        // OPERATION
 			 << "'" << fileName << "', "                         // FILE_NAME
 			 << reqNumber << ", "                                // REQ_NUM
 			 << targetState << ", "                              // MIGRATION_STATE
@@ -90,6 +90,7 @@ void SelRecall::addJob(std::string fileName)
 			 << Const::UNSET  << ", "                            // MTIME_NSEC
 			 << time(NULL) << ", "                               // LAST_UPD
 			 << FsObj::FAILED  << ", "                           // FILE_STATE
+			 << "'" << Const::FAILED_TAPE_ID << "'" << ", "      // TAPE_ID
 			 << 0 << ");";
 		MSG(LTFSDMS0017E, fileName.c_str());
 	}
@@ -127,6 +128,7 @@ void SelRecall::addRequest()
 		sqlite3_stmt *stmt2;
 
 		const char *cstr = reinterpret_cast<const char*>(sqlite3_column_text (stmt, 0));
+		std::string tapeId = std::string(cstr ? cstr : "");
 
 		ssql2 << "INSERT INTO REQUEST_QUEUE (OPERATION, REQ_NUM, TARGET_STATE, "
 			  << "COLOC_GRP, TAPE_ID, TIME_ADDED, STATE) "
@@ -134,9 +136,12 @@ void SelRecall::addRequest()
 			  << reqNumber << ", "                                                  // REQ_NUM
 			  << targetState << ", "                                                // TARGET_STATE
 			  << "NULL" << ", "                                                     // COLOC_GRP
-			  << "'" << (cstr ? std::string(cstr) : std::string("")) << "', "       // TAPE_ID
-			  << time(NULL) << ", "                                                 // TIME_ADDED
-			  << DataBase::REQ_NEW << ");";                                         // STATE
+			  << "'" << tapeId << "', "       // TAPE_ID
+			  << time(NULL) << ", ";                                                // TIME_ADDED
+		if ( tapeId.compare(Const::FAILED_TAPE_ID) != 0 )
+			ssql2 << DataBase::REQ_NEW << ");";                                     // STATE
+		else
+			ssql2 << DataBase::REQ_COMPLETED << ");";                               // STATE
 
 		sqlite3_statement::prepare(ssql2.str(), &stmt2);
 

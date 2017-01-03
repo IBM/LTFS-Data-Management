@@ -31,6 +31,7 @@ namespace Const {
 	const int maxReplica = 3;
 	const int tapeIdLength = 8;
 	const std::string DMAPI_TERMINATION_MESSAGE = std::string("termination message");
+	const std::string FAILED_TAPE_ID  = std::string("FAILED");
 }
 
 #endif /* _CONST_H */
