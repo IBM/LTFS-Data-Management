@@ -39,7 +39,7 @@ void Migration::addJob(std::string fileName)
 	ssql.str("");
 	ssql.clear();
 	ssql << "INSERT INTO JOB_QUEUE (OPERATION, FILE_NAME, REQ_NUM, TARGET_STATE, REPL_NUM, COLOC_GRP, "
-		 << "FILE_SIZE, FS_ID, I_GEN, I_NUM, MTIME_SEC, MTIME_NSEC, LAST_UPD, FILE_STATE, FAILED) "
+		 << "FILE_SIZE, FS_ID, I_GEN, I_NUM, MTIME_SEC, MTIME_NSEC, LAST_UPD, FILE_STATE) "
 		 << "VALUES (" << DataBase::MIGRATION << ", "            // OPERATION
 		 << "'" << fileName << "', "                             // FILE_NAME
 		 << reqNumber << ", "                                    // REQ_NUM
@@ -63,14 +63,13 @@ void Migration::addJob(std::string fileName)
 			 << statbuf.st_mtim.tv_sec << ", "                   // MTIME_SEC
 			 << statbuf.st_mtim.tv_nsec << ", "                  // MTIME_NSEC
 			 << time(NULL) << ", "                               // LAST_UPD
-			 << fso.getMigState() << ", "                        // FILE_STATE
-			 << 0 << ");";                                       // FAILED
+			 << fso.getMigState() << ");";                       // FILE_STATE
 	}
 	catch ( int error ) {
 		ssql.str("");
 		ssql.clear();
 		ssql << "INSERT INTO JOB_QUEUE (OPERATION, FILE_NAME, REQ_NUM, TARGET_STATE, REPL_NUM, COLOC_GRP, "
-			 << "FILE_SIZE, FS_ID, I_GEN, I_NUM, MTIME_SEC, MTIME_NSEC, LAST_UPD, FILE_STATE, FAILED) "
+			 << "FILE_SIZE, FS_ID, I_GEN, I_NUM, MTIME_SEC, MTIME_NSEC, LAST_UPD, FILE_STATE) "
 			 << "VALUES (" << DataBase::MIGRATION << ", "        // OPERATION
 			 << "'" << fileName << "', "                         // FILE_NAME
 			 << reqNumber << ", "                                // REQ_NUM
@@ -84,8 +83,7 @@ void Migration::addJob(std::string fileName)
 			 << Const::UNSET  << ", "                            // MTIME_SEC
 			 << Const::UNSET  << ", "                            // MTIME_NSEC
 			 << time(NULL) << ", "                               // LAST_UPD
-			 << FsObj::FAILED  << ", "                           // FILE_STATE
-			 << 0 << ");";
+			 << FsObj::FAILED  << ");";                          // FILE_STATE
 		MSG(LTFSDMS0017E, fileName.c_str());
 	}
 

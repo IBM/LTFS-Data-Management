@@ -39,7 +39,7 @@ void SelRecall::addJob(std::string fileName)
 	FsObj::mig_attr_t attr;
 
 	ssql << "INSERT INTO JOB_QUEUE (OPERATION, FILE_NAME, REQ_NUM, TARGET_STATE, FILE_SIZE, FS_ID, I_GEN, "
-		 << "I_NUM, MTIME_SEC, MTIME_NSEC, LAST_UPD, FILE_STATE, TAPE_ID, START_BLOCK, FAILED) "
+		 << "I_NUM, MTIME_SEC, MTIME_NSEC, LAST_UPD, FILE_STATE, TAPE_ID, START_BLOCK) "
 		 << "VALUES (" << DataBase::SELRECALL << ", "            // OPERATION
 		 << "'" << fileName << "', "                             // FILE_NAME
 		 << reqNumber << ", "                                    // REQ_NUM
@@ -70,14 +70,13 @@ void SelRecall::addJob(std::string fileName)
 		attr = fso.getAttribute();
 		ssql << "'" << attr.tapeId[0] << "', ";                  // TAPE_ID
 		tapeName = Scheduler::getTapeName(fileName, attr.tapeId[0]);
-		ssql << Scheduler::getStartBlock(tapeName) << ", "       // START_BLOCK
-			 << 0 << ");";                                       // FAILED
+		ssql << Scheduler::getStartBlock(tapeName) << ");";      // START_BLOCK
 	}
 	catch ( int error ) {
 		ssql.str("");
 		ssql.clear();
 		ssql << "INSERT INTO JOB_QUEUE (OPERATION, FILE_NAME, REQ_NUM, TARGET_STATE, FILE_SIZE, FS_ID, I_GEN, "
-			 << "I_NUM, MTIME_SEC, MTIME_NSEC, LAST_UPD, FILE_STATE, TAPE_ID, FAILED) "
+			 << "I_NUM, MTIME_SEC, MTIME_NSEC, LAST_UPD, FILE_STATE, TAPE_ID) "
 			 << "VALUES (" << DataBase::SELRECALL << ", "        // OPERATION
 			 << "'" << fileName << "', "                         // FILE_NAME
 			 << reqNumber << ", "                                // REQ_NUM
@@ -90,8 +89,7 @@ void SelRecall::addJob(std::string fileName)
 			 << Const::UNSET  << ", "                            // MTIME_NSEC
 			 << time(NULL) << ", "                               // LAST_UPD
 			 << FsObj::FAILED  << ", "                           // FILE_STATE
-			 << "'" << Const::FAILED_TAPE_ID << "'" << ", "      // TAPE_ID
-			 << 0 << ");";
+			 << "'" << Const::FAILED_TAPE_ID << "'" << ");";     // TAPE_ID
 		MSG(LTFSDMS0017E, fileName.c_str());
 	}
 

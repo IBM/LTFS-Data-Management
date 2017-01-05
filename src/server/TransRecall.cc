@@ -42,7 +42,7 @@ void TransRecall::recall(Connector::rec_info_t recinfo, std::string tapeId, long
 	bool succeeded = true;
 
 	ssql << "INSERT INTO JOB_QUEUE (OPERATION, REQ_NUM, TARGET_STATE, FILE_SIZE, FS_ID, I_GEN, "
-		 << "I_NUM, MTIME_SEC, MTIME_NSEC, LAST_UPD, FILE_STATE, TAPE_ID, START_BLOCK, FAILED) "
+		 << "I_NUM, MTIME_SEC, MTIME_NSEC, LAST_UPD, FILE_STATE, TAPE_ID, START_BLOCK) "
 		 << "VALUES (" << DataBase::TRARECALL << ", "            // OPERATION
 		 << reqNum << ", "                                       // REQ_NUM
 		 << ( recinfo.toresident ?
@@ -74,8 +74,7 @@ void TransRecall::recall(Connector::rec_info_t recinfo, std::string tapeId, long
 		ssql << "'" << attr.tapeId[0] << "', ";                  // TAPE_ID
 		tapeName = Scheduler::getTapeName(recinfo.fsid, recinfo.igen,
 										  recinfo.ino, tapeId);
-		ssql << Scheduler::getStartBlock(tapeName) << ", "       // START_BLOCK
-			 << 0 << ");";                                       // FAILED
+		ssql << Scheduler::getStartBlock(tapeName) << ");";      // START_BLOCK
 	}
 	catch ( int error ) {
 		MSG(LTFSDMS0032E, recinfo.ino);
