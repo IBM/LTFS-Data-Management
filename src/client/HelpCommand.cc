@@ -13,6 +13,7 @@
 #include "StopCommand.h"
 #include "MigrationCommand.h"
 #include "RecallCommand.h"
+#include "AddCommand.h"
 #include "InfoCommand.h"
 #include "InfoRequestsCommand.h"
 #include "InfoFilesCommand.h"
@@ -51,6 +52,9 @@ void HelpCommand::doCommand(int argc, char **argv)
 	}
 	else if ( RecallCommand().compare(command) ) {
 		openLTFSCommand = new RecallCommand();
+	}
+	else if ( AddCommand().compare(command) ) {
+		openLTFSCommand = new AddCommand();
 	}
 	else if ( HelpCommand().compare(command) ) {
 		openLTFSCommand = new HelpCommand();
