@@ -9,7 +9,7 @@ private:
 	void determineServerPath();
 	void talkToBackend(std::stringstream *parmList) {}
 public:
-    StatusCommand() : OpenLTFSCommand("status", "") {};
+    StatusCommand() : OpenLTFSCommand("status", "h") {};
     ~StatusCommand() {};
     void printUsage();
     void doCommand(int argc, char **argv);

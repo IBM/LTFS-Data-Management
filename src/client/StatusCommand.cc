@@ -18,6 +18,8 @@ void StatusCommand::doCommand(int argc, char **argv)
 {
 	int pid;
 
+	processOptions(argc, argv);
+
 	if ( argc > 1 ) {
 		printUsage();
 		throw Error::LTFSDM_GENERAL_ERROR;

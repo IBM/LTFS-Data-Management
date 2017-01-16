@@ -21,7 +21,7 @@
 
 void InfoFsCommand::printUsage()
 {
-	INFO(LTFSDMC0010I);
+	INFO(LTFSDMC0056I);
 }
 
 void InfoFsCommand::talkToBackend(std::stringstream *parmList)
@@ -35,10 +35,11 @@ void InfoFsCommand::doCommand(int argc, char **argv)
 	std::set<std::string>::iterator it;
 	Connector connector(false);
 
-	if ( argc > 1 ) {
-		INFO(LTFSDMC0018E);
-		throw(Error::LTFSDM_GENERAL_ERROR);
+	processOptions(argc, argv);
 
+	if ( argc > 1 ) {
+		printUsage();
+		throw(Error::LTFSDM_GENERAL_ERROR);
 	}
 
 	fsList = LTFSDM::getFs();
