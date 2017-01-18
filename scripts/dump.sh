@@ -4,6 +4,7 @@ cp /var/run/ltfsdm/OpenLTFS.db /var/run/ltfsdm/OpenLTFS.db.cpy
 
 sqlite3 /var/run/ltfsdm/OpenLTFS.db.cpy <<EOF
 .mode column
+.width 0 32
 .headers on
 
 CREATE TABLE OPTYPE(VALUE INT NOT NULL, OPERATION CHAR(256) NOT NULL);
@@ -41,8 +42,7 @@ SELECT OPTYPE.OPERATION,  -- <-
        LAST_UPD,
        TAPE_ID,
        FILESTATETYPE.FILESTATE, -- <-
-       START_BLOCK,
-       FAILED
+       START_BLOCK
        FROM JOB_QUEUE JOIN OPTYPE ON JOB_QUEUE.OPERATION=OPTYPE.VALUE
                       JOIN TARGETSTATETYPE ON JOB_QUEUE.TARGET_STATE=TARGETSTATETYPE.VALUE
                       JOIN FILESTATETYPE ON JOB_QUEUE.FILE_STATE=FILESTATETYPE.VALUE;
