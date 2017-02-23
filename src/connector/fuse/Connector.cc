@@ -134,37 +134,52 @@ bool FsObj::isFsManaged()
 void FsObj::manageFs(bool setDispo)
 
 {
-	int val = 1;
+	int managed = 1;
 	std::string *fn = (std::string *) handle;
 	std::string mountedPoint = *fn + std::string(".managed");
 	struct stat statbuf;
+	FuseFS *FS;
 
 	if ( ::stat(mountedPoint.c_str(), &statbuf) == 0 ) {
 		if ( rmdir(mountedPoint.c_str()) == -1 ) {
 			TRACE(Trace::error, errno);
-			val = 0;
+			managed = 0;
 		}
 	}
 
-	if ( mkdir(mountedPoint.c_str(), 700) == -1 ) {
+	if ( managed == 1 ) {
+		if ( mkdir(mountedPoint.c_str(), 700) == -1 ) {
 			TRACE(Trace::error, errno);
-			val = 0;
+			managed = 0;
+		}
+	}
+
+	if ( managed == 1 ) {
+		try {
+			FS = new FuseFS(*fn, mountedPoint);
+		}
+		catch(int error) {
+			managed = 0;
+		}
 	}
 
 	std::unique_lock<std::mutex> lock(mtx);
 
-	if ( setxattr(fn->c_str(), "trusted.openltfs.ismanaged", &val, sizeof(val), 0) == -1 ) {
+	if ( setxattr(fn->c_str(), "trusted.openltfs.ismanaged", &managed, sizeof(managed), 0) == -1 ) {
 		TRACE(Trace::error, errno);
 		MSG(LTFSDMF0009E, fn->c_str());
+		if ( managed == 1 )
+			delete(FS);
 		throw(Error::LTFSDM_FS_ADD_ERROR);
 	}
 
-	FuseFS *FS = new FuseFS(*fn, mountedPoint);
-	managedFss.push_back(FS);
-
-	if ( val == 0 ) {
+	if ( managed == 0 ) {
+		rmdir(mountedPoint.c_str());
 		MSG(LTFSDMF0009E, fn->c_str());
 		throw(Error::LTFSDM_FS_ADD_ERROR);
+	}
+	else {
+		managedFss.push_back(FS);
 	}
 }
 

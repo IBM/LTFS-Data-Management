@@ -517,7 +517,7 @@ FuseFS::FuseFS(std::string sourcedir_, std::string mountpt_) : sourcedir(sourced
 
 	if ( fuse_parse_cmdline(&fargs, NULL, NULL, NULL) != 0 ) {
 		MSG(LTFSDMF0004E, errno);
-		return;
+		throw(Error::LTFSDM_FS_ADD_ERROR);
 	}
 
 	MSG(LTFSDMF0002I, mountpt.c_str());
@@ -526,7 +526,7 @@ FuseFS::FuseFS(std::string sourcedir_, std::string mountpt_) : sourcedir(sourced
 
 	if ( openltfsch == NULL ) {
 		MSG(LTFSDMF0005E, mountpt.c_str());
-		return;
+		throw(Error::LTFSDM_FS_ADD_ERROR);
 	}
 
 
@@ -536,7 +536,7 @@ FuseFS::FuseFS(std::string sourcedir_, std::string mountpt_) : sourcedir(sourced
 
 	if ( openltfs == NULL ) {
 		MSG(LTFSDMF0006E);
-		return;
+		throw(Error::LTFSDM_FS_ADD_ERROR);
 	}
 
 	fusefs = new std::thread(&FuseFS::run, this);
