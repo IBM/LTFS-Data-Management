@@ -12,6 +12,7 @@ private:
 	void run();
 public:
 	bool isMigrated(int fd);
+	std::string getMountPoint() {return mountpt;}
 	FuseFS(std::string sourcedir_, std::string mountpt_);
 	~FuseFS();
 };

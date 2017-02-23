@@ -1,6 +1,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <sys/xattr.h>
 #include <string.h>
 #include <limits.h>
 #include <errno.h>
@@ -50,25 +51,24 @@ std::map<fuid_t, int, ltstr> fuidMap;
 
 std::mutex mtx;
 
-FuseFS *F1 = NULL;
-FuseFS *F2 = NULL;
+std::vector<FuseFS*> managedFss;
 
 Connector::Connector(bool cleanup)
 
 {
-	if ( cleanup ) {
-		F1 = new FuseFS("/mnt/lxfs/orig1", "/mnt/lxfs/fuse1");
-		F2 = new FuseFS("/mnt/lxfs/orig2", "/mnt/lxfs/fuse2");
-	}
 }
 
 Connector::~Connector()
 
 {
-	if ( F1 )
-		delete(F1);
-	if ( F2 )
-		delete(F2);
+	std::string mountpt;
+
+	for(auto const& fn: managedFss) {
+		mountpt = fn->getMountPoint();
+		delete(fn);
+		if ( rmdir(mountpt.c_str()) == -1 )
+			MSG(LTFSDMF0008W, mountpt.c_str());
+	}
 }
 
 void Connector::initTransRecalls()
@@ -97,6 +97,9 @@ FsObj::FsObj(std::string fileName)
 	: handle(NULL), handleLength(0), isLocked(false), handleFree(true)
 
 {
+	std::string *fn = new std::string(fileName);
+	handle = (void *) fn;
+	handleLength = fileName.size();
 }
 
 FsObj::FsObj(unsigned long long fsId, unsigned int iGen, unsigned long long iNode)
@@ -108,18 +111,61 @@ FsObj::FsObj(unsigned long long fsId, unsigned int iGen, unsigned long long iNod
 FsObj::~FsObj()
 
 {
+	delete((std::string *) handle);
+	handleLength = 0;
 }
 
 bool FsObj::isFsManaged()
 
 {
-	bool managed = false;
-	return managed;
+	int val;
+	std::string *fn = (std::string *) handle;
+	std::unique_lock<std::mutex> lock(mtx);
+
+	if ( getxattr(fn->c_str(), "trusted.openltfs.ismanaged", &val, sizeof(val)) == -1 ) {
+		if ( errno == ENODATA )
+			return false;
+		return true;
+	}
+
+	return (val == 1);
 }
 
 void FsObj::manageFs(bool setDispo)
 
 {
+	int val = 1;
+	std::string *fn = (std::string *) handle;
+	std::string mountedPoint = *fn + std::string(".managed");
+	struct stat statbuf;
+
+	if ( ::stat(mountedPoint.c_str(), &statbuf) == 0 ) {
+		if ( rmdir(mountedPoint.c_str()) == -1 ) {
+			TRACE(Trace::error, errno);
+			val = 0;
+		}
+	}
+
+	if ( mkdir(mountedPoint.c_str(), 700) == -1 ) {
+			TRACE(Trace::error, errno);
+			val = 0;
+	}
+
+	std::unique_lock<std::mutex> lock(mtx);
+
+	if ( setxattr(fn->c_str(), "trusted.openltfs.ismanaged", &val, sizeof(val), 0) == -1 ) {
+		TRACE(Trace::error, errno);
+		MSG(LTFSDMF0009E, fn->c_str());
+		throw(Error::LTFSDM_FS_ADD_ERROR);
+	}
+
+	FuseFS *FS = new FuseFS(*fn, mountedPoint);
+	managedFss.push_back(FS);
+
+	if ( val == 0 ) {
+		MSG(LTFSDMF0009E, fn->c_str());
+		throw(Error::LTFSDM_FS_ADD_ERROR);
+	}
 }
 
 struct stat FsObj::stat()
