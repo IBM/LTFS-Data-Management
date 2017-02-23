@@ -1,5 +1,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/mount.h>
 #include <unistd.h>
 #include <sys/xattr.h>
 #include <string.h>
@@ -139,6 +140,8 @@ void FsObj::manageFs(bool setDispo)
 	std::string mountedPoint = *fn + std::string(".managed");
 	struct stat statbuf;
 	FuseFS *FS;
+
+	umount2(mountedPoint.c_str(), MNT_FORCE);
 
 	if ( ::stat(mountedPoint.c_str(), &statbuf) == 0 ) {
 		if ( rmdir(mountedPoint.c_str()) == -1 ) {
