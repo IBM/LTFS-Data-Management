@@ -81,6 +81,7 @@ Connector::rec_info_t Connector::getEvents()
 
 {
 	Connector::rec_info_t rinfo;
+	sleep(1);
 	return rinfo;
 }
 
