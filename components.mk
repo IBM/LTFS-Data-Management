@@ -9,5 +9,4 @@ CLIENTDIRS := src/client
 SERVERDIRS := src/server
 
 CONNECDIRS := src/connector/dmapi
-#CONNECDIRS += src/connector/dummy
 CONNECDIRS += src/connector/fuse
