@@ -32,6 +32,8 @@
 
 #include "FuseFS.h"
 
+thread_local std::string lsourcedir;
+
 struct ltfsdm_dir_t {
 	DIR *dir;
 	struct dirent *dentry;
@@ -53,12 +55,10 @@ bool FuseFS::isMigrated(int fd)
 	return (val == 1);
 }
 
-static std::string sourcedir;
-
 std::string souce_path(const char *path)
 
 {
-	return sourcedir + std::string(path);
+	return  lsourcedir + std::string(path);
 }
 
 int ltfsdm_getattr(const char *path, struct stat *statbuf)
@@ -447,7 +447,6 @@ void *ltfsdm_init(struct fuse_conn_info *conn)
 	return NULL;
 }
 
-
 struct fuse_operations FuseFS::init_operations()
 
 {
@@ -493,16 +492,19 @@ struct fuse_operations FuseFS::init_operations()
 	return ltfsdm_operations;
 };
 
-FuseFS::FuseFS()
+void FuseFS::run()
 
 {
-	char *mountptp;
+	lsourcedir = sourcedir;
+	fuse_loop(openltfs);
+}
+
+FuseFS::FuseFS(std::string sourcedir_, std::string mountpt_) : sourcedir(sourcedir_), mountpt(mountpt_)
+
+{
 	std::stringstream options;
 	struct fuse_args fargs = FUSE_ARGS_INIT(0, NULL);
 	struct fuse_operations ltfsdm_operations = init_operations();
-
-	sourcedir = std::string("/mnt/lxfs/orig");
-	mountpt = std::string("/mnt/lxfs/fuse");
 
 	MSG(LTFSDMF0001I, sourcedir, mountpt);
 
@@ -513,7 +515,7 @@ FuseFS::FuseFS()
 	fuse_opt_add_arg(&fargs, options.str().c_str());
 	fuse_opt_parse(&fargs, NULL, NULL, NULL);
 
-	if ( fuse_parse_cmdline(&fargs, &mountptp, NULL, NULL) != 0 ) {
+	if ( fuse_parse_cmdline(&fargs, NULL, NULL, NULL) != 0 ) {
 		MSG(LTFSDMF0004E, errno);
 		return;
 	}
@@ -537,9 +539,10 @@ FuseFS::FuseFS()
 		return;
 	}
 
-	fusefs = new std::thread(fuse_loop, openltfs);
+	fusefs = new std::thread(&FuseFS::run, this);
 	pthread_setname_np(fusefs->native_handle(), "FuseFS");
 }
+
 
 FuseFS::~FuseFS()
 

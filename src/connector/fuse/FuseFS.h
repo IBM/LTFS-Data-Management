@@ -3,17 +3,16 @@
 
 class FuseFS {
 private:
+	std::thread *fusefs;
+	std::string sourcedir;
 	std::string mountpt;
 	struct fuse_chan *openltfsch = NULL;
 	struct fuse *openltfs = NULL;
-	std::thread *fusefs;
-
-public:
 	struct fuse_operations init_operations();
-
+	void run();
 public:
 	bool isMigrated(int fd);
-	FuseFS();
+	FuseFS(std::string sourcedir_, std::string mountpt_);
 	~FuseFS();
 };
 

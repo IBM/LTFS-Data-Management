@@ -50,20 +50,25 @@ std::map<fuid_t, int, ltstr> fuidMap;
 
 std::mutex mtx;
 
-FuseFS *F = NULL;
+FuseFS *F1 = NULL;
+FuseFS *F2 = NULL;
 
 Connector::Connector(bool cleanup)
 
 {
-	if ( cleanup )
-		F = new FuseFS();
+	if ( cleanup ) {
+		F1 = new FuseFS("/mnt/lxfs/orig1", "/mnt/lxfs/fuse1");
+		F2 = new FuseFS("/mnt/lxfs/orig2", "/mnt/lxfs/fuse2");
+	}
 }
 
 Connector::~Connector()
 
 {
-	if ( F )
-		delete(F);
+	if ( F1 )
+		delete(F1);
+	if ( F2 )
+		delete(F2);
 }
 
 void Connector::initTransRecalls()
