@@ -32,7 +32,7 @@
 
 #include "FuseFS.h"
 
-thread_local std::string lsourcedir;
+thread_local std::string lsourcedir = "";
 
 struct ltfsdm_dir_t {
 	DIR *dir;
@@ -58,7 +58,21 @@ bool FuseFS::isMigrated(int fd)
 std::string souce_path(const char *path)
 
 {
-	return  lsourcedir + std::string(path);
+	char thread_name[16];
+	char sourcedir[PATH_MAX];
+
+	if ( lsourcedir.compare("") == 0 ) {
+		memset(thread_name, 0, sizeof(thread_name));
+		pthread_getname_np(pthread_self(), (char *) thread_name, sizeof(thread_name));
+		std::stringstream fdpath;
+		fdpath << "/proc/" << getpid() << "/fd/" << thread_name+3;
+		memset(sourcedir, 0, sizeof(sourcedir));
+		if ( readlink(fdpath.str().c_str(), sourcedir, sizeof(sourcedir)-1) == -1 )
+			return "";
+		lsourcedir = sourcedir;
+	}
+
+	return lsourcedir + std::string(path);
 }
 
 int ltfsdm_getattr(const char *path, struct stat *statbuf)
@@ -495,8 +509,12 @@ struct fuse_operations FuseFS::init_operations()
 void FuseFS::run()
 
 {
-	lsourcedir = sourcedir;
-	fuse_loop(openltfs);
+	std::stringstream threadName;
+
+	threadName << "FS:"  << fd;
+	pthread_setname_np(pthread_self(), threadName.str().c_str());
+
+	fuse_loop_mt(openltfs);
 }
 
 FuseFS::FuseFS(std::string sourcedir_, std::string mountpt_) : sourcedir(sourcedir_), mountpt(mountpt_)
@@ -507,6 +525,12 @@ FuseFS::FuseFS(std::string sourcedir_, std::string mountpt_) : sourcedir(sourced
 	struct fuse_operations ltfsdm_operations = init_operations();
 
 	MSG(LTFSDMF0001I, sourcedir, mountpt);
+
+	if ( (fd = open(sourcedir.c_str(), O_RDONLY)) == -1 ) {
+		TRACE(Trace::error, errno);
+		MSG(LTFSDMF0010E, sourcedir);
+		throw(Error::LTFSDM_FS_ADD_ERROR);
+	}
 
 	fuse_opt_add_arg(&fargs, mountpt.c_str());
 
@@ -540,7 +564,6 @@ FuseFS::FuseFS(std::string sourcedir_, std::string mountpt_) : sourcedir(sourced
 	}
 
 	fusefs = new std::thread(&FuseFS::run, this);
-	pthread_setname_np(fusefs->native_handle(), "FuseFS");
 }
 
 
@@ -551,4 +574,5 @@ FuseFS::~FuseFS()
 	fuse_exit(openltfs);
 	fuse_unmount(mountpt.c_str(), openltfsch);
 	fusefs->join();
+	close(fd);
 }

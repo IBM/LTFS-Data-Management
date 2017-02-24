@@ -10,6 +10,7 @@ private:
 	struct fuse *openltfs = NULL;
 	struct fuse_operations init_operations();
 	void run();
+	int fd;
 public:
 	bool isMigrated(int fd);
 	std::string getMountPoint() {return mountpt;}
