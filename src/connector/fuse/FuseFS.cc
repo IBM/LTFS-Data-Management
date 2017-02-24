@@ -58,21 +58,8 @@ bool FuseFS::isMigrated(int fd)
 std::string souce_path(const char *path)
 
 {
-	char thread_name[16];
-	char sourcedir[PATH_MAX];
-
-	if ( lsourcedir.compare("") == 0 ) {
-		memset(thread_name, 0, sizeof(thread_name));
-		pthread_getname_np(pthread_self(), (char *) thread_name, sizeof(thread_name));
-		std::stringstream fdpath;
-		fdpath << "/proc/" << getpid() << "/fd/" << thread_name+3;
-		memset(sourcedir, 0, sizeof(sourcedir));
-		if ( readlink(fdpath.str().c_str(), sourcedir, sizeof(sourcedir)-1) == -1 )
-			return "";
-		lsourcedir = sourcedir;
-	}
-
-	return lsourcedir + std::string(path);
+	struct fuse_context *fc = fuse_get_context();
+	return (char *) fc->private_data + std::string(path);
 }
 
 int ltfsdm_getattr(const char *path, struct stat *statbuf)
@@ -458,7 +445,8 @@ int ltfsdm_removexattr(const char *path, const char *name)
 void *ltfsdm_init(struct fuse_conn_info *conn)
 
 {
-	return NULL;
+	struct fuse_context *fc = fuse_get_context();
+	return fc->private_data;
 }
 
 struct fuse_operations FuseFS::init_operations()
@@ -506,17 +494,6 @@ struct fuse_operations FuseFS::init_operations()
 	return ltfsdm_operations;
 };
 
-void FuseFS::run()
-
-{
-	std::stringstream threadName;
-
-	threadName << "FS:"  << fd;
-	pthread_setname_np(pthread_self(), threadName.str().c_str());
-
-	fuse_loop_mt(openltfs);
-}
-
 FuseFS::FuseFS(std::string sourcedir_, std::string mountpt_) : sourcedir(sourcedir_), mountpt(mountpt_)
 
 {
@@ -525,12 +502,6 @@ FuseFS::FuseFS(std::string sourcedir_, std::string mountpt_) : sourcedir(sourced
 	struct fuse_operations ltfsdm_operations = init_operations();
 
 	MSG(LTFSDMF0001I, sourcedir, mountpt);
-
-	if ( (fd = open(sourcedir.c_str(), O_RDONLY)) == -1 ) {
-		TRACE(Trace::error, errno);
-		MSG(LTFSDMF0010E, sourcedir);
-		throw(Error::LTFSDM_FS_ADD_ERROR);
-	}
 
 	fuse_opt_add_arg(&fargs, mountpt.c_str());
 
@@ -556,14 +527,20 @@ FuseFS::FuseFS(std::string sourcedir_, std::string mountpt_) : sourcedir(sourced
 
 	MSG(LTFSDMF0003I);
 
-	openltfs = fuse_new(openltfsch, &fargs,  &ltfsdm_operations, sizeof(ltfsdm_operations), NULL);
+	openltfs = fuse_new(openltfsch, &fargs,  &ltfsdm_operations, sizeof(ltfsdm_operations), (void *) sourcedir.c_str());
 
 	if ( openltfs == NULL ) {
 		MSG(LTFSDMF0006E);
 		throw(Error::LTFSDM_FS_ADD_ERROR);
 	}
 
-	fusefs = new std::thread(&FuseFS::run, this);
+	fusefs = new std::thread(fuse_loop_mt, openltfs);
+
+	std::stringstream threadName;
+	threadName << "FS:"  << sourcedir;
+	pthread_setname_np(fusefs->native_handle(), threadName.str().substr(0,14).c_str());
+
+
 }
 
 
@@ -574,5 +551,4 @@ FuseFS::~FuseFS()
 	fuse_exit(openltfs);
 	fuse_unmount(mountpt.c_str(), openltfsch);
 	fusefs->join();
-	close(fd);
 }
