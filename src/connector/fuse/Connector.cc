@@ -124,7 +124,7 @@ bool FsObj::isFsManaged()
 	std::string *fn = (std::string *) handle;
 	std::unique_lock<std::mutex> lock(mtx);
 
-	if ( getxattr(fn->c_str(), "trusted.openltfs.ismanaged", &val, sizeof(val)) == -1 ) {
+	if ( getxattr(fn->c_str(), Const::OPEN_LTFS_EA_MANAGED.c_str(), &val, sizeof(val)) == -1 ) {
 		if ( errno == ENODATA )
 			return false;
 		return true;
@@ -169,7 +169,7 @@ void FsObj::manageFs(bool setDispo)
 
 	std::unique_lock<std::mutex> lock(mtx);
 
-	if ( setxattr(fn->c_str(), "trusted.openltfs.ismanaged", &managed, sizeof(managed), 0) == -1 ) {
+	if ( setxattr(fn->c_str(), Const::OPEN_LTFS_EA_MANAGED.c_str(), &managed, sizeof(managed), 0) == -1 ) {
 		TRACE(Trace::error, errno);
 		MSG(LTFSDMF0009E, fn->c_str());
 		if ( managed == 1 )

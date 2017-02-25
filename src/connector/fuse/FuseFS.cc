@@ -406,6 +406,9 @@ int ltfsdm_setxattr(const char *path, const char *name, const char *value,
 			size_t size, int flags)
 
 {
+	if ( std::string(name).find(Const::OPEN_LTFS_EA.c_str()) != std::string::npos )
+		return (-1*ENOTSUP);
+
 	if ( lsetxattr(souce_path(path).c_str(), name, value, size, flags) == -1 )
 		return (-1*errno);
 	else
@@ -418,10 +421,15 @@ int ltfsdm_getxattr(const char *path, const char *name, char *value,
 {
 	ssize_t attrsize;
 
-	if ( (attrsize = lgetxattr(souce_path(path).c_str(), name, value, size)) == -1 )
+	if ( (attrsize = lgetxattr(souce_path(path).c_str(), name, value, size)) == -1 ) {
 		return (-1*errno);
-	else
-		return attrsize;
+	}
+	else {
+		if ( std::string(name).find(Const::OPEN_LTFS_EA.c_str()) != std::string::npos )
+			return (-1*ENOTSUP);
+		else
+			return attrsize;
+	}
 }
 
 int ltfsdm_listxattr(const char *path, char *list, size_t size)
@@ -436,6 +444,9 @@ int ltfsdm_listxattr(const char *path, char *list, size_t size)
 
 int ltfsdm_removexattr(const char *path, const char *name)
 {
+	if ( std::string(name).find(Const::OPEN_LTFS_EA.c_str()) != std::string::npos )
+		return (-1*ENOTSUP);
+
 	if ( lremovexattr(souce_path(path).c_str(), name) == -1 )
 		return (-1*errno);
 	else

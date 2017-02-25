@@ -32,6 +32,8 @@ namespace Const {
 	const int tapeIdLength = 8;
 	const std::string DMAPI_TERMINATION_MESSAGE = std::string("termination message");
 	const std::string FAILED_TAPE_ID  = std::string("FAILED");
+	const std::string OPEN_LTFS_EA = std::string(".openltfs.");
+	const std::string OPEN_LTFS_EA_MANAGED = std::string("trusted.openltfs.ismanaged");
 }
 
 #endif /* _CONST_H */
