@@ -230,7 +230,7 @@ void TransRecall::run(Connector *connector)
 			FsObj fileSystem(*it);
 			if ( fileSystem.isFsManaged() ) {
 				MSG(LTFSDMS0042I, *it);
-				fileSystem.manageFs(true);
+				fileSystem.manageFs(true, connector->getStartTime());
 			}
 		}
 		catch ( int error ) {

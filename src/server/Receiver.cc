@@ -50,7 +50,7 @@ void Receiver::run(long key, Connector *connector)
 		}
 
 		try {
-			subs.enqueue("MessageParser", &MessageParser::run, &mproc, key, command);
+			subs.enqueue("MessageParser", &MessageParser::run, &mproc, key, command, connector);
 		}
 		catch(...) {
 			MSG(LTFSDMS0010E);

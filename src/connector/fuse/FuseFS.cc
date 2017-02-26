@@ -34,32 +34,115 @@
 
 thread_local std::string lsourcedir = "";
 
+
+mig_info_t genMigInfo(const char *path, mig_info_t::state_t state)
+
+{
+	mig_info_t miginfo;
+
+	if ( stat(path, &miginfo.statinfo) ) {
+		TRACE(Trace::error, errno);
+		throw(errno);
+	}
+
+	miginfo.state = state;
+
+	clock_gettime(CLOCK_REALTIME, &miginfo.changed);
+
+	return miginfo;
+}
+
+
+void setMigInfo(const char *path, mig_info_t::state_t state)
+
+{
+	mig_info_t miginfo;
+
+	miginfo = genMigInfo(path, state);
+
+	if ( setxattr(path, Const::OPEN_LTFS_EA_MIGINFO.c_str(), (void *) &miginfo, sizeof(miginfo), 0) == -1 ) {
+		if ( errno != ENODATA ) {
+			throw(errno);
+		}
+	}
+}
+
+mig_info_t getMigInfo(const char *path)
+
+{
+	ssize_t size;
+	mig_info_t miginfo;
+
+	memset(&miginfo, 0, sizeof(miginfo));
+
+	if ( (size = getxattr(path, Const::OPEN_LTFS_EA_MIGINFO.c_str(), (void *) &miginfo, sizeof(miginfo))) == -1 ) {
+		if ( errno != ENODATA ) {
+			throw(errno);
+		}
+		return miginfo;
+	}
+
+	if ( size != sizeof(miginfo) )
+		throw(EIO);
+
+	return miginfo;
+}
+
+bool needsRecovery(mig_info_t miginfo)
+
+{
+	struct fuse_context *fc = fuse_get_context();
+
+	if ((miginfo.state == mig_info_t::state_t::IN_MIGRATION) |
+		(miginfo.state == mig_info_t::state_t::STUBBING) |
+		(miginfo.state == mig_info_t::state_t::IN_RECALL) ) {
+
+		if ( ((openltfs_ctx_t *) fc->private_data)->starttime.tv_sec < miginfo.changed.tv_sec )
+			return false;
+		else if ( (((openltfs_ctx_t *) fc->private_data)->starttime.tv_sec == miginfo.changed.tv_sec)  &&
+				  (((openltfs_ctx_t *) fc->private_data)->starttime.tv_nsec < miginfo.changed.tv_nsec) )
+			return false;
+		else
+			return true;
+	}
+
+	return false;
+}
+
+void recoverState(const char *path, mig_info_t::state_t state)
+
+{
+	// TODO
+}
+
 struct ltfsdm_dir_t {
 	DIR *dir;
 	struct dirent *dentry;
 	off_t offset;
 };
 
-bool FuseFS::isMigrated(int fd)
-
-{
-	int val;
-
-	if ( fgetxattr(fd, "trusted.openltfs.migrated", &val, sizeof(val)) == -1 ) {
-		if ( errno == ENODATA )
-			return false;
-//std::cerr << "unable to detect the migration state, errno: " << errno << std::endl;
-		return true;
-	}
-
-	return (val == 1);
-}
 
 std::string souce_path(const char *path)
 
 {
+	std::string fullpath;
+	mig_info_t miginfo;
+
 	struct fuse_context *fc = fuse_get_context();
-	return (char *) fc->private_data + std::string(path);
+	fullpath =  ((openltfs_ctx_t *) fc->private_data)->sourcedir + std::string(path);
+
+	try {
+		miginfo = getMigInfo(fullpath.c_str());
+	}
+	catch (int error) {
+		TRACE(Trace::error, error);
+		MSG(LTFSDMF0011E, fullpath);
+		return std::string("");
+	}
+	if ( needsRecovery(miginfo) == true )
+		 recoverState(fullpath.c_str(), miginfo.state);
+
+	return fullpath;
 }
 
 int ltfsdm_getattr(const char *path, struct stat *statbuf)
@@ -297,8 +380,16 @@ int ltfsdm_read(const char *path, char *buffer, size_t size, off_t offset,
 
 {
 	ssize_t rsize = -1;
+	mig_info_t migInfo;
+	ssize_t attrsize;
 
 	assert(path == NULL);
+
+	if ( (attrsize = fgetxattr(finfo->fh, Const::OPEN_LTFS_EA_MIGINFO.c_str(), (void *) &migInfo, sizeof(migInfo))) == -1 ) {
+		if ( errno != ENODATA ) {
+			return (-1*errno);
+		}
+	}
 
 	if ( (rsize =pread(finfo->fh, buffer, size, offset)) == -1 )
 		return (-1*errno);
@@ -311,8 +402,16 @@ int ltfsdm_read_buf(const char *path, struct fuse_bufvec **bufferp,
 
 {
     struct fuse_bufvec *source;
+	mig_info_t migInfo;
+	ssize_t attrsize;
 
 	assert(path == NULL);
+
+	if ( (attrsize = fgetxattr(finfo->fh, Const::OPEN_LTFS_EA_MIGINFO.c_str(), (void *) &migInfo, sizeof(migInfo))) == -1 ) {
+		if ( errno != ENODATA ) {
+			return (-1*errno);
+		}
+	}
 
     if ( (source = (fuse_bufvec*) malloc(sizeof(struct fuse_bufvec))) == NULL )
 		return (-1*errno);
@@ -332,6 +431,16 @@ int ltfsdm_write(const char *path, const char *buf, size_t size,
 
 {
 	ssize_t wsize;
+	mig_info_t migInfo;
+	ssize_t attrsize;
+
+	assert(path == NULL);
+
+	if ( (attrsize = fgetxattr(finfo->fh, Const::OPEN_LTFS_EA_MIGINFO.c_str(), (void *) &migInfo, sizeof(migInfo))) == -1 ) {
+		if ( errno != ENODATA ) {
+			return (-1*errno);
+		}
+	}
 
 	if ( (wsize = pwrite(finfo->fh, buf, size, offset)) == -1 )
 		return (-1*errno);
@@ -505,18 +614,19 @@ struct fuse_operations FuseFS::init_operations()
 	return ltfsdm_operations;
 };
 
-FuseFS::FuseFS(std::string sourcedir_, std::string mountpt_) : sourcedir(sourcedir_), mountpt(mountpt_)
+FuseFS::FuseFS(std::string sourcedir, std::string mountpt, struct timespec starttime)
+	: ctx((struct openltfs_ctx_t) {sourcedir.c_str(), starttime}), mountpt(mountpt)
 
 {
 	std::stringstream options;
 	struct fuse_args fargs = FUSE_ARGS_INIT(0, NULL);
 	struct fuse_operations ltfsdm_operations = init_operations();
 
-	MSG(LTFSDMF0001I, sourcedir, mountpt);
+	MSG(LTFSDMF0001I, ctx.sourcedir, mountpt);
 
 	fuse_opt_add_arg(&fargs, mountpt.c_str());
 
-	options << "-ouse_ino,fsname=OpenLTFS:" << sourcedir << ",nopath,default_permissions,allow_other";
+	options << "-ouse_ino,fsname=OpenLTFS:" << ctx.sourcedir << ",nopath,default_permissions,allow_other";
 
 	fuse_opt_add_arg(&fargs, options.str().c_str());
 	fuse_opt_parse(&fargs, NULL, NULL, NULL);
@@ -538,7 +648,7 @@ FuseFS::FuseFS(std::string sourcedir_, std::string mountpt_) : sourcedir(sourced
 
 	MSG(LTFSDMF0003I);
 
-	openltfs = fuse_new(openltfsch, &fargs,  &ltfsdm_operations, sizeof(ltfsdm_operations), (void *) sourcedir.c_str());
+	openltfs = fuse_new(openltfsch, &fargs,  &ltfsdm_operations, sizeof(ltfsdm_operations), (void *) &ctx);
 
 	if ( openltfs == NULL ) {
 		MSG(LTFSDMF0006E);
@@ -548,7 +658,7 @@ FuseFS::FuseFS(std::string sourcedir_, std::string mountpt_) : sourcedir(sourced
 	fusefs = new std::thread(fuse_loop_mt, openltfs);
 
 	std::stringstream threadName;
-	threadName << "FS:"  << sourcedir;
+	threadName << "FS:"  << ctx.sourcedir;
 	pthread_setname_np(fusefs->native_handle(), threadName.str().substr(0,14).c_str());
 
 

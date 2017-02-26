@@ -327,7 +327,7 @@ void MessageParser::statusMessage(long key, LTFSDmCommServer *command, long loca
 	}
 }
 
-void MessageParser::addMessage(long key, LTFSDmCommServer *command, long localReqNumber)
+void MessageParser::addMessage(long key, LTFSDmCommServer *command, long localReqNumber, Connector *connector)
 
 {
    	const LTFSDmProtocol::LTFSDmAddRequest addreq = command->addrequest();
@@ -352,7 +352,7 @@ void MessageParser::addMessage(long key, LTFSDmCommServer *command, long localRe
 		}
 		else {
 			MSG(LTFSDMS0042I, mountpoint);
-			fileSystem.manageFs(true);
+			fileSystem.manageFs(true, connector->getStartTime());
 		}
 	}
 	catch ( int error ) {
@@ -381,7 +381,7 @@ void MessageParser::addMessage(long key, LTFSDmCommServer *command, long localRe
 	}
 }
 
-void MessageParser::run(long key, LTFSDmCommServer command)
+void MessageParser::run(long key, LTFSDmCommServer command, Connector *connector)
 
 {
 	std::unique_lock<std::mutex> lock(termmtx);
@@ -428,7 +428,7 @@ void MessageParser::run(long key, LTFSDmCommServer command)
 				statusMessage(key, &command, localReqNumber);
 			}
 			else if ( command.has_addrequest() ) {
-				addMessage(key, &command, localReqNumber);
+				addMessage(key, &command, localReqNumber, connector);
 			}
 			else {
 				TRACE(Trace::error, "unkown command\n");

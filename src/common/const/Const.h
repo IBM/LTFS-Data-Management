@@ -34,6 +34,7 @@ namespace Const {
 	const std::string FAILED_TAPE_ID  = std::string("FAILED");
 	const std::string OPEN_LTFS_EA = std::string(".openltfs.");
 	const std::string OPEN_LTFS_EA_MANAGED = std::string("trusted.openltfs.ismanaged");
+	const std::string OPEN_LTFS_EA_MIGINFO = std::string("trusted.openltfs.miginfo");
 }
 
 #endif /* _CONST_H */

@@ -57,6 +57,7 @@ std::vector<FuseFS*> managedFss;
 Connector::Connector(bool cleanup)
 
 {
+	clock_gettime(CLOCK_REALTIME, &starttime);
 }
 
 Connector::~Connector()
@@ -133,7 +134,7 @@ bool FsObj::isFsManaged()
 	return (val == 1);
 }
 
-void FsObj::manageFs(bool setDispo)
+void FsObj::manageFs(bool setDispo, struct timespec starttime)
 
 {
 	int managed = 1;
@@ -160,7 +161,7 @@ void FsObj::manageFs(bool setDispo)
 
 	if ( managed == 1 ) {
 		try {
-			FS = new FuseFS(*fn, mountedPoint);
+			FS = new FuseFS(*fn, mountedPoint, starttime);
 		}
 		catch(int error) {
 			managed = 0;

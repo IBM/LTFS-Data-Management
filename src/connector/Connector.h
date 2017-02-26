@@ -2,6 +2,8 @@
 #define _CONNECTOR_H
 
 class Connector {
+private:
+	struct timespec starttime;
 public:
 	struct rec_info_t {
 		struct conn_info_t *conn_info;
@@ -12,6 +14,7 @@ public:
 	};
 	Connector(bool cleanup);
 	~Connector();
+	struct timespec getStartTime() { return starttime; }
 	void initTransRecalls();
 	rec_info_t getEvents();
 	static void respondRecallEvent(rec_info_t recinfo, bool success);
@@ -45,7 +48,7 @@ public:
 	FsObj(unsigned long long fsId, unsigned int iGen, unsigned long long iNode);
 	~FsObj();
 	bool isFsManaged();
-	void manageFs(bool setDispo);
+	void manageFs(bool setDispo, struct timespec starttime);
 	struct stat stat();
 	unsigned long long getFsId();
 	unsigned int getIGen();

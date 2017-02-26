@@ -455,7 +455,7 @@ Connector::rec_info_t Connector::getEvents()
 			while ( retries < 4 ) {
 				try {
 					FsObj fileSystem(handRP, handRLen);
-					fileSystem.manageFs(false);
+					fileSystem.manageFs(false, starttime);
 					break;
 				}
 				catch ( int error ) {
@@ -616,7 +616,7 @@ bool FsObj::isFsManaged()
 	return attr.managed;
 }
 
-void FsObj::manageFs(bool setDispo)
+void FsObj::manageFs(bool setDispo, struct timespec starttime)
 
 {
 	FsObj::fs_attr_t attr;

@@ -15,13 +15,13 @@ private:
 	void requestNumber(long key, LTFSDmCommServer *command, long *localReqNumber);
 	void stopMessage(long key, LTFSDmCommServer *command, long localReqNumber);
 	void statusMessage(long key, LTFSDmCommServer *command, long localReqNumber);
-	void addMessage(long key, LTFSDmCommServer *command, long localReqNumber);
+	void addMessage(long key, LTFSDmCommServer *command, long localReqNumber, Connector *connector);
 public:
 	std::mutex termmtx;
 	std::condition_variable termcond;
 	MessageParser() {}
 	~MessageParser() {};
-	void run(long key, LTFSDmCommServer command);
+	void run(long key, LTFSDmCommServer command, Connector *connector);
 };
 
 #endif /* _MESSAGEPARSER_H */
