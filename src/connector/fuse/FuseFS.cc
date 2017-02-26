@@ -56,16 +56,38 @@ mig_info_t genMigInfo(const char *path, mig_info_t::state_t state)
 void setMigInfo(const char *path, mig_info_t::state_t state)
 
 {
+	ssize_t size;
+	mig_info_t miginfo_new;
 	mig_info_t miginfo;
 
-	miginfo = genMigInfo(path, state);
+	miginfo_new = genMigInfo(path, state);
 
-	if ( setxattr(path, Const::OPEN_LTFS_EA_MIGINFO.c_str(), (void *) &miginfo, sizeof(miginfo), 0) == -1 ) {
+	memset(&miginfo, 0, sizeof(miginfo));
+
+	if ( (size = getxattr(path, Const::OPEN_LTFS_EA_MIGINFO_INT.c_str(), (void *) &miginfo, sizeof(miginfo))) == -1 ) {
 		if ( errno != ENODATA ) {
 			throw(errno);
 		}
 	}
+	else if ( size != sizeof(miginfo) ) {
+		throw(EIO);
+	}
+
+	if ( miginfo.state != mig_info_t::state_t::NO_STATE )
+		miginfo_new.statinfo.st_size = miginfo.statinfo.st_size;
+
+	if ( setxattr(path, Const::OPEN_LTFS_EA_MIGINFO_INT.c_str(), (void *) &miginfo_new, sizeof(miginfo_new), 0) == -1 )
+		throw(errno);
 }
+
+
+void remMigInfo(const char *path)
+
+{
+	if ( removexattr(path, Const::OPEN_LTFS_EA_MIGINFO_INT.c_str()) == -1 )
+		throw(errno);
+}
+
 
 mig_info_t getMigInfo(const char *path)
 
@@ -75,18 +97,50 @@ mig_info_t getMigInfo(const char *path)
 
 	memset(&miginfo, 0, sizeof(miginfo));
 
-	if ( (size = getxattr(path, Const::OPEN_LTFS_EA_MIGINFO.c_str(), (void *) &miginfo, sizeof(miginfo))) == -1 ) {
+	if ( (size = getxattr(path, Const::OPEN_LTFS_EA_MIGINFO_INT.c_str(), (void *) &miginfo, sizeof(miginfo))) == -1 ) {
 		if ( errno != ENODATA ) {
 			throw(errno);
 		}
 		return miginfo;
 	}
+	else if ( size != sizeof(miginfo) ) {
+		throw(EIO);
+	}
+
+	return miginfo;
+}
+
+
+mig_info_t getMigInfoAt(int dirfd, const char *path)
+
+{
+	ssize_t size;
+	mig_info_t miginfo;
+	int fd;
+
+	memset(&miginfo, 0, sizeof(miginfo));
+
+	if ( (fd = openat(dirfd, path, O_RDONLY)) == -1 )
+		throw(errno);
+
+	if ( (size = fgetxattr(fd, Const::OPEN_LTFS_EA_MIGINFO_INT.c_str(), (void *) &miginfo, sizeof(miginfo))) == -1 ) {
+		if ( errno != ENODATA ) {
+			close(fd);
+			throw(errno);
+		}
+		close(fd);
+		return miginfo;
+	}
+
+	close(fd);
 
 	if ( size != sizeof(miginfo) )
 		throw(EIO);
 
 	return miginfo;
 }
+
+
 
 bool needsRecovery(mig_info_t miginfo)
 
@@ -148,12 +202,19 @@ std::string souce_path(const char *path)
 int ltfsdm_getattr(const char *path, struct stat *statbuf)
 
 {
+	mig_info_t miginfo;
+
 	memset(statbuf, 0, sizeof(struct stat));
 
-	if ( lstat(souce_path(path).c_str(), statbuf) == -1 )
+	if ( lstat(souce_path(path).c_str(), statbuf) == -1 ) {
 		return (-1*errno);
-	else
+	}
+	else {
+		miginfo = getMigInfo(souce_path(path).c_str());
+		if ( miginfo.state != mig_info_t::state_t::NO_STATE )
+			statbuf->st_size = miginfo.statinfo.st_size;
 		return 0;
+	}
 }
 
 int ltfsdm_access(const char *path, int mask)
@@ -202,6 +263,7 @@ int ltfsdm_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 
 {
 	struct stat statbuf;
+	mig_info_t miginfo;
 	off_t next;
 
 	assert(path == NULL);
@@ -225,6 +287,11 @@ int ltfsdm_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 		 	return (-1*errno);
 
 		next = telldir(dirinfo->dir);
+
+		miginfo = getMigInfoAt(dirfd(dirinfo->dir), dirinfo->dentry->d_name);
+		if ( miginfo.state != mig_info_t::state_t::NO_STATE )
+			statbuf.st_size = miginfo.statinfo.st_size;
+
 
 		if (filler(buf, dirinfo->dentry->d_name, &statbuf, next))
 			break;
@@ -385,7 +452,7 @@ int ltfsdm_read(const char *path, char *buffer, size_t size, off_t offset,
 
 	assert(path == NULL);
 
-	if ( (attrsize = fgetxattr(finfo->fh, Const::OPEN_LTFS_EA_MIGINFO.c_str(), (void *) &migInfo, sizeof(migInfo))) == -1 ) {
+	if ( (attrsize = fgetxattr(finfo->fh, Const::OPEN_LTFS_EA_MIGINFO_INT.c_str(), (void *) &migInfo, sizeof(migInfo))) == -1 ) {
 		if ( errno != ENODATA ) {
 			return (-1*errno);
 		}
@@ -407,7 +474,7 @@ int ltfsdm_read_buf(const char *path, struct fuse_bufvec **bufferp,
 
 	assert(path == NULL);
 
-	if ( (attrsize = fgetxattr(finfo->fh, Const::OPEN_LTFS_EA_MIGINFO.c_str(), (void *) &migInfo, sizeof(migInfo))) == -1 ) {
+	if ( (attrsize = fgetxattr(finfo->fh, Const::OPEN_LTFS_EA_MIGINFO_INT.c_str(), (void *) &migInfo, sizeof(migInfo))) == -1 ) {
 		if ( errno != ENODATA ) {
 			return (-1*errno);
 		}
@@ -436,7 +503,7 @@ int ltfsdm_write(const char *path, const char *buf, size_t size,
 
 	assert(path == NULL);
 
-	if ( (attrsize = fgetxattr(finfo->fh, Const::OPEN_LTFS_EA_MIGINFO.c_str(), (void *) &migInfo, sizeof(migInfo))) == -1 ) {
+	if ( (attrsize = fgetxattr(finfo->fh, Const::OPEN_LTFS_EA_MIGINFO_INT.c_str(), (void *) &migInfo, sizeof(migInfo))) == -1 ) {
 		if ( errno != ENODATA ) {
 			return (-1*errno);
 		}
@@ -529,15 +596,24 @@ int ltfsdm_getxattr(const char *path, const char *name, char *value,
 
 {
 	ssize_t attrsize;
+	//struct fuse_context *fc = fuse_get_context();
 
-	if ( (attrsize = lgetxattr(souce_path(path).c_str(), name, value, size)) == -1 ) {
+	// additionally to compare fc->pid with getpid() does not work
+	// since fc->pid returns a thread id
+
+	if ( Const::OPEN_LTFS_EA_FSINFO.compare(name) == 0 ) {
+		strncpy(value, souce_path(path).c_str(), PATH_MAX);
+		size = strlen(value) + 1;
+		return size;
+	}
+	else if ( (attrsize = lgetxattr(souce_path(path).c_str(), name, value, size)) == -1 ) {
 		return (-1*errno);
 	}
+	else if ( std::string(name).find(Const::OPEN_LTFS_EA.c_str()) != std::string::npos ) {
+		return (-1*ENOTSUP);
+	}
 	else {
-		if ( std::string(name).find(Const::OPEN_LTFS_EA.c_str()) != std::string::npos )
-			return (-1*ENOTSUP);
-		else
-			return attrsize;
+		return attrsize;
 	}
 }
 

@@ -17,7 +17,9 @@ struct mig_info_t {
 
 mig_info_t genMigInfo(const char *path, mig_info_t::state_t state);
 void setMigInfo(const char *path, mig_info_t::state_t state);
+void remMigInfo(const char *path);
 mig_info_t getMigInfo(const char *path);
+mig_info_t getMigInfoAt(int dirfd, const char *path);
 bool needsRecovery(mig_info_t miginfo);
 void recoverState(const char *path, mig_info_t::state_t state);
 
@@ -30,10 +32,8 @@ struct openltfs_ctx_t {
 class FuseFS {
 private:
 	std::thread *fusefs;
-	//std::string sourcedir;
 	struct openltfs_ctx_t ctx;
 	std::string mountpt;
-	//struct timespec starttime;
 	struct fuse_chan *openltfsch = NULL;
 	struct fuse *openltfs = NULL;
 	struct fuse_operations init_operations();
