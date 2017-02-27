@@ -98,9 +98,8 @@ mig_info_t getMigInfo(const char *path)
 	memset(&miginfo, 0, sizeof(miginfo));
 
 	if ( (size = getxattr(path, Const::OPEN_LTFS_EA_MIGINFO_INT.c_str(), (void *) &miginfo, sizeof(miginfo))) == -1 ) {
-		if ( errno != ENODATA ) {
-			throw(errno);
-		}
+		// TODO
+		/* check for errno */
 		return miginfo;
 	}
 	else if ( size != sizeof(miginfo) ) {
@@ -124,10 +123,8 @@ mig_info_t getMigInfoAt(int dirfd, const char *path)
 		throw(errno);
 
 	if ( (size = fgetxattr(fd, Const::OPEN_LTFS_EA_MIGINFO_INT.c_str(), (void *) &miginfo, sizeof(miginfo))) == -1 ) {
-		if ( errno != ENODATA ) {
-			close(fd);
-			throw(errno);
-		}
+		// TODO
+		/* check for errno */
 		close(fd);
 		return miginfo;
 	}
@@ -288,10 +285,11 @@ int ltfsdm_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 
 		next = telldir(dirinfo->dir);
 
-		miginfo = getMigInfoAt(dirfd(dirinfo->dir), dirinfo->dentry->d_name);
-		if ( miginfo.state != mig_info_t::state_t::NO_STATE )
-			statbuf.st_size = miginfo.statinfo.st_size;
-
+		if ( S_ISREG(statbuf.st_mode) ) {
+			miginfo = getMigInfoAt(dirfd(dirinfo->dir), dirinfo->dentry->d_name);
+			if ( miginfo.state != mig_info_t::state_t::NO_STATE )
+				statbuf.st_size = miginfo.statinfo.st_size;
+		}
 
 		if (filler(buf, dirinfo->dentry->d_name, &statbuf, next))
 			break;
