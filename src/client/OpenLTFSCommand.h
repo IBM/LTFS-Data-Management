@@ -14,6 +14,8 @@ protected:
 		numReplica(1),
 	    command(command_),
 		optionStr(optionStr_),
+		fsName(""),
+		mountPoint(""),
 	    key(Const::UNSET) {};
 	bool waitForCompletion;
 	bool preMigrate;
@@ -24,6 +26,8 @@ protected:
 	long numReplica;
 	std::string command;
 	std::string optionStr;
+	std::string fsName;
+	std::string mountPoint;
 	std::ifstream fileListStrm;
 	long key;
 	LTFSDmCommClient commCommand;

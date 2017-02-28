@@ -34,6 +34,8 @@ namespace Const {
 	const std::string FAILED_TAPE_ID  = std::string("FAILED");
 	const std::string OPEN_LTFS_EA = std::string(".openltfs.");
 	const std::string OPEN_LTFS_EA_MANAGED = std::string("trusted.openltfs.ismanaged");
+	const std::string OPEN_LTFS_EA_MOUNTPT = std::string("trusted.openltfs.mountpt");
+	const std::string OPEN_LTFS_EA_FSNAME = std::string("trusted.openltfs.fsname");
 	const std::string OPEN_LTFS_EA_MIGINFO_INT = std::string("trusted.openltfs.miginfo.int");
 	const std::string OPEN_LTFS_EA_MIGINFO_EXT = std::string("trusted.openltfs.miginfo.ext");
 	const std::string OPEN_LTFS_EA_FSINFO = std::string("trusted.openltfs.fsinfo");

@@ -616,7 +616,7 @@ bool FsObj::isFsManaged()
 	return attr.managed;
 }
 
-void FsObj::manageFs(bool setDispo, struct timespec starttime)
+void FsObj::manageFs(bool setDispo, struct timespec starttime, std::string mountPoint, std::string fsName)
 
 {
 	FsObj::fs_attr_t attr;

@@ -48,7 +48,8 @@ public:
 	FsObj(unsigned long long fsId, unsigned int iGen, unsigned long long iNode);
 	~FsObj();
 	bool isFsManaged();
-	void manageFs(bool setDispo, struct timespec starttime);
+	void manageFs(bool setDispo, struct timespec starttime) { manageFs(setDispo, starttime, "", ""); }
+	void manageFs(bool setDispo, struct timespec starttime, std::string mountPoint, std::string fsName);
 	struct stat stat();
 	unsigned long long getFsId();
 	unsigned int getIGen();

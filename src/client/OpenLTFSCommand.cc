@@ -56,6 +56,12 @@ void OpenLTFSCommand::processOptions(int argc, char **argv)
 			case 'R':
 				numReplica = strtoul(optarg, NULL, 0);
 				break;
+			case 'm':
+				mountPoint = std::string(optarg);
+				break;
+			case 'N':
+				fsName = std::string(optarg);
+				break;
 			case ':':
 				INFO(LTFSDMC0014E);
 				printUsage();

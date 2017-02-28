@@ -163,26 +163,53 @@ bool FsObj::isFsManaged()
 	return (val == 1);
 }
 
-void FsObj::manageFs(bool setDispo, struct timespec starttime)
+void FsObj::manageFs(bool setDispo, struct timespec starttime, std::string mountPoint, std::string fsName)
 
 {
 	int managed = 1;
 	FuseHandle *fh = (FuseHandle *) handle;
-	std::string mountedPoint = fh->fileName + std::string(".managed");
+	char mountpt[PATH_MAX];
+	char fsname[PATH_MAX];
 	struct stat statbuf;
 	FuseFS *FS;
 
-	umount2(mountedPoint.c_str(), MNT_FORCE);
+	if ( mountPoint.compare("") == 0 ) {
+		if ( getxattr(fh->fileName.c_str(), Const::OPEN_LTFS_EA_MOUNTPT.c_str(), &mountpt, sizeof(mountpt)) == -1 ) {
+			if ( errno != ENODATA )
+				TRACE(Trace::error, errno);
+			mountPoint = fh->fileName + std::string(".managed");
+		}
+		else {
+			mountPoint = mountpt;
+		}
+	}
 
-	if ( ::stat(mountedPoint.c_str(), &statbuf) == 0 ) {
-		if ( rmdir(mountedPoint.c_str()) == -1 ) {
+	if ( fsName.compare("") == 0 ) {
+		if ( getxattr(fh->fileName.c_str(), Const::OPEN_LTFS_EA_FSNAME.c_str(), &fsname, sizeof(fsname)) == -1 ) {
+			if ( errno != ENODATA )
+				TRACE(Trace::error, errno);
+			fsName = std::string("[") + fh->fileName + std::string("]");
+		}
+		else {
+			fsName = fsname;
+		}
+	}
+	else {
+		fsName = std::string("[") + fsName + std::string("]");
+	}
+	std::replace(fsName.begin(), fsName.end(), '/', '.');
+
+	umount2(mountPoint.c_str(), MNT_FORCE);
+
+	if ( ::stat(mountPoint.c_str(), &statbuf) == 0 ) {
+		if ( rmdir(mountPoint.c_str()) == -1 ) {
 			TRACE(Trace::error, errno);
 			managed = 0;
 		}
 	}
 
 	if ( managed == 1 ) {
-		if ( mkdir(mountedPoint.c_str(), 700) == -1 ) {
+		if ( mkdir(mountPoint.c_str(), 700) == -1 ) {
 			TRACE(Trace::error, errno);
 			managed = 0;
 		}
@@ -190,7 +217,7 @@ void FsObj::manageFs(bool setDispo, struct timespec starttime)
 
 	if ( managed == 1 ) {
 		try {
-			FS = new FuseFS(fh->fileName, mountedPoint, starttime);
+			FS = new FuseFS(fh->fileName, mountPoint, starttime);
 		}
 		catch(int error) {
 			managed = 0;
@@ -199,16 +226,32 @@ void FsObj::manageFs(bool setDispo, struct timespec starttime)
 
 	std::unique_lock<std::mutex> lock(mtx);
 
-	if ( setxattr(fh->fileName.c_str(), Const::OPEN_LTFS_EA_MANAGED.c_str(), &managed, sizeof(managed), 0) == -1 ) {
-		TRACE(Trace::error, errno);
-		MSG(LTFSDMF0009E, fh->fileName.c_str());
-		if ( managed == 1 )
-			delete(FS);
-		throw(Error::LTFSDM_FS_ADD_ERROR);
+	if ( managed ) {
+		if ( setxattr(fh->fileName.c_str(), Const::OPEN_LTFS_EA_MOUNTPT.c_str(), mountPoint.c_str(), mountPoint.size() + 1, 0) == -1 ) {
+			TRACE(Trace::error, errno);
+			MSG(LTFSDMF0009E, fh->fileName.c_str());
+			if ( managed == 1 )
+				delete(FS);
+			throw(Error::LTFSDM_FS_ADD_ERROR);
+		}
+		else if ( setxattr(fh->fileName.c_str(), Const::OPEN_LTFS_EA_FSNAME.c_str(), fsName.c_str(), fsName.size() + 1, 0) == -1 ) {
+			TRACE(Trace::error, errno);
+			MSG(LTFSDMF0009E, fh->fileName.c_str());
+			if ( managed == 1 )
+				delete(FS);
+			throw(Error::LTFSDM_FS_ADD_ERROR);
+		}
+		else if ( setxattr(fh->fileName.c_str(), Const::OPEN_LTFS_EA_MANAGED.c_str(), &managed, sizeof(managed), 0) == -1 ) {
+			TRACE(Trace::error, errno);
+			MSG(LTFSDMF0009E, fh->fileName.c_str());
+			if ( managed == 1 )
+				delete(FS);
+			throw(Error::LTFSDM_FS_ADD_ERROR);
+		}
 	}
 
 	if ( managed == 0 ) {
-		rmdir(mountedPoint.c_str());
+		rmdir(mountPoint.c_str());
 		MSG(LTFSDMF0009E, fh->fileName.c_str());
 		throw(Error::LTFSDM_FS_ADD_ERROR);
 	}
