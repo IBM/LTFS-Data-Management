@@ -688,7 +688,7 @@ struct fuse_operations FuseFS::init_operations()
 	return ltfsdm_operations;
 };
 
-FuseFS::FuseFS(std::string sourcedir, std::string mountpt, struct timespec starttime)
+FuseFS::FuseFS(std::string sourcedir, std::string mountpt, std::string fsName, struct timespec starttime)
 	: ctx((struct openltfs_ctx_t) {sourcedir.c_str(), starttime}), mountpt(mountpt)
 
 {
@@ -700,7 +700,7 @@ FuseFS::FuseFS(std::string sourcedir, std::string mountpt, struct timespec start
 
 	fuse_opt_add_arg(&fargs, mountpt.c_str());
 
-	options << "-ouse_ino,fsname=OpenLTFS:" << ctx.sourcedir << ",nopath,default_permissions,allow_other";
+	options << "-ouse_ino,fsname=OpenLTFS:" << fsName << ",nopath,default_permissions,allow_other";
 
 	fuse_opt_add_arg(&fargs, options.str().c_str());
 	fuse_opt_parse(&fargs, NULL, NULL, NULL);

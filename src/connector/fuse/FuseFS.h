@@ -39,7 +39,7 @@ private:
 	struct fuse_operations init_operations();
 public:
 	std::string getMountPoint() {return mountpt;}
-	FuseFS(std::string sourcedir, std::string mountpt, struct timespec starttime);
+	FuseFS(std::string sourcedir, std::string mountpt, std::string fsName, struct timespec starttime);
 	~FuseFS();
 };
 

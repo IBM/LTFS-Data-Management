@@ -197,7 +197,6 @@ void FsObj::manageFs(bool setDispo, struct timespec starttime, std::string mount
 	else {
 		fsName = std::string("[") + fsName + std::string("]");
 	}
-	std::replace(fsName.begin(), fsName.end(), '/', '.');
 
 	umount2(mountPoint.c_str(), MNT_FORCE);
 
@@ -219,7 +218,7 @@ void FsObj::manageFs(bool setDispo, struct timespec starttime, std::string mount
 
 	if ( managed == 1 ) {
 		try {
-			FS = new FuseFS(fh->fileName, mountPoint, starttime);
+			FS = new FuseFS(fh->fileName, mountPoint, fsName, starttime);
 		}
 		catch(int error) {
 			managed = 0;
