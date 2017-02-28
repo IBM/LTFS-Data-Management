@@ -689,14 +689,19 @@ struct fuse_operations FuseFS::init_operations()
 };
 
 FuseFS::FuseFS(std::string sourcedir, std::string mountpt, std::string fsName, struct timespec starttime)
-	: ctx((struct openltfs_ctx_t) {sourcedir.c_str(), starttime}), mountpt(mountpt)
+	: mountpt(mountpt)
 
 {
 	std::stringstream options;
 	struct fuse_args fargs = FUSE_ARGS_INIT(0, NULL);
 	struct fuse_operations ltfsdm_operations = init_operations();
 
-	MSG(LTFSDMF0001I, ctx.sourcedir, mountpt);
+	ctx = (struct openltfs_ctx_t *) malloc(sizeof(struct openltfs_ctx_t));
+	memset(ctx, 0, sizeof(struct openltfs_ctx_t));
+	strncpy(ctx->sourcedir,sourcedir.c_str(), PATH_MAX - 1);
+	ctx->starttime = starttime;
+
+	MSG(LTFSDMF0001I, ctx->sourcedir, mountpt);
 
 	fuse_opt_add_arg(&fargs, mountpt.c_str());
 
@@ -722,7 +727,7 @@ FuseFS::FuseFS(std::string sourcedir, std::string mountpt, std::string fsName, s
 
 	MSG(LTFSDMF0003I);
 
-	openltfs = fuse_new(openltfsch, &fargs,  &ltfsdm_operations, sizeof(ltfsdm_operations), (void *) &ctx);
+	openltfs = fuse_new(openltfsch, &fargs,  &ltfsdm_operations, sizeof(ltfsdm_operations), (void *) ctx);
 
 	if ( openltfs == NULL ) {
 		MSG(LTFSDMF0006E);
@@ -732,7 +737,7 @@ FuseFS::FuseFS(std::string sourcedir, std::string mountpt, std::string fsName, s
 	fusefs = new std::thread(fuse_loop_mt, openltfs);
 
 	std::stringstream threadName;
-	threadName << "FS:"  << ctx.sourcedir;
+	threadName << "FS:"  << ctx->sourcedir;
 	pthread_setname_np(fusefs->native_handle(), threadName.str().substr(0,14).c_str());
 
 
@@ -746,4 +751,5 @@ FuseFS::~FuseFS()
 	fuse_exit(openltfs);
 	fuse_unmount(mountpt.c_str(), openltfsch);
 	fusefs->join();
+	free(ctx);
 }

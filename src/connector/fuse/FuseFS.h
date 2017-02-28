@@ -25,14 +25,14 @@ void recoverState(const char *path, mig_info_t::state_t state);
 
 
 struct openltfs_ctx_t {
-	const char *sourcedir;
+	char sourcedir[4096];
 	struct timespec starttime;
 };
 
 class FuseFS {
 private:
 	std::thread *fusefs;
-	struct openltfs_ctx_t ctx;
+	struct openltfs_ctx_t *ctx;
 	std::string mountpt;
 	struct fuse_chan *openltfsch = NULL;
 	struct fuse *openltfs = NULL;
