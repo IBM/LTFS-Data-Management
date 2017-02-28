@@ -204,6 +204,7 @@ void FsObj::manageFs(bool setDispo, struct timespec starttime, std::string mount
 	if ( ::stat(mountPoint.c_str(), &statbuf) == 0 ) {
 		if ( rmdir(mountPoint.c_str()) == -1 ) {
 			TRACE(Trace::error, errno);
+			MSG(LTFSDMF0012E, mountPoint, fh->fileName);
 			managed = 0;
 		}
 	}
@@ -211,6 +212,7 @@ void FsObj::manageFs(bool setDispo, struct timespec starttime, std::string mount
 	if ( managed == 1 ) {
 		if ( mkdir(mountPoint.c_str(), 700) == -1 ) {
 			TRACE(Trace::error, errno);
+			MSG(LTFSDMF0012E, mountPoint, fh->fileName);
 			managed = 0;
 		}
 	}
