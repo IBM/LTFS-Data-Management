@@ -388,7 +388,7 @@ Connector::rec_info_t Connector::getEvents()
 	dm_token_t token;
 	int retries;
 
-	memset(&recinfo, 0, sizeof(recinfo));
+	recinfo = (Connector::rec_info_t) {0, 0, 0, 0, 0, 0, ""};
 
 	while ( dm_get_events(dmapiSession, 1, DM_EV_WAIT, sizeof(eventBuf), eventBuf, &rlen) == -1 ) {
 		TRACE(Trace::error, errno);
@@ -575,11 +575,11 @@ FsObj::FsObj(std::string fileName)
 	}
 }
 
-FsObj::FsObj(unsigned long long fsId, unsigned int iGen, unsigned long long iNode)
+FsObj::FsObj(Connector::rec_info_t recinfo)
 	: handle(NULL), handleLength(0), isLocked(false), handleFree(true)
 
 {
-	if ( dm_make_handle(&fsId, &iNode, &iGen, &handle, &handleLength) != 0 ) {
+	if ( dm_make_handle(&recinfo.fsid, &recinfo.ino, &recinfo.igen, &handle, &handleLength) != 0 ) {
 		TRACE(Trace::error, errno);
 		throw(errno);
 	}

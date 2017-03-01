@@ -130,7 +130,7 @@ FsObj::FsObj(std::string fileName)
 	handleLength = fileName.size();
 }
 
-FsObj::FsObj(unsigned long long fsId, unsigned int iGen, unsigned long long iNode)
+FsObj::FsObj(Connector::rec_info_t recinfo)
 	: handle(NULL), handleLength(0), isLocked(false), handleFree(true)
 
 {

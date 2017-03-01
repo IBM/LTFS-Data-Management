@@ -41,15 +41,17 @@ void TransRecall::recall(Connector::rec_info_t recinfo, std::string tapeId, long
 	FsObj::mig_attr_t attr;
 	bool succeeded = true;
 
-	ssql << "INSERT INTO JOB_QUEUE (OPERATION, REQ_NUM, TARGET_STATE, FILE_SIZE, FS_ID, I_GEN, "
-		 << "I_NUM, MTIME_SEC, MTIME_NSEC, LAST_UPD, FILE_STATE, TAPE_ID, START_BLOCK) "
+	ssql << "INSERT INTO JOB_QUEUE (OPERATION, FILE_NAME, REQ_NUM, TARGET_STATE, FILE_SIZE, FS_ID, I_GEN, "
+		 << "I_NUM, MTIME_SEC, MTIME_NSEC, LAST_UPD, FILE_STATE, TAPE_ID, START_BLOCK, FILE_DESCRIPTOR) "
 		 << "VALUES (" << DataBase::TRARECALL << ", "            // OPERATION
+		 << (recinfo.filename.compare("") == 0 ?
+			 "NULL" : recinfo.filename) << ", "                  // FILE_NAME
 		 << reqNum << ", "                                       // REQ_NUM
 		 << ( recinfo.toresident ?
 			  FsObj::RESIDENT : FsObj::PREMIGRATED ) << ", ";    // TARGET_STATE
 
 	try {
-		FsObj fso(recinfo.fsid, recinfo.igen, recinfo.ino);
+		FsObj fso(recinfo);
 		statbuf = fso.stat();
 
 		if (!S_ISREG(statbuf.st_mode)) {
@@ -74,7 +76,8 @@ void TransRecall::recall(Connector::rec_info_t recinfo, std::string tapeId, long
 		ssql << "'" << attr.tapeId[0] << "', ";                  // TAPE_ID
 		tapeName = Scheduler::getTapeName(recinfo.fsid, recinfo.igen,
 										  recinfo.ino, tapeId);
-		ssql << Scheduler::getStartBlock(tapeName) << ");";      // START_BLOCK
+		ssql << Scheduler::getStartBlock(tapeName) << ", "       // START_BLOCK
+			 << recinfo.fd << ");";                              // FILE_DESCRIPTOR
 	}
 	catch ( int error ) {
 		MSG(LTFSDMS0032E, recinfo.ino);
@@ -258,7 +261,7 @@ void TransRecall::run(Connector *connector)
 		if ( recinfo.ino == 0 )
 			continue;
 
-		FsObj fso(recinfo.fsid, recinfo.igen, recinfo.ino);
+		FsObj fso(recinfo);
 
 		// error case: managed region set but no attrs
 		try {
@@ -298,8 +301,8 @@ void TransRecall::run(Connector *connector)
 }
 
 
-unsigned long recall(unsigned long long fsid,unsigned int igen,	unsigned long long ino,
-					 std::string tapeId, FsObj::file_state state, FsObj::file_state toState)
+unsigned long recall(Connector::rec_info_t recinfo, std::string tapeId,
+					 FsObj::file_state state, FsObj::file_state toState)
 
 {
 	struct stat statbuf;
@@ -312,21 +315,21 @@ unsigned long recall(unsigned long long fsid,unsigned int igen,	unsigned long lo
 	FsObj::file_state curstate;
 
 	try {
-		FsObj target(fsid, igen, ino);
+		FsObj target(recinfo);
 
 		target.lock();
 
 		curstate = target.getMigState();
 
 		if ( curstate != state ) {
-			MSG(LTFSDMS0034I, ino);
+			MSG(LTFSDMS0034I, recinfo.ino);
 			state = curstate;
 		}
 		if ( state == FsObj::RESIDENT ) {
 			return 0;
 		}
 		else if ( state == FsObj::MIGRATED ) {
-			tapeName = Scheduler::getTapeName(fsid, igen, ino, tapeId);
+			tapeName = Scheduler::getTapeName(recinfo.fsid, recinfo.igen, recinfo.ino, tapeId);
 			fd = open(tapeName.c_str(), O_RDWR);
 
 			if ( fd == -1 ) {
@@ -349,7 +352,7 @@ unsigned long recall(unsigned long long fsid,unsigned int igen,	unsigned long lo
 					TRACE(Trace::error, errno);
 					TRACE(Trace::error, wsize);
 					TRACE(Trace::error, rsize);
-					MSG(LTFSDMS0033E, ino);
+					MSG(LTFSDMS0033E, recinfo.ino);
 					close(fd);
 					throw(Error::LTFSDM_GENERAL_ERROR);
 				}
@@ -377,17 +380,15 @@ unsigned long recall(unsigned long long fsid,unsigned int igen,	unsigned long lo
 void recallStep(int reqNum, std::string tapeId)
 
 {
+	Connector::rec_info_t recinfo;
 	sqlite3_stmt *stmt;
 	std::stringstream ssql;
 	int rc, rc2;
 	FsObj::file_state state;
 	FsObj::file_state toState;
-	unsigned long long fsid;
-	unsigned int igen;
-	unsigned long long ino;
 	int numFiles = 0;
 
-	ssql << "SELECT FS_ID, I_GEN, I_NUM, FILE_STATE, TARGET_STATE  FROM JOB_QUEUE "
+	ssql << "SELECT FS_ID, I_GEN, I_NUM, FILE_NAME, FILE_DESCRIPTOR, FILE_STATE, TARGET_STATE  FROM JOB_QUEUE "
 		 << "WHERE REQ_NUM=" << reqNum << " AND TAPE_ID='" << tapeId << "' ORDER BY START_BLOCK";
 
 	sqlite3_statement::prepare(ssql.str(), &stmt);
@@ -398,11 +399,16 @@ void recallStep(int reqNum, std::string tapeId)
 
 		numFiles++;
 
-		fsid = (unsigned long long) sqlite3_column_int64(stmt, 0);
-		igen = (unsigned int) sqlite3_column_int(stmt, 1);
-		ino = (unsigned long long) sqlite3_column_int64(stmt, 2);
-		state = (FsObj::file_state) sqlite3_column_int(stmt, 3);
-		toState = (FsObj::file_state) sqlite3_column_int(stmt, 4);
+		recinfo = (Connector::rec_info_t) {0, 0, 0, 0, 0, 0, ""};
+		recinfo.fsid = (unsigned long long) sqlite3_column_int64(stmt, 0);
+		recinfo.igen = (unsigned int) sqlite3_column_int(stmt, 1);
+		recinfo.ino = (unsigned long long) sqlite3_column_int64(stmt, 2);
+		const char *cstr = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3));
+		if ( cstr != NULL )
+			recinfo.filename = std::string(cstr);
+		recinfo.fd =  (int) sqlite3_column_int(stmt, 4);
+		state = (FsObj::file_state) sqlite3_column_int(stmt, 5);
+		toState = (FsObj::file_state) sqlite3_column_int(stmt, 6);
 
 		if ( state == FsObj::RESIDENT )
 			continue;
@@ -411,15 +417,15 @@ void recallStep(int reqNum, std::string tapeId)
 			continue;
 
 		try {
-			recall(fsid, igen, ino, tapeId, state, toState);
+			recall(recinfo, tapeId, state, toState);
 		}
 		catch(int error) {
 			ssql.str("");
 			ssql.clear();
 			ssql << "UPDATE JOB_QUEUE SET FILE_STATE =" <<  FsObj::FAILED << " WHERE"
-				 << " FS_ID=" << (long long) fsid
-				 << " AND I_GEN=" << igen
-				 << " AND I_NUM=" << (long long) ino
+				 << " FS_ID=" << (long long) recinfo.fsid
+				 << " AND I_GEN=" << recinfo.igen
+				 << " AND I_NUM=" << (long long) recinfo.ino
 				 << " AND REQ_NUM=" << reqNum;
 			sqlite3_stmt *stmt2;
 			sqlite3_statement::prepare(ssql.str(), &stmt2);
@@ -432,9 +438,9 @@ void recallStep(int reqNum, std::string tapeId)
 		ssql.clear();
 
 		ssql << "UPDATE JOB_QUEUE SET FILE_STATE =" <<  toState << " WHERE"
-			 << " FS_ID=" << (long long) fsid
-			 << " AND I_GEN=" << igen
-			 << " AND I_NUM=" << (long long) ino
+			 << " FS_ID=" << (long long) recinfo.fsid
+			 << " AND I_GEN=" << recinfo.igen
+			 << " AND I_NUM=" << (long long) recinfo.ino
 			 << " AND REQ_NUM=" << reqNum;
 
 		sqlite3_stmt *stmt2;

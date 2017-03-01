@@ -25,7 +25,8 @@ void recoverState(const char *path, mig_info_t::state_t state);
 
 
 struct openltfs_ctx_t {
-	char sourcedir[4096];
+	char sourcedir[PATH_MAX];
+	char mountpoint[PATH_MAX];
 	struct timespec starttime;
 };
 

@@ -699,15 +699,17 @@ FuseFS::FuseFS(std::string sourcedir, std::string mountpt, std::string fsName, s
 	ctx = (struct openltfs_ctx_t *) malloc(sizeof(struct openltfs_ctx_t));
 	memset(ctx, 0, sizeof(struct openltfs_ctx_t));
 	strncpy(ctx->sourcedir,sourcedir.c_str(), PATH_MAX - 1);
+	strncpy(ctx->mountpoint, mountpt.c_str(), PATH_MAX - 1);
 	ctx->starttime = starttime;
 
 	MSG(LTFSDMF0001I, ctx->sourcedir, mountpt);
 
 	fuse_opt_add_arg(&fargs, mountpt.c_str());
 
-	options << "-ouse_ino,fsname=OpenLTFS:" << fsName << ",nopath,default_permissions,allow_other";
+	options << "-ouse_ino,fsname=OpenLTFS:" << fsName << ",nopath,default_permissions,allow_other,max_background=32768";
 
 	fuse_opt_add_arg(&fargs, options.str().c_str());
+	//fuse_opt_add_arg(&fargs, "-d");
 	fuse_opt_parse(&fargs, NULL, NULL, NULL);
 
 	if ( fuse_parse_cmdline(&fargs, NULL, NULL, NULL) != 0 ) {

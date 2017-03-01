@@ -11,6 +11,8 @@ public:
 		unsigned long long fsid;
         unsigned int igen;
         unsigned long long ino;
+		int fd;
+		std::string filename;
 	};
 	Connector(bool cleanup);
 	~Connector();
@@ -45,7 +47,7 @@ public:
 	};
 	FsObj(void *_handle, unsigned long _handleLength) : handle(_handle), handleLength(_handleLength), handleFree(false) {}
 	FsObj(std::string fileName);
-	FsObj(unsigned long long fsId, unsigned int iGen, unsigned long long iNode);
+	FsObj(Connector::rec_info_t recinfo);
 	~FsObj();
 	bool isFsManaged();
 	void manageFs(bool setDispo, struct timespec starttime) { manageFs(setDispo, starttime, "", ""); }
