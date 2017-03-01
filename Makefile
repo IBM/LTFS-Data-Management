@@ -3,7 +3,7 @@ include components.mk
 # for executing code
 export PATH := $(PATH):$(CURDIR)/bin
 
-export CONNECTOR := dmapi
+export CONNECTOR := fuse
 
 ifeq ($(wildcard src/connector/$(CONNECTOR)),)
     $(error connector $(CONNECTOR) does not exit)
