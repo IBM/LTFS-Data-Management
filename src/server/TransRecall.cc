@@ -41,11 +41,16 @@ void TransRecall::recall(Connector::rec_info_t recinfo, std::string tapeId, long
 	FsObj::mig_attr_t attr;
 	bool succeeded = true;
 
+	std::string filename;
+	if ( recinfo.filename.compare("") == 0 )
+		filename = "NULL";
+	else
+		filename = std::string("'") + recinfo.filename + std::string("'");
+
 	ssql << "INSERT INTO JOB_QUEUE (OPERATION, FILE_NAME, REQ_NUM, TARGET_STATE, FILE_SIZE, FS_ID, I_GEN, "
 		 << "I_NUM, MTIME_SEC, MTIME_NSEC, LAST_UPD, FILE_STATE, TAPE_ID, START_BLOCK, FILE_DESCRIPTOR) "
 		 << "VALUES (" << DataBase::TRARECALL << ", "            // OPERATION
-		 << (recinfo.filename.compare("") == 0 ?
-			 "NULL" : recinfo.filename) << ", "                  // FILE_NAME
+		 << filename.c_str() << ", "                  // FILE_NAME
 		 << reqNum << ", "                                       // REQ_NUM
 		 << ( recinfo.toresident ?
 			  FsObj::RESIDENT : FsObj::PREMIGRATED ) << ", ";    // TARGET_STATE
@@ -73,7 +78,8 @@ void TransRecall::recall(Connector::rec_info_t recinfo, std::string tapeId, long
 		}
 		ssql << state << ", ";                                   // FILE_STATE
 		attr = fso.getAttribute();
-		ssql << "'" << attr.tapeId[0] << "', ";                  // TAPE_ID
+		//		ssql << "'" << attr.tapeId[0] << "', ";                  // TAPE_ID
+		ssql << "'" << tapeId << "', ";                  // TAPE_ID
 		tapeName = Scheduler::getTapeName(recinfo.fsid, recinfo.igen,
 										  recinfo.ino, tapeId);
 		ssql << Scheduler::getStartBlock(tapeName) << ", "       // START_BLOCK
@@ -87,7 +93,6 @@ void TransRecall::recall(Connector::rec_info_t recinfo, std::string tapeId, long
 		toState = FsObj::RESIDENT;
 	else
 		toState = FsObj::PREMIGRATED;
-
 
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 	rc = sqlite3_statement::step(stmt);

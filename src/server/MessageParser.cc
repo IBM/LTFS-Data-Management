@@ -22,7 +22,6 @@
 #include "Scheduler.h"
 #include "Migration.h"
 #include "SelRecall.h"
-#include "InfoFiles.h"
 #include "DataBase.h"
 #include "MessageParser.h"
 

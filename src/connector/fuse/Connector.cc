@@ -82,19 +82,30 @@ void Connector::initTransRecalls()
 Connector::rec_info_t Connector::getEvents()
 
 {
-	Connector::rec_info_t rinfo;
-	sleep(1);
-	return rinfo;
+	Connector::rec_info_t recinfo;
+
+	recinfo = (Connector::rec_info_t) {0, 0, 0, 0, 0, 0, ""};
+	std::unique_lock<std::mutex> lock(trecall_mtx);
+	trecall_cond.wait(lock);
+	recinfo = recinfo_share;
+
+	return recinfo;
 }
 
 void Connector::respondRecallEvent(rec_info_t recinfo, bool success)
 
 {
+	std::unique_lock<std::mutex> lock(recinfo.conn_info->mtx);
+	recinfo.conn_info->cond.notify_one();
 }
 
 void Connector::terminate()
 
 {
+	std::unique_lock<std::mutex> lock(trecall_mtx);
+
+	recinfo_share = (Connector::rec_info_t) {0, 0, 0, 0, 0, 0, ""};
+	trecall_cond.notify_one();
 }
 
 struct FuseHandle {
@@ -134,6 +145,13 @@ FsObj::FsObj(Connector::rec_info_t recinfo)
 	: handle(NULL), handleLength(0), isLocked(false), handleFree(true)
 
 {
+	FuseHandle *fh = new FuseHandle();
+
+	fh->sourcePath = recinfo.filename;
+	fh->fd = dup(recinfo.fd);
+
+	handle = (void *) fh;
+	handleLength = recinfo.filename.size();
 }
 
 FsObj::~FsObj()
@@ -382,6 +400,8 @@ long FsObj::write(long offset, unsigned long size, char *buffer)
 		TRACE(Trace::error, errno);
 		throw(errno);
 	}
+
+	fsync(fh->fd);
 
 	return wsize;
 }
