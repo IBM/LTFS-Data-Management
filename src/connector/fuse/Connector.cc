@@ -401,8 +401,6 @@ long FsObj::write(long offset, unsigned long size, char *buffer)
 		throw(errno);
 	}
 
-	fsync(fh->fd);
-
 	return wsize;
 }
 
