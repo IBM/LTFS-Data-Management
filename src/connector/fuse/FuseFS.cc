@@ -40,6 +40,18 @@ std::mutex trecall_mtx;
 std::condition_variable trecall_cond;
 Connector::rec_info_t recinfo_share;
 
+struct ltfs_file_info {
+	int fd;
+	std::string sourcepath;
+	std::string fusepath;
+};
+
+struct ltfsdm_dir_info {
+	DIR *dir;
+	struct dirent *dentry;
+	off_t offset;
+};
+
 mig_info_t genMigInfo(const char *path, mig_info_t::state_t state)
 
 {
@@ -171,13 +183,6 @@ void recoverState(const char *path, mig_info_t::state_t state)
 	// TODO
 }
 
-struct ltfsdm_dir_t {
-	DIR *dir;
-	struct dirent *dentry;
-	off_t offset;
-};
-
-
 std::string souce_path(const char *path)
 
 {
@@ -242,16 +247,15 @@ int ltfsdm_readlink(const char *path, char *buffer, size_t size)
 int ltfsdm_opendir(const char *path, struct fuse_file_info *finfo)
 
 {
-	ltfsdm_dir_t *dirinfo = (ltfsdm_dir_t *) malloc(sizeof(ltfsdm_dir_t));
+	ltfsdm_dir_info *dirinfo = NULL;
+	DIR *dir = NULL;
 
-	if (dirinfo == NULL)
-		return (-1*errno);
-
-	if ( (dirinfo->dir = opendir(souce_path(path).c_str())) == 0 ) {
-		free(dirinfo);
+	if ( (dir = opendir(souce_path(path).c_str())) == 0 ) {
 		return (-1*errno);
 	}
 
+	dirinfo = new(ltfsdm_dir_info);
+	dirinfo->dir = dir;
 	dirinfo->dentry = NULL;
 	dirinfo->offset = 0;
 
@@ -267,10 +271,12 @@ int ltfsdm_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 	struct stat statbuf;
 	mig_info_t miginfo;
 	off_t next;
+	ltfsdm_dir_info *dirinfo = (ltfsdm_dir_info *) finfo->fh;
 
 	assert(path == NULL);
 
-	ltfsdm_dir_t *dirinfo = (ltfsdm_dir_t *) finfo->fh;
+	if ( dirinfo == NULL )
+		return (-1*EBADF);
 
 	if (offset != dirinfo->offset) {
 		seekdir(dirinfo->dir, offset);
@@ -309,12 +315,15 @@ int ltfsdm_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 int ltfsdm_releasedir(const char *path, struct fuse_file_info *finfo)
 
 {
+	ltfsdm_dir_info *dirinfo = (ltfsdm_dir_info *) finfo->fh;
+
 	assert(path == NULL);
 
-	ltfsdm_dir_t *dirinfo = (ltfsdm_dir_t *) finfo->fh;
+	if ( dirinfo == NULL )
+		return (-1*EBADF);
 
 	closedir(dirinfo->dir);
-	free(dirinfo);
+	delete(dirinfo);
 
 	return 0;
 }
@@ -436,11 +445,17 @@ int ltfsdm_open(const char *path, struct fuse_file_info *finfo)
 
 {
 	int fd = -1;
+	ltfs_file_info *linfo = NULL;
 
 	if ( (fd = open(souce_path(path).c_str(), finfo->flags)) == -1 )
 		return (-1*errno);
 
-	finfo->fh = fd;
+	linfo = new(ltfs_file_info);
+	linfo->fd = fd;
+	linfo->fusepath = path;
+	linfo->sourcepath = souce_path(path);
+
+	finfo->fh = (unsigned long) linfo;
 
 	return 0;
 }
@@ -452,16 +467,20 @@ int ltfsdm_read(const char *path, char *buffer, size_t size, off_t offset,
 	ssize_t rsize = -1;
 	mig_info_t migInfo;
 	ssize_t attrsize;
+	ltfs_file_info *linfo = (ltfs_file_info *) finfo->fh;
 
 	assert(path == NULL);
 
-	if ( (attrsize = fgetxattr(finfo->fh, Const::OPEN_LTFS_EA_MIGINFO_INT.c_str(), (void *) &migInfo, sizeof(migInfo))) == -1 ) {
+	if ( linfo == NULL )
+		return (-1*EBADF);
+
+	if ( (attrsize = fgetxattr(linfo->fd, Const::OPEN_LTFS_EA_MIGINFO_INT.c_str(), (void *) &migInfo, sizeof(migInfo))) == -1 ) {
 		if ( errno != ENODATA ) {
 			return (-1*errno);
 		}
 	}
 
-	if ( (rsize =pread(finfo->fh, buffer, size, offset)) == -1 )
+	if ( (rsize =pread(linfo->fd, buffer, size, offset)) == -1 )
 		return (-1*errno);
 	else
 		return rsize;
@@ -474,10 +493,14 @@ int ltfsdm_read_buf(const char *path, struct fuse_bufvec **bufferp,
     struct fuse_bufvec *source;
 	mig_info_t migInfo;
 	ssize_t attrsize;
+	ltfs_file_info *linfo = (ltfs_file_info *) finfo->fh;
 
 	assert(path == NULL);
 
-	if ( (attrsize = fgetxattr(finfo->fh, Const::OPEN_LTFS_EA_MIGINFO_INT.c_str(), (void *) &migInfo, sizeof(migInfo))) == -1 ) {
+	if ( linfo == NULL )
+		return (-1*EBADF);
+
+	if ( (attrsize = fgetxattr(linfo->fd, Const::OPEN_LTFS_EA_MIGINFO_INT.c_str(), (void *) &migInfo, sizeof(migInfo))) == -1 ) {
 		if ( errno != ENODATA ) {
 			return (-1*errno);
 		}
@@ -488,54 +511,33 @@ int ltfsdm_read_buf(const char *path, struct fuse_bufvec **bufferp,
 		struct stat statbuf;
 		unsigned int igen;
 
-		if ( fstat(finfo->fh, &statbuf) == -1 ) {
+		if ( fstat(linfo->fd, &statbuf) == -1 ) {
 			TRACE(Trace::error, errno);
 			return (-1*errno);
 		}
 
-		if ( ioctl(finfo->fh, FS_IOC_GETVERSION, &igen) ) {
+		if ( ioctl(linfo->fd, FS_IOC_GETVERSION, &igen) ) {
 			TRACE(Trace::error, errno);
 			throw(errno);
 		}
 
 		std::unique_lock<std::mutex> lock(trecall_mtx);
 
-		recinfo_share.conn_info = new(struct conn_info_t);
+		struct conn_info_t *conn_info = new(struct conn_info_t);
+		recinfo_share.conn_info = conn_info;
 		recinfo_share.toresident = false;
 		recinfo_share.fsid = statbuf.st_dev;
 		recinfo_share.igen = igen;
 		recinfo_share.ino = statbuf.st_ino;
-		recinfo_share.fd = dup(finfo->fh);
+		recinfo_share.filename = linfo->sourcepath;
+		recinfo_share.fd = open(recinfo_share.filename.c_str(), O_WRONLY);
 
-		std::stringstream procpath;
-
-		procpath << "/proc/" << getpid() << "/fd/" << recinfo_share.fd;
-
-		std::cout << "procpath: " << procpath.str() << std::endl;
-
-		char sourcepath[PATH_MAX];
-
-		memset(sourcepath, 0, sizeof(sourcepath));
-
-		if ( readlink(procpath.str().c_str(), sourcepath, sizeof(sourcepath) - 1) == -1 ) {
-			TRACE(Trace::error, errno);
-			throw(errno);
-		}
-
-		std::cout << "sourcepath: " << sourcepath << std::endl;
-
-		recinfo_share.filename = sourcepath;
-
-		std::unique_lock<std::mutex> lock2(recinfo_share.conn_info->mtx);
+		std::unique_lock<std::mutex> lock2(conn_info->mtx);
 
 		trecall_cond.notify_one();
 		lock.unlock();
 
-		std::cout << "waiting for the file being recalled" << std::endl;
-
-		recinfo_share.conn_info->cond.wait(lock2);
-
-		std::cout << "file is recalled: continue operation" << std::endl;
+		conn_info->cond.wait(lock2);
 	}
 
     if ( (source = (fuse_bufvec*) malloc(sizeof(struct fuse_bufvec))) == NULL )
@@ -543,7 +545,7 @@ int ltfsdm_read_buf(const char *path, struct fuse_bufvec **bufferp,
 
     *source = FUSE_BUFVEC_INIT(size);
     source->buf[0].flags = (fuse_buf_flags) (FUSE_BUF_IS_FD | FUSE_BUF_FD_SEEK);
-    source->buf[0].fd = finfo->fh;
+    source->buf[0].fd = linfo->fd;
     source->buf[0].pos = offset;
     *bufferp = source;
 
@@ -558,16 +560,20 @@ int ltfsdm_write(const char *path, const char *buf, size_t size,
 	ssize_t wsize;
 	mig_info_t migInfo;
 	ssize_t attrsize;
+	ltfs_file_info *linfo = (ltfs_file_info *) finfo->fh;
 
 	assert(path == NULL);
 
-	if ( (attrsize = fgetxattr(finfo->fh, Const::OPEN_LTFS_EA_MIGINFO_INT.c_str(), (void *) &migInfo, sizeof(migInfo))) == -1 ) {
+	if ( linfo == NULL )
+		return (-1*EBADF);
+
+	if ( (attrsize = fgetxattr(linfo->fd, Const::OPEN_LTFS_EA_MIGINFO_INT.c_str(), (void *) &migInfo, sizeof(migInfo))) == -1 ) {
 		if ( errno != ENODATA ) {
 			return (-1*errno);
 		}
 	}
 
-	if ( (wsize = pwrite(finfo->fh, buf, size, offset)) == -1 )
+	if ( (wsize = pwrite(linfo->fd, buf, size, offset)) == -1 )
 		return (-1*errno);
 	else
 		return wsize;
@@ -585,20 +591,34 @@ int ltfsdm_statfs(const char *path, struct statvfs *stbuf)
 int ltfsdm_release(const char *path, struct fuse_file_info *finfo)
 
 {
+	ltfs_file_info *linfo = (ltfs_file_info *) finfo->fh;
+
 	assert(path == NULL);
 
-	if ( close(finfo->fh) == -1 )
+	if ( linfo == NULL )
+		return (-1*EBADF);
+
+	if ( close(linfo->fd) == -1 ) {
+		delete(linfo);
 		return (-1*errno);
-	else
+	}
+	else {
+		delete(linfo);
 		return 0;
+	}
 }
 
 int ltfsdm_flush(const char *path, struct fuse_file_info *finfo)
 
 {
+	ltfs_file_info *linfo = (ltfs_file_info *) finfo->fh;
+
 	assert(path == NULL);
 
-	if ( close(dup(finfo->fh)) == -1 )
+	if ( linfo == NULL )
+		return (-1*EBADF);
+
+	if ( close(dup(linfo->fd)) == -1 )
 		return (-1*errno);
 	else
 		return 0;
@@ -608,14 +628,19 @@ int ltfsdm_fsync(const char *path, int isdatasync,
 						struct fuse_file_info *finfo)
 
 {
+	ltfs_file_info *linfo = (ltfs_file_info *) finfo->fh;
+
 	int rc;
 
 	assert(path == NULL);
 
+	if ( linfo == NULL )
+		return (-1*EBADF);
+
 	if ( isdatasync )
-	  rc = fdatasync(finfo->fh);
+	  rc = fdatasync(linfo->fd);
 	else
-	  rc = fsync(finfo->fh);
+	  rc = fsync(linfo->fd);
 
 	if ( rc == -1 )
 		return (-1*errno);
@@ -627,9 +652,14 @@ int ltfsdm_fallocate(const char *path, int mode,
 			off_t offset, off_t length, struct fuse_file_info *finfo)
 
 {
+	ltfs_file_info *linfo = (ltfs_file_info *) finfo->fh;
+
 	assert(path == NULL);
 
-	if ( fallocate(finfo->fh, mode, offset, length) == -1 )
+	if ( linfo == NULL )
+		return (-1*EBADF);
+
+	if ( fallocate(linfo->fd, mode, offset, length) == -1 )
 		return (-1*errno);
 	else
 		return 0;

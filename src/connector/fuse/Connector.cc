@@ -84,21 +84,10 @@ Connector::rec_info_t Connector::getEvents()
 {
 	Connector::rec_info_t recinfo;
 
-	std::cout << "starting getEvents" << std::endl;
-
 	recinfo = (Connector::rec_info_t) {0, 0, 0, 0, 0, 0, ""};
 	std::unique_lock<std::mutex> lock(trecall_mtx);
-
-	std::cout << "waiting for a recall event" << std::endl;
-
 	trecall_cond.wait(lock);
-
 	recinfo = recinfo_share;
-
-	std::cout << "event received: " << std::endl;
-	std::cout << "  inode: " << recinfo.ino << std::endl;
-	std::cout << "  fd: " << recinfo.fd << std::endl;
-	std::cout << "  file name: " << recinfo.filename << std::endl;
 
 	return recinfo;
 }
@@ -106,12 +95,8 @@ Connector::rec_info_t Connector::getEvents()
 void Connector::respondRecallEvent(rec_info_t recinfo, bool success)
 
 {
-	std::cout << "responding event" << std::endl;
-
-	std::unique_lock<std::mutex> lock(recinfo_share.conn_info->mtx);
-	recinfo_share.conn_info->cond.notify_one();
-
-	std::cout << "event responded" << std::endl;
+	std::unique_lock<std::mutex> lock(recinfo.conn_info->mtx);
+	recinfo.conn_info->cond.notify_one();
 }
 
 void Connector::terminate()
@@ -120,9 +105,6 @@ void Connector::terminate()
 	std::unique_lock<std::mutex> lock(trecall_mtx);
 
 	recinfo_share = (Connector::rec_info_t) {0, 0, 0, 0, 0, 0, ""};
-
-	std::cout << "terminate connector" << std::endl;
-
 	trecall_cond.notify_one();
 }
 
@@ -155,8 +137,6 @@ FsObj::FsObj(std::string fileName)
 
 	fh->sourcePath = source_path;
 
-	std::cout << "file name: " << fileName << ", source path: " << source_path << ", file handle: " << fh->fd << std::endl;
-
 	handle = (void *) fh;
 	handleLength = fileName.size();
 }
@@ -168,7 +148,7 @@ FsObj::FsObj(Connector::rec_info_t recinfo)
 	FuseHandle *fh = new FuseHandle();
 
 	fh->sourcePath = recinfo.filename;
-	fh->fd = recinfo.fd;
+	fh->fd = dup(recinfo.fd);
 
 	handle = (void *) fh;
 	handleLength = recinfo.filename.size();
@@ -420,6 +400,8 @@ long FsObj::write(long offset, unsigned long size, char *buffer)
 		TRACE(Trace::error, errno);
 		throw(errno);
 	}
+
+	fsync(fh->fd);
 
 	return wsize;
 }

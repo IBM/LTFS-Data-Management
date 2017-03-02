@@ -74,7 +74,6 @@ void InfoFilesCommand::doCommand(int argc, char **argv)
 		try {
 			file_name = canonicalize_file_name(line.c_str());
 			if ( file_name == NULL ) {
-				INFO(LTFSDMC0049I, line);
 				continue;
 			}
 			FsObj fso(file_name);
@@ -105,7 +104,9 @@ void InfoFilesCommand::doCommand(int argc, char **argv)
 			}
 		}
 		catch ( int error ) {
-			INFO(LTFSDMC0048I, file_name);
+			if ( stat(file_name, &statbuf) == -1 )
+				continue;
+			INFO(LTFSDMC0049I, '-', statbuf.st_size, statbuf.st_blocks, '-', file_name);
 		}
 	}
 }

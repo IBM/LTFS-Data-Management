@@ -11,7 +11,6 @@ ARC_SRC_FILES += FileOperation.cc
 ARC_SRC_FILES += Migration.cc
 ARC_SRC_FILES += SelRecall.cc
 ARC_SRC_FILES += TransRecall.cc
-ARC_SRC_FILES += InfoFiles.cc
 ARC_SRC_FILES += Scheduler.cc
 
 CLEANUP_FILES := ltfsdmd

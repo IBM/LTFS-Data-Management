@@ -94,7 +94,6 @@ void TransRecall::recall(Connector::rec_info_t recinfo, std::string tapeId, long
 	else
 		toState = FsObj::PREMIGRATED;
 
-
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 	rc = sqlite3_statement::step(stmt);
 	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
@@ -347,9 +346,7 @@ unsigned long recall(Connector::rec_info_t recinfo, std::string tapeId,
 			statbuf = target.stat();
 
 			while ( offset < statbuf.st_size ) {
-				std::cout << "offset: " << offset << ", size: " << statbuf.st_size << std::endl;
 				rsize = read(fd, buffer, sizeof(buffer));
-				std::cout << "rsize: " << rsize << ", size: " << statbuf.st_size << std::endl;
 				if ( rsize == -1 ) {
 					TRACE(Trace::error, errno);
 					MSG(LTFSDMS0023E, tapeName.c_str());

@@ -194,7 +194,6 @@ unsigned long recall(std::string fileName, std::string tapeId,
 			statbuf = target.stat();
 
 			while ( offset < statbuf.st_size ) {
-				std::cout << "offset: " << offset << ", size: " << statbuf.st_size << std::endl;
 				rsize = read(fd, buffer, sizeof(buffer));
 				if ( rsize == -1 ) {
 					TRACE(Trace::error, errno);
