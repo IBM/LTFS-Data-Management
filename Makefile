@@ -1,17 +1,19 @@
 include components.mk
 
+.PHONY: build clean fuse dmapi
+
 # for executing code
 export PATH := $(PATH):$(CURDIR)/bin
 
 export CONNECTOR := fuse
+fuse: CONNECTOR = fuse
+fuse: build
+dmapi: CONNECTOR = dmapi
+dmapi: build
 
 ifeq ($(wildcard src/connector/$(CONNECTOR)),)
     $(error connector $(CONNECTOR) does not exit)
 endif
-
-.PHONY: build clean
-
-default: build
 
 SEP = >
 addtgtprefix = $(addprefix $(1)$(SEP), $(2))

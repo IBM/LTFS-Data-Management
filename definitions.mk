@@ -1,6 +1,6 @@
 # common definitions
 
-.PHONY: clean build libdir
+.PHONY: clean build libdir link
 
 # to be used below
 PROJECT := OpenLTFS
@@ -44,6 +44,12 @@ objfiles = $(patsubst %.cc,%.o, $(1))
 
 # build rules
 default: build
+link:
+
+ifeq ($(CONNECTOR),$(notdir $(CURDIR)))
+link:
+	ln -sf $(SHAREDLIB) $(BINDIR)/libconnector.so
+endif
 
 $(SHAREDLIB): $(call objfiles, $(SO_SRC_FILES))
 	$(CXX) -shared $(LDFLAGS) $(CXXFLAGS) $^ -o $@
@@ -71,7 +77,7 @@ $(TARGET): $(BINARY) | $(BINDIR)
 clean:
 	rm -fr $(RELPATH)/lib/* *.o $(CLEANUP_FILES) $(BINARY) $(BINDIR)/* $(DEPDIR)
 
-build: $(DEPS) $(call objfiles, $(SOURCE_FILES)) $(TARGETLIB) $(TARGET) $(POSTTARGET)
+build: $(DEPS) $(call objfiles, $(SOURCE_FILES)) $(TARGETLIB) $(TARGET) link $(POSTTARGET)
 
 ifeq ($(MAKECMDGOALS),build)
     -include .d/deps.mk

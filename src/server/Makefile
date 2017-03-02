@@ -1,6 +1,6 @@
 RELPATH = ../..
 
-LDFLAGS := -lprotobuf -lpthread -lsqlite3 -l$(CONNECTOR)connector
+LDFLAGS := -lprotobuf -lpthread -lsqlite3 -lconnector
 
 ARC_SRC_FILES := Server.cc
 ARC_SRC_FILES += DataBase.cc
