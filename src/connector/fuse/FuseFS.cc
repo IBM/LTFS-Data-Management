@@ -518,19 +518,24 @@ int ltfsdm_read_buf(const char *path, struct fuse_bufvec **bufferp,
 
 		if ( ioctl(linfo->fd, FS_IOC_GETVERSION, &igen) ) {
 			TRACE(Trace::error, errno);
-			throw(errno);
+			return (-1*errno);
 		}
 
 		std::unique_lock<std::mutex> lock(trecall_mtx);
 
 		struct conn_info_t *conn_info = new(struct conn_info_t);
+		int fd;
 		recinfo_share.conn_info = conn_info;
 		recinfo_share.toresident = false;
 		recinfo_share.fsid = statbuf.st_dev;
 		recinfo_share.igen = igen;
 		recinfo_share.ino = statbuf.st_ino;
 		recinfo_share.filename = linfo->sourcepath;
-		recinfo_share.fd = open(recinfo_share.filename.c_str(), O_WRONLY);
+		if ( (fd = open(recinfo_share.filename.c_str(), O_WRONLY)) == -1 ) {
+			TRACE(Trace::error, errno);
+			return (-1*errno);
+		}
+		recinfo_share.fd = fd;
 
 		std::unique_lock<std::mutex> lock2(conn_info->mtx);
 
@@ -538,6 +543,8 @@ int ltfsdm_read_buf(const char *path, struct fuse_bufvec **bufferp,
 		lock.unlock();
 
 		conn_info->cond.wait(lock2);
+		close(fd);
+		delete(conn_info);
 	}
 
     if ( (source = (fuse_bufvec*) malloc(sizeof(struct fuse_bufvec))) == NULL )
