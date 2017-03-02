@@ -5,10 +5,12 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <linux/fs.h>
 #include <dirent.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/xattr.h>
+#include <sys/ioctl.h>
 #include <assert.h>
 #include <errno.h>
 
@@ -30,10 +32,13 @@
 #include "src/common/errors/errors.h"
 #include "src/common/const/Const.h"
 
+#include "src/connector/Connector.h"
 #include "FuseFS.h"
 
 thread_local std::string lsourcedir = "";
-
+std::mutex trecall_mtx;
+std::condition_variable trecall_cond;
+Connector::rec_info_t recinfo_share;
 
 mig_info_t genMigInfo(const char *path, mig_info_t::state_t state)
 
@@ -476,6 +481,61 @@ int ltfsdm_read_buf(const char *path, struct fuse_bufvec **bufferp,
 		if ( errno != ENODATA ) {
 			return (-1*errno);
 		}
+	}
+
+	if ( migInfo.state == mig_info_t::state_t::MIGRATED ||
+		 migInfo.state == mig_info_t::state_t::IN_RECALL ) {
+		struct stat statbuf;
+		unsigned int igen;
+
+		if ( fstat(finfo->fh, &statbuf) == -1 ) {
+			TRACE(Trace::error, errno);
+			return (-1*errno);
+		}
+
+		if ( ioctl(finfo->fh, FS_IOC_GETVERSION, &igen) ) {
+			TRACE(Trace::error, errno);
+			throw(errno);
+		}
+
+		std::unique_lock<std::mutex> lock(trecall_mtx);
+
+		recinfo_share.conn_info = new(struct conn_info_t);
+		recinfo_share.toresident = false;
+		recinfo_share.fsid = statbuf.st_dev;
+		recinfo_share.igen = igen;
+		recinfo_share.ino = statbuf.st_ino;
+		recinfo_share.fd = dup(finfo->fh);
+
+		std::stringstream procpath;
+
+		procpath << "/proc/" << getpid() << "/fd/" << recinfo_share.fd;
+
+		std::cout << "procpath: " << procpath.str() << std::endl;
+
+		char sourcepath[PATH_MAX];
+
+		memset(sourcepath, 0, sizeof(sourcepath));
+
+		if ( readlink(procpath.str().c_str(), sourcepath, sizeof(sourcepath) - 1) == -1 ) {
+			TRACE(Trace::error, errno);
+			throw(errno);
+		}
+
+		std::cout << "sourcepath: " << sourcepath << std::endl;
+
+		recinfo_share.filename = sourcepath;
+
+		std::unique_lock<std::mutex> lock2(recinfo_share.conn_info->mtx);
+
+		trecall_cond.notify_one();
+		lock.unlock();
+
+		std::cout << "waiting for the file being recalled" << std::endl;
+
+		recinfo_share.conn_info->cond.wait(lock2);
+
+		std::cout << "file is recalled: continue operation" << std::endl;
 	}
 
     if ( (source = (fuse_bufvec*) malloc(sizeof(struct fuse_bufvec))) == NULL )

@@ -1,6 +1,15 @@
 #ifndef _FUSEFS_H
 #define _FUSEFS_H
 
+extern std::mutex trecall_mtx;
+extern std::condition_variable trecall_cond;
+extern Connector::rec_info_t recinfo_share;
+
+struct conn_info_t {
+	std::mutex mtx;
+	std::condition_variable cond;
+};
+
 struct mig_info_t {
 	enum state_t {
 		NO_STATE = 0,
