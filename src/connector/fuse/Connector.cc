@@ -74,9 +74,13 @@ Connector::~Connector()
 	}
 }
 
+std::unique_lock<std::mutex> *lock;
+
 void Connector::initTransRecalls()
 
 {
+	lock = new std::unique_lock<std::mutex>(trecall_mtx);
+
 }
 
 Connector::rec_info_t Connector::getEvents()
@@ -84,19 +88,27 @@ Connector::rec_info_t Connector::getEvents()
 {
 	Connector::rec_info_t recinfo;
 
-	recinfo = (Connector::rec_info_t) {0, 0, 0, 0, 0, 0, ""};
-	std::unique_lock<std::mutex> lock(trecall_mtx);
-	trecall_cond.wait(lock);
+	single = true;
+	wait_cond.notify_all();
+	trecall_cond.wait(*lock);
 	recinfo = recinfo_share;
+	recinfo_share = (Connector::rec_info_t) {0, 0, 0, 0, 0, 0, ""};
+
+	TRACE(Trace::error, recinfo.ino);
 
 	return recinfo;
 }
 
+std::mutex respond_mutex;
+
 void Connector::respondRecallEvent(rec_info_t recinfo, bool success)
 
 {
-	std::unique_lock<std::mutex> lock(recinfo.conn_info->mtx);
-	recinfo.conn_info->cond.notify_one();
+	std::lock_guard<std::mutex> lock_connector(respond_mutex);
+	std::unique_lock<std::mutex> lock(trecall_reply_mtx);
+	trecall_ino = recinfo.ino;
+	trecall_reply_cond.notify_all();
+	trecall_reply_wait_cond.wait(lock);
 }
 
 void Connector::terminate()
@@ -149,6 +161,11 @@ FsObj::FsObj(Connector::rec_info_t recinfo)
 
 	fh->sourcePath = recinfo.filename;
 	fh->fd = dup(recinfo.fd);
+
+	if ( fh->fd == -1 ) {
+		TRACE(Trace::error, errno);
+		throw(errno);
+	}
 
 	handle = (void *) fh;
 	handleLength = recinfo.filename.size();

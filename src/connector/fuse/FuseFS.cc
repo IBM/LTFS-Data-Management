@@ -38,7 +38,13 @@
 thread_local std::string lsourcedir = "";
 std::mutex trecall_mtx;
 std::condition_variable trecall_cond;
+std::mutex trecall_reply_mtx;
+std::condition_variable trecall_reply_cond;
+std::condition_variable trecall_reply_wait_cond;
+std::atomic<unsigned long> trecall_ino;
 Connector::rec_info_t recinfo_share;
+std::condition_variable wait_cond;
+std::atomic<bool> single(false);
 
 struct ltfs_file_info {
 	int fd;
@@ -56,6 +62,8 @@ mig_info_t genMigInfo(const char *path, mig_info_t::state_t state)
 
 {
 	mig_info_t miginfo;
+
+	memset(&miginfo, 0, sizeof(miginfo));
 
 	if ( stat(path, &miginfo.statinfo) ) {
 		TRACE(Trace::error, errno);
@@ -447,8 +455,10 @@ int ltfsdm_open(const char *path, struct fuse_file_info *finfo)
 	int fd = -1;
 	ltfs_file_info *linfo = NULL;
 
-	if ( (fd = open(souce_path(path).c_str(), finfo->flags)) == -1 )
+	if ( (fd = open(souce_path(path).c_str(), finfo->flags)) == -1 ) {
+		TRACE(Trace::error, fuse_get_context()->pid);
 		return (-1*errno);
+	}
 
 	linfo = new(ltfs_file_info);
 	linfo->fd = fd;
@@ -471,19 +481,26 @@ int ltfsdm_read(const char *path, char *buffer, size_t size, off_t offset,
 
 	assert(path == NULL);
 
-	if ( linfo == NULL )
+	if ( linfo == NULL ) {
+		TRACE(Trace::error, fuse_get_context()->pid);
 		return (-1*EBADF);
+	}
 
 	if ( (attrsize = fgetxattr(linfo->fd, Const::OPEN_LTFS_EA_MIGINFO_INT.c_str(), (void *) &migInfo, sizeof(migInfo))) == -1 ) {
 		if ( errno != ENODATA ) {
+			TRACE(Trace::error, fuse_get_context()->pid);
 			return (-1*errno);
 		}
 	}
 
-	if ( (rsize =pread(linfo->fd, buffer, size, offset)) == -1 )
+	if ( (rsize =pread(linfo->fd, buffer, size, offset)) == -1 ) {
+		TRACE(Trace::error, fuse_get_context()->pid);
 		return (-1*errno);
-	else
+	}
+	else {
+		TRACE(Trace::error, fuse_get_context()->pid);
 		return rsize;
+	}
 }
 
 int ltfsdm_read_buf(const char *path, struct fuse_bufvec **bufferp,
@@ -493,15 +510,20 @@ int ltfsdm_read_buf(const char *path, struct fuse_bufvec **bufferp,
     struct fuse_bufvec *source;
 	mig_info_t migInfo;
 	ssize_t attrsize;
+
 	ltfs_file_info *linfo = (ltfs_file_info *) finfo->fh;
 
 	assert(path == NULL);
 
-	if ( linfo == NULL )
+	if ( linfo == NULL ) {
+		TRACE(Trace::error, fuse_get_context()->pid);
 		return (-1*EBADF);
+	}
 
 	if ( (attrsize = fgetxattr(linfo->fd, Const::OPEN_LTFS_EA_MIGINFO_INT.c_str(), (void *) &migInfo, sizeof(migInfo))) == -1 ) {
 		if ( errno != ENODATA ) {
+			TRACE(Trace::error, fuse_get_context()->pid);
+			TRACE(Trace::error, errno);
 			return (-1*errno);
 		}
 	}
@@ -510,41 +532,42 @@ int ltfsdm_read_buf(const char *path, struct fuse_bufvec **bufferp,
 		 migInfo.state == mig_info_t::state_t::IN_RECALL ) {
 		struct stat statbuf;
 		unsigned int igen;
+		int fd;
 
 		if ( fstat(linfo->fd, &statbuf) == -1 ) {
+			TRACE(Trace::error, fuse_get_context()->pid);
 			TRACE(Trace::error, errno);
 			return (-1*errno);
 		}
 
 		if ( ioctl(linfo->fd, FS_IOC_GETVERSION, &igen) ) {
+			TRACE(Trace::error, fuse_get_context()->pid);
 			TRACE(Trace::error, errno);
 			return (-1*errno);
 		}
 
 		std::unique_lock<std::mutex> lock(trecall_mtx);
+		while (single == false) wait_cond.wait(lock);
+		single = false;
 
-		struct conn_info_t *conn_info = new(struct conn_info_t);
-		int fd;
-		recinfo_share.conn_info = conn_info;
 		recinfo_share.toresident = false;
 		recinfo_share.fsid = statbuf.st_dev;
 		recinfo_share.igen = igen;
 		recinfo_share.ino = statbuf.st_ino;
 		recinfo_share.filename = linfo->sourcepath;
 		if ( (fd = open(recinfo_share.filename.c_str(), O_WRONLY)) == -1 ) {
+			TRACE(Trace::error, fuse_get_context()->pid);
 			TRACE(Trace::error, errno);
 			return (-1*errno);
 		}
 		recinfo_share.fd = fd;
 
-		std::unique_lock<std::mutex> lock2(conn_info->mtx);
-
+		std::unique_lock<std::mutex> lock_reply(trecall_reply_mtx);
 		trecall_cond.notify_one();
 		lock.unlock();
-
-		conn_info->cond.wait(lock2);
+		while (statbuf.st_ino != trecall_ino) trecall_reply_cond.wait(lock_reply);
+		trecall_reply_wait_cond.notify_one();
 		close(fd);
-		delete(conn_info);
 	}
 
     if ( (source = (fuse_bufvec*) malloc(sizeof(struct fuse_bufvec))) == NULL )
@@ -697,7 +720,7 @@ int ltfsdm_getxattr(const char *path, const char *name, char *value,
 	// since fc->pid returns a thread id
 
 	if ( Const::OPEN_LTFS_EA_FSINFO.compare(name) == 0 ) {
-		strncpy(value, souce_path(path).c_str(), PATH_MAX);
+		strncpy(value, souce_path(path).c_str(), PATH_MAX - 1);
 		size = strlen(value) + 1;
 		return size;
 	}
