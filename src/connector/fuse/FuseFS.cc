@@ -46,22 +46,10 @@ Connector::rec_info_t recinfo_share;
 std::condition_variable wait_cond;
 std::atomic<bool> single(false);
 
-struct ltfs_file_info {
-	int fd;
-	std::string sourcepath;
-	std::string fusepath;
-};
-
-struct ltfsdm_dir_info {
-	DIR *dir;
-	struct dirent *dentry;
-	off_t offset;
-};
-
-mig_info_t FuseFS::genMigInfo(const char *path, mig_info_t::state_t state)
+FuseFS::mig_info FuseFS::genMigInfo(const char *path, FuseFS::mig_info::state_num state)
 
 {
-	mig_info_t miginfo;
+	FuseFS::mig_info miginfo;
 
 	memset(&miginfo, 0, sizeof(miginfo));
 
@@ -78,12 +66,12 @@ mig_info_t FuseFS::genMigInfo(const char *path, mig_info_t::state_t state)
 }
 
 
-void FuseFS::setMigInfo(const char *path, mig_info_t::state_t state)
+void FuseFS::setMigInfo(const char *path, FuseFS::mig_info::state_num state)
 
 {
 	ssize_t size;
-	mig_info_t miginfo_new;
-	mig_info_t miginfo;
+	FuseFS::mig_info miginfo_new;
+	FuseFS::mig_info miginfo;
 
 	miginfo_new = genMigInfo(path, state);
 
@@ -98,7 +86,7 @@ void FuseFS::setMigInfo(const char *path, mig_info_t::state_t state)
 		throw(EIO);
 	}
 
-	if ( miginfo.state != mig_info_t::state_t::NO_STATE )
+	if ( miginfo.state != FuseFS::mig_info::state_num::NO_STATE )
 		miginfo_new.statinfo.st_size = miginfo.statinfo.st_size;
 
 	if ( setxattr(path, Const::OPEN_LTFS_EA_MIGINFO_INT.c_str(), (void *) &miginfo_new, sizeof(miginfo_new), 0) == -1 )
@@ -114,11 +102,11 @@ void FuseFS::remMigInfo(const char *path)
 }
 
 
-mig_info_t FuseFS::getMigInfo(const char *path)
+FuseFS::mig_info FuseFS::getMigInfo(const char *path)
 
 {
 	ssize_t size;
-	mig_info_t miginfo;
+	FuseFS::mig_info miginfo;
 
 	memset(&miginfo, 0, sizeof(miginfo));
 
@@ -135,11 +123,11 @@ mig_info_t FuseFS::getMigInfo(const char *path)
 }
 
 
-mig_info_t FuseFS::getMigInfoAt(int dirfd, const char *path)
+FuseFS::mig_info FuseFS::getMigInfoAt(int dirfd, const char *path)
 
 {
 	ssize_t size;
-	mig_info_t miginfo;
+	FuseFS::mig_info miginfo;
 	int fd;
 
 	memset(&miginfo, 0, sizeof(miginfo));
@@ -164,19 +152,19 @@ mig_info_t FuseFS::getMigInfoAt(int dirfd, const char *path)
 
 
 
-bool FuseFS::needsRecovery(mig_info_t miginfo)
+bool FuseFS::needsRecovery(FuseFS::mig_info miginfo)
 
 {
 	struct fuse_context *fc = fuse_get_context();
 
-	if ((miginfo.state == mig_info_t::state_t::IN_MIGRATION) |
-		(miginfo.state == mig_info_t::state_t::STUBBING) |
-		(miginfo.state == mig_info_t::state_t::IN_RECALL) ) {
+	if ((miginfo.state == FuseFS::mig_info::state_num::IN_MIGRATION) |
+		(miginfo.state == FuseFS::mig_info::state_num::STUBBING) |
+		(miginfo.state == FuseFS::mig_info::state_num::IN_RECALL) ) {
 
-		if ( ((openltfs_ctx_t *) fc->private_data)->starttime.tv_sec < miginfo.changed.tv_sec )
+		if ( ((FuseFS::openltfs_ctx *) fc->private_data)->starttime.tv_sec < miginfo.changed.tv_sec )
 			return false;
-		else if ( (((openltfs_ctx_t *) fc->private_data)->starttime.tv_sec == miginfo.changed.tv_sec)  &&
-				  (((openltfs_ctx_t *) fc->private_data)->starttime.tv_nsec < miginfo.changed.tv_nsec) )
+		else if ( (((FuseFS::openltfs_ctx *) fc->private_data)->starttime.tv_sec == miginfo.changed.tv_sec)  &&
+				  (((FuseFS::openltfs_ctx *) fc->private_data)->starttime.tv_nsec < miginfo.changed.tv_nsec) )
 			return false;
 		else
 			return true;
@@ -185,7 +173,7 @@ bool FuseFS::needsRecovery(mig_info_t miginfo)
 	return false;
 }
 
-void FuseFS::recoverState(const char *path, mig_info_t::state_t state)
+void FuseFS::recoverState(const char *path, FuseFS::mig_info::state_num state)
 
 {
 	// TODO
@@ -195,10 +183,10 @@ std::string FuseFS::souce_path(const char *path)
 
 {
 	std::string fullpath;
-	mig_info_t miginfo;
+	FuseFS::mig_info miginfo;
 
 	struct fuse_context *fc = fuse_get_context();
-	fullpath =  ((openltfs_ctx_t *) fc->private_data)->sourcedir + std::string(path);
+	fullpath =  ((FuseFS::openltfs_ctx *) fc->private_data)->sourcedir + std::string(path);
 
 	try {
 		miginfo = getMigInfo(fullpath.c_str());
@@ -217,7 +205,7 @@ std::string FuseFS::souce_path(const char *path)
 int FuseFS::ltfsdm_getattr(const char *path, struct stat *statbuf)
 
 {
-	mig_info_t miginfo;
+	FuseFS::mig_info miginfo;
 
 	memset(statbuf, 0, sizeof(struct stat));
 
@@ -226,7 +214,7 @@ int FuseFS::ltfsdm_getattr(const char *path, struct stat *statbuf)
 	}
 	else {
 		miginfo = getMigInfo(FuseFS::souce_path(path).c_str());
-		if ( miginfo.state != mig_info_t::state_t::NO_STATE )
+		if ( miginfo.state != FuseFS::mig_info::state_num::NO_STATE )
 			statbuf->st_size = miginfo.statinfo.st_size;
 		return 0;
 	}
@@ -255,14 +243,14 @@ int FuseFS::ltfsdm_readlink(const char *path, char *buffer, size_t size)
 int FuseFS::ltfsdm_opendir(const char *path, struct fuse_file_info *finfo)
 
 {
-	ltfsdm_dir_info *dirinfo = NULL;
+	FuseFS::ltfsdm_dir_info *dirinfo = NULL;
 	DIR *dir = NULL;
 
 	if ( (dir = opendir(FuseFS::souce_path(path).c_str())) == 0 ) {
 		return (-1*errno);
 	}
 
-	dirinfo = new(ltfsdm_dir_info);
+	dirinfo = new(FuseFS::ltfsdm_dir_info);
 	dirinfo->dir = dir;
 	dirinfo->dentry = NULL;
 	dirinfo->offset = 0;
@@ -277,9 +265,9 @@ int FuseFS::ltfsdm_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 
 {
 	struct stat statbuf;
-	mig_info_t miginfo;
+	FuseFS::mig_info miginfo;
 	off_t next;
-	ltfsdm_dir_info *dirinfo = (ltfsdm_dir_info *) finfo->fh;
+	FuseFS::ltfsdm_dir_info *dirinfo = (FuseFS::ltfsdm_dir_info *) finfo->fh;
 
 	assert(path == NULL);
 
@@ -306,7 +294,7 @@ int FuseFS::ltfsdm_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 
 		if ( S_ISREG(statbuf.st_mode) ) {
 			miginfo = getMigInfoAt(dirfd(dirinfo->dir), dirinfo->dentry->d_name);
-			if ( miginfo.state != mig_info_t::state_t::NO_STATE )
+			if ( miginfo.state != FuseFS::mig_info::state_num::NO_STATE )
 				statbuf.st_size = miginfo.statinfo.st_size;
 		}
 
@@ -323,7 +311,7 @@ int FuseFS::ltfsdm_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 int FuseFS::ltfsdm_releasedir(const char *path, struct fuse_file_info *finfo)
 
 {
-	ltfsdm_dir_info *dirinfo = (ltfsdm_dir_info *) finfo->fh;
+	FuseFS::ltfsdm_dir_info *dirinfo = (FuseFS::ltfsdm_dir_info *) finfo->fh;
 
 	assert(path == NULL);
 
@@ -453,14 +441,14 @@ int FuseFS::ltfsdm_open(const char *path, struct fuse_file_info *finfo)
 
 {
 	int fd = -1;
-	ltfs_file_info *linfo = NULL;
+	FuseFS::ltfsdm_file_info *linfo = NULL;
 
 	if ( (fd = open(FuseFS::souce_path(path).c_str(), finfo->flags)) == -1 ) {
 		TRACE(Trace::error, fuse_get_context()->pid);
 		return (-1*errno);
 	}
 
-	linfo = new(ltfs_file_info);
+	linfo = new(FuseFS::ltfsdm_file_info);
 	linfo->fd = fd;
 	linfo->fusepath = path;
 	linfo->sourcepath = FuseFS::souce_path(path);
@@ -475,9 +463,9 @@ int FuseFS::ltfsdm_read(const char *path, char *buffer, size_t size, off_t offse
 
 {
 	ssize_t rsize = -1;
-	mig_info_t migInfo;
+	FuseFS::mig_info migInfo;
 	ssize_t attrsize;
-	ltfs_file_info *linfo = (ltfs_file_info *) finfo->fh;
+	FuseFS::ltfsdm_file_info *linfo = (FuseFS::ltfsdm_file_info *) finfo->fh;
 
 	assert(path == NULL);
 
@@ -508,10 +496,10 @@ int FuseFS::ltfsdm_read_buf(const char *path, struct fuse_bufvec **bufferp,
 
 {
     struct fuse_bufvec *source;
-	mig_info_t migInfo;
+	FuseFS::mig_info migInfo;
 	ssize_t attrsize;
 
-	ltfs_file_info *linfo = (ltfs_file_info *) finfo->fh;
+	FuseFS::ltfsdm_file_info *linfo = (FuseFS::ltfsdm_file_info *) finfo->fh;
 
 	assert(path == NULL);
 
@@ -528,8 +516,8 @@ int FuseFS::ltfsdm_read_buf(const char *path, struct fuse_bufvec **bufferp,
 		}
 	}
 
-	if ( migInfo.state == mig_info_t::state_t::MIGRATED ||
-		 migInfo.state == mig_info_t::state_t::IN_RECALL ) {
+	if ( migInfo.state == FuseFS::mig_info::state_num::MIGRATED ||
+		 migInfo.state == FuseFS::mig_info::state_num::IN_RECALL ) {
 		struct stat statbuf;
 		unsigned int igen;
 		int fd;
@@ -592,9 +580,9 @@ int FuseFS::ltfsdm_write(const char *path, const char *buf, size_t size,
 
 {
 	ssize_t wsize;
-	mig_info_t migInfo;
+	FuseFS::mig_info migInfo;
 	ssize_t attrsize;
-	ltfs_file_info *linfo = (ltfs_file_info *) finfo->fh;
+	FuseFS::ltfsdm_file_info *linfo = (FuseFS::ltfsdm_file_info *) finfo->fh;
 
 	assert(path == NULL);
 
@@ -625,7 +613,7 @@ int FuseFS::ltfsdm_statfs(const char *path, struct statvfs *stbuf)
 int FuseFS::ltfsdm_release(const char *path, struct fuse_file_info *finfo)
 
 {
-	ltfs_file_info *linfo = (ltfs_file_info *) finfo->fh;
+	FuseFS::ltfsdm_file_info *linfo = (FuseFS::ltfsdm_file_info *) finfo->fh;
 
 	assert(path == NULL);
 
@@ -645,7 +633,7 @@ int FuseFS::ltfsdm_release(const char *path, struct fuse_file_info *finfo)
 int FuseFS::ltfsdm_flush(const char *path, struct fuse_file_info *finfo)
 
 {
-	ltfs_file_info *linfo = (ltfs_file_info *) finfo->fh;
+	FuseFS::ltfsdm_file_info *linfo = (FuseFS::ltfsdm_file_info *) finfo->fh;
 
 	assert(path == NULL);
 
@@ -662,7 +650,7 @@ int FuseFS::ltfsdm_fsync(const char *path, int isdatasync,
 								struct fuse_file_info *finfo)
 
 {
-	ltfs_file_info *linfo = (ltfs_file_info *) finfo->fh;
+	FuseFS::ltfsdm_file_info *linfo = (FuseFS::ltfsdm_file_info *) finfo->fh;
 
 	int rc;
 
@@ -686,7 +674,7 @@ int FuseFS::ltfsdm_fallocate(const char *path, int mode,
 									off_t offset, off_t length, struct fuse_file_info *finfo)
 
 {
-	ltfs_file_info *linfo = (ltfs_file_info *) finfo->fh;
+	FuseFS::ltfsdm_file_info *linfo = (FuseFS::ltfsdm_file_info *) finfo->fh;
 
 	assert(path == NULL);
 
@@ -822,8 +810,8 @@ FuseFS::FuseFS(std::string sourcedir, std::string mountpt, std::string fsName, s
 	struct fuse_args fargs = FUSE_ARGS_INIT(0, NULL);
 	struct fuse_operations ltfsdm_operations = init_operations();
 
-	ctx = (struct openltfs_ctx_t *) malloc(sizeof(struct openltfs_ctx_t));
-	memset(ctx, 0, sizeof(struct openltfs_ctx_t));
+	ctx = (FuseFS::openltfs_ctx *) malloc(sizeof(FuseFS::openltfs_ctx));
+	memset(ctx, 0, sizeof(FuseFS::openltfs_ctx));
 	strncpy(ctx->sourcedir,sourcedir.c_str(), PATH_MAX - 1);
 	strncpy(ctx->mountpoint, mountpt.c_str(), PATH_MAX - 1);
 	ctx->starttime = starttime;

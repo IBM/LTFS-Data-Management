@@ -3,6 +3,7 @@
 #include <sys/mount.h>
 #include <linux/fs.h>
 #include <unistd.h>
+#include <dirent.h>
 #include <sys/xattr.h>
 #include <string.h>
 #include <limits.h>
@@ -278,13 +279,13 @@ struct stat FsObj::stat()
 
 {
 	struct stat statbuf;
-	mig_info_t miginfo;
+	FuseFS::mig_info miginfo;
 
 	FuseHandle *fh = (FuseHandle *) handle;
 
 	miginfo = FuseFS::getMigInfo(fh->sourcePath.c_str());
 
-	if ( miginfo.state !=mig_info_t::state_t::NO_STATE ) {
+	if ( miginfo.state !=FuseFS::mig_info::state_num::NO_STATE ) {
 		statbuf = miginfo.statinfo;
 	}
 	else {
@@ -416,7 +417,7 @@ void FsObj::remAttribute()
 {
 	FuseHandle *fh = (FuseHandle *) handle;
 
-	FuseFS::setMigInfo(fh->sourcePath.c_str(), mig_info_t::state_t::NO_STATE);
+	FuseFS::setMigInfo(fh->sourcePath.c_str(), FuseFS::mig_info::state_num::NO_STATE);
 
 	if ( fremovexattr(fh->fd, Const::OPEN_LTFS_EA_MIGINFO_EXT.c_str()) == -1 ) {
 		TRACE(Trace::error, errno);
@@ -446,7 +447,7 @@ void FsObj::preparePremigration()
 {
 	FuseHandle *fh = (FuseHandle *) handle;
 
-	FuseFS::setMigInfo(fh->sourcePath.c_str(), mig_info_t::state_t::IN_MIGRATION);
+	FuseFS::setMigInfo(fh->sourcePath.c_str(), FuseFS::mig_info::state_num::IN_MIGRATION);
 }
 
 void FsObj::finishRecall(FsObj::file_state fstate)
@@ -455,7 +456,7 @@ void FsObj::finishRecall(FsObj::file_state fstate)
 	FuseHandle *fh = (FuseHandle *) handle;
 
 	if ( fstate == FsObj::PREMIGRATED ) {
-		FuseFS::setMigInfo(fh->sourcePath.c_str(), mig_info_t::state_t::PREMIGRATED);
+		FuseFS::setMigInfo(fh->sourcePath.c_str(), FuseFS::mig_info::state_num::PREMIGRATED);
 	}
 	else {
 		FuseFS::remMigInfo(fh->sourcePath.c_str());
@@ -468,7 +469,7 @@ void FsObj::prepareStubbing()
 {
 	FuseHandle *fh = (FuseHandle *) handle;
 
-	FuseFS::setMigInfo(fh->sourcePath.c_str(), mig_info_t::state_t::STUBBING);
+	FuseFS::setMigInfo(fh->sourcePath.c_str(), FuseFS::mig_info::state_num::STUBBING);
 }
 
 
@@ -494,7 +495,7 @@ void FsObj::stub()
 	// 	throw(errno);
 	// }
 
-	FuseFS::setMigInfo(fh->sourcePath.c_str(), mig_info_t::state_t::MIGRATED);
+	FuseFS::setMigInfo(fh->sourcePath.c_str(), FuseFS::mig_info::state_num::MIGRATED);
 }
 
 
@@ -502,21 +503,21 @@ FsObj::file_state FsObj::getMigState()
 {
 	FuseHandle *fh = (FuseHandle *) handle;
 	FsObj::file_state state = FsObj::RESIDENT;
-	mig_info_t miginfo;
+	FuseFS::mig_info miginfo;
 
 	miginfo = FuseFS::getMigInfo(fh->sourcePath.c_str());
 
 	switch (miginfo.state) {
-		case mig_info_t::state_t::NO_STATE:
-		case mig_info_t::state_t::IN_MIGRATION:
+		case FuseFS::mig_info::state_num::NO_STATE:
+		case FuseFS::mig_info::state_num::IN_MIGRATION:
 			state = FsObj::RESIDENT;
 			break;
-		case mig_info_t::state_t::MIGRATED:
-		case mig_info_t::state_t::IN_RECALL:
+		case FuseFS::mig_info::state_num::MIGRATED:
+		case FuseFS::mig_info::state_num::IN_RECALL:
 			state = FsObj::MIGRATED;
 			break;
-		case mig_info_t::state_t::PREMIGRATED:
-		case mig_info_t::state_t::STUBBING:
+		case FuseFS::mig_info::state_num::PREMIGRATED:
+		case FuseFS::mig_info::state_num::STUBBING:
 			state = FsObj::PREMIGRATED;
 	}
 

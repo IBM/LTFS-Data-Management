@@ -37,31 +37,42 @@ extern Connector::rec_info_t recinfo_share;
 extern std::condition_variable wait_cond;
 extern std::atomic<bool> single;
 
-struct mig_info_t {
-	enum state_t {
-		NO_STATE = 0,
-		IN_MIGRATION = 1,
-		PREMIGRATED = 2,
-		STUBBING = 3,
-		MIGRATED = 4,
-		IN_RECALL = 5
-	};
-	state_t state;
-	struct stat statinfo;
-	struct timespec changed;
-};
-
-
 class FuseFS {
+public:
+	struct mig_info {
+		enum state_num {
+			NO_STATE = 0,
+			IN_MIGRATION = 1,
+			PREMIGRATED = 2,
+			STUBBING = 3,
+			MIGRATED = 4,
+			IN_RECALL = 5
+		} state;
+		struct stat statinfo;
+		struct timespec changed;
+	};
+
 private:
-	struct openltfs_ctx_t {
+	struct openltfs_ctx {
 		char sourcedir[PATH_MAX];
 		char mountpoint[PATH_MAX];
 		struct timespec starttime;
 	};
 
-	static bool needsRecovery(mig_info_t miginfo);
-	static void recoverState(const char *path, mig_info_t::state_t state);
+	struct ltfsdm_file_info {
+		int fd;
+		std::string sourcepath;
+		std::string fusepath;
+	};
+
+	struct ltfsdm_dir_info {
+		DIR *dir;
+		struct dirent *dentry;
+		off_t offset;
+	};
+
+	static bool needsRecovery(FuseFS::mig_info miginfo);
+	static void recoverState(const char *path, FuseFS::mig_info::state_num state);
 	static std::string souce_path(const char *path);
 	// FUSE call backs
 	static int ltfsdm_getattr(const char *path, struct stat *statbuf);
@@ -105,17 +116,17 @@ private:
 	static void *ltfsdm_init(struct fuse_conn_info *conn);
 
 	std::thread *fusefs;
-	struct openltfs_ctx_t *ctx;
+	struct FuseFS::openltfs_ctx *ctx;
 	std::string mountpt;
 	struct fuse_chan *openltfsch = NULL;
 	struct fuse *openltfs = NULL;
 	struct fuse_operations init_operations();
 public:
-	static mig_info_t genMigInfo(const char *path, mig_info_t::state_t state);
-	static void setMigInfo(const char *path, mig_info_t::state_t state);
+	static FuseFS::mig_info genMigInfo(const char *path, FuseFS::mig_info::state_num state);
+	static void setMigInfo(const char *path, FuseFS::mig_info::state_num state);
 	static void remMigInfo(const char *path);
-	static mig_info_t getMigInfo(const char *path);
-	static mig_info_t getMigInfoAt(int dirfd, const char *path);
+	static FuseFS::mig_info getMigInfo(const char *path);
+	static FuseFS::mig_info getMigInfoAt(int dirfd, const char *path);
 	std::string getMountPoint() {return mountpt;}
 	FuseFS(std::string sourcedir, std::string mountpt, std::string fsName, struct timespec starttime);
 	~FuseFS();
