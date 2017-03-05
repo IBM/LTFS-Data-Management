@@ -51,23 +51,59 @@ struct mig_info_t {
 	struct timespec changed;
 };
 
-mig_info_t genMigInfo(const char *path, mig_info_t::state_t state);
-void setMigInfo(const char *path, mig_info_t::state_t state);
-void remMigInfo(const char *path);
-mig_info_t getMigInfo(const char *path);
-mig_info_t getMigInfoAt(int dirfd, const char *path);
-bool needsRecovery(mig_info_t miginfo);
-void recoverState(const char *path, mig_info_t::state_t state);
-
-
-struct openltfs_ctx_t {
-	char sourcedir[PATH_MAX];
-	char mountpoint[PATH_MAX];
-	struct timespec starttime;
-};
 
 class FuseFS {
 private:
+	struct openltfs_ctx_t {
+		char sourcedir[PATH_MAX];
+		char mountpoint[PATH_MAX];
+		struct timespec starttime;
+	};
+
+	static bool needsRecovery(mig_info_t miginfo);
+	static void recoverState(const char *path, mig_info_t::state_t state);
+	static std::string souce_path(const char *path);
+	// FUSE call backs
+	static int ltfsdm_getattr(const char *path, struct stat *statbuf);
+	static int ltfsdm_access(const char *path, int mask);
+	static int ltfsdm_readlink(const char *path, char *buffer, size_t size);
+	static int ltfsdm_opendir(const char *path, struct fuse_file_info *finfo);
+	static int ltfsdm_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
+							  off_t offset, struct fuse_file_info *finfo);
+	static int ltfsdm_releasedir(const char *path, struct fuse_file_info *finfo);
+	static int ltfsdm_mknod(const char *path, mode_t mode, dev_t rdev);
+	static int ltfsdm_mkdir(const char *path, mode_t mode);
+	static int ltfsdm_unlink(const char *path);
+	static int ltfsdm_rmdir(const char *path);
+	static int ltfsdm_symlink(const char *target, const char *linkpath);
+	static int ltfsdm_rename(const char *oldpath, const char *newpath);
+	static int ltfsdm_link(const char *oldpath, const char *newpath);
+	static int ltfsdm_chmod(const char *path, mode_t mode);
+	static int ltfsdm_chown(const char *path, uid_t uid, gid_t gid);
+	static int ltfsdm_truncate(const char *path, off_t size);
+	static int ltfsdm_utimens(const char *path, const struct timespec times[2]);
+	static int ltfsdm_open(const char *path, struct fuse_file_info *finfo);
+	static int ltfsdm_read(const char *path, char *buffer, size_t size, off_t offset,
+						   struct fuse_file_info *finfo);
+	static int ltfsdm_read_buf(const char *path, struct fuse_bufvec **bufferp,
+							   size_t size, off_t offset, struct fuse_file_info *finfo);
+	static int ltfsdm_write(const char *path, const char *buf, size_t size,
+							off_t offset, struct fuse_file_info *finfo);
+	static int ltfsdm_statfs(const char *path, struct statvfs *stbuf);
+	static int ltfsdm_release(const char *path, struct fuse_file_info *finfo);
+	static int ltfsdm_flush(const char *path, struct fuse_file_info *finfo);
+	static int ltfsdm_fsync(const char *path, int isdatasync,
+							struct fuse_file_info *finfo);
+	static int ltfsdm_fallocate(const char *path, int mode,
+								off_t offset, off_t length, struct fuse_file_info *finfo);
+	static int ltfsdm_setxattr(const char *path, const char *name, const char *value,
+							   size_t size, int flags);
+	static int ltfsdm_getxattr(const char *path, const char *name, char *value,
+							   size_t size);
+	static int ltfsdm_listxattr(const char *path, char *list, size_t size);
+	static int ltfsdm_removexattr(const char *path, const char *name);
+	static void *ltfsdm_init(struct fuse_conn_info *conn);
+
 	std::thread *fusefs;
 	struct openltfs_ctx_t *ctx;
 	std::string mountpt;
@@ -75,6 +111,11 @@ private:
 	struct fuse *openltfs = NULL;
 	struct fuse_operations init_operations();
 public:
+	static mig_info_t genMigInfo(const char *path, mig_info_t::state_t state);
+	static void setMigInfo(const char *path, mig_info_t::state_t state);
+	static void remMigInfo(const char *path);
+	static mig_info_t getMigInfo(const char *path);
+	static mig_info_t getMigInfoAt(int dirfd, const char *path);
 	std::string getMountPoint() {return mountpt;}
 	FuseFS(std::string sourcedir, std::string mountpt, std::string fsName, struct timespec starttime);
 	~FuseFS();

@@ -282,7 +282,7 @@ struct stat FsObj::stat()
 
 	FuseHandle *fh = (FuseHandle *) handle;
 
-	miginfo = getMigInfo(fh->sourcePath.c_str());
+	miginfo = FuseFS::getMigInfo(fh->sourcePath.c_str());
 
 	if ( miginfo.state !=mig_info_t::state_t::NO_STATE ) {
 		statbuf = miginfo.statinfo;
@@ -416,7 +416,7 @@ void FsObj::remAttribute()
 {
 	FuseHandle *fh = (FuseHandle *) handle;
 
-	setMigInfo(fh->sourcePath.c_str(), mig_info_t::state_t::NO_STATE);
+	FuseFS::setMigInfo(fh->sourcePath.c_str(), mig_info_t::state_t::NO_STATE);
 
 	if ( fremovexattr(fh->fd, Const::OPEN_LTFS_EA_MIGINFO_EXT.c_str()) == -1 ) {
 		TRACE(Trace::error, errno);
@@ -446,7 +446,7 @@ void FsObj::preparePremigration()
 {
 	FuseHandle *fh = (FuseHandle *) handle;
 
-	setMigInfo(fh->sourcePath.c_str(), mig_info_t::state_t::IN_MIGRATION);
+	FuseFS::setMigInfo(fh->sourcePath.c_str(), mig_info_t::state_t::IN_MIGRATION);
 }
 
 void FsObj::finishRecall(FsObj::file_state fstate)
@@ -455,10 +455,10 @@ void FsObj::finishRecall(FsObj::file_state fstate)
 	FuseHandle *fh = (FuseHandle *) handle;
 
 	if ( fstate == FsObj::PREMIGRATED ) {
-		setMigInfo(fh->sourcePath.c_str(), mig_info_t::state_t::PREMIGRATED);
+		FuseFS::setMigInfo(fh->sourcePath.c_str(), mig_info_t::state_t::PREMIGRATED);
 	}
 	else {
-		remMigInfo(fh->sourcePath.c_str());
+		FuseFS::remMigInfo(fh->sourcePath.c_str());
 	}
 }
 
@@ -468,7 +468,7 @@ void FsObj::prepareStubbing()
 {
 	FuseHandle *fh = (FuseHandle *) handle;
 
-	setMigInfo(fh->sourcePath.c_str(), mig_info_t::state_t::STUBBING);
+	FuseFS::setMigInfo(fh->sourcePath.c_str(), mig_info_t::state_t::STUBBING);
 }
 
 
@@ -494,7 +494,7 @@ void FsObj::stub()
 	// 	throw(errno);
 	// }
 
-	setMigInfo(fh->sourcePath.c_str(), mig_info_t::state_t::MIGRATED);
+	FuseFS::setMigInfo(fh->sourcePath.c_str(), mig_info_t::state_t::MIGRATED);
 }
 
 
@@ -504,7 +504,7 @@ FsObj::file_state FsObj::getMigState()
 	FsObj::file_state state = FsObj::RESIDENT;
 	mig_info_t miginfo;
 
-	miginfo = getMigInfo(fh->sourcePath.c_str());
+	miginfo = FuseFS::getMigInfo(fh->sourcePath.c_str());
 
 	switch (miginfo.state) {
 		case mig_info_t::state_t::NO_STATE:

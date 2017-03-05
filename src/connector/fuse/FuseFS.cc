@@ -58,7 +58,7 @@ struct ltfsdm_dir_info {
 	off_t offset;
 };
 
-mig_info_t genMigInfo(const char *path, mig_info_t::state_t state)
+mig_info_t FuseFS::genMigInfo(const char *path, mig_info_t::state_t state)
 
 {
 	mig_info_t miginfo;
@@ -78,7 +78,7 @@ mig_info_t genMigInfo(const char *path, mig_info_t::state_t state)
 }
 
 
-void setMigInfo(const char *path, mig_info_t::state_t state)
+void FuseFS::setMigInfo(const char *path, mig_info_t::state_t state)
 
 {
 	ssize_t size;
@@ -106,7 +106,7 @@ void setMigInfo(const char *path, mig_info_t::state_t state)
 }
 
 
-void remMigInfo(const char *path)
+void FuseFS::remMigInfo(const char *path)
 
 {
 	if ( removexattr(path, Const::OPEN_LTFS_EA_MIGINFO_INT.c_str()) == -1 )
@@ -114,7 +114,7 @@ void remMigInfo(const char *path)
 }
 
 
-mig_info_t getMigInfo(const char *path)
+mig_info_t FuseFS::getMigInfo(const char *path)
 
 {
 	ssize_t size;
@@ -135,7 +135,7 @@ mig_info_t getMigInfo(const char *path)
 }
 
 
-mig_info_t getMigInfoAt(int dirfd, const char *path)
+mig_info_t FuseFS::getMigInfoAt(int dirfd, const char *path)
 
 {
 	ssize_t size;
@@ -164,7 +164,7 @@ mig_info_t getMigInfoAt(int dirfd, const char *path)
 
 
 
-bool needsRecovery(mig_info_t miginfo)
+bool FuseFS::needsRecovery(mig_info_t miginfo)
 
 {
 	struct fuse_context *fc = fuse_get_context();
@@ -185,13 +185,13 @@ bool needsRecovery(mig_info_t miginfo)
 	return false;
 }
 
-void recoverState(const char *path, mig_info_t::state_t state)
+void FuseFS::recoverState(const char *path, mig_info_t::state_t state)
 
 {
 	// TODO
 }
 
-std::string souce_path(const char *path)
+std::string FuseFS::souce_path(const char *path)
 
 {
 	std::string fullpath;
@@ -208,57 +208,57 @@ std::string souce_path(const char *path)
 		MSG(LTFSDMF0011E, fullpath);
 		return std::string("");
 	}
-	if ( needsRecovery(miginfo) == true )
-		 recoverState(fullpath.c_str(), miginfo.state);
+	if ( FuseFS::needsRecovery(miginfo) == true )
+		 FuseFS::recoverState(fullpath.c_str(), miginfo.state);
 
 	return fullpath;
 }
 
-int ltfsdm_getattr(const char *path, struct stat *statbuf)
+int FuseFS::ltfsdm_getattr(const char *path, struct stat *statbuf)
 
 {
 	mig_info_t miginfo;
 
 	memset(statbuf, 0, sizeof(struct stat));
 
-	if ( lstat(souce_path(path).c_str(), statbuf) == -1 ) {
+	if ( lstat(FuseFS::souce_path(path).c_str(), statbuf) == -1 ) {
 		return (-1*errno);
 	}
 	else {
-		miginfo = getMigInfo(souce_path(path).c_str());
+		miginfo = getMigInfo(FuseFS::souce_path(path).c_str());
 		if ( miginfo.state != mig_info_t::state_t::NO_STATE )
 			statbuf->st_size = miginfo.statinfo.st_size;
 		return 0;
 	}
 }
 
-int ltfsdm_access(const char *path, int mask)
+int FuseFS::ltfsdm_access(const char *path, int mask)
 
 {
-	if ( access(souce_path(path).c_str(), mask) == -1 )
+	if ( access(FuseFS::souce_path(path).c_str(), mask) == -1 )
 		return (-1*errno);
 	else
 		return 0;
 }
 
-int ltfsdm_readlink(const char *path, char *buffer, size_t size)
+int FuseFS::ltfsdm_readlink(const char *path, char *buffer, size_t size)
 
 {
 	memset(buffer, 0, size);
 
-	if ( readlink(souce_path(path).c_str(), buffer, size - 1) == -1 )
+	if ( readlink(FuseFS::souce_path(path).c_str(), buffer, size - 1) == -1 )
 		return (-1*errno);
 	else
 		return 0;
 }
 
-int ltfsdm_opendir(const char *path, struct fuse_file_info *finfo)
+int FuseFS::ltfsdm_opendir(const char *path, struct fuse_file_info *finfo)
 
 {
 	ltfsdm_dir_info *dirinfo = NULL;
 	DIR *dir = NULL;
 
-	if ( (dir = opendir(souce_path(path).c_str())) == 0 ) {
+	if ( (dir = opendir(FuseFS::souce_path(path).c_str())) == 0 ) {
 		return (-1*errno);
 	}
 
@@ -272,7 +272,7 @@ int ltfsdm_opendir(const char *path, struct fuse_file_info *finfo)
 	return 0;
 }
 
-int ltfsdm_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
+int FuseFS::ltfsdm_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 						  off_t offset, struct fuse_file_info *finfo)
 
 {
@@ -320,7 +320,7 @@ int ltfsdm_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 	return 0;
 }
 
-int ltfsdm_releasedir(const char *path, struct fuse_file_info *finfo)
+int FuseFS::ltfsdm_releasedir(const char *path, struct fuse_file_info *finfo)
 
 {
 	ltfsdm_dir_info *dirinfo = (ltfsdm_dir_info *) finfo->fh;
@@ -336,126 +336,126 @@ int ltfsdm_releasedir(const char *path, struct fuse_file_info *finfo)
 	return 0;
 }
 
-int ltfsdm_mknod(const char *path, mode_t mode, dev_t rdev)
+int FuseFS::ltfsdm_mknod(const char *path, mode_t mode, dev_t rdev)
 
 {
 	struct fuse_context *fc;
 
-	if ( mknod(souce_path(path).c_str(), mode, rdev) == -1 ) {
+	if ( mknod(FuseFS::souce_path(path).c_str(), mode, rdev) == -1 ) {
 		return (-1*errno);
 	}
 	else {
 		fc = fuse_get_context();
-		if ( chown(souce_path(path).c_str(), fc->uid, fc->gid) == -1 )
+		if ( chown(FuseFS::souce_path(path).c_str(), fc->uid, fc->gid) == -1 )
 			return (-1*errno);
 	}
 	return 0;
 }
 
-int ltfsdm_mkdir(const char *path, mode_t mode)
+int FuseFS::ltfsdm_mkdir(const char *path, mode_t mode)
 
 {
 	struct fuse_context *fc;
 
-	if ( mkdir(souce_path(path).c_str(), mode) == -1 ) {
+	if ( mkdir(FuseFS::souce_path(path).c_str(), mode) == -1 ) {
 		return (-1*errno);
 	}
 	else {
 		fc = fuse_get_context();
-		if ( chown(souce_path(path).c_str(), fc->uid, fc->gid) == -1 )
+		if ( chown(FuseFS::souce_path(path).c_str(), fc->uid, fc->gid) == -1 )
 			return (-1*errno);
 	}
 	return 0;
 }
 
-int ltfsdm_unlink(const char *path)
+int FuseFS::ltfsdm_unlink(const char *path)
 
 {
-	if ( unlink(souce_path(path).c_str()) == -1 )
+	if ( unlink(FuseFS::souce_path(path).c_str()) == -1 )
 		return (-1*errno);
 	else
 		return 0;
 }
 
-int ltfsdm_rmdir(const char *path)
+int FuseFS::ltfsdm_rmdir(const char *path)
 
 {
-	if ( rmdir(souce_path(path).c_str()) == -1 )
+	if ( rmdir(FuseFS::souce_path(path).c_str()) == -1 )
 		return (-1*errno);
 	else
 		return 0;
 }
 
-int ltfsdm_symlink(const char *target, const char *linkpath)
+int FuseFS::ltfsdm_symlink(const char *target, const char *linkpath)
 
 {
-	if ( symlink(target, souce_path(linkpath).c_str()) == -1 )
+	if ( symlink(target, FuseFS::souce_path(linkpath).c_str()) == -1 )
 		return (-1*errno);
 	else
 		return 0;
 }
 
-int ltfsdm_rename(const char *oldpath, const char *newpath)
+int FuseFS::ltfsdm_rename(const char *oldpath, const char *newpath)
 
 {
-	if ( rename(souce_path(oldpath).c_str(), souce_path(newpath).c_str()) == -1 )
+	if ( rename(FuseFS::souce_path(oldpath).c_str(), FuseFS::souce_path(newpath).c_str()) == -1 )
 		return (-1*errno);
 	else
 		return 0;
 }
 
-int ltfsdm_link(const char *oldpath, const char *newpath)
+int FuseFS::ltfsdm_link(const char *oldpath, const char *newpath)
 
 {
-	if ( link(souce_path(oldpath).c_str(), souce_path(newpath).c_str()) == -1 )
+	if ( link(FuseFS::souce_path(oldpath).c_str(), FuseFS::souce_path(newpath).c_str()) == -1 )
 		return (-1*errno);
 	else
 		return 0;
 }
 
-int ltfsdm_chmod(const char *path, mode_t mode)
+int FuseFS::ltfsdm_chmod(const char *path, mode_t mode)
 
 {
-	if ( chmod(souce_path(path).c_str(), mode) == -1 )
+	if ( chmod(FuseFS::souce_path(path).c_str(), mode) == -1 )
 		return (-1*errno);
 	else
 		return 0;
 }
 
-int ltfsdm_chown(const char *path, uid_t uid, gid_t gid)
+int FuseFS::ltfsdm_chown(const char *path, uid_t uid, gid_t gid)
 
 {
-	if ( lchown(souce_path(path).c_str(), uid, gid) == -1 )
+	if ( lchown(FuseFS::souce_path(path).c_str(), uid, gid) == -1 )
 		return (-1*errno);
 	else
 		return 0;
 }
 
-int ltfsdm_truncate(const char *path, off_t size)
+int FuseFS::ltfsdm_truncate(const char *path, off_t size)
 
 {
-	if ( truncate(souce_path(path).c_str(), size) == -1 )
+	if ( truncate(FuseFS::souce_path(path).c_str(), size) == -1 )
 		return (-1*errno);
 	else
 		return 0;
 }
 
-int ltfsdm_utimens(const char *path, const struct timespec times[2])
+int FuseFS::ltfsdm_utimens(const char *path, const struct timespec times[2])
 
 {
-	if (  utimensat(0, souce_path(path).c_str(), times, AT_SYMLINK_NOFOLLOW) == -1 )
+	if (  utimensat(0, FuseFS::souce_path(path).c_str(), times, AT_SYMLINK_NOFOLLOW) == -1 )
 		return (-1*errno);
 	else
 		return 0;
 }
 
-int ltfsdm_open(const char *path, struct fuse_file_info *finfo)
+int FuseFS::ltfsdm_open(const char *path, struct fuse_file_info *finfo)
 
 {
 	int fd = -1;
 	ltfs_file_info *linfo = NULL;
 
-	if ( (fd = open(souce_path(path).c_str(), finfo->flags)) == -1 ) {
+	if ( (fd = open(FuseFS::souce_path(path).c_str(), finfo->flags)) == -1 ) {
 		TRACE(Trace::error, fuse_get_context()->pid);
 		return (-1*errno);
 	}
@@ -463,15 +463,15 @@ int ltfsdm_open(const char *path, struct fuse_file_info *finfo)
 	linfo = new(ltfs_file_info);
 	linfo->fd = fd;
 	linfo->fusepath = path;
-	linfo->sourcepath = souce_path(path);
+	linfo->sourcepath = FuseFS::souce_path(path);
 
 	finfo->fh = (unsigned long) linfo;
 
 	return 0;
 }
 
-int ltfsdm_read(const char *path, char *buffer, size_t size, off_t offset,
-					   struct fuse_file_info *finfo)
+int FuseFS::ltfsdm_read(const char *path, char *buffer, size_t size, off_t offset,
+							   struct fuse_file_info *finfo)
 
 {
 	ssize_t rsize = -1;
@@ -503,8 +503,8 @@ int ltfsdm_read(const char *path, char *buffer, size_t size, off_t offset,
 	}
 }
 
-int ltfsdm_read_buf(const char *path, struct fuse_bufvec **bufferp,
-						   size_t size, off_t offset, struct fuse_file_info *finfo)
+int FuseFS::ltfsdm_read_buf(const char *path, struct fuse_bufvec **bufferp,
+								   size_t size, off_t offset, struct fuse_file_info *finfo)
 
 {
     struct fuse_bufvec *source;
@@ -587,8 +587,8 @@ int ltfsdm_read_buf(const char *path, struct fuse_bufvec **bufferp,
 }
 
 
-int ltfsdm_write(const char *path, const char *buf, size_t size,
-		     off_t offset, struct fuse_file_info *finfo)
+int FuseFS::ltfsdm_write(const char *path, const char *buf, size_t size,
+								off_t offset, struct fuse_file_info *finfo)
 
 {
 	ssize_t wsize;
@@ -613,16 +613,16 @@ int ltfsdm_write(const char *path, const char *buf, size_t size,
 		return wsize;
 }
 
-int ltfsdm_statfs(const char *path, struct statvfs *stbuf)
+int FuseFS::ltfsdm_statfs(const char *path, struct statvfs *stbuf)
 
 {
-	if ( statvfs(souce_path(path).c_str(), stbuf) == -1 )
+	if ( statvfs(FuseFS::souce_path(path).c_str(), stbuf) == -1 )
 		return (-1*errno);
 	else
 		return 0;
 }
 
-int ltfsdm_release(const char *path, struct fuse_file_info *finfo)
+int FuseFS::ltfsdm_release(const char *path, struct fuse_file_info *finfo)
 
 {
 	ltfs_file_info *linfo = (ltfs_file_info *) finfo->fh;
@@ -642,7 +642,7 @@ int ltfsdm_release(const char *path, struct fuse_file_info *finfo)
 	}
 }
 
-int ltfsdm_flush(const char *path, struct fuse_file_info *finfo)
+int FuseFS::ltfsdm_flush(const char *path, struct fuse_file_info *finfo)
 
 {
 	ltfs_file_info *linfo = (ltfs_file_info *) finfo->fh;
@@ -658,8 +658,8 @@ int ltfsdm_flush(const char *path, struct fuse_file_info *finfo)
 		return 0;
 }
 
-int ltfsdm_fsync(const char *path, int isdatasync,
-						struct fuse_file_info *finfo)
+int FuseFS::ltfsdm_fsync(const char *path, int isdatasync,
+								struct fuse_file_info *finfo)
 
 {
 	ltfs_file_info *linfo = (ltfs_file_info *) finfo->fh;
@@ -682,8 +682,8 @@ int ltfsdm_fsync(const char *path, int isdatasync,
 		return 0;
 }
 
-int ltfsdm_fallocate(const char *path, int mode,
-			off_t offset, off_t length, struct fuse_file_info *finfo)
+int FuseFS::ltfsdm_fallocate(const char *path, int mode,
+									off_t offset, off_t length, struct fuse_file_info *finfo)
 
 {
 	ltfs_file_info *linfo = (ltfs_file_info *) finfo->fh;
@@ -700,21 +700,21 @@ int ltfsdm_fallocate(const char *path, int mode,
 }
 
 
-int ltfsdm_setxattr(const char *path, const char *name, const char *value,
-			size_t size, int flags)
+int FuseFS::ltfsdm_setxattr(const char *path, const char *name, const char *value,
+								   size_t size, int flags)
 
 {
 	if ( std::string(name).find(Const::OPEN_LTFS_EA.c_str()) != std::string::npos )
 		return (-1*ENOTSUP);
 
-	if ( lsetxattr(souce_path(path).c_str(), name, value, size, flags) == -1 )
+	if ( lsetxattr(FuseFS::souce_path(path).c_str(), name, value, size, flags) == -1 )
 		return (-1*errno);
 	else
 		return 0;
 }
 
-int ltfsdm_getxattr(const char *path, const char *name, char *value,
-			size_t size)
+int FuseFS::ltfsdm_getxattr(const char *path, const char *name, char *value,
+								   size_t size)
 
 {
 	ssize_t attrsize;
@@ -724,11 +724,11 @@ int ltfsdm_getxattr(const char *path, const char *name, char *value,
 	// since fc->pid returns a thread id
 
 	if ( Const::OPEN_LTFS_EA_FSINFO.compare(name) == 0 ) {
-		strncpy(value, souce_path(path).c_str(), PATH_MAX - 1);
+		strncpy(value, FuseFS::souce_path(path).c_str(), PATH_MAX - 1);
 		size = strlen(value) + 1;
 		return size;
 	}
-	else if ( (attrsize = lgetxattr(souce_path(path).c_str(), name, value, size)) == -1 ) {
+	else if ( (attrsize = lgetxattr(FuseFS::souce_path(path).c_str(), name, value, size)) == -1 ) {
 		return (-1*errno);
 	}
 	else if ( std::string(name).find(Const::OPEN_LTFS_EA.c_str()) != std::string::npos ) {
@@ -739,28 +739,30 @@ int ltfsdm_getxattr(const char *path, const char *name, char *value,
 	}
 }
 
-int ltfsdm_listxattr(const char *path, char *list, size_t size)
+int FuseFS::ltfsdm_listxattr(const char *path, char *list, size_t size)
+
 {
 	ssize_t attrsize;
 
-	if ( (attrsize = llistxattr(souce_path(path).c_str(), list, size)) == -1 )
+	if ( (attrsize = llistxattr(FuseFS::souce_path(path).c_str(), list, size)) == -1 )
 		return (-1*errno);
 	else
 		return attrsize;
 }
 
-int ltfsdm_removexattr(const char *path, const char *name)
+int FuseFS::ltfsdm_removexattr(const char *path, const char *name)
+
 {
 	if ( std::string(name).find(Const::OPEN_LTFS_EA.c_str()) != std::string::npos )
 		return (-1*ENOTSUP);
 
-	if ( lremovexattr(souce_path(path).c_str(), name) == -1 )
+	if ( lremovexattr(FuseFS::souce_path(path).c_str(), name) == -1 )
 		return (-1*errno);
 	else
 		return 0;
 }
 
-void *ltfsdm_init(struct fuse_conn_info *conn)
+void *FuseFS::ltfsdm_init(struct fuse_conn_info *conn)
 
 {
 	struct fuse_context *fc = fuse_get_context();
@@ -774,40 +776,40 @@ struct fuse_operations FuseFS::init_operations()
 
 	memset(&ltfsdm_operations, 0, sizeof(ltfsdm_operations));
 
-    ltfsdm_operations.init       	= ltfsdm_init;
+    ltfsdm_operations.init       	= FuseFS::ltfsdm_init;
 
-	ltfsdm_operations.getattr		= ltfsdm_getattr;
-	ltfsdm_operations.access		= ltfsdm_access;
-	ltfsdm_operations.readlink		= ltfsdm_readlink;
+	ltfsdm_operations.getattr		= FuseFS::ltfsdm_getattr;
+	ltfsdm_operations.access		= FuseFS::ltfsdm_access;
+	ltfsdm_operations.readlink		= FuseFS::ltfsdm_readlink;
 
-	ltfsdm_operations.opendir		= ltfsdm_opendir;
-	ltfsdm_operations.readdir		= ltfsdm_readdir;
-	ltfsdm_operations.releasedir	= ltfsdm_releasedir;
+	ltfsdm_operations.opendir		= FuseFS::ltfsdm_opendir;
+	ltfsdm_operations.readdir		= FuseFS::ltfsdm_readdir;
+	ltfsdm_operations.releasedir	= FuseFS::ltfsdm_releasedir;
 
-	ltfsdm_operations.mknod			= ltfsdm_mknod;
-	ltfsdm_operations.mkdir			= ltfsdm_mkdir;
-	ltfsdm_operations.symlink		= ltfsdm_symlink;
-	ltfsdm_operations.unlink		= ltfsdm_unlink;
-	ltfsdm_operations.rmdir			= ltfsdm_rmdir;
-	ltfsdm_operations.rename		= ltfsdm_rename;
-	ltfsdm_operations.link			= ltfsdm_link;
-	ltfsdm_operations.chmod			= ltfsdm_chmod;
-	ltfsdm_operations.chown			= ltfsdm_chown;
-	ltfsdm_operations.truncate		= ltfsdm_truncate;
-	ltfsdm_operations.utimens		= ltfsdm_utimens;
-	ltfsdm_operations.open			= ltfsdm_open;
-	ltfsdm_operations.read			= ltfsdm_read;
-	ltfsdm_operations.read_buf      = ltfsdm_read_buf;
-	ltfsdm_operations.write			= ltfsdm_write;
-	ltfsdm_operations.statfs		= ltfsdm_statfs;
-	ltfsdm_operations.release		= ltfsdm_release;
-	ltfsdm_operations.flush         = ltfsdm_flush;
-	ltfsdm_operations.fsync			= ltfsdm_fsync;
-	ltfsdm_operations.fallocate		= ltfsdm_fallocate;
-	ltfsdm_operations.setxattr		= ltfsdm_setxattr;
-	ltfsdm_operations.getxattr		= ltfsdm_getxattr;
-	ltfsdm_operations.listxattr		= ltfsdm_listxattr;
-	ltfsdm_operations.removexattr	= ltfsdm_removexattr;
+	ltfsdm_operations.mknod			= FuseFS::ltfsdm_mknod;
+	ltfsdm_operations.mkdir			= FuseFS::ltfsdm_mkdir;
+	ltfsdm_operations.symlink		= FuseFS::ltfsdm_symlink;
+	ltfsdm_operations.unlink		= FuseFS::ltfsdm_unlink;
+	ltfsdm_operations.rmdir			= FuseFS::ltfsdm_rmdir;
+	ltfsdm_operations.rename		= FuseFS::ltfsdm_rename;
+	ltfsdm_operations.link			= FuseFS::ltfsdm_link;
+	ltfsdm_operations.chmod			= FuseFS::ltfsdm_chmod;
+	ltfsdm_operations.chown			= FuseFS::ltfsdm_chown;
+	ltfsdm_operations.truncate		= FuseFS::ltfsdm_truncate;
+	ltfsdm_operations.utimens		= FuseFS::ltfsdm_utimens;
+	ltfsdm_operations.open			= FuseFS::ltfsdm_open;
+	ltfsdm_operations.read			= FuseFS::ltfsdm_read;
+	ltfsdm_operations.read_buf      = FuseFS::ltfsdm_read_buf;
+	ltfsdm_operations.write			= FuseFS::ltfsdm_write;
+	ltfsdm_operations.statfs		= FuseFS::ltfsdm_statfs;
+	ltfsdm_operations.release		= FuseFS::ltfsdm_release;
+	ltfsdm_operations.flush         = FuseFS::ltfsdm_flush;
+	ltfsdm_operations.fsync			= FuseFS::ltfsdm_fsync;
+	ltfsdm_operations.fallocate		= FuseFS::ltfsdm_fallocate;
+	ltfsdm_operations.setxattr		= FuseFS::ltfsdm_setxattr;
+	ltfsdm_operations.getxattr		= FuseFS::ltfsdm_getxattr;
+	ltfsdm_operations.listxattr		= FuseFS::ltfsdm_listxattr;
+	ltfsdm_operations.removexattr	= FuseFS::ltfsdm_removexattr;
 
 	return ltfsdm_operations;
 };
