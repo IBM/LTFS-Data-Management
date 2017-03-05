@@ -41,7 +41,7 @@ std::condition_variable trecall_cond;
 std::mutex trecall_reply_mtx;
 std::condition_variable trecall_reply_cond;
 std::condition_variable trecall_reply_wait_cond;
-std::atomic<unsigned long> trecall_ino;
+std::atomic<fuid_t> trecall_fuid;
 Connector::rec_info_t recinfo_share;
 std::condition_variable wait_cond;
 std::atomic<bool> single(false);
@@ -547,7 +547,7 @@ int ltfsdm_read_buf(const char *path, struct fuse_bufvec **bufferp,
 		}
 
 		std::unique_lock<std::mutex> lock(trecall_mtx);
-		while (single == false) wait_cond.wait(lock);
+		wait_cond.wait(lock, [](){ return single != false; });
 		single = false;
 
 		recinfo_share.toresident = false;
@@ -565,7 +565,11 @@ int ltfsdm_read_buf(const char *path, struct fuse_bufvec **bufferp,
 		std::unique_lock<std::mutex> lock_reply(trecall_reply_mtx);
 		trecall_cond.notify_one();
 		lock.unlock();
-		while (statbuf.st_ino != trecall_ino) trecall_reply_cond.wait(lock_reply);
+		fuid_t fuid = (fuid_t) {statbuf.st_dev, igen, statbuf.st_ino};
+		do {
+			trecall_reply_cond.wait(lock_reply);
+		} while (fuid != trecall_fuid);
+
 		trecall_reply_wait_cond.notify_one();
 		close(fd);
 	}

@@ -1,12 +1,38 @@
 #ifndef _FUSEFS_H
 #define _FUSEFS_H
 
+struct fuid_t {
+	unsigned long long fsid;
+	unsigned int igen;
+	unsigned long long ino;
+	friend bool operator<(const fuid_t fuid1, const fuid_t fuid2)
+	{
+		return ( fuid1.ino < fuid2.ino )
+			|| (( fuid1.ino == fuid2.ino )
+				&& (( fuid1.igen < fuid2.igen )
+					|| (( fuid1.igen == fuid2.igen )
+						&& (( fuid1.fsid < fuid2.fsid )))));
+	}
+
+	friend bool operator==(const fuid_t fuid1, const fuid_t fuid2)
+	{
+		return ( fuid1.ino == fuid2.ino )
+			&& ( fuid1.igen == fuid2.igen )
+			&& ( fuid1.fsid == fuid2.fsid );
+	}
+	friend bool operator!=(const fuid_t fuid1, const fuid_t fuid2)
+	{
+		return !(fuid1 == fuid2);
+	}
+};
+
+
 extern std::mutex trecall_mtx;
 extern std::condition_variable trecall_cond;
 extern std::mutex trecall_reply_mtx;
 extern std::condition_variable trecall_reply_cond;
 extern std::condition_variable trecall_reply_wait_cond;
-extern std::atomic<unsigned long> trecall_ino;
+extern std::atomic<fuid_t> trecall_fuid;
 extern Connector::rec_info_t recinfo_share;
 extern std::condition_variable wait_cond;
 extern std::atomic<bool> single;

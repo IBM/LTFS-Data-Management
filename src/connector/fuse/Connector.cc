@@ -31,26 +31,6 @@
 #include "src/connector/Connector.h"
 #include "FuseFS.h"
 
-typedef struct {
-	unsigned long long fsid;
-	unsigned int igen;
-	unsigned long long ino;
-} fuid_t;
-
-struct ltstr
-{
-	bool operator()(const fuid_t fuid1, const fuid_t fuid2) const
-	{
-        return ( fuid1.ino < fuid2.ino )
-			|| (( fuid1.ino == fuid2.ino )
-				&& (( fuid1.igen < fuid2.igen )
-					|| (( fuid1.igen == fuid2.igen )
-						&& (( fuid1.fsid < fuid2.fsid )))));
-	}
-};
-
-std::map<fuid_t, int, ltstr> fuidMap;
-
 std::mutex mtx;
 
 std::vector<FuseFS*> managedFss;
@@ -94,8 +74,6 @@ Connector::rec_info_t Connector::getEvents()
 	recinfo = recinfo_share;
 	recinfo_share = (Connector::rec_info_t) {0, 0, 0, 0, 0, 0, ""};
 
-	TRACE(Trace::error, recinfo.ino);
-
 	return recinfo;
 }
 
@@ -106,7 +84,7 @@ void Connector::respondRecallEvent(rec_info_t recinfo, bool success)
 {
 	std::lock_guard<std::mutex> lock_connector(respond_mutex);
 	std::unique_lock<std::mutex> lock(trecall_reply_mtx);
-	trecall_ino = recinfo.ino;
+	trecall_fuid = (fuid_t) {recinfo.fsid, recinfo.igen, recinfo.ino};
 	trecall_reply_cond.notify_all();
 	trecall_reply_wait_cond.wait(lock);
 }
