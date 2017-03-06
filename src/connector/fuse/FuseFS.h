@@ -87,6 +87,8 @@ private:
 	static int ltfsdm_truncate(const char *path, off_t size);
 	static int ltfsdm_utimens(const char *path, const struct timespec times[2]);
 	static int ltfsdm_open(const char *path, struct fuse_file_info *finfo);
+	static int ltfsdm_ftruncate(const char *path, off_t size,
+								struct fuse_file_info *finfo);
 	static int ltfsdm_read(const char *path, char *buffer, size_t size, off_t offset,
 						   struct fuse_file_info *finfo);
 	static int ltfsdm_read_buf(const char *path, struct fuse_bufvec **bufferp,
@@ -128,7 +130,7 @@ public:
 
 	static FuseFS::mig_info genMigInfo(const char *path, FuseFS::mig_info::state_num state);
 	static void setMigInfo(const char *path, FuseFS::mig_info::state_num state);
-	static void remMigInfo(const char *path);
+	static int remMigInfo(const char *path);
 	static FuseFS::mig_info getMigInfo(const char *path);
 	std::string getMountPoint() {return mountpt;}
 	FuseFS(std::string sourcedir, std::string mountpt, std::string fsName, struct timespec starttime);

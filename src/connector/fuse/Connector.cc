@@ -416,9 +416,12 @@ void FsObj::remAttribute()
 {
 	FuseHandle *fh = (FuseHandle *) handle;
 
-	FuseFS::setMigInfo(fh->sourcePath.c_str(), FuseFS::mig_info::state_num::NO_STATE);
-
 	if ( fremovexattr(fh->fd, Const::OPEN_LTFS_EA_MIGINFO_EXT.c_str()) == -1 ) {
+		TRACE(Trace::error, errno);
+		throw(errno);
+	}
+
+	if ( fremovexattr(fh->fd, Const::OPEN_LTFS_EA_MIGINFO_INT.c_str()) == -1 ) {
 		TRACE(Trace::error, errno);
 		throw(errno);
 	}
@@ -458,7 +461,7 @@ void FsObj::finishRecall(FsObj::file_state fstate)
 		FuseFS::setMigInfo(fh->sourcePath.c_str(), FuseFS::mig_info::state_num::PREMIGRATED);
 	}
 	else {
-		FuseFS::remMigInfo(fh->sourcePath.c_str());
+		FuseFS::setMigInfo(fh->sourcePath.c_str(), FuseFS::mig_info::state_num::NO_STATE);
 	}
 }
 
