@@ -186,7 +186,7 @@ void Migration::addRequest()
 }
 
 
-unsigned long preMigrate(std::string fileName, std::string tapeId, long secs, long nsecs)
+unsigned long preMigrate(std::string fileName, std::string tapeId, long secs, long nsecs, int numRepl)
 
 {
 	struct stat statbuf;
@@ -275,6 +275,8 @@ unsigned long preMigrate(std::string fileName, std::string tapeId, long secs, lo
 		strncpy(attr.tapeId[attr.copies], tapeId.c_str(), Const::tapeIdLength);
 		attr.copies++;
 		source.addAttribute(attr);
+		if ( attr.copies == numRepl )
+			source.finishPremigration();
 		source.unlock();
 	}
 	catch ( int error ) {
@@ -356,7 +358,7 @@ bool migrationStep(int reqNum, int numRepl, int replNum, int colGrp, std::string
 						sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_ROW);
 						return suspended;
 					}
-					preMigrate(std::string(cstr), tapeId, secs, nsecs);
+					preMigrate(std::string(cstr), tapeId, secs, nsecs, numRepl);
 				}
 				else {
 					stub(std::string(cstr), numRepl);

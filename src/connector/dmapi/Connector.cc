@@ -951,6 +951,14 @@ void FsObj::preparePremigration()
 	}
 }
 
+void FsObj::finishPremigration()
+
+{
+	/*
+	 * premigration is currently set in preparePremigration which
+	 * should happen here
+	 */
+}
 void FsObj::finishRecall(FsObj::file_state fstate)
 
 {
