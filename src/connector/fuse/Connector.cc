@@ -60,7 +60,7 @@ std::unique_lock<std::mutex> *lock;
 void Connector::initTransRecalls()
 
 {
-	lock = new std::unique_lock<std::mutex>(trecall_submit_mtx);
+	lock = new std::unique_lock<std::mutex>(FuseFS::trecall_submit.mtx);
 
 }
 
@@ -70,8 +70,8 @@ Connector::rec_info_t Connector::getEvents()
 	Connector::rec_info_t recinfo;
 
 	FuseFS::no_rec_event = true;
-	trecall_submit_wait_cond.notify_all();
-	trecall_submit_cond.wait(*lock);
+	FuseFS::trecall_submit.wait_cond.notify_all();
+	FuseFS::trecall_submit.cond.wait(*lock);
 	recinfo = FuseFS::recinfo_share;
 	FuseFS::recinfo_share = (Connector::rec_info_t) {0, 0, 0, 0, 0, 0, ""};
 
@@ -84,19 +84,19 @@ void Connector::respondRecallEvent(rec_info_t recinfo, bool success)
 
 {
 	std::lock_guard<std::mutex> lock_connector(respond_mutex);
-	std::unique_lock<std::mutex> lock(trecall_reply_mtx);
+	std::unique_lock<std::mutex> lock(FuseFS::trecall_reply.mtx);
 	FuseFS::trecall_fuid = (fuid_t) {recinfo.fsid, recinfo.igen, recinfo.ino};
-	trecall_reply_cond.notify_all();
-	trecall_reply_wait_cond.wait(lock);
+	FuseFS::trecall_reply.cond.notify_all();
+	FuseFS::trecall_reply.wait_cond.wait(lock);
 }
 
 void Connector::terminate()
 
 {
-	std::unique_lock<std::mutex> lock(trecall_submit_mtx);
+	std::unique_lock<std::mutex> lock(FuseFS::trecall_submit.mtx);
 
 	FuseFS::recinfo_share = (Connector::rec_info_t) {0, 0, 0, 0, 0, 0, ""};
-	trecall_submit_cond.notify_one();
+	FuseFS::trecall_submit.cond.notify_one();
 }
 
 struct FuseHandle {

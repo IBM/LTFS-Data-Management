@@ -26,14 +26,6 @@ struct fuid_t {
 	}
 };
 
-extern std::mutex trecall_submit_mtx;
-extern std::condition_variable trecall_submit_cond;
-extern std::condition_variable trecall_submit_wait_cond;
-
-extern std::mutex trecall_reply_mtx;
-extern std::condition_variable trecall_reply_cond;
-extern std::condition_variable trecall_reply_wait_cond;
-
 class FuseFS {
 public:
 	struct mig_info {
@@ -124,6 +116,11 @@ private:
 	struct fuse_operations init_operations();
 	static FuseFS::mig_info getMigInfoAt(int dirfd, const char *path);
 public:
+	static struct serialize {
+		std::mutex mtx;
+		std::condition_variable cond;
+		std::condition_variable wait_cond;
+	} trecall_submit, trecall_reply;
 	static Connector::rec_info_t recinfo_share;
 	static std::atomic<fuid_t> trecall_fuid;
 	static std::atomic<bool> no_rec_event;

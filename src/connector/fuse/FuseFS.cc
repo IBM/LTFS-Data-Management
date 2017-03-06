@@ -35,13 +35,8 @@
 #include "src/connector/Connector.h"
 #include "FuseFS.h"
 
-std::mutex trecall_submit_mtx;
-std::condition_variable trecall_submit_cond;
-std::condition_variable trecall_submit_wait_cond;
-
-std::mutex trecall_reply_mtx;
-std::condition_variable trecall_reply_cond;
-std::condition_variable trecall_reply_wait_cond;
+FuseFS::serialize FuseFS::trecall_submit;
+FuseFS::serialize FuseFS::trecall_reply;
 
 Connector::rec_info_t FuseFS::recinfo_share = (Connector::rec_info_t) {0, 0, 0, 0, 0, 0, ""};
 std::atomic<fuid_t> FuseFS::trecall_fuid((fuid_t) {0, 0, 0});
@@ -537,8 +532,8 @@ int FuseFS::ltfsdm_read_buf(const char *path, struct fuse_bufvec **bufferp,
 			return (-1*errno);
 		}
 
-		std::unique_lock<std::mutex> lock(trecall_submit_mtx);
-		trecall_submit_wait_cond.wait(lock, [](){ return no_rec_event != false; });
+		std::unique_lock<std::mutex> lock(FuseFS::trecall_submit.mtx);
+		FuseFS::trecall_submit.wait_cond.wait(lock, [](){ return no_rec_event != false; });
 		no_rec_event = false;
 
 		recinfo_share.toresident = false;
@@ -553,15 +548,15 @@ int FuseFS::ltfsdm_read_buf(const char *path, struct fuse_bufvec **bufferp,
 		}
 		recinfo_share.fd = fd;
 
-		std::unique_lock<std::mutex> lock_reply(trecall_reply_mtx);
-		trecall_submit_cond.notify_one();
+		std::unique_lock<std::mutex> lock_reply(FuseFS::trecall_reply.mtx);
+		FuseFS::trecall_submit.cond.notify_one();
 		lock.unlock();
 		fuid_t fuid = (fuid_t) {statbuf.st_dev, igen, statbuf.st_ino};
 		do {
-			trecall_reply_cond.wait(lock_reply);
+			FuseFS::trecall_reply.cond.wait(lock_reply);
 		} while (fuid != trecall_fuid);
 
-		trecall_reply_wait_cond.notify_one();
+		FuseFS::trecall_reply.wait_cond.notify_one();
 		close(fd);
 	}
 
