@@ -26,16 +26,13 @@ struct fuid_t {
 	}
 };
 
+extern std::mutex trecall_submit_mtx;
+extern std::condition_variable trecall_submit_cond;
+extern std::condition_variable trecall_submit_wait_cond;
 
-extern std::mutex trecall_mtx;
-extern std::condition_variable trecall_cond;
 extern std::mutex trecall_reply_mtx;
 extern std::condition_variable trecall_reply_cond;
 extern std::condition_variable trecall_reply_wait_cond;
-extern std::atomic<fuid_t> trecall_fuid;
-extern Connector::rec_info_t recinfo_share;
-extern std::condition_variable wait_cond;
-extern std::atomic<bool> single;
 
 class FuseFS {
 public:
@@ -71,9 +68,12 @@ private:
 		off_t offset;
 	};
 
+	static thread_local std::string lsourcedir;
+
 	static bool needsRecovery(FuseFS::mig_info miginfo);
 	static void recoverState(const char *path, FuseFS::mig_info::state_num state);
 	static std::string souce_path(const char *path);
+
 	// FUSE call backs
 	static int ltfsdm_getattr(const char *path, struct stat *statbuf);
 	static int ltfsdm_access(const char *path, int mask);
@@ -120,13 +120,18 @@ private:
 	std::string mountpt;
 	struct fuse_chan *openltfsch = NULL;
 	struct fuse *openltfs = NULL;
+
 	struct fuse_operations init_operations();
+	static FuseFS::mig_info getMigInfoAt(int dirfd, const char *path);
 public:
+	static Connector::rec_info_t recinfo_share;
+	static std::atomic<fuid_t> trecall_fuid;
+	static std::atomic<bool> no_rec_event;
+
 	static FuseFS::mig_info genMigInfo(const char *path, FuseFS::mig_info::state_num state);
 	static void setMigInfo(const char *path, FuseFS::mig_info::state_num state);
 	static void remMigInfo(const char *path);
 	static FuseFS::mig_info getMigInfo(const char *path);
-	static FuseFS::mig_info getMigInfoAt(int dirfd, const char *path);
 	std::string getMountPoint() {return mountpt;}
 	FuseFS(std::string sourcedir, std::string mountpt, std::string fsName, struct timespec starttime);
 	~FuseFS();
