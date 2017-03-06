@@ -65,6 +65,7 @@ private:
 	static bool needsRecovery(FuseFS::mig_info miginfo);
 	static void recoverState(const char *path, FuseFS::mig_info::state_num state);
 	static std::string souce_path(const char *path);
+	static int recall_file(FuseFS::ltfsdm_file_info *linfo, bool toresident);
 
 	// FUSE call backs
 	static int ltfsdm_getattr(const char *path, struct stat *statbuf);

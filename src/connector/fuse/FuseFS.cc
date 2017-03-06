@@ -198,6 +198,58 @@ std::string FuseFS::souce_path(const char *path)
 	return fullpath;
 }
 
+
+int FuseFS::recall_file(FuseFS::ltfsdm_file_info *linfo, bool toresident)
+
+{
+	struct stat statbuf;
+	unsigned int igen;
+	int fd;
+	fuid_t fuid;
+
+	if ( fstat(linfo->fd, &statbuf) == -1 ) {
+		TRACE(Trace::error, fuse_get_context()->pid);
+		TRACE(Trace::error, errno);
+		return (-1*errno);
+	}
+
+	if ( ioctl(linfo->fd, FS_IOC_GETVERSION, &igen) ) {
+		TRACE(Trace::error, fuse_get_context()->pid);
+		TRACE(Trace::error, errno);
+		return (-1*errno);
+	}
+
+	std::unique_lock<std::mutex> lock(FuseFS::trecall_submit.mtx);
+	FuseFS::trecall_submit.wait_cond.wait(lock, [](){ return no_rec_event != false; });
+	no_rec_event = false;
+
+	recinfo_share.toresident = toresident;
+	recinfo_share.fsid = statbuf.st_dev;
+	recinfo_share.igen = igen;
+	recinfo_share.ino = statbuf.st_ino;
+	recinfo_share.filename = linfo->sourcepath;
+	if ( (fd = open(recinfo_share.filename.c_str(), O_WRONLY)) == -1 ) {
+		TRACE(Trace::error, fuse_get_context()->pid);
+		TRACE(Trace::error, errno);
+		return (-1*errno);
+	}
+	recinfo_share.fd = fd;
+
+	std::unique_lock<std::mutex> lock_reply(FuseFS::trecall_reply.mtx);
+	FuseFS::trecall_submit.cond.notify_one();
+	lock.unlock();
+	fuid = (fuid_t) {statbuf.st_dev, igen, statbuf.st_ino};
+	do {
+		FuseFS::trecall_reply.cond.wait(lock_reply);
+	} while (fuid != trecall_fuid);
+
+	FuseFS::trecall_reply.wait_cond.notify_one();
+	close(fd);
+
+	return 0;
+}
+
+
 int FuseFS::ltfsdm_getattr(const char *path, struct stat *statbuf)
 
 {
@@ -462,6 +514,7 @@ int FuseFS::ltfsdm_read(const char *path, char *buffer, size_t size, off_t offse
 	FuseFS::mig_info migInfo;
 	ssize_t attrsize;
 	FuseFS::ltfsdm_file_info *linfo = (FuseFS::ltfsdm_file_info *) finfo->fh;
+	int rc;
 
 	assert(path == NULL);
 
@@ -475,6 +528,12 @@ int FuseFS::ltfsdm_read(const char *path, char *buffer, size_t size, off_t offse
 			TRACE(Trace::error, fuse_get_context()->pid);
 			return (-1*errno);
 		}
+	}
+
+	if ( migInfo.state == FuseFS::mig_info::state_num::MIGRATED ||
+		 migInfo.state == FuseFS::mig_info::state_num::IN_RECALL ) {
+		if ( (rc = recall_file(linfo, linfo)) != 0 )
+			return rc;
 	}
 
 	if ( (rsize =pread(linfo->fd, buffer, size, offset)) == -1 ) {
@@ -494,8 +553,8 @@ int FuseFS::ltfsdm_read_buf(const char *path, struct fuse_bufvec **bufferp,
     struct fuse_bufvec *source;
 	FuseFS::mig_info migInfo;
 	ssize_t attrsize;
-
 	FuseFS::ltfsdm_file_info *linfo = (FuseFS::ltfsdm_file_info *) finfo->fh;
+	int rc;
 
 	assert(path == NULL);
 
@@ -516,48 +575,8 @@ int FuseFS::ltfsdm_read_buf(const char *path, struct fuse_bufvec **bufferp,
 
 	if ( migInfo.state == FuseFS::mig_info::state_num::MIGRATED ||
 		 migInfo.state == FuseFS::mig_info::state_num::IN_RECALL ) {
-		struct stat statbuf;
-		unsigned int igen;
-		int fd;
-
-		if ( fstat(linfo->fd, &statbuf) == -1 ) {
-			TRACE(Trace::error, fuse_get_context()->pid);
-			TRACE(Trace::error, errno);
-			return (-1*errno);
-		}
-
-		if ( ioctl(linfo->fd, FS_IOC_GETVERSION, &igen) ) {
-			TRACE(Trace::error, fuse_get_context()->pid);
-			TRACE(Trace::error, errno);
-			return (-1*errno);
-		}
-
-		std::unique_lock<std::mutex> lock(FuseFS::trecall_submit.mtx);
-		FuseFS::trecall_submit.wait_cond.wait(lock, [](){ return no_rec_event != false; });
-		no_rec_event = false;
-
-		recinfo_share.toresident = false;
-		recinfo_share.fsid = statbuf.st_dev;
-		recinfo_share.igen = igen;
-		recinfo_share.ino = statbuf.st_ino;
-		recinfo_share.filename = linfo->sourcepath;
-		if ( (fd = open(recinfo_share.filename.c_str(), O_WRONLY)) == -1 ) {
-			TRACE(Trace::error, fuse_get_context()->pid);
-			TRACE(Trace::error, errno);
-			return (-1*errno);
-		}
-		recinfo_share.fd = fd;
-
-		std::unique_lock<std::mutex> lock_reply(FuseFS::trecall_reply.mtx);
-		FuseFS::trecall_submit.cond.notify_one();
-		lock.unlock();
-		fuid_t fuid = (fuid_t) {statbuf.st_dev, igen, statbuf.st_ino};
-		do {
-			FuseFS::trecall_reply.cond.wait(lock_reply);
-		} while (fuid != trecall_fuid);
-
-		FuseFS::trecall_reply.wait_cond.notify_one();
-		close(fd);
+		if ( (rc = recall_file(linfo, false)) != 0 )
+			return rc;
 	}
 
     if ( (source = (fuse_bufvec*) malloc(sizeof(struct fuse_bufvec))) == NULL )
@@ -581,6 +600,7 @@ int FuseFS::ltfsdm_write(const char *path, const char *buf, size_t size,
 	FuseFS::mig_info migInfo;
 	ssize_t attrsize;
 	FuseFS::ltfsdm_file_info *linfo = (FuseFS::ltfsdm_file_info *) finfo->fh;
+	int rc;
 
 	assert(path == NULL);
 
@@ -591,6 +611,12 @@ int FuseFS::ltfsdm_write(const char *path, const char *buf, size_t size,
 		if ( errno != ENODATA ) {
 			return (-1*errno);
 		}
+	}
+
+	if ( migInfo.state == FuseFS::mig_info::state_num::MIGRATED ||
+		 migInfo.state == FuseFS::mig_info::state_num::IN_RECALL ) {
+		if ( (rc = recall_file(linfo, linfo)) != 0 )
+			return rc;
 	}
 
 	if ( (wsize = pwrite(linfo->fd, buf, size, offset)) == -1 )
