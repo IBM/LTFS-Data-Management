@@ -35,16 +35,18 @@
 #include "src/connector/Connector.h"
 #include "FuseFS.h"
 
+Connector::rec_info_t recinfo_share;
 thread_local std::string lsourcedir = "";
+
+std::atomic<fuid_t> trecall_fuid;
+std::atomic<bool> single(false);
+
 std::mutex trecall_mtx;
 std::condition_variable trecall_cond;
 std::mutex trecall_reply_mtx;
 std::condition_variable trecall_reply_cond;
 std::condition_variable trecall_reply_wait_cond;
-std::atomic<fuid_t> trecall_fuid;
-Connector::rec_info_t recinfo_share;
 std::condition_variable wait_cond;
-std::atomic<bool> single(false);
 
 FuseFS::mig_info FuseFS::genMigInfo(const char *path, FuseFS::mig_info::state_num state)
 
@@ -508,6 +510,8 @@ int FuseFS::ltfsdm_read_buf(const char *path, struct fuse_bufvec **bufferp,
 		return (-1*EBADF);
 	}
 
+	memset(&migInfo, 0, sizeof(FuseFS::mig_info));
+
 	if ( (attrsize = fgetxattr(linfo->fd, Const::OPEN_LTFS_EA_MIGINFO_INT.c_str(), (void *) &migInfo, sizeof(migInfo))) == -1 ) {
 		if ( errno != ENODATA ) {
 			TRACE(Trace::error, fuse_get_context()->pid);
@@ -845,6 +849,8 @@ FuseFS::FuseFS(std::string sourcedir, std::string mountpt, std::string fsName, s
 
 	openltfs = fuse_new(openltfsch, &fargs,  &ltfsdm_operations, sizeof(ltfsdm_operations), (void *) ctx);
 
+	fuse_opt_free_args(&fargs);
+
 	if ( openltfs == NULL ) {
 		MSG(LTFSDMF0006E);
 		throw(Error::LTFSDM_FS_ADD_ERROR);
@@ -855,8 +861,6 @@ FuseFS::FuseFS(std::string sourcedir, std::string mountpt, std::string fsName, s
 	std::stringstream threadName;
 	threadName << "FS:"  << ctx->sourcedir;
 	pthread_setname_np(fusefs->native_handle(), threadName.str().substr(0,14).c_str());
-
-
 }
 
 
@@ -867,5 +871,6 @@ FuseFS::~FuseFS()
 	fuse_exit(openltfs);
 	fuse_unmount(mountpt.c_str(), openltfsch);
 	fusefs->join();
+	delete(fusefs);
 	free(ctx);
 }
