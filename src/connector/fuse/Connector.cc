@@ -32,9 +32,12 @@
 #include "src/connector/Connector.h"
 #include "FuseFS.h"
 
-std::mutex mtx;
-
-std::vector<FuseFS*> managedFss;
+namespace FuseConnector {
+	std::mutex mtx;
+	std::vector<FuseFS*> managedFss;
+	std::unique_lock<std::mutex> *trecall_lock;
+	std::mutex respond_mutex;
+};
 
 Connector::Connector(bool cleanup)
 
@@ -47,7 +50,7 @@ Connector::~Connector()
 {
 	std::string mountpt;
 
-	for(auto const& fn: managedFss) {
+	for(auto const& fn: FuseConnector::managedFss) {
 		mountpt = fn->getMountPoint();
 		delete(fn);
 		if ( rmdir(mountpt.c_str()) == -1 )
@@ -55,12 +58,10 @@ Connector::~Connector()
 	}
 }
 
-std::unique_lock<std::mutex> *lock;
-
 void Connector::initTransRecalls()
 
 {
-	lock = new std::unique_lock<std::mutex>(FuseFS::trecall_submit.mtx);
+	FuseConnector::trecall_lock = new std::unique_lock<std::mutex>(FuseFS::trecall_submit.mtx);
 
 }
 
@@ -71,19 +72,17 @@ Connector::rec_info_t Connector::getEvents()
 
 	FuseFS::no_rec_event = true;
 	FuseFS::trecall_submit.wait_cond.notify_all();
-	FuseFS::trecall_submit.cond.wait(*lock);
+	FuseFS::trecall_submit.cond.wait(*FuseConnector::trecall_lock);
 	recinfo = FuseFS::recinfo_share;
 	FuseFS::recinfo_share = (Connector::rec_info_t) {0, 0, 0, 0, 0, 0, ""};
 
 	return recinfo;
 }
 
-std::mutex respond_mutex;
-
 void Connector::respondRecallEvent(rec_info_t recinfo, bool success)
 
 {
-	std::lock_guard<std::mutex> lock_connector(respond_mutex);
+	std::lock_guard<std::mutex> lock_connector(FuseConnector::respond_mutex);
 	std::unique_lock<std::mutex> lock(FuseFS::trecall_reply.mtx);
 	FuseFS::trecall_fuid = (fuid_t) {recinfo.fsid, recinfo.igen, recinfo.ino};
 	FuseFS::trecall_reply.cond.notify_all();
@@ -166,7 +165,7 @@ bool FsObj::isFsManaged()
 {
 	int val;
 	FuseHandle *fh = (FuseHandle *) handle;
-	std::unique_lock<std::mutex> lock(mtx);
+	std::unique_lock<std::mutex> lock(FuseConnector::mtx);
 
 	if ( getxattr(fh->fileName.c_str(), Const::OPEN_LTFS_EA_MANAGED.c_str(), &val, sizeof(val)) == -1 ) {
 		if ( errno == ENODATA )
@@ -239,7 +238,7 @@ void FsObj::manageFs(bool setDispo, struct timespec starttime, std::string mount
 		}
 	}
 
-	std::unique_lock<std::mutex> lock(mtx);
+	std::unique_lock<std::mutex> lock(FuseConnector::mtx);
 
 	if ( managed ) {
 		if ( setxattr(fh->fileName.c_str(), Const::OPEN_LTFS_EA_MOUNTPT.c_str(), mountPoint.c_str(), mountPoint.size() + 1, 0) == -1 ) {
@@ -271,7 +270,7 @@ void FsObj::manageFs(bool setDispo, struct timespec starttime, std::string mount
 		throw(Error::LTFSDM_FS_ADD_ERROR);
 	}
 	else {
-		managedFss.push_back(FS);
+		FuseConnector::managedFss.push_back(FS);
 	}
 }
 
