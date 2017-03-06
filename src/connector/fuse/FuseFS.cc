@@ -492,31 +492,38 @@ int FuseFS::ltfsdm_truncate(const char *path, off_t size)
 
 	if ( (attrsize = fgetxattr(linfo.fd, Const::OPEN_LTFS_EA_MIGINFO_INT.c_str(), (void *) &migInfo, sizeof(migInfo))) == -1 ) {
 		if ( errno != ENODATA ) {
+			close(linfo.fd);
 			TRACE(Trace::error, fuse_get_context()->pid);
 			return (-1*errno);
 		}
 	}
 
-	if ( size > 0 &&
-		 (migInfo.state == FuseFS::mig_info::state_num::MIGRATED ||
-		  migInfo.state == FuseFS::mig_info::state_num::IN_RECALL) ) {
+	if ( (size > 0) &&
+		 ((migInfo.state == FuseFS::mig_info::state_num::MIGRATED) ||
+		  (migInfo.state == FuseFS::mig_info::state_num::IN_RECALL)) ) {
 		if ( (rc = recall_file(&linfo, true)) != 0 ) {
+			close(linfo.fd);
 			TRACE(Trace::error, rc);
 			return rc;
 		}
 	}
-
-	if ( ftruncate(linfo.fd, size) == -1 ) {
-		return (-1*errno);
-	}
-	else {
-		if ( (size == 0) && (attrsize != -1) ) {
-			if ( fremovexattr(linfo.fd, Const::OPEN_LTFS_EA_MIGINFO_INT.c_str()) == -1 )
-				return (-1*EIO);
-			if ( fremovexattr(linfo.fd, Const::OPEN_LTFS_EA_MIGINFO_EXT.c_str()) == -1 )
-				return (-1*EIO);
+	else if ( attrsize != -1 ) {
+		if ( fremovexattr(linfo.fd, Const::OPEN_LTFS_EA_MIGINFO_INT.c_str()) == -1 ) {
+			close(linfo.fd);
+			return (-1*EIO);
+		}
+		if ( fremovexattr(linfo.fd, Const::OPEN_LTFS_EA_MIGINFO_EXT.c_str()) == -1 ) {
+			close(linfo.fd);
+			return (-1*EIO);
 		}
 	}
+
+	if ( ftruncate(linfo.fd, size) == -1 ) {
+		close(linfo.fd);
+		return (-1*errno);
+	}
+
+	close(linfo.fd);
 
 	return 0;
 }
@@ -576,25 +583,23 @@ int FuseFS::ltfsdm_ftruncate(const char *path, off_t size, struct fuse_file_info
 		}
 	}
 
-	if ( size > 0 &&
-		 (migInfo.state == FuseFS::mig_info::state_num::MIGRATED ||
-		  migInfo.state == FuseFS::mig_info::state_num::IN_RECALL) ) {
+	if ( (size > 0) &&
+		 ((migInfo.state == FuseFS::mig_info::state_num::MIGRATED) ||
+		  (migInfo.state == FuseFS::mig_info::state_num::IN_RECALL)) ) {
 		if ( (rc = recall_file(linfo, true)) != 0 ) {
 			TRACE(Trace::error, rc);
 			return rc;
 		}
 	}
+	else if ( attrsize != -1 ) {
+		if ( fremovexattr(linfo->fd, Const::OPEN_LTFS_EA_MIGINFO_INT.c_str()) == -1 )
+			return (-1*EIO);
+		if ( fremovexattr(linfo->fd, Const::OPEN_LTFS_EA_MIGINFO_EXT.c_str()) == -1 )
+			return (-1*EIO);
+	}
 
 	if ( ftruncate(linfo->fd, size) == -1 ) {
 		return (-1*errno);
-	}
-	else {
-		if ( (size == 0) && (attrsize != -1) ) {
-			if ( fremovexattr(linfo->fd, Const::OPEN_LTFS_EA_MIGINFO_INT.c_str()) == -1 )
-				return (-1*EIO);
-			if ( fremovexattr(linfo->fd, Const::OPEN_LTFS_EA_MIGINFO_EXT.c_str()) == -1 )
-				return (-1*EIO);
-		}
 	}
 
 	return 0;
