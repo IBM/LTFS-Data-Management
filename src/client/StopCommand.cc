@@ -1,5 +1,6 @@
 #include <fcntl.h>
 #include <sys/file.h>
+#include <sys/resource.h>
 
 #include <string>
 #include "src/common/messages/Message.h"

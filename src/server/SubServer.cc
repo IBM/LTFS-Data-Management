@@ -1,3 +1,4 @@
+#include <sys/resource.h>
 #include <limits.h>
 
 #include <atomic>

@@ -3,6 +3,7 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/xattr.h>
+#include <sys/resource.h>
 #include <unistd.h>
 
 #include <iostream>

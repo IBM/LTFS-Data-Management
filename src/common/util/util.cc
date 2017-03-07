@@ -3,6 +3,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <mntent.h>
+#include <sys/resource.h>
 
 #include <string>
 #include <set>

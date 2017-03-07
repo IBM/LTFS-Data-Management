@@ -1,3 +1,5 @@
+#include <sys/resource.h>
+
 #include <string>
 #include <condition_variable>
 #include <thread>

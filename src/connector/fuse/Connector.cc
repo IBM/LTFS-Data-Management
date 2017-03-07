@@ -7,6 +7,7 @@
 #include <sys/xattr.h>
 #include <string.h>
 #include <limits.h>
+#include <sys/resource.h>
 #include <errno.h>
 
 #include <fuse.h>

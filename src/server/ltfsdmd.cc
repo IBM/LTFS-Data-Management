@@ -2,6 +2,7 @@
 #include <signal.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <sys/resource.h>
 #include <errno.h>
 
 #include <string>

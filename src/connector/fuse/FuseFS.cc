@@ -11,6 +11,7 @@
 #include <sys/types.h>
 #include <sys/xattr.h>
 #include <sys/ioctl.h>
+#include <sys/resource.h>
 #include <assert.h>
 #include <errno.h>
 
@@ -964,7 +965,7 @@ FuseFS::FuseFS(std::string sourcedir, std::string mountpt, std::string fsName, s
 
 	fuse_opt_add_arg(&fargs, mountpt.c_str());
 
-	options << "-ouse_ino,fsname=OpenLTFS:" << fsName << ",nopath,default_permissions,allow_other,max_background=32768";
+	options << "-ouse_ino,fsname=OpenLTFS:" << fsName << ",nopath,default_permissions,allow_other,max_background=" << Const::MAX_FUSE_BACKGROUND;
 
 	fuse_opt_add_arg(&fargs, options.str().c_str());
 	//fuse_opt_add_arg(&fargs, "-d");

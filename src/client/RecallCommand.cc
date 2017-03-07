@@ -1,4 +1,6 @@
 #include <unistd.h>
+#include <sys/resource.h>
+
 #include <string>
 
 #include "src/common/messages/Message.h"

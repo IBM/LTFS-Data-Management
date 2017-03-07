@@ -1,3 +1,5 @@
+#include <sys/resource.h>
+
 #include <string>
 #include <atomic>
 #include <condition_variable>

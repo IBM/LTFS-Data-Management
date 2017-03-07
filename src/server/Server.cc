@@ -3,10 +3,9 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <sys/stat.h>
-#ifdef __linux__
 #include <sys/file.h>
-#endif
 #include <limits.h>
+#include <sys/resource.h>
 #include <errno.h>
 
 #include <string>
@@ -86,6 +85,11 @@ void Server::writeKey()
 void Server::initialize()
 
 {
+	if ( setrlimit(RLIMIT_NOFILE, &Const::NOFILE_LIMIT) == -1 ) {
+		MSG(LTFSDMS0046E);
+		throw(errno);
+	}
+
 	lockServer();
 	writeKey();
 

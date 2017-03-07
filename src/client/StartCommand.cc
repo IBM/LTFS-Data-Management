@@ -5,6 +5,7 @@
 #include <libgen.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/resource.h>
 #include <errno.h>
 
 #ifdef __APPLE__

@@ -4,7 +4,6 @@ LDFLAGS += -lprotobuf
 
 ARC_SRC_FILES := ltfsdm.pb.cc LTFSDmComm.cc
 CLEANUP_FILES := ltfsdm.pb.cc ltfsdm.pb.h
-BINARY := client server
 POSTTARGET :=
 
 
