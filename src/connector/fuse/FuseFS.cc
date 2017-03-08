@@ -969,7 +969,7 @@ FuseFS::FuseFS(std::string sourcedir, std::string mountpt, std::string fsName, s
 	options << "-ouse_ino,fsname=OpenLTFS:" << fsName << ",nopath,default_permissions,allow_other,max_background=" << Const::MAX_FUSE_BACKGROUND;
 
 	fuse_opt_add_arg(&fargs, options.str().c_str());
-	if ( traceObject.getTrclevel() == Trace::much )
+	if ( getppid() != 1 && traceObject.getTrclevel() == Trace::much )
 		fuse_opt_add_arg(&fargs, "-d");
 	fuse_opt_parse(&fargs, NULL, NULL, NULL);
 
