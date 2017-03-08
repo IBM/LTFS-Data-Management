@@ -268,7 +268,8 @@ int FuseFS::ltfsdm_getattr(const char *path, struct stat *statbuf)
 	}
 	else {
 		miginfo = getMigInfo(FuseFS::souce_path(path).c_str());
-		if ( miginfo.state != FuseFS::mig_info::state_num::NO_STATE )
+		if ( miginfo.state != FuseFS::mig_info::state_num::NO_STATE &&
+			 miginfo.state != FuseFS::mig_info::state_num::IN_MIGRATION )
 			statbuf->st_size = miginfo.statinfo.st_size;
 		return 0;
 	}
