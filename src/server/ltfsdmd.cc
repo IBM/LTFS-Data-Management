@@ -28,15 +28,24 @@ int main(int argc, char **argv)
 	int err = Error::LTFSDM_OK;
 	bool detach = true;
 	int opt;
+	Trace::traceLevel tl = Trace::error;
 
 	Connector *connector = NULL;
 
 	opterr = 0;
 
-	while (( opt = getopt(argc, argv, "f")) != -1 ) {
+	while (( opt = getopt(argc, argv, "fd:")) != -1 ) {
 		switch( opt ) {
 			case 'f':
 				detach = false;
+				break;
+			case 'd':
+				try {
+					tl = (Trace::traceLevel) std::stoi(optarg);
+				}
+				catch(...) {
+					tl = Trace::error;
+				}
 				break;
 			default:
 				std::cerr << messages[LTFSDMC0013E] << std::endl;
@@ -53,7 +62,8 @@ int main(int argc, char **argv)
 		goto end;
 	}
 
-	traceObject.setTrclevel(Trace::much);
+	traceObject.setTrclevel(tl);
+
 	TRACE(Trace::little, getpid());
 
 	try {

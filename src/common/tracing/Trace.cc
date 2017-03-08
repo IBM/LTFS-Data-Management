@@ -21,10 +21,22 @@ Trace::~Trace()
 void Trace::setTrclevel(traceLevel level)
 
 {
-	traceLevel oldLevel = trclevel;
-	TRACE(Trace::error, oldLevel);
-	TRACE(Trace::error, level);
-	trclevel = level;
+	traceLevel oldLevel;
+
+	switch (level) {
+		case Trace::error:
+		case Trace::little:
+		case Trace::medium:
+        case Trace::much:
+			oldLevel = trclevel;
+			TRACE(Trace::error, oldLevel);
+			TRACE(Trace::error, level);
+			trclevel = level;
+			break;
+		default:
+			trclevel = Trace::error;
+			break;
+	}
 }
 
 int Trace::getTrclevel()
