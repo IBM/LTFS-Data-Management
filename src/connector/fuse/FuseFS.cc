@@ -349,7 +349,8 @@ int FuseFS::ltfsdm_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 
 		if ( S_ISREG(statbuf.st_mode) ) {
 			miginfo = getMigInfoAt(dirfd(dirinfo->dir), dirinfo->dentry->d_name);
-			if ( miginfo.state != FuseFS::mig_info::state_num::NO_STATE )
+			if ( miginfo.state != FuseFS::mig_info::state_num::NO_STATE &&
+				 miginfo.state != FuseFS::mig_info::state_num::IN_MIGRATION )
 				statbuf.st_size = miginfo.statinfo.st_size;
 		}
 

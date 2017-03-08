@@ -285,7 +285,8 @@ struct stat FsObj::stat()
 
 	miginfo = FuseFS::getMigInfo(fh->sourcePath.c_str());
 
-	if ( miginfo.state !=FuseFS::mig_info::state_num::NO_STATE ) {
+	if ( miginfo.state !=FuseFS::mig_info::state_num::NO_STATE &&
+		 miginfo.state != FuseFS::mig_info::state_num::IN_MIGRATION ) {
 		statbuf = miginfo.statinfo;
 	}
 	else {
