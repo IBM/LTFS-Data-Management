@@ -29,7 +29,7 @@
 #include "TransRecall.h"
 
 
-void TransRecall::recall(Connector::rec_info_t recinfo, std::string tapeId, long reqNum, bool newReq)
+void TransRecall::addRequest(Connector::rec_info_t recinfo, std::string tapeId, long reqNum, bool newReq)
 
 {
 	int rc;
@@ -38,9 +38,7 @@ void TransRecall::recall(Connector::rec_info_t recinfo, std::string tapeId, long
 	sqlite3_stmt *stmt;
 	std::string tapeName;
 	int state;
-	int toState;
 	FsObj::mig_attr_t attr;
-	bool succeeded = true;
 
 	std::string filename;
 	if ( recinfo.filename.compare("") == 0 )
@@ -49,7 +47,7 @@ void TransRecall::recall(Connector::rec_info_t recinfo, std::string tapeId, long
 		filename = std::string("'") + recinfo.filename + std::string("'");
 
 	ssql << "INSERT INTO JOB_QUEUE (OPERATION, FILE_NAME, REQ_NUM, TARGET_STATE, FILE_SIZE, FS_ID, I_GEN, "
-		 << "I_NUM, MTIME_SEC, MTIME_NSEC, LAST_UPD, FILE_STATE, TAPE_ID, START_BLOCK, FILE_DESCRIPTOR) "
+		 << "I_NUM, MTIME_SEC, MTIME_NSEC, LAST_UPD, FILE_STATE, TAPE_ID, START_BLOCK, FILE_DESCRIPTOR, CONN_INFO) "
 		 << "VALUES (" << DataBase::TRARECALL << ", "            // OPERATION
 		 << filename.c_str() << ", "                  // FILE_NAME
 		 << reqNum << ", "                                       // REQ_NUM
@@ -79,31 +77,29 @@ void TransRecall::recall(Connector::rec_info_t recinfo, std::string tapeId, long
 		}
 		ssql << state << ", ";                                   // FILE_STATE
 		attr = fso.getAttribute();
-		//		ssql << "'" << attr.tapeId[0] << "', ";                  // TAPE_ID
-		ssql << "'" << tapeId << "', ";                  // TAPE_ID
+		ssql << "'" << tapeId << "', ";                          // TAPE_ID
 		tapeName = Scheduler::getTapeName(recinfo.fsid, recinfo.igen,
 										  recinfo.ino, tapeId);
-		ssql << Scheduler::getStartBlock(tapeName) << ", "       // START_BLOCK
-			 << recinfo.fd << ");";                              // FILE_DESCRIPTOR
+		ssql << Scheduler::getStartBlock(tapeName) << ", ";      // START_BLOCK
+		if ( recinfo.fd )
+			ssql << recinfo.fd << ", ";                          // FILE_DESCRIPTOR
+		else
+			ssql << "NULL" << ", ";
+		ssql << (std::intptr_t) recinfo.conn_info << ");";       // CONN_INFO
 	}
 	catch ( int error ) {
 		MSG(LTFSDMS0032E, recinfo.ino);
 	}
 
-	if ( recinfo.toresident )
-		toState = FsObj::RESIDENT;
-	else
-		toState = FsObj::PREMIGRATED;
-
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 	rc = sqlite3_statement::step(stmt);
 	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 
+	std::unique_lock<std::mutex> lock(Scheduler::mtx);
+
 	if ( newReq == true ) {
 		ssql.str("");
 		ssql.clear();
-
-		std::unique_lock<std::mutex> lock(Scheduler::mtx);
 
 		ssql << "INSERT INTO REQUEST_QUEUE (OPERATION, REQ_NUM, "
 			 << "TAPE_ID, TIME_ADDED, STATE) "
@@ -124,8 +120,6 @@ void TransRecall::recall(Connector::rec_info_t recinfo, std::string tapeId, long
 		ssql.str("");
 		ssql.clear();
 
-		std::unique_lock<std::mutex> lock(Scheduler::mtx);
-
 		ssql << "SELECT STATE FROM REQUEST_QUEUE WHERE REQ_NUM=" << reqNum;
 		sqlite3_statement::prepare(ssql.str(), &stmt);
 		while ( (rc = sqlite3_statement::step(stmt)) == SQLITE_ROW ) {
@@ -145,73 +139,6 @@ void TransRecall::recall(Connector::rec_info_t recinfo, std::string tapeId, long
 			Scheduler::cond.notify_one();
 		}
 	}
-
-	while ( true ) {
-		bool reqCompleted = true;
-		bool jobCompleted = true;
-		ssql.str("");
-		ssql.clear();
-
-		std::unique_lock<std::mutex> lock(Scheduler::mtx);
-
-		ssql << "SELECT STATE FROM REQUEST_QUEUE WHERE REQ_NUM=" << reqNum;
-		sqlite3_statement::prepare(ssql.str(), &stmt);
-		while ( (rc = sqlite3_statement::step(stmt)) == SQLITE_ROW ) {
-			if ( sqlite3_column_int(stmt, 0) != DataBase::REQ_COMPLETED ) {
-				reqCompleted = false;
-			}
-		}
-		sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
-
-		ssql.str("");
-		ssql.clear();
-
-		ssql << "SELECT FILE_STATE FROM JOB_QUEUE WHERE"
-			 << " FS_ID=" << (long long) recinfo.fsid
-			 << " AND I_GEN=" << recinfo.igen
-			 << " AND I_NUM=" << (long long) recinfo.ino
-			 << " AND REQ_NUM=" << reqNum;
-		sqlite3_statement::prepare(ssql.str(), &stmt);
-		while ( (rc = sqlite3_statement::step(stmt)) == SQLITE_ROW ) {
-			if ( sqlite3_column_int(stmt, 0) == FsObj::FAILED ) {
-				succeeded = false;
-			}
-			else if ( sqlite3_column_int(stmt, 0) != toState ) {
-				jobCompleted = false;
-			}
-		}
-		sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
-
-		if  ( jobCompleted == true ) {
-			ssql.str("");
-			ssql.clear();
-
-			ssql << "DELETE FROM JOB_QUEUE WHERE"
-				 << " FS_ID=" << (long long) recinfo.fsid
-				 << " AND I_GEN=" << recinfo.igen
-				 << " AND I_NUM=" << (long long) recinfo.ino
-				 << " AND REQ_NUM=" << reqNum;
-			sqlite3_statement::prepare(ssql.str(), &stmt);
-			rc = sqlite3_statement::step(stmt);
-			sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
-			break;
-		}
-		else if ( reqCompleted == true ) {
-			ssql.str("");
-			ssql.clear();
-			ssql << "UPDATE REQUEST_QUEUE SET STATE=" << DataBase::REQ_NEW
-				 << " WHERE REQ_NUM=" << reqNum << " AND TAPE_ID='" << tapeId << "';";
-			sqlite3_statement::prepare(ssql.str(), &stmt);
-			rc = sqlite3_statement::step(stmt);
-			sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
-			Scheduler::cond.notify_one();
-		}
-		lock.unlock();
-
-		sleep(1);
-	}
-
-	Connector::respondRecallEvent(recinfo, succeeded);
 }
 
 void TransRecall::run(Connector *connector)
@@ -300,7 +227,7 @@ void TransRecall::run(Connector *connector)
 			newReq = false;
 		}
 
-		subs.enqueue(thrdinfo.str(), TransRecall::recall, recinfo, tapeId, reqmap[tapeId], newReq);
+		subs.enqueue(thrdinfo.str(), TransRecall::addRequest, recinfo, tapeId, reqmap[tapeId], newReq);
 	}
 
 	subs.waitAllRemaining();
@@ -394,7 +321,7 @@ void recallStep(int reqNum, std::string tapeId)
 	FsObj::file_state toState;
 	int numFiles = 0;
 
-	ssql << "SELECT FS_ID, I_GEN, I_NUM, FILE_NAME, FILE_DESCRIPTOR, FILE_STATE, TARGET_STATE  FROM JOB_QUEUE "
+	ssql << "SELECT FS_ID, I_GEN, I_NUM, FILE_NAME, FILE_DESCRIPTOR, FILE_STATE, TARGET_STATE, CONN_INFO  FROM JOB_QUEUE "
 		 << "WHERE REQ_NUM=" << reqNum << " AND TAPE_ID='" << tapeId << "' ORDER BY START_BLOCK";
 
 	sqlite3_statement::prepare(ssql.str(), &stmt);
@@ -415,35 +342,22 @@ void recallStep(int reqNum, std::string tapeId)
 		recinfo.fd =  (int) sqlite3_column_int(stmt, 4);
 		state = (FsObj::file_state) sqlite3_column_int(stmt, 5);
 		toState = (FsObj::file_state) sqlite3_column_int(stmt, 6);
-
-		if ( state == FsObj::RESIDENT )
-			continue;
-
-		if ( state == toState )
-			continue;
+		if ( toState == FsObj::RESIDENT )
+			recinfo.toresident = true;
+		recinfo.conn_info = (struct conn_info_t *) sqlite3_column_int64(stmt, 7);
 
 		try {
 			recall(recinfo, tapeId, state, toState);
+			Connector::respondRecallEvent(recinfo, true);
 		}
 		catch(int error) {
-			ssql.str("");
-			ssql.clear();
-			ssql << "UPDATE JOB_QUEUE SET FILE_STATE =" <<  FsObj::FAILED << " WHERE"
-				 << " FS_ID=" << (long long) recinfo.fsid
-				 << " AND I_GEN=" << recinfo.igen
-				 << " AND I_NUM=" << (long long) recinfo.ino
-				 << " AND REQ_NUM=" << reqNum;
-			sqlite3_stmt *stmt2;
-			sqlite3_statement::prepare(ssql.str(), &stmt2);
-			rc2 = sqlite3_statement::step(stmt2);
-			sqlite3_statement::checkRcAndFinalize(stmt2, rc2, SQLITE_DONE);
-			return;
+			Connector::respondRecallEvent(recinfo, false);
 		}
 
 		ssql.str("");
 		ssql.clear();
 
-		ssql << "UPDATE JOB_QUEUE SET FILE_STATE =" <<  toState << " WHERE"
+		ssql << "DELETE FROM JOB_QUEUE WHERE"
 			 << " FS_ID=" << (long long) recinfo.fsid
 			 << " AND I_GEN=" << recinfo.igen
 			 << " AND I_NUM=" << (long long) recinfo.ino
@@ -467,23 +381,34 @@ void TransRecall::execRequest(int reqNum, std::string tapeId)
 {
 	std::stringstream ssql;
 	sqlite3_stmt *stmt;
+	int remaining = 0;
 	int rc;
 
 	recallStep(reqNum, tapeId);
 
 	std::unique_lock<std::mutex> lock(Scheduler::mtx);
+
 	ssql << "UPDATE TAPE_LIST SET STATE=" << DataBase::TAPE_FREE
 		 << " WHERE TAPE_ID='" << tapeId << "';";
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 	rc = sqlite3_statement::step(stmt);
 	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
-	Scheduler::cond.notify_one();
 
 	ssql.str("");
 	ssql.clear();
-	ssql << "UPDATE REQUEST_QUEUE SET STATE=" << DataBase::REQ_COMPLETED
+	ssql << "SELECT FILE_STATE, COUNT(*) FROM JOB_QUEUE WHERE REQ_NUM="
+		 << reqNum << " AND TAPE_ID='" << tapeId << "';";
+	sqlite3_statement::prepare(ssql.str(), &stmt);
+	while ( (rc = sqlite3_statement::step(stmt)) == SQLITE_ROW )
+				remaining = sqlite3_column_int(stmt, 1);
+	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+
+	ssql.str("");
+	ssql.clear();
+	ssql << "UPDATE REQUEST_QUEUE SET STATE=" << (remaining ? DataBase::REQ_NEW : DataBase::REQ_COMPLETED )
 		 << " WHERE REQ_NUM=" << reqNum << " AND TAPE_ID='" << tapeId << "';";
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 	rc = sqlite3_statement::step(stmt);
 	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+	Scheduler::cond.notify_one();
 }
