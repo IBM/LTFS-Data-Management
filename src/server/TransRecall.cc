@@ -85,7 +85,10 @@ void TransRecall::addRequest(Connector::rec_info_t recinfo, std::string tapeId, 
 			ssql << recinfo.fd << ", ";                          // FILE_DESCRIPTOR
 		else
 			ssql << "NULL" << ", ";
-		ssql << (std::intptr_t) recinfo.conn_info << ");";       // CONN_INFO
+		if (  recinfo.conn_info != NULL )
+			ssql << (std::intptr_t) recinfo.conn_info << ");";   // CONN_INFO
+		else
+			ssql << "NULL" << ");";
 	}
 	catch ( int error ) {
 		MSG(LTFSDMS0032E, recinfo.ino);
