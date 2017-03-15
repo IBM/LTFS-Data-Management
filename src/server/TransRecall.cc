@@ -323,6 +323,7 @@ void recallStep(int reqNum, std::string tapeId)
 	FsObj::file_state state;
 	FsObj::file_state toState;
 	int numFiles = 0;
+	bool succeeded;
 
 	ssql << "SELECT FS_ID, I_GEN, I_NUM, FILE_NAME, FILE_DESCRIPTOR, FILE_STATE, TARGET_STATE, CONN_INFO  FROM JOB_QUEUE "
 		 << "WHERE REQ_NUM=" << reqNum << " AND TAPE_ID='" << tapeId << "' ORDER BY START_BLOCK";
@@ -351,10 +352,10 @@ void recallStep(int reqNum, std::string tapeId)
 
 		try {
 			recall(recinfo, tapeId, state, toState);
-			Connector::respondRecallEvent(recinfo, true);
+			succeeded = true;
 		}
 		catch(int error) {
-			Connector::respondRecallEvent(recinfo, false);
+			succeeded = false;
 		}
 
 		ssql.str("");
@@ -371,6 +372,8 @@ void recallStep(int reqNum, std::string tapeId)
 		sqlite3_statement::prepare(ssql.str(), &stmt2);
 		rc2 = sqlite3_statement::step(stmt2);
 		sqlite3_statement::checkRcAndFinalize(stmt2, rc2, SQLITE_DONE);
+
+		Connector::respondRecallEvent(recinfo, succeeded);
 	}
 
 	TRACE(Trace::medium, numFiles);
