@@ -17,8 +17,9 @@ namespace Const {
 	const int MAX_RECEIVER_THREADS = 40;
 	const int MAX_TRANSPARENT_RECALL_THREADS = 8192;
 	const int MAX_OBJECTS_SEND = 100000;
-	const int MAX_FUSE_BACKGROUND = 4096;
+	const int MAX_FUSE_BACKGROUND = 256*1024;
 	const struct rlimit NOFILE_LIMIT = (struct rlimit) {1024*1024, 1024*1024};
+	const struct rlimit NPROC_LIMIT = (struct rlimit) {16*1024*1024, 16*1024*1024};
 	const std::string DMAPI_SESSION_NAME = std::string("ltfsdm");
 	const std::string LTFS_PATH = std::string("/mnt/ltfs");
 	const std::string LTFS_NAME = std::string("ltfsdm");

@@ -83,17 +83,18 @@ Connector::rec_info_t Connector::getEvents()
 void Connector::respondRecallEvent(rec_info_t recinfo, bool success)
 
 {
-	std::lock_guard<std::mutex> lock_connector(FuseConnector::respond_mutex);
-	std::unique_lock<std::mutex> lock(FuseFS::trecall_reply.mtx);
-	FuseFS::trecall_fuid = (fuid_t) {recinfo.fsid, recinfo.igen, recinfo.ino};
-	FuseFS::trecall_reply.cond.notify_all();
-	FuseFS::trecall_reply.wait_cond.wait(lock);
+	//std::lock_guard<std::mutex> lock_connector(FuseConnector::respond_mutex);
+
+	conn_info_t *conn_info = recinfo.conn_info;
+
+	std::unique_lock<std::mutex> lock(conn_info->trecall_reply.mtx);
+	conn_info->trecall_reply.cond.notify_one();
 }
 
 void Connector::terminate()
 
 {
-	std::unique_lock<std::mutex> lock(FuseFS::trecall_submit.mtx);
+	std::lock_guard<std::mutex> lock(FuseFS::trecall_submit.mtx);
 
 	FuseFS::recinfo_share = (Connector::rec_info_t) {0, 0, 0, 0, 0, 0, ""};
 	FuseFS::trecall_submit.cond.notify_one();

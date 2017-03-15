@@ -95,6 +95,8 @@ private:
 							   size_t size, off_t offset, struct fuse_file_info *finfo);
 	static int ltfsdm_write(const char *path, const char *buf, size_t size,
 							off_t offset, struct fuse_file_info *finfo);
+	static int ltfsdm_write_buf(const char *path, struct fuse_bufvec *buf,
+								off_t offset, struct fuse_file_info *finfo);
 	static int ltfsdm_statfs(const char *path, struct statvfs *stbuf);
 	static int ltfsdm_release(const char *path, struct fuse_file_info *finfo);
 	static int ltfsdm_flush(const char *path, struct fuse_file_info *finfo);
@@ -123,7 +125,7 @@ public:
 		std::mutex mtx;
 		std::condition_variable cond;
 		std::condition_variable wait_cond;
-	} trecall_submit, trecall_reply;
+	} trecall_submit;
 	static Connector::rec_info_t recinfo_share;
 	static std::atomic<fuid_t> trecall_fuid;
 	static std::atomic<bool> no_rec_event;
@@ -136,5 +138,10 @@ public:
 	FuseFS(std::string sourcedir, std::string mountpt, std::string fsName, struct timespec starttime);
 	~FuseFS();
 };
+
+struct conn_info_t {
+	FuseFS::serialize trecall_reply;
+};
+
 
 #endif /* _FUSEFS_H */

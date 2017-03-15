@@ -90,6 +90,11 @@ void Server::initialize()
 		throw(errno);
 	}
 
+	if ( setrlimit(RLIMIT_NPROC, &Const::NPROC_LIMIT) == -1 ) {
+		MSG(LTFSDMS0046E);
+		throw(errno);
+	}
+
 	lockServer();
 	writeKey();
 

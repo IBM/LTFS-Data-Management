@@ -330,6 +330,8 @@ void recallStep(int reqNum, std::string tapeId)
 
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 
+	DB.beginTransaction();
+
 	while ( (rc = sqlite3_statement::step(stmt) ) ) {
 		if ( rc != SQLITE_ROW )
 			break;
@@ -375,6 +377,8 @@ void recallStep(int reqNum, std::string tapeId)
 
 		Connector::respondRecallEvent(recinfo, succeeded);
 	}
+
+	DB.endTransaction();
 
 	TRACE(Trace::medium, numFiles);
 
