@@ -389,7 +389,7 @@ Connector::rec_info_t Connector::getEvents()
 	dm_token_t token;
 	int retries;
 
-	recinfo = (Connector::rec_info_t) {0, 0, 0, 0, 0, 0, ""};
+	recinfo = (Connector::rec_info_t) {0, 0, 0, 0, 0, ""};
 
 	while ( dm_get_events(dmapiSession, 1, DM_EV_WAIT, sizeof(eventBuf), eventBuf, &rlen) == -1 ) {
 		TRACE(Trace::error, errno);

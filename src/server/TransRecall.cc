@@ -47,7 +47,7 @@ void TransRecall::addRequest(Connector::rec_info_t recinfo, std::string tapeId, 
 		filename = std::string("'") + recinfo.filename + std::string("'");
 
 	ssql << "INSERT INTO JOB_QUEUE (OPERATION, FILE_NAME, REQ_NUM, TARGET_STATE, FILE_SIZE, FS_ID, I_GEN, "
-		 << "I_NUM, MTIME_SEC, MTIME_NSEC, LAST_UPD, FILE_STATE, TAPE_ID, START_BLOCK, FILE_DESCRIPTOR, CONN_INFO) "
+		 << "I_NUM, MTIME_SEC, MTIME_NSEC, LAST_UPD, FILE_STATE, TAPE_ID, START_BLOCK, CONN_INFO) "
 		 << "VALUES (" << DataBase::TRARECALL << ", "            // OPERATION
 		 << filename.c_str() << ", "                  // FILE_NAME
 		 << reqNum << ", "                                       // REQ_NUM
@@ -80,15 +80,8 @@ void TransRecall::addRequest(Connector::rec_info_t recinfo, std::string tapeId, 
 		ssql << "'" << tapeId << "', ";                          // TAPE_ID
 		tapeName = Scheduler::getTapeName(recinfo.fsid, recinfo.igen,
 										  recinfo.ino, tapeId);
-		ssql << Scheduler::getStartBlock(tapeName) << ", ";      // START_BLOCK
-		if ( recinfo.fd )
-			ssql << recinfo.fd << ", ";                          // FILE_DESCRIPTOR
-		else
-			ssql << "NULL" << ", ";
-		if (  recinfo.conn_info != NULL )
-			ssql << (std::intptr_t) recinfo.conn_info << ");";   // CONN_INFO
-		else
-			ssql << "NULL" << ");";
+		ssql << Scheduler::getStartBlock(tapeName) << ", "       // START_BLOCK
+			 << (std::intptr_t) recinfo.conn_info << ");";       // CONN_INFO
 	}
 	catch ( int error ) {
 		MSG(LTFSDMS0032E, recinfo.ino);
@@ -325,7 +318,7 @@ void recallStep(int reqNum, std::string tapeId)
 	int numFiles = 0;
 	bool succeeded;
 
-	ssql << "SELECT FS_ID, I_GEN, I_NUM, FILE_NAME, FILE_DESCRIPTOR, FILE_STATE, TARGET_STATE, CONN_INFO  FROM JOB_QUEUE "
+	ssql << "SELECT FS_ID, I_GEN, I_NUM, FILE_NAME, FILE_STATE, TARGET_STATE, CONN_INFO  FROM JOB_QUEUE "
 		 << "WHERE REQ_NUM=" << reqNum << " AND TAPE_ID='" << tapeId << "' ORDER BY START_BLOCK";
 
 	sqlite3_statement::prepare(ssql.str(), &stmt);
@@ -338,19 +331,18 @@ void recallStep(int reqNum, std::string tapeId)
 
 		numFiles++;
 
-		recinfo = (Connector::rec_info_t) {0, 0, 0, 0, 0, 0, ""};
+		recinfo = (Connector::rec_info_t) {0, 0, 0, 0, 0, ""};
 		recinfo.fsid = (unsigned long long) sqlite3_column_int64(stmt, 0);
 		recinfo.igen = (unsigned int) sqlite3_column_int(stmt, 1);
 		recinfo.ino = (unsigned long long) sqlite3_column_int64(stmt, 2);
 		const char *cstr = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3));
 		if ( cstr != NULL )
 			recinfo.filename = std::string(cstr);
-		recinfo.fd =  (int) sqlite3_column_int(stmt, 4);
-		state = (FsObj::file_state) sqlite3_column_int(stmt, 5);
-		toState = (FsObj::file_state) sqlite3_column_int(stmt, 6);
+		state = (FsObj::file_state) sqlite3_column_int(stmt, 4);
+		toState = (FsObj::file_state) sqlite3_column_int(stmt, 5);
 		if ( toState == FsObj::RESIDENT )
 			recinfo.toresident = true;
-		recinfo.conn_info = (struct conn_info_t *) sqlite3_column_int64(stmt, 7);
+		recinfo.conn_info = (struct conn_info_t *) sqlite3_column_int64(stmt, 6);
 
 		try {
 			recall(recinfo, tapeId, state, toState);

@@ -38,7 +38,7 @@
 
 FuseFS::serialize FuseFS::trecall_submit;
 
-Connector::rec_info_t FuseFS::recinfo_share = (Connector::rec_info_t) {0, 0, 0, 0, 0, 0, ""};
+Connector::rec_info_t FuseFS::recinfo_share = (Connector::rec_info_t) {0, 0, 0, 0, 0, ""};
 std::atomic<fuid_t> FuseFS::trecall_fuid((fuid_t) {0, 0, 0});
 std::atomic<bool> FuseFS::no_rec_event(false);
 
@@ -208,7 +208,6 @@ int FuseFS::recall_file(FuseFS::ltfsdm_file_info *linfo, bool toresident)
 {
 	struct stat statbuf;
 	unsigned int igen;
-	int fd;
 	conn_info_t *conn_info;
 	std::unique_lock<std::mutex> *lock_reply;
 
@@ -235,19 +234,11 @@ int FuseFS::recall_file(FuseFS::ltfsdm_file_info *linfo, bool toresident)
 	recinfo_share.igen = igen;
 	recinfo_share.ino = statbuf.st_ino;
 	recinfo_share.filename = linfo->sourcepath;
-	if ( (fd = open(recinfo_share.filename.c_str(), O_WRONLY)) == -1 ) {
-		TRACE(Trace::error, fuse_get_context()->pid);
-		TRACE(Trace::error, errno);
-		return (-1*errno);
-	}
-	recinfo_share.fd = fd;
 
 	lock_reply = new std::unique_lock<std::mutex>(conn_info->trecall_reply.mtx);
 	FuseFS::trecall_submit.cond.notify_one();
 	lock.unlock();
 	conn_info->trecall_reply.cond.wait(*lock_reply);
-
-	close(fd);
 
 	delete(lock_reply);
    	delete(conn_info);

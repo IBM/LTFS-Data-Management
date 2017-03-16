@@ -11,7 +11,6 @@ public:
 		unsigned long long fsid;
         unsigned int igen;
         unsigned long long ino;
-		int fd;
 		std::string filename;
 	};
 	Connector(bool cleanup);

@@ -75,7 +75,7 @@ Connector::rec_info_t Connector::getEvents()
 	FuseFS::trecall_submit.wait_cond.notify_all();
 	FuseFS::trecall_submit.cond.wait(*FuseConnector::trecall_lock);
 	recinfo = FuseFS::recinfo_share;
-	FuseFS::recinfo_share = (Connector::rec_info_t) {0, 0, 0, 0, 0, 0, ""};
+	FuseFS::recinfo_share = (Connector::rec_info_t) {0, 0, 0, 0, 0, ""};
 
 	return recinfo;
 }
@@ -96,7 +96,7 @@ void Connector::terminate()
 {
 	std::lock_guard<std::mutex> lock(FuseFS::trecall_submit.mtx);
 
-	FuseFS::recinfo_share = (Connector::rec_info_t) {0, 0, 0, 0, 0, 0, ""};
+	FuseFS::recinfo_share = (Connector::rec_info_t) {0, 0, 0, 0, 0, ""};
 	FuseFS::trecall_submit.cond.notify_one();
 }
 
@@ -140,7 +140,7 @@ FsObj::FsObj(Connector::rec_info_t recinfo)
 	FuseHandle *fh = new FuseHandle();
 
 	fh->sourcePath = recinfo.filename;
-	fh->fd = dup(recinfo.fd);
+	fh->fd = open(recinfo.filename.c_str(), O_RDWR);
 
 	if ( fh->fd == -1 ) {
 		TRACE(Trace::error, errno);
