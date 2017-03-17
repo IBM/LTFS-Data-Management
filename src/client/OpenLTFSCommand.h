@@ -16,6 +16,7 @@ protected:
 		optionStr(optionStr_),
 		fsName(""),
 		mountPoint(""),
+		startTime(time(NULL)),
 	    key(Const::UNSET) {};
 	bool waitForCompletion;
 	bool preMigrate;
@@ -29,6 +30,7 @@ protected:
 	std::string fsName;
 	std::string mountPoint;
 	std::ifstream fileListStrm;
+	time_t startTime;
 	long key;
 	LTFSDmCommClient commCommand;
 

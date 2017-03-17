@@ -277,7 +277,7 @@ void OpenLTFSCommand::queryResults()
 	long failed = 0;
 	bool first = true;
 	bool done = false;
-	struct timeval curtime;
+	time_t duration;
 	struct tm tmval;;
 	char curctime[26];
 
@@ -325,8 +325,8 @@ void OpenLTFSCommand::queryResults()
 			failed = reqstatusresp.failed();
 			done = reqstatusresp.done();
 
-			gettimeofday(&curtime, NULL);
-			localtime_r(&(curtime.tv_sec), &tmval);
+			duration = time(NULL) - startTime;
+			gmtime_r(&duration, &tmval);
 			strftime(curctime, sizeof(curctime) - 1, "%H:%M:%S", &tmval);
 			if ( first ) {
 				INFO(LTFSDMC0046I);
