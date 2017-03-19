@@ -96,7 +96,10 @@ bool FileOperation::queryResult(long reqNumber, long *resident,
 		ssql.str("");
 		ssql.clear();
 
-		Scheduler::updReq.erase(Scheduler::updReq.find(reqNumber));
+		{
+			std::lock_guard<std::mutex> updlock(Scheduler::updmtx);
+			Scheduler::updReq.erase(Scheduler::updReq.find(reqNumber));
+		}
 
 		ssql << "DELETE FROM JOB_QUEUE WHERE REQ_NUM=" << reqNumber;
 		sqlite3_statement::prepare(ssql.str(), &stmt);

@@ -118,7 +118,10 @@ void SelRecall::addRequest()
 
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 
-	Scheduler::updReq[reqNumber] = false;
+	{
+		std::lock_guard<std::mutex> updlock(Scheduler::updmtx);
+		Scheduler::updReq[reqNumber] = false;
+	}
 
 	while ( (rc = sqlite3_statement::step(stmt)) == SQLITE_ROW ) {
 		std::unique_lock<std::mutex> lock(Scheduler::mtx);

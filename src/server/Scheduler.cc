@@ -31,6 +31,9 @@ std::mutex Scheduler::mtx;
 std::condition_variable Scheduler::cond;
 std::mutex Scheduler::updmtx;
 std::condition_variable Scheduler::updcond;
+std::mutex Scheduler::startmtx;
+std::condition_variable Scheduler:: startcond;
+Scheduler::startInfo_t Scheduler::startInfo = (Scheduler::startInfo_t) {-1, -1, -1};
 std::map<int, std::atomic<bool>> Scheduler::updReq;
 std::map<std::string, std::atomic<bool>> Scheduler::suspend_map;
 
@@ -174,6 +177,8 @@ void Scheduler::run(long key)
 
 				std::stringstream thrdinfo;
 
+				std::unique_lock<std::mutex> startlock(Scheduler::startmtx);
+
 				switch (sqlite3_column_int(stmt, 0)) {
 					case DataBase::MIGRATION:
 						ssql.str("");
@@ -186,8 +191,10 @@ void Scheduler::run(long key)
 						rc = sqlite3_statement::step(stmt3);
 						sqlite3_statement::checkRcAndFinalize(stmt3, rc, SQLITE_DONE);
 
-						thrdinfo << "Mig(" << reqNum << "," << replNum << "," << colGrp << ")";
-						subs.enqueue(thrdinfo.str(), Migration::execRequest, reqNum, tgtState, numRepl, replNum, colGrp, tapeId);
+						Scheduler::startInfo = (Scheduler::startInfo_t) {reqNum, replNum, colGrp};
+						Scheduler::startcond.notify_all();
+						//thrdinfo << "Mig(" << reqNum << "," << replNum << "," << colGrp << ")";
+						//subs.enqueue(thrdinfo.str(), Migration::execRequest, reqNum, tgtState, numRepl, replNum, colGrp, tapeId);
 						break;
 					case DataBase::SELRECALL:
 						ssql.str("");
