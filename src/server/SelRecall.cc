@@ -11,6 +11,7 @@
 
 #include <mutex>
 #include <condition_variable>
+#include <thread>
 
 #include <sqlite3.h>
 #include "src/common/comm/ltfsdm.pb.h"
@@ -26,6 +27,7 @@
 #include "DataBase.h"
 #include "FileOperation.h"
 #include "Scheduler.h"
+#include "SubServer.h"
 #include "SelRecall.h"
 
 void SelRecall::addJob(std::string fileName)
@@ -63,13 +65,16 @@ void SelRecall::addJob(std::string fileName)
 			 << statbuf.st_mtim.tv_nsec << ", "                  // MTIME_NSEC
 			 << time(NULL) << ", ";                              // LAST_UPD
 		state = fso.getMigState();
-		if ( fso.getMigState() == FsObj::RESIDENT ) {
+		if ( state == FsObj::RESIDENT ) {
 			MSG(LTFSDMS0026I, fileName.c_str());
 			return;
 		}
 		ssql << state << ", ";                                   // FILE_STATE
 		attr = fso.getAttribute();
 		ssql << "'" << attr.tapeId[0] << "', ";                  // TAPE_ID
+		if ( state == FsObj::MIGRATED ) {
+			needsTape.insert(attr.tapeId[0]);
+		}
 		tapeName = Scheduler::getTapeName(fileName, attr.tapeId[0]);
 		ssql << Scheduler::getStartBlock(tapeName) << ");";      // START_BLOCK
 	}
@@ -109,6 +114,8 @@ void SelRecall::addRequest()
 	int rc;
 	std::stringstream ssql;
 	sqlite3_stmt *stmt;
+	std::stringstream thrdinfo;
+	SubServer subs;
 
 	ssql.str("");
 	ssql.clear();
@@ -138,12 +145,14 @@ void SelRecall::addRequest()
 			  << reqNumber << ", "                                                  // REQ_NUM
 			  << targetState << ", "                                                // TARGET_STATE
 			  << "NULL" << ", "                                                     // COLOC_GRP
-			  << "'" << tapeId << "', "       // TAPE_ID
+			  << "'" << tapeId << "', "                                             // TAPE_ID
 			  << time(NULL) << ", ";                                                // TIME_ADDED
-		if ( tapeId.compare(Const::FAILED_TAPE_ID) != 0 )
+		if ( tapeId.compare(Const::FAILED_TAPE_ID) == 0 )
+			ssql2 << DataBase::REQ_COMPLETED << ");";                               // STATE
+		else if ( needsTape.count(tapeId) > 0 )
 			ssql2 << DataBase::REQ_NEW << ");";                                     // STATE
 		else
-			ssql2 << DataBase::REQ_COMPLETED << ");";                               // STATE
+			ssql2 << DataBase::REQ_INPROGRESS << ");";                              // STATE
 
 		sqlite3_statement::prepare(ssql2.str(), &stmt2);
 
@@ -151,15 +160,23 @@ void SelRecall::addRequest()
 
 		sqlite3_statement::checkRcAndFinalize(stmt2, rc, SQLITE_DONE);
 
-		Scheduler::cond.notify_one();
+		if ( needsTape.count(tapeId) > 0 ) {
+			Scheduler::cond.notify_one();
+		}
+		else {
+			thrdinfo << "SelRec(" << reqNumber << ")";
+			subs.enqueue(thrdinfo.str(), SelRecall::execRequest, reqNumber, targetState, tapeId, false);
+		}
 	}
 
 	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+
+	subs.waitAllRemaining();
 }
 
 
-unsigned long recall(std::string fileName, std::string tapeId,
-					 FsObj::file_state state, FsObj::file_state toState)
+unsigned long SelRecall::recall(std::string fileName, std::string tapeId,
+								FsObj::file_state state, FsObj::file_state toState)
 
 {
 	struct stat statbuf;
@@ -233,7 +250,7 @@ unsigned long recall(std::string fileName, std::string tapeId,
 	return statbuf.st_size;
 }
 
-void recallStep(int reqNum, std::string tapeId, FsObj::file_state toState)
+void SelRecall::recallStep(int reqNumber, std::string tapeId, FsObj::file_state toState, bool needsTape)
 
 {
 	sqlite3_stmt *stmt;
@@ -244,13 +261,13 @@ void recallStep(int reqNum, std::string tapeId, FsObj::file_state toState)
 	time_t start;
 
 	std::unique_lock<std::mutex> lock(Scheduler::updmtx);
-	TRACE(Trace::much, reqNum);
-	Scheduler::updReq[reqNum] = true;
+	TRACE(Trace::much, reqNumber);
+	Scheduler::updReq[reqNumber] = true;
 	Scheduler::updcond.notify_all();
 	lock.unlock();
 
 	ssql << "SELECT ROWID, FILE_NAME, FILE_STATE FROM JOB_QUEUE WHERE REQ_NUM="
-		 << reqNum << " AND TAPE_ID='" << tapeId << "' ORDER BY START_BLOCK";
+		 << reqNumber << " AND TAPE_ID='" << tapeId << "' ORDER BY START_BLOCK";
 
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 
@@ -275,6 +292,10 @@ void recallStep(int reqNum, std::string tapeId, FsObj::file_state toState)
 				continue;
 
 			try {
+				if ( (state == FsObj::MIGRATED) && (needsTape == false) ) {
+					MSG(LTFSDMS0047E, cstr);
+					throw(Error::LTFSDM_GENERAL_ERROR);
+				}
 				recall(std::string(cstr), tapeId, state, toState);
 				group_end = sqlite3_column_int(stmt, 0);
 			}
@@ -282,7 +303,7 @@ void recallStep(int reqNum, std::string tapeId, FsObj::file_state toState)
 				ssql.str("");
 				ssql.clear();
 				ssql << "UPDATE JOB_QUEUE SET FILE_STATE = " <<  FsObj::FAILED
-					 << " WHERE REQ_NUM=" << reqNum
+					 << " WHERE REQ_NUM=" << reqNumber
 					 << " AND TAPE_ID ='" << tapeId << "'"
 					 << " AND ROWID=" << sqlite3_column_int(stmt, 0);
 				TRACE(Trace::error, ssql.str());
@@ -308,7 +329,7 @@ void recallStep(int reqNum, std::string tapeId, FsObj::file_state toState)
 		ssql.clear();
 
 		ssql << "UPDATE JOB_QUEUE SET FILE_STATE = " <<  toState
-			 << " WHERE REQ_NUM=" << reqNum
+			 << " WHERE REQ_NUM=" << reqNumber
 			 << " AND TAPE_ID ='" << tapeId << "'"
 			 << " AND FILE_STATE!=" << FsObj::FAILED
 			 << " AND (ROWID BETWEEN " << group_begin << " AND " << group_end << ")";
@@ -321,7 +342,7 @@ void recallStep(int reqNum, std::string tapeId, FsObj::file_state toState)
 		rc2 = sqlite3_statement::step(stmt2);
 		sqlite3_statement::checkRcAndFinalize(stmt2, rc2, SQLITE_DONE);
 
-		Scheduler::updReq[reqNum] = true;
+		Scheduler::updReq[reqNumber] = true;
 		Scheduler::updcond.notify_all();
 		lock.unlock();
 
@@ -334,7 +355,7 @@ void recallStep(int reqNum, std::string tapeId, FsObj::file_state toState)
 	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 }
 
-void SelRecall::execRequest(int reqNum, int tgtState, std::string tapeId)
+void SelRecall::execRequest(int reqNumber, int tgtState, std::string tapeId, bool needsTape)
 
 {
 	std::stringstream ssql;
@@ -342,9 +363,9 @@ void SelRecall::execRequest(int reqNum, int tgtState, std::string tapeId)
 	int rc;
 
 	if ( tgtState == LTFSDmProtocol::LTFSDmMigRequest::PREMIGRATED )
-		recallStep(reqNum, tapeId, FsObj::PREMIGRATED);
+		recallStep(reqNumber, tapeId, FsObj::PREMIGRATED, needsTape);
 	else
-		recallStep(reqNum, tapeId, FsObj::RESIDENT);
+		recallStep(reqNumber, tapeId, FsObj::RESIDENT, needsTape);
 
 	std::unique_lock<std::mutex> lock(Scheduler::mtx);
 	ssql << "UPDATE TAPE_LIST SET STATE=" << DataBase::TAPE_FREE
@@ -359,11 +380,11 @@ void SelRecall::execRequest(int reqNum, int tgtState, std::string tapeId)
 	ssql.str("");
 	ssql.clear();
 	ssql << "UPDATE REQUEST_QUEUE SET STATE=" << DataBase::REQ_COMPLETED
-		 << " WHERE REQ_NUM=" << reqNum << " AND TAPE_ID='" << tapeId << "';";
+		 << " WHERE REQ_NUM=" << reqNumber << " AND TAPE_ID='" << tapeId << "';";
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 	rc = sqlite3_statement::step(stmt);
 	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 
-	Scheduler::updReq[reqNum] = true;
+	Scheduler::updReq[reqNumber] = true;
 	Scheduler::updcond.notify_all();
 }

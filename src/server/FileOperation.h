@@ -2,8 +2,6 @@
 #define _FILEOPERATION_H
 
 class FileOperation {
-protected:
-	bool needsTape = false;
 public:
 	virtual void addJob(std::string fileName) {}
 	virtual void start() {}
