@@ -15,7 +15,7 @@ private:
 
 	static unsigned long preMigrate(std::string fileName, std::string tapeId, long secs, long nsecs, int numRepl);
 	static void stub(std::string fileName, int numRepl);
-	static bool migrationStep(int reqNumber, int numRepl, int replNum, int colGrp, std::string tapeId, int fromState, int toState);
+	static bool migrationStep(int reqNumber, int numRepl, int replNum, int colGrp, std::string tapeId, FsObj::file_state fromState, FsObj::file_state toState);
 public:
 	Migration(unsigned long _pid, long _reqNumber, int _numReplica, int _colFactor,
 			  LTFSDmProtocol::LTFSDmMigRequest::State _targetState) :

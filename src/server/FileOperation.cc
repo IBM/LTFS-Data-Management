@@ -18,6 +18,7 @@
 
 #include "DataBase.h"
 #include "Scheduler.h"
+#include "Status.h"
 #include "FileOperation.h"
 
 bool FileOperation::queryResult(long reqNumber, long *resident,
@@ -57,42 +58,11 @@ bool FileOperation::queryResult(long reqNumber, long *resident,
 		}
 	} while(!done && time(NULL) - starttime < 10);
 
-	ssql.str("");
-	ssql.clear();
-
-	ssql << "SELECT FILE_STATE, COUNT(*) FROM JOB_QUEUE WHERE REQ_NUM="
-		 << reqNumber << " GROUP BY FILE_STATE";
-
-	sqlite3_statement::prepare(ssql.str(), &stmt);
-
-	*resident = 0;
-	*premigrated = 0;
-	*migrated = 0;
-	*failed = 0;
-
-	while ( (rc = sqlite3_statement::step(stmt)) == SQLITE_ROW ) {
-		switch ( sqlite3_column_int(stmt, 0) ) {
-			case FsObj::RESIDENT:
-				*resident = sqlite3_column_int(stmt, 1);
-				break;
-			case FsObj::PREMIGRATED:
-				*premigrated = sqlite3_column_int(stmt, 1);
-				break;
-			case FsObj::MIGRATED:
-				*migrated = sqlite3_column_int(stmt, 1);
-				break;
-			case FsObj::FAILED:
-				*failed = sqlite3_column_int(stmt, 1);
-				break;
-			default:
-				TRACE(Trace::error, sqlite3_column_int(stmt, 0));
-				throw(Error::LTFSDM_GENERAL_ERROR);
-		}
-	}
-
-	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+	mrStatus.get(reqNumber, resident, premigrated, migrated, failed);
 
 	if ( done ) {
+		mrStatus.remove(reqNumber);
+
 		ssql.str("");
 		ssql.clear();
 

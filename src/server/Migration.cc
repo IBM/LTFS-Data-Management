@@ -29,6 +29,7 @@
 #include "FileOperation.h"
 #include "Scheduler.h"
 #include "SubServer.h"
+#include "Status.h"
 #include "Migration.h"
 
 void Migration::addJob(std::string fileName)
@@ -331,7 +332,7 @@ void Migration::stub(std::string fileName, int numRepl)
 }
 
 
-bool Migration::migrationStep(int reqNumber, int numRepl, int replNum, int colGrp, std::string tapeId, int fromState, int toState)
+bool Migration::migrationStep(int reqNumber, int numRepl, int replNum, int colGrp, std::string tapeId, FsObj::file_state fromState, FsObj::file_state toState)
 
 {
 	sqlite3_stmt *stmt;
@@ -387,9 +388,11 @@ bool Migration::migrationStep(int reqNumber, int numRepl, int replNum, int colGr
 				else {
 					stub(std::string(cstr), numRepl);
 				}
+				mrStatus.updateSuccess(reqNumber, fromState, toState);
 				group_end = sqlite3_column_int(stmt, 0);
 			}
 			catch(int error) {
+				mrStatus.updateFailed(reqNumber, fromState);
 				ssql.str("");
 				ssql.clear();
 				ssql << "UPDATE JOB_QUEUE SET FILE_STATE = " <<  FsObj::FAILED

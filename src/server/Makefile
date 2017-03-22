@@ -12,6 +12,7 @@ ARC_SRC_FILES += Migration.cc
 ARC_SRC_FILES += SelRecall.cc
 ARC_SRC_FILES += TransRecall.cc
 ARC_SRC_FILES += Scheduler.cc
+ARC_SRC_FILES += Status.cc
 
 CLEANUP_FILES := ltfsdmd
 BINARY := ltfsdmd

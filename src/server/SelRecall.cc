@@ -28,6 +28,7 @@
 #include "FileOperation.h"
 #include "Scheduler.h"
 #include "SubServer.h"
+#include "Status.h"
 #include "SelRecall.h"
 
 void SelRecall::addJob(std::string fileName)
@@ -297,9 +298,11 @@ void SelRecall::recallStep(int reqNumber, std::string tapeId, FsObj::file_state 
 					throw(Error::LTFSDM_GENERAL_ERROR);
 				}
 				recall(std::string(cstr), tapeId, state, toState);
+				mrStatus.updateSuccess(reqNumber, state, toState);
 				group_end = sqlite3_column_int(stmt, 0);
 			}
 			catch (int error) {
+				mrStatus.updateFailed(reqNumber, state);
 				ssql.str("");
 				ssql.clear();
 				ssql << "UPDATE JOB_QUEUE SET FILE_STATE = " <<  FsObj::FAILED
