@@ -16,6 +16,8 @@ private:
 	void stopMessage(long key, LTFSDmCommServer *command, long localReqNumber);
 	void statusMessage(long key, LTFSDmCommServer *command, long localReqNumber);
 	void addMessage(long key, LTFSDmCommServer *command, long localReqNumber, Connector *connector);
+	void infoRequestsMessage(long key, LTFSDmCommServer *command, long localReqNumber);
+	void infoJobsMessage(long key, LTFSDmCommServer *command, long localReqNumber);
 public:
 	std::mutex termmtx;
 	std::condition_variable termcond;

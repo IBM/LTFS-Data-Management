@@ -44,6 +44,21 @@ public:
 		MIGRATED,
 		FAILED
 	};
+	static std::string migStateStr(file_state migstate)
+	{
+		switch (migstate) {
+			case RESIDENT:
+				return messages[LTFSDMX0012I];
+			case PREMIGRATED:
+				return messages[LTFSDMX0011I];
+			case MIGRATED:
+				return messages[LTFSDMX0010I];
+			case FAILED:
+				return messages[LTFSDMX0019I];
+			default:
+				return "";
+		}
+	}
 	FsObj(void *_handle, unsigned long _handleLength) : handle(_handle), handleLength(_handleLength), handleFree(false) {}
 	FsObj(std::string fileName);
 	FsObj(Connector::rec_info_t recinfo);

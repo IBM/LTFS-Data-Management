@@ -113,6 +113,34 @@ message LTFSDmAddResp {
 	required AddResp response = 1;
 }
 
+message LTFSDmInfoRequestsRequest {
+	required uint64 key = 1;
+	required int64 reqNumber = 2;
+}
+
+message LTFSDmInfoRequestsResp {
+	required bytes operation = 1;
+	required int64 reqnumber = 2;
+	required bytes tapeid = 3;
+	required bytes targetstate = 4;
+	required bytes state = 5;
+}
+
+message LTFSDmInfoJobsRequest {
+	required uint64 key = 1;
+	required int64 reqNumber = 2;
+}
+
+message LTFSDmInfoJobsResp {
+	required bytes operation = 1;
+	required bytes filename = 2;
+	required int64 reqnumber = 3;
+	required int64 replnumber = 4;
+	required int64 filesize = 5;
+	required bytes tapeid = 6;
+	required bytes state = 7;
+}
+
 message Command {
 	oneof commands {
 		LTFSDmReqNumber reqnum = 1;
@@ -131,5 +159,9 @@ message Command {
 		LTFSDmReqStatusResp reqstatusresp = 14;
 		LTFSDmAddRequest addrequest = 15;
 		LTFSDmAddResp addresp = 16;
+		LTFSDmInfoRequestsRequest inforequestsrequest = 17;
+		LTFSDmInfoRequestsResp inforequestsresp = 18;
+		LTFSDmInfoJobsRequest infojobsrequest = 19;
+		LTFSDmInfoJobsResp infojobsresp = 20;
 	}
 }

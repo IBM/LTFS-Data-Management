@@ -28,6 +28,8 @@ public:
 	void beginTransaction();
 	void endTransaction();
 	sqlite3 *getDB() { return db; }
+	static std::string opStr(operation op);
+	static std::string reqStateStr(req_state reqs);
 };
 
 extern DataBase DB;

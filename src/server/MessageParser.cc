@@ -384,6 +384,141 @@ void MessageParser::addMessage(long key, LTFSDmCommServer *command, long localRe
 	}
 }
 
+void MessageParser::infoRequestsMessage(long key, LTFSDmCommServer *command, long localReqNumber)
+
+{
+	const LTFSDmProtocol::LTFSDmInfoRequestsRequest inforeqs = command->inforequestsrequest();
+	long keySent = inforeqs.key();
+	int requestNumber = inforeqs.reqnumber();
+	sqlite3_stmt *stmt;
+	std::stringstream ssql;
+	int rc;
+
+	if ( key != keySent ) {
+		MSG(LTFSDMS0008E, keySent);
+		return;
+	}
+
+	TRACE(Trace::little, requestNumber);
+
+	ssql << "SELECT OPERATION, REQ_NUM, TAPE_ID, TARGET_STATE, STATE FROM REQUEST_QUEUE";
+	if ( requestNumber != Const::UNSET )
+		ssql << " WHERE REQ_NUM=" << requestNumber << ";";
+	else
+		ssql << ";";
+
+	sqlite3_statement::prepare(ssql.str(), &stmt);
+
+	while ( (rc = sqlite3_statement::step(stmt)) == SQLITE_ROW ) {
+		LTFSDmProtocol::LTFSDmInfoRequestsResp *inforeqsresp = command->mutable_inforequestsresp();
+
+		inforeqsresp->set_operation(DataBase::opStr((DataBase::operation) sqlite3_column_int(stmt, 0)));
+		inforeqsresp->set_reqnumber(sqlite3_column_int(stmt, 1));
+		const char *tape_id = reinterpret_cast<const char*>(sqlite3_column_text (stmt, 2));
+		if (tape_id == NULL)
+			inforeqsresp->set_tapeid("");
+		else
+			inforeqsresp->set_tapeid(std::string(tape_id));
+		inforeqsresp->set_targetstate(DataBase::reqStateStr((DataBase::req_state) sqlite3_column_int(stmt, 3)));
+		inforeqsresp->set_state(DataBase::reqStateStr((DataBase::req_state) sqlite3_column_int(stmt, 4)));
+
+		try {
+			command->send();
+		}
+		catch(...) {
+			MSG(LTFSDMS0007E);
+		}
+	}
+
+	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+
+	LTFSDmProtocol::LTFSDmInfoRequestsResp *inforeqsresp = command->mutable_inforequestsresp();
+	inforeqsresp->set_operation("");
+	inforeqsresp->set_reqnumber(Const::UNSET);
+	inforeqsresp->set_tapeid("");
+	inforeqsresp->set_targetstate("");
+	inforeqsresp->set_state("");
+
+	try {
+		command->send();
+	}
+	catch(...) {
+		MSG(LTFSDMS0007E);
+	}
+}
+
+void MessageParser::infoJobsMessage(long key, LTFSDmCommServer *command, long localReqNumber)
+
+{
+	const LTFSDmProtocol::LTFSDmInfoJobsRequest infojobs = command->infojobsrequest();
+	long keySent = infojobs.key();
+	int requestNumber = infojobs.reqnumber();
+	sqlite3_stmt *stmt;
+	std::stringstream ssql;
+	int rc;
+
+	if ( key != keySent ) {
+		MSG(LTFSDMS0008E, keySent);
+		return;
+	}
+
+	TRACE(Trace::little, requestNumber);
+
+	ssql << "SELECT OPERATION, FILE_NAME, REQ_NUM, REPL_NUM, FILE_SIZE, TAPE_ID, FILE_STATE FROM JOB_QUEUE";
+	if ( requestNumber != Const::UNSET )
+		ssql << " WHERE REQ_NUM=" << requestNumber << ";";
+	else
+		ssql << ";";
+
+	sqlite3_statement::prepare(ssql.str(), &stmt);
+
+	while ( (rc = sqlite3_statement::step(stmt)) == SQLITE_ROW ) {
+		LTFSDmProtocol::LTFSDmInfoJobsResp *infojobsresp = command->mutable_infojobsresp();
+
+		infojobsresp->set_operation(DataBase::opStr((DataBase::operation) sqlite3_column_int(stmt, 0)));
+		const char *file_name = reinterpret_cast<const char*>(sqlite3_column_text (stmt, 1));
+		if (file_name == NULL)
+			infojobsresp->set_filename("-");
+		else
+			infojobsresp->set_filename(std::string(file_name));
+		infojobsresp->set_reqnumber(sqlite3_column_int(stmt, 2));
+		infojobsresp->set_replnumber(sqlite3_column_int(stmt, 3));
+		infojobsresp->set_filesize(sqlite3_column_int64(stmt, 4));
+		const char *tape_id = reinterpret_cast<const char*>(sqlite3_column_text (stmt, 5));
+		if (tape_id == NULL)
+			infojobsresp->set_tapeid("-");
+		else
+			infojobsresp->set_tapeid(std::string(tape_id));
+		infojobsresp->set_state(FsObj::migStateStr((FsObj::file_state) sqlite3_column_int(stmt, 6)));
+
+		try {
+			command->send();
+		}
+		catch(...) {
+			MSG(LTFSDMS0007E);
+		}
+	}
+
+	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+
+	LTFSDmProtocol::LTFSDmInfoJobsResp *infojobsresp = command->mutable_infojobsresp();
+	infojobsresp->set_operation("");
+	infojobsresp->set_filename("");
+	infojobsresp->set_reqnumber(Const::UNSET);
+	infojobsresp->set_replnumber(Const::UNSET);
+	infojobsresp->set_filesize(Const::UNSET);
+	infojobsresp->set_tapeid("");
+	infojobsresp->set_state("");
+
+	try {
+		command->send();
+	}
+	catch(...) {
+		MSG(LTFSDMS0007E);
+	}
+}
+
+
 void MessageParser::run(long key, LTFSDmCommServer command, Connector *connector)
 
 {
@@ -432,6 +567,12 @@ void MessageParser::run(long key, LTFSDmCommServer command, Connector *connector
 			}
 			else if ( command.has_addrequest() ) {
 				addMessage(key, &command, localReqNumber, connector);
+			}
+			else if ( command.has_inforequestsrequest() ) {
+				infoRequestsMessage(key, &command, localReqNumber);
+			}
+			else if ( command.has_infojobsrequest() ) {
+				infoJobsMessage(key, &command, localReqNumber);
 			}
 			else {
 				TRACE(Trace::error, "unkown command\n");

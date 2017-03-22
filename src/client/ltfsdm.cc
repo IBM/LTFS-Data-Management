@@ -22,6 +22,7 @@
 #include "InfoCommand.h"
 #include "InfoRequestsCommand.h"
 #include "InfoFilesCommand.h"
+#include "InfoJobsCommand.h"
 #include "InfoFsCommand.h"
 #include "StatusCommand.h"
 
@@ -88,6 +89,9 @@ int main(int argc, char *argv[])
 		TRACE(Trace::little, command.c_str());
 		if      ( InfoRequestsCommand().compare(command) ) {
 			openLTFSCommand = dynamic_cast<OpenLTFSCommand*>(new InfoRequestsCommand());
+		}
+		else if ( InfoJobsCommand().compare(command) ) {
+			openLTFSCommand = dynamic_cast<OpenLTFSCommand*>(new InfoJobsCommand());
 		}
 		else if ( InfoFilesCommand().compare(command) ) {
 			openLTFSCommand = dynamic_cast<OpenLTFSCommand*>(new InfoFilesCommand());

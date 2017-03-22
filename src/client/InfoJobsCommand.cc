@@ -11,14 +11,14 @@
 #include "src/common/comm/LTFSDmComm.h"
 
 #include "OpenLTFSCommand.h"
-#include "InfoRequestsCommand.h"
+#include "InfoJobsCommand.h"
 
-void InfoRequestsCommand::printUsage()
+void InfoJobsCommand::printUsage()
 {
-	INFO(LTFSDMC0009I);
+	INFO(LTFSDMC0059I);
 }
 
-void InfoRequestsCommand::doCommand(int argc, char **argv)
+void InfoJobsCommand::doCommand(int argc, char **argv)
 {
 	long reqOfInterest;
 
@@ -47,10 +47,10 @@ void InfoRequestsCommand::doCommand(int argc, char **argv)
 		return;
 	}
 
-	LTFSDmProtocol::LTFSDmInfoRequestsRequest *inforeqs = commCommand.mutable_inforequestsrequest();
+	LTFSDmProtocol::LTFSDmInfoJobsRequest *infojobs = commCommand.mutable_infojobsrequest();
 
-	inforeqs->set_key(key);
-	inforeqs->set_reqnumber(reqOfInterest);
+	infojobs->set_key(key);
+	infojobs->set_reqnumber(reqOfInterest);
 
 	try {
 		commCommand.send();
@@ -60,7 +60,7 @@ void InfoRequestsCommand::doCommand(int argc, char **argv)
 		throw Error::LTFSDM_GENERAL_ERROR;
 	}
 
-	INFO(LTFSDMC0060I);
+	INFO(LTFSDMC0062I);
 	int recnum;
 
 	do {
@@ -72,14 +72,16 @@ void InfoRequestsCommand::doCommand(int argc, char **argv)
 			throw(Error::LTFSDM_GENERAL_ERROR);
 		}
 
-		const LTFSDmProtocol::LTFSDmInfoRequestsResp inforeqsresp = commCommand.inforequestsresp();
-		std::string operation = inforeqsresp.operation();
-		recnum = inforeqsresp.reqnumber();
-		std::string tapeid = inforeqsresp.tapeid();
-		std::string tstate = inforeqsresp.targetstate();
-		std::string state = inforeqsresp.state();
+		const LTFSDmProtocol::LTFSDmInfoJobsResp infojobsresp = commCommand.infojobsresp();
+		std::string operation = infojobsresp.operation();
+		std::string filename = infojobsresp.filename();
+		recnum = infojobsresp.reqnumber();
+		int replnum = infojobsresp.replnumber();
+		int size = infojobsresp.filesize();
+		std::string tapeid = infojobsresp.tapeid();
+		std::string state = infojobsresp.state();
 		if ( recnum != Const::UNSET )
-			INFO(LTFSDMC0061I, operation, recnum, tapeid, tstate, state);
+			INFO(LTFSDMC0063I, operation, state, recnum, replnum, size, tapeid, filename);
 
 	} while ( recnum != Const::UNSET );
 
