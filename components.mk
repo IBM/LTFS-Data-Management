@@ -8,5 +8,7 @@ CLIENTDIRS := src/client
 
 SERVERDIRS := src/server
 
-CONNECDIRS := src/connector/dmapi
-CONNECDIRS += src/connector/fuse
+CONNECDIRS := src/connector/fuse
+ifneq ($(wildcard /usr/include/xfs/dmapi.h),)
+    CONNECDIRS += src/connector/dmapi
+endif
