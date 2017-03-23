@@ -14,6 +14,7 @@
 #include <thread>
 #include <map>
 #include <set>
+#include <vector>
 
 #include <sqlite3.h>
 

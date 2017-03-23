@@ -7,6 +7,7 @@
 
 #include <string>
 #include <set>
+#include <vector>
 #include <condition_variable>
 #include <thread>
 

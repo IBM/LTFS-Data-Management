@@ -11,6 +11,7 @@
 #include <typeinfo>
 #include <map>
 #include <set>
+#include <vector>
 #include <mutex>
 
 #include "src/common/util/util.h"

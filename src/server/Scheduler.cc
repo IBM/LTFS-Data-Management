@@ -105,8 +105,9 @@ void Scheduler::run(long key)
 	SubServer subs;
 	int rc;
 
-	suspend_map["DV1480L6"] = false;
-	suspend_map["DV1481L6"] = false;
+	std::vector<std::string> tapeIds = LTFSDM::getTapeIds();
+	for(auto const& tapeId: tapeIds)
+		suspend_map[tapeId] = false;
 
 	while (true) {
 		cond.wait(lock);

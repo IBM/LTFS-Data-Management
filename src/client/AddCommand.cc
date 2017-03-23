@@ -4,6 +4,7 @@
 
 #include <string>
 #include <set>
+#include <vector>
 
 #include "src/common/util/util.h"
 #include "src/common/messages/Message.h"

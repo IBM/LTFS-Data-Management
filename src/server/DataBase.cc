@@ -4,6 +4,7 @@
 #include <string>
 #include <sstream>
 #include <set>
+#include <vector>
 
 #include <sqlite3.h>
 
@@ -147,9 +148,21 @@ void DataBase::createTables()
 	ssql.str("");
 	ssql.clear();
 
-	ssql << "INSERT INTO TAPE_LIST (TAPE_ID, STATE) VALUES "
-		 << "('DV1480L6', " << DataBase::TAPE_FREE << "), "
-		 << "('DV1481L6', " << DataBase::TAPE_FREE << ");";
+	ssql << "INSERT INTO TAPE_LIST (TAPE_ID, STATE) VALUES ";
+
+	std::vector<std::string> tapeIds = LTFSDM::getTapeIds();
+	bool first = true;
+	for(auto const& tapeId: tapeIds) {
+		if ( first ) {
+			ssql << "('" << tapeId << "', " << DataBase::TAPE_FREE;
+			first = false;
+		}
+		else {
+			ssql << "), ('" << tapeId << "', " << DataBase::TAPE_FREE;
+		}
+	}
+
+	ssql << ");";
 
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 

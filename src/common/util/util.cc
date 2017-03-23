@@ -6,7 +6,9 @@
 #include <sys/resource.h>
 
 #include <string>
+#include <fstream>
 #include <set>
+#include <vector>
 
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
@@ -42,7 +44,20 @@ void LTFSDM::init()
 	traceObject.init();
 }
 
+std::vector<std::string> LTFSDM::getTapeIds()
 
+{
+	std::vector<std::string> tapeIds;
+	std::ifstream tpfile("/tmp/tapeids");
+	std::string line;
+
+	while (std::getline(tpfile, line))
+	{
+		tapeIds.push_back(line);
+	}
+
+	return tapeIds;
+}
 
 std::set<std::string> LTFSDM::getFs()
 

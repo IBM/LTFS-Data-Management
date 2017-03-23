@@ -5,6 +5,7 @@
 #include <string>
 #include <map>
 #include <set>
+#include <vector>
 #include <mutex>
 
 #include <sqlite3.h>

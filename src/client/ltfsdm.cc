@@ -3,6 +3,7 @@
 #include <string>
 #include <sstream>
 #include <set>
+#include <vector>
 
 #include "src/common/util/util.h"
 #include "src/common/messages/Message.h"

@@ -18,6 +18,7 @@
 #include <typeinfo>
 #include <map>
 #include <set>
+#include <vector>
 #include <atomic>
 #include <condition_variable>
 #include <thread>
