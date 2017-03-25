@@ -40,12 +40,16 @@ void Status::add(int reqNumber)
 	while ( (rc = sqlite3_statement::step(stmt)) == SQLITE_ROW ) {
 		switch ( sqlite3_column_int(stmt, 0) ) {
 			case FsObj::RESIDENT:
+			case FsObj::PREMIGRATING:
 				state.resident = sqlite3_column_int(stmt, 1);
 				break;
 			case FsObj::PREMIGRATED:
+			case FsObj::STUBBING:
+			case FsObj::RECALLING_PREMIG:
 				state.premigrated = sqlite3_column_int(stmt, 1);
 				break;
 			case FsObj::MIGRATED:
+			case FsObj::RECALLING_MIG:
 				state.migrated = sqlite3_column_int(stmt, 1);
 				break;
 			case FsObj::FAILED:
@@ -53,7 +57,6 @@ void Status::add(int reqNumber)
 				break;
 			default:
 				TRACE(Trace::error, sqlite3_column_int(stmt, 0));
-				throw(Error::LTFSDM_GENERAL_ERROR);
 		}
 	}
 
