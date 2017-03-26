@@ -20,6 +20,7 @@ public:
 		TAPE_FREE,
 		TAPE_INUSE
 	};
+	static std::mutex trans_mutex;
 	DataBase() : db(NULL), dbNeedsClosed(false) {}
 	~DataBase();
 	void cleanup();
