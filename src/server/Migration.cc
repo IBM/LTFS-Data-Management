@@ -30,6 +30,7 @@
 #include "Scheduler.h"
 #include "SubServer.h"
 #include "Status.h"
+#include "Server.h"
 #include "Migration.h"
 
 void Migration::addJob(std::string fileName)
@@ -425,6 +426,11 @@ bool Migration::migrationStep(int reqNumber, int numRepl, int replNum, int colGr
 	start = time(NULL);
 
 	while ( (rc = sqlite3_statement::step(stmt) ) ) {
+		if ( terminate == true ) {
+			rc = SQLITE_DONE;
+			break;
+		}
+
 		if ( rc != SQLITE_ROW && rc != SQLITE_DONE )
 			break;
 

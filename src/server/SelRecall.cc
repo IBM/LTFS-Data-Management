@@ -29,6 +29,7 @@
 #include "Scheduler.h"
 #include "SubServer.h"
 #include "Status.h"
+#include "Server.h"
 #include "SelRecall.h"
 
 void SelRecall::addJob(std::string fileName)
@@ -301,6 +302,11 @@ void SelRecall::recallStep(int reqNumber, std::string tapeId, FsObj::file_state 
 	start = time(NULL);
 
 	while ( (rc = sqlite3_statement::step(stmt) ) ) {
+		if ( terminate == true ) {
+			rc = SQLITE_DONE;
+			break;
+		}
+
 		if ( rc != SQLITE_ROW && rc != SQLITE_DONE )
 			break;
 

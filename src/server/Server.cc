@@ -54,6 +54,9 @@ void Server::signalHandler(sigset_t set, long key)
             continue;
         }
 
+		if ( sig == SIGUSR1 )
+			return;
+
 		MSG(LTFSDMS0049I, sig);
 
 		break;
@@ -65,6 +68,7 @@ void Server::signalHandler(sigset_t set, long key)
 		commCommand.connect();
 	}
 	catch(int error) {
+		TRACE(Trace::error, error);
 		return;
 	}
 
@@ -77,22 +81,17 @@ void Server::signalHandler(sigset_t set, long key)
 		commCommand.send();
 	}
 	catch(int error) {
+		TRACE(Trace::error, error);
 		return;
 	}
-
-	std::unique_lock<std::mutex> lock(termmtx);
 
 	try {
 		commCommand.recv();
 	}
-	catch(...) {
+	catch(int error) {
+		TRACE(Trace::error, error);
 		return;
 	}
-
-	MSG(LTFSDMS0009I);
-	terminate = true;
-	lock.unlock();
-	termcond.notify_one();
 
 	return;
 }

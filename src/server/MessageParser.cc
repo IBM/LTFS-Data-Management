@@ -57,6 +57,10 @@ void MessageParser::getObjects(LTFSDmCommServer *command, long localReqNumber,
 		DB.beginTransaction();
 
 		for (int j = 0; j < sendobjects.filenames_size(); j++) {
+			if ( terminate == true ) {
+				command->closeAcc();
+				return;
+			}
 			const LTFSDmProtocol::LTFSDmSendObjects::FileName& filename = sendobjects.filenames(j);
 			if ( filename.filename().compare("") != 0 ) {
 				try {
@@ -552,7 +556,7 @@ void MessageParser::run(long key, LTFSDmCommServer command, Connector *connector
 			terminate = true;
 			lock.unlock();
 			Server::termcond.notify_one();
-			kill(getpid(), SIGTERM);
+			kill(getpid(), SIGUSR1);
 			break;
 		}
 		else {
