@@ -26,9 +26,9 @@ void Receiver::run(long key, Connector *connector)
 
 {
 	MessageParser mproc;
-	std::unique_lock<std::mutex> lock(mproc.termmtx);
-	LTFSDmCommServer command;
+	std::unique_lock<std::mutex> lock(Server::termmtx);
 	SubServer subs(Const::MAX_RECEIVER_THREADS);
+	LTFSDmCommServer command;
 
 	TRACE(Trace::much, __PRETTY_FUNCTION__);
 
@@ -59,7 +59,7 @@ void Receiver::run(long key, Connector *connector)
 			continue;
 		}
 
-		mproc.termcond.wait_for(lock, std::chrono::seconds(30));
+		Server::termcond.wait_for(lock, std::chrono::seconds(30));
 	}
 
 	connector->terminate();

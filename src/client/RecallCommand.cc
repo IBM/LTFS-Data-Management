@@ -94,7 +94,13 @@ void RecallCommand::doCommand(int argc, char **argv)
 
 	processOptions(argc, argv);
 
-	checkOptions(argc, argv);
+	try {
+		checkOptions(argc, argv);
+	}
+	catch (int error) {
+		printUsage();
+		throw(Error::LTFSDM_GENERAL_ERROR);
+	}
 
 	TRACE(Trace::little, argc);
 	TRACE(Trace::little, optind);

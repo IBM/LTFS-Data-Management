@@ -39,7 +39,6 @@ void MigrationCommand::talkToBackend(std::stringstream *parmList)
 	migreq->set_numreplica(numReplica);
 	migreq->set_colfactor(collocationFactor);
 
-
 	if ( preMigrate == true )
 		migreq->set_state(LTFSDmProtocol::LTFSDmMigRequest::PREMIGRATED);
 	else
@@ -94,12 +93,17 @@ void MigrationCommand::doCommand(int argc, char **argv)
 	if ( argc == 1 ) {
 		INFO(LTFSDMC0018E);
 		throw(Error::LTFSDM_GENERAL_ERROR);
-
 	}
 
 	processOptions(argc, argv);
 
-	checkOptions(argc, argv);
+	try {
+		checkOptions(argc, argv);
+	}
+	catch (int error) {
+		printUsage();
+		throw(Error::LTFSDM_GENERAL_ERROR);
+	}
 
 	TRACE(Trace::little, argc);
 	TRACE(Trace::little, optind);

@@ -24,6 +24,9 @@
 #include "src/common/errors/errors.h"
 #include "src/common/const/Const.h"
 
+#include "src/common/comm/ltfsdm.pb.h"
+#include "src/common/comm/LTFSDmComm.h"
+
 #include "src/connector/Connector.h"
 #include "DataBase.h"
 #include "Receiver.h"
@@ -33,6 +36,66 @@
 #include "Server.h"
 
 std::atomic<bool> terminate;
+std::mutex Server::termmtx;
+std::condition_variable Server::termcond;
+
+void Server::signalHandler(sigset_t set, long key)
+
+{
+	int sig;
+	int requestNumber = ++globalReqNumber;
+
+    while ( true ) {
+        if ( sigwait(&set, &sig))
+            continue;
+
+        if ( sig == SIGPIPE ) {
+            MSG(LTFSDMS0048E);
+            continue;
+        }
+
+		MSG(LTFSDMS0049I, sig);
+
+		break;
+	}
+
+	LTFSDmCommClient commCommand;
+
+	try {
+		commCommand.connect();
+	}
+	catch(int error) {
+		return;
+	}
+
+	TRACE(Trace::little, requestNumber);
+	LTFSDmProtocol::LTFSDmStopRequest *stopreq = commCommand.mutable_stoprequest();
+	stopreq->set_key(key);
+	stopreq->set_reqnumber(requestNumber);
+
+	try {
+		commCommand.send();
+	}
+	catch(int error) {
+		return;
+	}
+
+	std::unique_lock<std::mutex> lock(termmtx);
+
+	try {
+		commCommand.recv();
+	}
+	catch(...) {
+		return;
+	}
+
+	MSG(LTFSDMS0009I);
+	terminate = true;
+	lock.unlock();
+	termcond.notify_one();
+
+	return;
+}
 
 void Server::lockServer()
 
@@ -147,7 +210,7 @@ void Server::daemonize()
 	close(dev_null);
 }
 
-void Server::run(Connector *connector)
+void Server::run(Connector *connector, sigset_t set)
 
 {
 	SubServer subs;
@@ -159,6 +222,7 @@ void Server::run(Connector *connector)
 
 	subs.enqueue("Scheduler", &Scheduler::run, &sched, key);
 	subs.enqueue("Receiver", &Receiver::run, &recv, key, connector);
+	subs.enqueue("Signal Handler", &Server::signalHandler, set, key);
 	subs.enqueue("RecallD", &TransRecall::run, &trec, connector);
 
 	subs.waitAllRemaining();

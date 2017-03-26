@@ -47,6 +47,11 @@ void OpenLTFSCommand::processOptions(int argc, char **argv)
 				break;
 			case 'n':
 				requestNumber = strtoul(optarg, NULL, 0);
+				if ( requestNumber < 0 ) {
+					MSG(LTFSDMC0064E);
+					printUsage();
+					throw(Error::LTFSDM_GENERAL_ERROR);
+				}
 				break;
 			case 'c':
 				collocationFactor = strtoul(optarg, NULL, 0);
@@ -162,6 +167,9 @@ void OpenLTFSCommand::connect()
 void OpenLTFSCommand::checkOptions(int argc, char **argv)
 
 {
+	if ( (requestNumber != Const::UNSET) && (argc != 3) )
+		throw(Error::LTFSDM_GENERAL_ERROR);
+
 	if ( numReplica < 1 || numReplica > 3 ) {
 			INFO(LTFSDMC0015E);
 			throw(Error::LTFSDM_GENERAL_ERROR);

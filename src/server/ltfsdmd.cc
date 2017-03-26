@@ -29,6 +29,7 @@ int main(int argc, char **argv)
 	int err = Error::LTFSDM_OK;
 	bool detach = true;
 	int opt;
+	sigset_t set;
 	Trace::traceLevel tl = Trace::error;
 
 	Connector *connector = NULL;
@@ -55,6 +56,14 @@ int main(int argc, char **argv)
 		}
 	}
 
+	sigemptyset(&set);
+	sigaddset(&set, SIGQUIT);
+	sigaddset(&set, SIGINT);
+	sigaddset(&set, SIGTERM);
+	sigaddset(&set, SIGPIPE);
+	sigaddset(&set, SIGUSR1);
+	pthread_sigmask(SIG_BLOCK, &set, NULL);
+
 	try {
 		LTFSDM::init();
 	}
@@ -71,8 +80,9 @@ int main(int argc, char **argv)
 		ltfsdmd.initialize();
 		if ( detach )
 			ltfsdmd.daemonize();
+
 		connector = new Connector(true);
-		ltfsdmd.run(connector);
+		ltfsdmd.run(connector, set);
 	}
 	catch ( int initerr ) {
 		err = initerr;

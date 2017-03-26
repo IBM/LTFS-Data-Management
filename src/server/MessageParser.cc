@@ -522,7 +522,7 @@ void MessageParser::infoJobsMessage(long key, LTFSDmCommServer *command, long lo
 void MessageParser::run(long key, LTFSDmCommServer command, Connector *connector)
 
 {
-	std::unique_lock<std::mutex> lock(termmtx);
+	std::unique_lock<std::mutex> lock(Server::termmtx);
 	bool firstTime = true;
 	long localReqNumber = Const::UNSET;
 
@@ -534,7 +534,7 @@ void MessageParser::run(long key, LTFSDmCommServer command, Connector *connector
 			TRACE(Trace::error, errno);
 			MSG(LTFSDMS0006E);
 			lock.unlock();
-			termcond.notify_one();
+			Server::termcond.notify_one();
 			return;
 		}
 
@@ -547,13 +547,14 @@ void MessageParser::run(long key, LTFSDmCommServer command, Connector *connector
 			stopMessage(key, &command, localReqNumber);
 			terminate = true;
 			lock.unlock();
-			termcond.notify_one();
+			Server::termcond.notify_one();
+			kill(getpid(), SIGTERM);
 			break;
 		}
 		else {
 			if ( firstTime ) {
 				lock.unlock();
-				termcond.notify_one();
+				Server::termcond.notify_one();
 				firstTime = false;
 			}
 			if ( command.has_migrequest() ) {

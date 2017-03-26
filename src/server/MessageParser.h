@@ -19,8 +19,6 @@ private:
 	void infoRequestsMessage(long key, LTFSDmCommServer *command, long localReqNumber);
 	void infoJobsMessage(long key, LTFSDmCommServer *command, long localReqNumber);
 public:
-	std::mutex termmtx;
-	std::condition_variable termcond;
 	MessageParser() {}
 	~MessageParser() {};
 	void run(long key, LTFSDmCommServer command, Connector *connector);
