@@ -42,7 +42,11 @@ public:
 		RESIDENT,
 		PREMIGRATED,
 		MIGRATED,
-		FAILED
+		FAILED,
+		PREMIGRATING,
+		STUBBING,
+		RECALLING_MIG,
+		RECALLING_PREMIG
 	};
 	static std::string migStateStr(file_state migstate)
 	{

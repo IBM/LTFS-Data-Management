@@ -47,15 +47,15 @@ void TransRecall::addRequest(Connector::rec_info_t recinfo, std::string tapeId, 
 	else
 		filename = std::string("'") + recinfo.filename + std::string("'");
 
-	ssql << "INSERT INTO JOB_QUEUE (OPERATION, FILE_NAME, REQ_NUM, TARGET_STATE, FILE_SIZE, FS_ID, I_GEN, "
+	ssql << "INSERT INTO JOB_QUEUE (OPERATION, FILE_NAME, REQ_NUM, TARGET_STATE, REPL_NUM, FILE_SIZE, FS_ID, I_GEN, "
 		 << "I_NUM, MTIME_SEC, MTIME_NSEC, LAST_UPD, FILE_STATE, TAPE_ID, START_BLOCK, CONN_INFO) "
 		 << "VALUES (" << DataBase::TRARECALL << ", "            // OPERATION
 		 << filename.c_str() << ", "                  // FILE_NAME
 		 << reqNum << ", "                                       // REQ_NUM
 		 << ( recinfo.toresident ?
-			  FsObj::RESIDENT : FsObj::PREMIGRATED ) << ", ";    // TARGET_STATE
-
-	try {
+			  FsObj::RESIDENT : FsObj::PREMIGRATED ) << ", "    // TARGET_STATE
+		 << Const::UNSET << ", ";                               // REPL_NUM needed since trec requests
+	try {                                                       // are not deleted immeditely
 		FsObj fso(recinfo);
 		statbuf = fso.stat();
 
@@ -313,18 +313,43 @@ void recallStep(int reqNum, std::string tapeId)
 	Connector::rec_info_t recinfo;
 	sqlite3_stmt *stmt;
 	std::stringstream ssql;
-	int rc, rc2;
+	int rc;
 	FsObj::file_state state;
 	FsObj::file_state toState;
 	int numFiles = 0;
 	bool succeeded;
 
-	ssql << "SELECT FS_ID, I_GEN, I_NUM, FILE_NAME, FILE_STATE, TARGET_STATE, CONN_INFO  FROM JOB_QUEUE "
-		 << "WHERE REQ_NUM=" << reqNum << " AND TAPE_ID='" << tapeId << "' ORDER BY START_BLOCK";
+	ssql << "UPDATE JOB_QUEUE SET FILE_STATE=" <<  FsObj::RECALLING_MIG
+		 << " WHERE REQ_NUM=" << reqNum
+		 << " AND FILE_STATE=" << FsObj::MIGRATED
+		 << " AND TAPE_ID='" << tapeId << "'";
 
 	sqlite3_statement::prepare(ssql.str(), &stmt);
+	rc = sqlite3_statement::step(stmt);
+	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 
-	DB.beginTransaction();
+	ssql.str("");
+	ssql.clear();
+
+	ssql << "UPDATE JOB_QUEUE SET FILE_STATE=" <<  FsObj::RECALLING_PREMIG
+		 << " WHERE REQ_NUM=" << reqNum
+		 << " AND FILE_STATE=" << FsObj::PREMIGRATED
+		 << " AND TAPE_ID='" << tapeId << "'";
+
+	sqlite3_statement::prepare(ssql.str(), &stmt);
+	rc = sqlite3_statement::step(stmt);
+	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+
+	ssql.str("");
+	ssql.clear();
+
+	ssql << "SELECT FS_ID, I_GEN, I_NUM, FILE_NAME, FILE_STATE, TARGET_STATE, CONN_INFO  FROM JOB_QUEUE "
+		 << "WHERE REQ_NUM=" << reqNum
+		 << " AND (FILE_STATE=" << FsObj::RECALLING_MIG << " OR FILE_STATE=" << FsObj::RECALLING_PREMIG << ")"
+		 << " AND TAPE_ID='" << tapeId
+		 << "' ORDER BY START_BLOCK";
+
+	sqlite3_statement::prepare(ssql.str(), &stmt);
 
 	while ( (rc = sqlite3_statement::step(stmt) ) ) {
 		if ( rc != SQLITE_ROW )
@@ -340,6 +365,10 @@ void recallStep(int reqNum, std::string tapeId)
 		if ( cstr != NULL )
 			recinfo.filename = std::string(cstr);
 		state = (FsObj::file_state) sqlite3_column_int(stmt, 4);
+		if ( state ==  FsObj::RECALLING_MIG )
+			state = FsObj::MIGRATED;
+		else
+			state = FsObj::PREMIGRATED;
 		toState = (FsObj::file_state) sqlite3_column_int(stmt, 5);
 		if ( toState == FsObj::RESIDENT )
 			recinfo.toresident = true;
@@ -353,28 +382,23 @@ void recallStep(int reqNum, std::string tapeId)
 			succeeded = false;
 		}
 
-		ssql.str("");
-		ssql.clear();
-
-		ssql << "DELETE FROM JOB_QUEUE WHERE"
-			 << " FS_ID=" << (long long) recinfo.fsid
-			 << " AND I_GEN=" << recinfo.igen
-			 << " AND I_NUM=" << (long long) recinfo.ino
-			 << " AND REQ_NUM=" << reqNum;
-
-		sqlite3_stmt *stmt2;
-
-		sqlite3_statement::prepare(ssql.str(), &stmt2);
-		rc2 = sqlite3_statement::step(stmt2);
-		sqlite3_statement::checkRcAndFinalize(stmt2, rc2, SQLITE_DONE);
-
 		Connector::respondRecallEvent(recinfo, succeeded);
 	}
 
-	DB.endTransaction();
-
 	TRACE(Trace::medium, numFiles);
 
+	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+
+	ssql.str("");
+	ssql.clear();
+
+	ssql << "DELETE FROM JOB_QUEUE "
+		 << "WHERE REQ_NUM=" << reqNum
+		 << " AND (FILE_STATE=" << FsObj::RECALLING_MIG << " OR FILE_STATE=" << FsObj::RECALLING_PREMIG << ")"
+		 << " AND TAPE_ID='" << tapeId << "'";
+
+	sqlite3_statement::prepare(ssql.str(), &stmt);
+	rc = sqlite3_statement::step(stmt);
 	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 }
 

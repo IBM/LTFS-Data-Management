@@ -54,6 +54,8 @@ void MessageParser::getObjects(LTFSDmCommServer *command, long localReqNumber,
 
 		const LTFSDmProtocol::LTFSDmSendObjects sendobjects = command->sendobjects();
 
+		DB.beginTransaction();
+
 		for (int j = 0; j < sendobjects.filenames_size(); j++) {
 			const LTFSDmProtocol::LTFSDmSendObjects::FileName& filename = sendobjects.filenames(j);
 			if ( filename.filename().compare("") != 0 ) {
@@ -72,6 +74,8 @@ void MessageParser::getObjects(LTFSDmCommServer *command, long localReqNumber,
 				cont = false; // END
 			}
 		}
+
+		DB.endTransaction();
 
 		LTFSDmProtocol::LTFSDmSendObjectsResp *sendobjresp = command->mutable_sendobjectsresp();
 

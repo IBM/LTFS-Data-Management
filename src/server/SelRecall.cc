@@ -257,18 +257,44 @@ void SelRecall::recallStep(int reqNumber, std::string tapeId, FsObj::file_state 
 	sqlite3_stmt *stmt;
 	std::stringstream ssql;
 	int rc, rc2;
-    int group_end = 0;
-    int group_begin = -1;
 	time_t start;
 
-	std::unique_lock<std::mutex> lock(Scheduler::updmtx);
 	TRACE(Trace::much, reqNumber);
-	Scheduler::updReq[reqNumber] = true;
-	Scheduler::updcond.notify_all();
-	lock.unlock();
 
-	ssql << "SELECT ROWID, FILE_NAME, FILE_STATE FROM JOB_QUEUE WHERE REQ_NUM="
-		 << reqNumber << " AND TAPE_ID='" << tapeId << "' ORDER BY START_BLOCK";
+	{
+		std::lock_guard<std::mutex> lock(Scheduler::updmtx);
+		Scheduler::updReq[reqNumber] = true;
+		Scheduler::updcond.notify_all();
+	}
+
+	ssql << "UPDATE JOB_QUEUE SET FILE_STATE=" <<  FsObj::RECALLING_MIG
+		 << " WHERE REQ_NUM=" << reqNumber
+		 << " AND FILE_STATE=" << FsObj::MIGRATED
+		 << " AND TAPE_ID='" << tapeId << "'";
+
+	sqlite3_statement::prepare(ssql.str(), &stmt);
+	rc2 = sqlite3_statement::step(stmt);
+	sqlite3_statement::checkRcAndFinalize(stmt, rc2, SQLITE_DONE);
+
+	ssql.str("");
+	ssql.clear();
+
+	ssql << "UPDATE JOB_QUEUE SET FILE_STATE=" <<  FsObj::RECALLING_PREMIG
+		 << " WHERE REQ_NUM=" << reqNumber
+		 << " AND FILE_STATE=" << FsObj::PREMIGRATED
+		 << " AND TAPE_ID='" << tapeId << "'";
+
+	sqlite3_statement::prepare(ssql.str(), &stmt);
+	rc2 = sqlite3_statement::step(stmt);
+	sqlite3_statement::checkRcAndFinalize(stmt, rc2, SQLITE_DONE);
+
+	ssql.str("");
+	ssql.clear();
+
+	ssql << "SELECT FILE_NAME, FILE_STATE FROM JOB_QUEUE WHERE REQ_NUM=" << reqNumber
+		 << " AND TAPE_ID='" << tapeId << "'"
+		 << " AND (FILE_STATE=" << FsObj::RECALLING_MIG << " OR FILE_STATE=" << FsObj::RECALLING_PREMIG << ")"
+		 << " ORDER BY START_BLOCK";
 
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 
@@ -279,83 +305,75 @@ void SelRecall::recallStep(int reqNumber, std::string tapeId, FsObj::file_state 
 			break;
 
 		if ( rc == SQLITE_ROW ) {
-			const char *cstr = reinterpret_cast<const char*>(sqlite3_column_text (stmt, 1));
+			std::string fileName;
+			const char *cstr = reinterpret_cast<const char*>(sqlite3_column_text (stmt, 0));
 
 			if (!cstr)
 				continue;
+			else
+				fileName = std::string(cstr);
 
-			FsObj::file_state state = (FsObj::file_state) sqlite3_column_int(stmt, 2);
+			FsObj::file_state state = (FsObj::file_state) sqlite3_column_int(stmt, 1);
 
-			if ( state == FsObj::RESIDENT )
-				continue;
+			if ( state ==  FsObj::RECALLING_MIG )
+				state = FsObj::MIGRATED;
+			else
+				state = FsObj::PREMIGRATED;
 
 			if ( state == toState )
 				continue;
 
 			try {
 				if ( (state == FsObj::MIGRATED) && (needsTape == false) ) {
-					MSG(LTFSDMS0047E, cstr);
+					MSG(LTFSDMS0047E, fileName);
 					throw(Error::LTFSDM_GENERAL_ERROR);
 				}
-				recall(std::string(cstr), tapeId, state, toState);
+				recall(fileName, tapeId, state, toState);
 				mrStatus.updateSuccess(reqNumber, state, toState);
-				group_end = sqlite3_column_int(stmt, 0);
 			}
 			catch (int error) {
 				mrStatus.updateFailed(reqNumber, state);
 				ssql.str("");
 				ssql.clear();
 				ssql << "UPDATE JOB_QUEUE SET FILE_STATE = " <<  FsObj::FAILED
-					 << " WHERE REQ_NUM=" << reqNumber
-					 << " AND TAPE_ID ='" << tapeId << "'"
-					 << " AND ROWID=" << sqlite3_column_int(stmt, 0);
+					 << " WHERE FILE_NAME='" << fileName << "'"
+					 << " AND REQ_NUM=" << reqNumber
+					 << " AND TAPE_ID='" << tapeId << "'";
 				TRACE(Trace::error, ssql.str());
 				sqlite3_stmt *stmt2;
 				sqlite3_statement::prepare(ssql.str(), &stmt2);
 				rc2 = sqlite3_statement::step(stmt2);
 				sqlite3_statement::checkRcAndFinalize(stmt2, rc2, SQLITE_DONE);
-
-				if ( group_begin == -1 ) {
-					start = time(NULL);
-					continue;
-				}
-				start = 0;
 			}
-			if ( group_begin == -1 )
-				group_begin = group_end;
+
 			if ( time(NULL) - start < 10 )
 				continue;
+
 			start = time(NULL);
+
+			std::lock_guard<std::mutex> lock(Scheduler::updmtx);
+			Scheduler::updReq[reqNumber] = true;
+			Scheduler::updcond.notify_all();
 		}
-
-		ssql.str("");
-		ssql.clear();
-
-		ssql << "UPDATE JOB_QUEUE SET FILE_STATE = " <<  toState
-			 << " WHERE REQ_NUM=" << reqNumber
-			 << " AND TAPE_ID ='" << tapeId << "'"
-			 << " AND FILE_STATE!=" << FsObj::FAILED
-			 << " AND (ROWID BETWEEN " << group_begin << " AND " << group_end << ")";
-
-		sqlite3_stmt *stmt2;
-
-		lock.lock();
-
-		sqlite3_statement::prepare(ssql.str(), &stmt2);
-		rc2 = sqlite3_statement::step(stmt2);
-		sqlite3_statement::checkRcAndFinalize(stmt2, rc2, SQLITE_DONE);
-
-		Scheduler::updReq[reqNumber] = true;
-		Scheduler::updcond.notify_all();
-		lock.unlock();
-
-		group_begin = -1;
 
 		if ( rc == SQLITE_DONE )
 			break;
 	}
 
 	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+
+	ssql.str("");
+	ssql.clear();
+
+	ssql << "UPDATE JOB_QUEUE SET FILE_STATE = " <<  toState
+		 << " WHERE REQ_NUM=" << reqNumber
+		 << " AND TAPE_ID='" << tapeId << "'"
+		 << " AND (FILE_STATE=" << FsObj::RECALLING_MIG << " OR FILE_STATE=" << FsObj::RECALLING_PREMIG << ")";
+
+	sqlite3_statement::prepare(ssql.str(), &stmt);
+	rc = sqlite3_statement::step(stmt);
+	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+
 }
 
 void SelRecall::execRequest(int reqNumber, int tgtState, std::string tapeId, bool needsTape)

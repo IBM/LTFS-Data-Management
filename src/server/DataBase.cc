@@ -18,6 +18,8 @@
 
 DataBase DB;
 
+std::mutex DataBase::trans_mutex;
+
 DataBase::~DataBase()
 
 {
@@ -99,7 +101,7 @@ void DataBase::createTables()
 		 << "TAPE_ID CHAR(9), "
 		 << "FILE_STATE INT NOT NULL, "
 		 << "START_BLOCK INT, "
-		 << "CONN_INFO BIGINT UNIQUE, "
+		 << "CONN_INFO BIGINT, "
 		 << "CONSTRAINT JOB_QUEUE_UNIQUE_FILE_NAME UNIQUE (FILE_NAME, REPL_NUM), "
 		 << "CONSTRAINT JOB_QUEUE_UNIQUE_UID UNIQUE (FS_ID, I_GEN, I_NUM, REPL_NUM));";
 
@@ -175,9 +177,11 @@ void DataBase::beginTransaction()
 {
 	int rc;
 
+	trans_mutex.lock();
 	rc = sqlite3_exec(db, "BEGIN TRANSACTION;", NULL, NULL, NULL);
 
 	if( rc != SQLITE_OK ) {
+		trans_mutex.unlock();
 		TRACE(Trace::error, rc);
 		throw(rc);
 	}
@@ -188,6 +192,8 @@ void DataBase::endTransaction()
 	int rc;
 
 	rc = sqlite3_exec(db, "END TRANSACTION;", NULL, NULL, NULL);
+
+	trans_mutex.unlock();
 
 	if( rc != SQLITE_OK ) {
 		TRACE(Trace::error, rc);
