@@ -13,6 +13,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <thread>
+#include <future>
 
 #include <sqlite3.h>
 #include "src/common/comm/ltfsdm.pb.h"
@@ -31,6 +32,7 @@
 #include "SubServer.h"
 #include "Status.h"
 #include "Server.h"
+#include "WorkQueue.h"
 #include "Migration.h"
 
 void Migration::addJob(std::string fileName)
@@ -385,9 +387,15 @@ bool Migration::migrationStep(int reqNumber, int numRepl, int replNum, int colGr
 	time_t start;
 	long secs;
 	long nsecs;
-	SubServer subs(16);
+	WorkQueue<std::string, long, long, Migration::mig_info_t> *wqp;
+	WorkQueue<Migration::mig_info_t> *wqs;
 	time_t steptime;
 	FsObj::file_state state;
+
+	if ( toState == FsObj::PREMIGRATED )
+		wqp = new WorkQueue<std::string, long, long, Migration::mig_info_t>(&preMigrate, 16);
+	else
+		wqs = new WorkQueue<Migration::mig_info_t>(&stub, 16);
 
 	TRACE(Trace::much, reqNumber);
 
@@ -463,10 +471,10 @@ bool Migration::migrationStep(int reqNumber, int numRepl, int replNum, int colGr
 					}
 					TRACE(Trace::much, secs);
 					TRACE(Trace::much, nsecs);
-					subs.enqueue("migrator", &preMigrate, tapeId, secs, nsecs, mig_info);
+					wqp->enqueue(tapeId, secs, nsecs, mig_info);
 				}
 				else {
-					subs.enqueue("stubber", &stub, mig_info);
+					wqs->enqueue(mig_info);
 				}
 			}
 			catch (int error) {
@@ -490,7 +498,14 @@ bool Migration::migrationStep(int reqNumber, int numRepl, int replNum, int colGr
 
 	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 
-	subs.waitAllRemaining();
+	if ( toState == FsObj::PREMIGRATED ) {
+		wqp->terminate();
+		delete(wqp);
+	}
+	else {
+		wqs->terminate();
+		delete(wqs);
+	}
 
 	ssql.str("");
 	ssql.clear();
