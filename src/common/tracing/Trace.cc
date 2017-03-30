@@ -9,6 +9,8 @@
 
 #include "Trace.h"
 
+extern const char *__progname;
+
 Trace traceObject;
 
 Trace::~Trace()
@@ -48,6 +50,29 @@ int Trace::getTrclevel()
 void Trace::init()
 
 {
+	tracefile.exceptions(std::ios::failbit | std::ios::badbit);
+
+	try {
+		tracefile.open(Const::TRACE_FILE, std::fstream::out | std::fstream::app);
+	}
+	catch(...) {
+		MSG(LTFSDMX0001E);
+		exit((int) Error::LTFSDM_GENERAL_ERROR);
+	}
+}
+
+void Trace::rotate()
+
+{
+	tracefile.flush();
+	tracefile.close();
+
+	if ( std::string(__progname).compare("ltfsdmd") == 0 ) {
+			unlink((Const::TRACE_FILE + ".2").c_str());
+			rename((Const::TRACE_FILE + ".1").c_str(),(Const::TRACE_FILE + ".2").c_str());
+			rename(Const::TRACE_FILE.c_str(),(Const::TRACE_FILE + ".1").c_str());
+	}
+
 	tracefile.exceptions(std::ios::failbit | std::ios::badbit);
 
 	try {

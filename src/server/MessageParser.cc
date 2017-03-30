@@ -164,7 +164,7 @@ void MessageParser::migrationMessage(long key, LTFSDmCommServer *command, long l
 	const LTFSDmProtocol::LTFSDmMigRequest migreq = command->migrequest();
 	long keySent = migreq.key();
 
-	TRACE(Trace::much, __PRETTY_FUNCTION__);
+	TRACE(Trace::error, __PRETTY_FUNCTION__);
 	TRACE(Trace::little, keySent);
 
 	if ( key != keySent ) {
@@ -207,7 +207,7 @@ void  MessageParser::selRecallMessage(long key, LTFSDmCommServer *command, long 
 	const LTFSDmProtocol::LTFSDmSelRecRequest recreq = command->selrecrequest();
 	long keySent = recreq.key();
 
-	TRACE(Trace::much, __PRETTY_FUNCTION__);
+	TRACE(Trace::error, __PRETTY_FUNCTION__);
 	TRACE(Trace::little, keySent);
 
 	if ( key != keySent ) {
@@ -282,7 +282,7 @@ void MessageParser::stopMessage(long key, LTFSDmCommServer *command, long localR
 
 	std::unique_lock<std::mutex> lock(Scheduler::mtx);
 
-	TRACE(Trace::much, __PRETTY_FUNCTION__);
+	TRACE(Trace::error, __PRETTY_FUNCTION__);
 	TRACE(Trace::little, keySent);
 
 	if ( key != keySent ) {
@@ -315,7 +315,7 @@ void MessageParser::statusMessage(long key, LTFSDmCommServer *command, long loca
 	long keySent = statusreq.key();
 
 	TRACE(Trace::little, keySent);
-	TRACE(Trace::much, __PRETTY_FUNCTION__);
+	TRACE(Trace::error, __PRETTY_FUNCTION__);
 
 	if ( key != keySent ) {
 		MSG(LTFSDMS0008E, keySent);
@@ -346,7 +346,7 @@ void MessageParser::addMessage(long key, LTFSDmCommServer *command, long localRe
 	std::string fsName = addreq.fsname();
 	LTFSDmProtocol::LTFSDmAddResp_AddResp response =  LTFSDmProtocol::LTFSDmAddResp::SUCCESS;
 
-	TRACE(Trace::much, __PRETTY_FUNCTION__);
+	TRACE(Trace::error, __PRETTY_FUNCTION__);
 	TRACE(Trace::little, keySent);
 
 	if ( key != keySent ) {
@@ -401,6 +401,8 @@ void MessageParser::infoRequestsMessage(long key, LTFSDmCommServer *command, lon
 	sqlite3_stmt *stmt;
 	std::stringstream ssql;
 	int rc;
+
+	TRACE(Trace::error, __PRETTY_FUNCTION__);
 
 	if ( key != keySent ) {
 		MSG(LTFSDMS0008E, keySent);
@@ -464,6 +466,8 @@ void MessageParser::infoJobsMessage(long key, LTFSDmCommServer *command, long lo
 	sqlite3_stmt *stmt;
 	std::stringstream ssql;
 	int rc;
+
+	TRACE(Trace::error, __PRETTY_FUNCTION__);
 
 	if ( key != keySent ) {
 		MSG(LTFSDMS0008E, keySent);

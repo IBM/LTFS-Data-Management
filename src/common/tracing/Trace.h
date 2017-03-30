@@ -36,6 +36,7 @@ public:
 	~Trace();
 
 	void init();
+	void rotate();
 
 	void setTrclevel(traceLevel level);
 	int getTrclevel();
@@ -55,6 +56,10 @@ public:
 
 			try {
 				mtx.lock();
+
+				if ( tracefile.tellp() > 100*1024*1024 )
+					rotate();
+
 				tracefile << curctime << "."
 						  << std::setfill('0') << std::setw(6) << curtime.tv_usec << ":["
 						  << std::setfill('0') << std::setw(6) << getpid() << ":"
