@@ -7,6 +7,7 @@ private:
 	struct wq_data_t {
 		std::mutex mtx_add;
 		std::condition_variable cond_add;
+		std::condition_variable cond_init;
 		std::mutex mtx_resp;
 		std::condition_variable cond_resp;
 		std::condition_variable cond_cont;
@@ -25,9 +26,10 @@ public:
 	{
 		std::packaged_task<void ()> ltask;
 		std::unique_lock<std::mutex> lock(wq_data->mtx_add);
+		wq_data->started++;
+		wq_data->cond_init.notify_one();
 
 		while ( true ) {
-			wq_data->started++;
 			wq_data->cond_add.wait(lock);
 			wq_data->occupied++;
 			if ( wq_data->terminate == true )
@@ -43,10 +45,11 @@ public:
 
 			ltask();
 
+			lock.lock();
+
 			if ( wq_data->terminate == true )
 				return;
 
-			lock.lock();
 			wq_data->occupied--;
 			if ( wq_data->occupied == num_thrds - 1)
 				wq_data->cond_cont.notify_one();
@@ -62,11 +65,8 @@ public:
 		for (int i=0; i<num_thrds; i++)
 			threads.push_back(std::thread(&threadfunc, i, num_thrds, &wq_data));
 
-		// wait until all threads are started ...
-		while (wq_data.started < num_thrds) {}
-
-		// ... and are waiting on a condition
 		std::unique_lock<std::mutex> lock(wq_data.mtx_add);
+		wq_data.cond_init.wait(lock,[this]{return wq_data.started == num_thrds;});
 	}
 
 	static void execute(std::function<void (Args... args)> func, Args... args)
