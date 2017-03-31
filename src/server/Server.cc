@@ -145,7 +145,7 @@ void Server::writeKey()
 }
 
 
-void Server::initialize()
+void Server::initialize(bool dbUseMemory)
 
 {
 	if ( setrlimit(RLIMIT_NOFILE, &Const::NOFILE_LIMIT) == -1 ) {
@@ -163,7 +163,7 @@ void Server::initialize()
 
 	try {
 		DB.cleanup();
-		DB.open();
+		DB.open(dbUseMemory);
 		DB.createTables();
 	}
 	catch (int error) {

@@ -36,12 +36,17 @@ void DataBase::cleanup()
 	unlink((Const::DB_FILE + std::string("-journal")).c_str());
 }
 
-void DataBase::open()
+void DataBase::open(bool dbUseMemory)
 
 {
 	int rc;
 	std::string sql;
-	std::string uri = std::string("file:") + Const::DB_FILE;
+	std::string uri;
+
+	if ( dbUseMemory )
+		uri = "file::memory:";
+	else
+		uri = std::string("file:") + Const::DB_FILE;
 
 	rc = sqlite3_config(SQLITE_CONFIG_URI,1);
 

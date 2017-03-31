@@ -30,16 +30,20 @@ int main(int argc, char **argv)
 	bool detach = true;
 	int opt;
 	sigset_t set;
+	bool dbUseMemory = false;
 	Trace::traceLevel tl = Trace::error;
 
 	Connector *connector = NULL;
 
 	opterr = 0;
 
-	while (( opt = getopt(argc, argv, "fd:")) != -1 ) {
+	while (( opt = getopt(argc, argv, "fmd:")) != -1 ) {
 		switch( opt ) {
 			case 'f':
 				detach = false;
+				break;
+			case 'm':
+				dbUseMemory = true;
 				break;
 			case 'd':
 				try {
@@ -77,7 +81,7 @@ int main(int argc, char **argv)
 	TRACE(Trace::little, getpid());
 
 	try {
-		ltfsdmd.initialize();
+		ltfsdmd.initialize(dbUseMemory);
 		if ( detach )
 			ltfsdmd.daemonize();
 

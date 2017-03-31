@@ -24,7 +24,7 @@ public:
 	DataBase() : db(NULL), dbNeedsClosed(false) {}
 	~DataBase();
 	void cleanup();
-	void open();
+	void open(bool dbUseMemory);
 	void createTables();
 	void beginTransaction();
 	void endTransaction();
