@@ -79,7 +79,8 @@ std::set<std::string> LTFSDM::getFs()
 		throw int(Error::LTFSDM_GENERAL_ERROR);
 
 	while (getmntent_r(MNTINFO, &mntbuf, buffer, buflen))
-		if (!strcmp(mntbuf.mnt_type, "xfs"))
+		if (!strcmp(mntbuf.mnt_type, "xfs") ||
+			!strcmp(mntbuf.mnt_type, "ext4"))
 			mountList.insert(std::string(mntbuf.mnt_dir));
 
 	endmntent(MNTINFO);
