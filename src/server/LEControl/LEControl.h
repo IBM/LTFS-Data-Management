@@ -116,6 +116,6 @@ public:
 	// Get index file
 
 private:
-	static const boost::unordered_map<std::string, int> format_errors_;
+	static const std::unordered_map<std::string, int> format_errors_;
 	static LTFSAdminLog *logger_;
 };

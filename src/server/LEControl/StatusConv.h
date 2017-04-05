@@ -25,14 +25,14 @@
 
 class StatusConv {
 	private:
-		static boost::unordered_map<string, int> cart_stat_;
-		static boost::unordered_map<string, int> drive_stat_;
-		static boost::unordered_map<string, int> node_stat_;
-		static boost::unordered_map<string, int> cart_location_;
+		static std::unordered_map<std::string, int> cart_stat_;
+		static std::unordered_map<std::string, int> drive_stat_;
+		static std::unordered_map<std::string, int> node_stat_;
+		static std::unordered_map<std::string, int> cart_location_;
 
 	public:
-		static int get_cart_value(string in);
-		static int get_drive_value(string in);
-		static int get_node_value(string in);
-		static int get_cart_location(string in);
+		static int get_cart_value(std::string in);
+		static int get_drive_value(std::string in);
+		static int get_node_value(std::string in);
+		static int get_cart_location(std::string in);
 };

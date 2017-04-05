@@ -6,7 +6,9 @@ COMMONDIRS += src/common/comm
 
 CLIENTDIRS := src/client
 
-SERVERDIRS := src/server
+SERVERDIRS := src/server/LEControl/ltfsadminlib
+SERVERDIRS += src/server/LEControl
+SERVERDIRS += src/server
 
 CONNECDIRS := src/connector/fuse
 ifneq ($(wildcard /usr/include/xfs/dmapi.h),)

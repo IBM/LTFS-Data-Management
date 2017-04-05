@@ -20,12 +20,24 @@
 **  ZZ_Copyright_END
 */
 
-#include  <memory>
+#include <sys/resource.h>
+
+#include <memory>
+#include <list>
+#include <condition_variable>
+#include <unordered_map>
+#include <thread>
+#include <vector>
+#include <set>
+
+#include "src/common/util/util.h"
+#include "src/common/messages/Message.h"
+#include "src/common/tracing/Trace.h"
+#include "src/common/errors/errors.h"
+#include "src/common/const/Const.h"
 
 #include "LEControl.h"
 #include "StatusConv.h"
-
-LTFSAdminLog *LEControl::logger_ = NULL;
 
 /*
  *  Following enumdefinitil is quite bad...
@@ -40,40 +52,19 @@ enum {
 	FORMAT_JAG5W = 0x75,
 };
 
-std::shared_ptr<LTFSAdminSession> LEControl::Connect(string node_addr, uint16_t port_num)
+std::shared_ptr<LTFSAdminSession> LEControl::Connect(std::string node_addr, uint16_t port_num)
 {
-	if (! logger_) {
-		logger_ = new LELogger();
-		if (logger_) {
-			int level = get_debug_level();
-			loglevel_t level_le = INFO;
-			switch(level) {
-				case 1:
-					level_le = DEBUG0;
-					break;
-				case 2:
-					level_le = DEBUG1;
-					break;
-				case 3:
-					level_le = DEBUG2;
-					break;
-			}
-			logger_->SetLogLevel(level_le);
-			LTFSAdminBase::SetLogger(logger_);
-		}
-	}
-
 	std::shared_ptr<LTFSAdminSession> s =
 		std::shared_ptr<LTFSAdminSession>(new LTFSAdminSession(node_addr, port_num));
 
 	if (s) {
-		MSG_LOG(GLESM700I, node_addr.c_str(), port_num);
+		MSG(LTFSDML0700I, node_addr.c_str(), port_num);
 		try {
 			s->Connect();
 			s->SessionLogin();
-			MSG_LOG(GLESM701I, node_addr.c_str(), port_num, s->get_fd());
+			MSG(LTFSDML0701I, node_addr.c_str(), port_num, s->get_fd());
 		} catch (AdminLibException& e) {
-			MSG_LOG(GLESM186E, node_addr.c_str());
+			MSG(LTFSDML0186E, node_addr.c_str());
 			s = std::shared_ptr<LTFSAdminSession>();
 		}
 	}
@@ -84,14 +75,14 @@ std::shared_ptr<LTFSAdminSession> LEControl::Connect(string node_addr, uint16_t 
 std::shared_ptr<LTFSAdminSession> LEControl::Reconnect(std::shared_ptr<LTFSAdminSession> s)
 {
 	if (s) {
-		MSG_LOG(GLESM702I, s->get_server().c_str(), s->get_port());
+		MSG(LTFSDML0702I, s->get_server().c_str(), s->get_port());
 		try {
 			s->Connect();
 			s->SessionLogin();
-			MSG_LOG(GLESM703I, s->get_server().c_str(), s->get_port(),
+			MSG(LTFSDML0703I, s->get_server().c_str(), s->get_port(),
 					s->get_fd());
 		} catch (AdminLibException& e) {
-			MSG_LOG(GLESM186E, s->get_server().c_str());
+			MSG(LTFSDML0186E, s->get_server().c_str());
 			s = std::shared_ptr<LTFSAdminSession>();
 		}
 	}
@@ -102,17 +93,17 @@ std::shared_ptr<LTFSAdminSession> LEControl::Reconnect(std::shared_ptr<LTFSAdmin
 void LEControl::Disconnect(std::shared_ptr<LTFSAdminSession> s)
 {
 	if (s) {
-		MSG_LOG(GLESM704I, s->get_server().c_str(), s->get_port(), s->get_fd());
+		MSG(LTFSDML0704I, s->get_server().c_str(), s->get_port(), s->get_fd());
 		try {
 			try {
 				s->SessionLogout();
 			} catch (AdminLibException& e) {
-				MSG_LOG(GLESM187E); // LTFS logout failed
+				MSG(LTFSDML0187E); // LTFS logout failed
 			}
 			s->Disconnect();
-			MSG_LOG(GLESM705I, s->get_server().c_str(), s->get_port());
+			MSG(LTFSDML0705I, s->get_server().c_str(), s->get_port());
 		} catch ( AdminLibException& e ) {
-			MSG_LOG(GLESM187E); // LTFS logout failed
+			MSG(LTFSDML0187E); // LTFS logout failed
 		}
 	}
 
@@ -125,23 +116,23 @@ std::shared_ptr<LTFSNode> LEControl::InventoryNode(std::shared_ptr<LTFSAdminSess
 
 	if (s && s->is_alived()) {
 		/*
-		 *  Remove GLESM706I and GLESM707I because the scheduler calls this function so much periodically
+		 *  Remove LTFSDML0706I and LTFSDML0707I because the scheduler calls this function so much periodically
 		 *  It is a stupid implementation to check the every node status every 1 second but we don't have
 		 *  enough time to correct it... Now just remove the messages to overflow the messages.
 		 */
-		//MSG_LOG(GLESM706I, "node", s->get_server().c_str(), s->get_port(), s->get_fd());
+		//MSG(LTFSDML0706I, "node", s->get_server().c_str(), s->get_port(), s->get_fd());
 		try {
-			list<std::shared_ptr <LTFSNode> > node_list;
+			std::list<std::shared_ptr <LTFSNode> > node_list;
 			s->SessionInventory(node_list);
 
 			if (node_list.size() == 1) {
-				//MSG_LOG(GLESM707I, "node", s->get_server().c_str(), s->get_port(), s->get_fd());
-				list<std::shared_ptr <LTFSNode> >::iterator it = node_list.begin();
+				//MSG(LTFSDML0707I, "node", s->get_server().c_str(), s->get_port(), s->get_fd());
+				std::list<std::shared_ptr <LTFSNode> >::iterator it = node_list.begin();
 				n = *it;
 			} else
-				MSG_LOG(GLESM708E, node_list.size(), s->get_server().c_str(), s->get_port(), s->get_fd());
+				MSG(LTFSDML0708E, node_list.size(), s->get_server().c_str(), s->get_port(), s->get_fd());
 		} catch ( AdminLibException& e ) {
-			MSG_LOG(GLESM709E, "Inventory", "node", s->get_server().c_str(), s->get_port(), s->get_fd(), e.what());
+			MSG(LTFSDML0709E, "Inventory", "node", s->get_server().c_str(), s->get_port(), s->get_fd(), e.what());
 			n = std::shared_ptr<LTFSNode>();
 		}
 	}
@@ -149,30 +140,30 @@ std::shared_ptr<LTFSNode> LEControl::InventoryNode(std::shared_ptr<LTFSAdminSess
 	return n;
 }
 
-std::shared_ptr<Drive> LEControl::InventoryDrive(string id,
+std::shared_ptr<Drive> LEControl::InventoryDrive(std::string id,
 											std::shared_ptr<LTFSAdminSession> s,
 											bool force)
 {
 	std::shared_ptr<Drive> d = std::shared_ptr<Drive>();
 
 	if (s && s->is_alived()) {
-		string type = "drive (" + id + ")";
-		MSG_LOG(GLESM706I, type.c_str(), s->get_server().c_str(), s->get_port(),
+		std::string type = "drive (" + id + ")";
+		MSG(LTFSDML0706I, type.c_str(), s->get_server().c_str(), s->get_port(),
 				s->get_fd());
 		try {
-			list<std::shared_ptr <Drive> > drive_list;
+			std::list<std::shared_ptr <Drive> > drive_list;
 			s->SessionInventory(drive_list, id, force);
 
 			/*
 			 * FIXME (Atsushi Abe): currently LE does not support filter function
 			 * against the drive object. So that get all drives and search the target linearly.
 			 */
-			list<std::shared_ptr<Drive> >::iterator it;
+			std::list<std::shared_ptr<Drive> >::iterator it;
 			for (it = drive_list.begin(); it != drive_list.end(); ++it) {
 				try {
 					if (id == (*it)->GetObjectID()) {
 						d = (*it);
-						MSG_LOG(GLESM707I, type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd());
+						MSG(LTFSDML0707I, type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd());
 					}
 				} catch ( InternalError& ie ) {
 					if (ie.GetID() != "031E") {
@@ -182,9 +173,9 @@ std::shared_ptr<Drive> LEControl::InventoryDrive(string id,
 				}
 			}
 			if (!d)
-				MSG_LOG(GLESM710W, type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd());
+				MSG(LTFSDML0710W, type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd());
 		} catch ( AdminLibException& e ) {
-			MSG_LOG(GLESM709E, "Inventory", type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd(), e.what());
+			MSG(LTFSDML0709E, "Inventory", type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd(), e.what());
 			d = std::shared_ptr<Drive>();
 		}
 	}
@@ -192,23 +183,23 @@ std::shared_ptr<Drive> LEControl::InventoryDrive(string id,
 	return d;
 }
 
-int LEControl::InventoryDrive(list<std::shared_ptr<Drive> > &drives,
+int LEControl::InventoryDrive(std::list<std::shared_ptr<Drive> > &drives,
 							  std::shared_ptr<LTFSAdminSession> s,
 							  bool assigned_only, bool force)
 {
 	if (s && s->is_alived()) {
 		try {
 			if (assigned_only) {
-				MSG_LOG(GLESM706I, "assigned drive", s->get_server().c_str(), s->get_port(), s->get_fd());
+				MSG(LTFSDML0706I, "assigned drive", s->get_server().c_str(), s->get_port(), s->get_fd());
 				s->SessionInventory(drives, "__ACTIVE_ONLY__", force);
-				MSG_LOG(GLESM707I, "assigned drive", s->get_server().c_str(), s->get_port(), s->get_fd());
+				MSG(LTFSDML0707I, "assigned drive", s->get_server().c_str(), s->get_port(), s->get_fd());
 			} else {
-				MSG_LOG(GLESM706I, "drive", s->get_server().c_str(), s->get_port(), s->get_fd());
+				MSG(LTFSDML0706I, "drive", s->get_server().c_str(), s->get_port(), s->get_fd());
 				s->SessionInventory(drives, "", force);
-				MSG_LOG(GLESM707I, "drive", s->get_server().c_str(), s->get_port(), s->get_fd());
+				MSG(LTFSDML0707I, "drive", s->get_server().c_str(), s->get_port(), s->get_fd());
 			}
 		} catch ( AdminLibException& e ) {
-			MSG_LOG(GLESM709E, "Inventory", "drive", s->get_server().c_str(), s->get_port(), s->get_fd(), e.what());
+			MSG(LTFSDML0709E, "Inventory", "drive", s->get_server().c_str(), s->get_port(), s->get_fd(), e.what());
 			drives.clear();
 			return -1;
 		}
@@ -219,13 +210,13 @@ int LEControl::InventoryDrive(list<std::shared_ptr<Drive> > &drives,
 	return -1;
 }
 
-int LEControl::AssignDrive(string serial, std::shared_ptr<LTFSAdminSession> s)
+int LEControl::AssignDrive(std::string serial, std::shared_ptr<LTFSAdminSession> s)
 {
 	int rc = -1;
 
 	if (s && s->is_alived()) {
-		string type = "drive (" + serial + ")";
-		MSG_LOG(GLESM711I, type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd());
+		std::string type = "drive (" + serial + ")";
+		MSG(LTFSDML0711I, type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd());
 		try {
 			std::shared_ptr<Drive> d = InventoryDrive(serial, s);
 			if (!d) {
@@ -236,12 +227,12 @@ int LEControl::AssignDrive(string serial, std::shared_ptr<LTFSAdminSession> s)
 			if (d) {
 				d->Add();
 				rc = 0;
-				MSG_LOG(GLESM712I, type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd());
+				MSG(LTFSDML0712I, type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd());
 			} else
-				MSG_LOG(GLESM710W, type.c_str(), s->get_server().c_str(),
+				MSG(LTFSDML0710W, type.c_str(), s->get_server().c_str(),
 						s->get_port(), s->get_fd());
 		} catch ( AdminLibException& e ) {
-			MSG_LOG(GLESM709E, "Assign", type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd(), e.what());
+			MSG(LTFSDML0709E, "Assign", type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd(), e.what());
 			rc = -1;
 		}
 	}
@@ -255,22 +246,22 @@ int LEControl::UnassignDrive(std::shared_ptr<Drive> drive)
 
 	if (drive) {
 		LTFSAdminSession *s = drive->get_session();
-		string type = "drive (" + drive->GetObjectID() + ")";
-		MSG_LOG(GLESM713I, type.c_str(), s->get_server().c_str(), s->get_port(),
+		std::string type = "drive (" + drive->GetObjectID() + ")";
+		MSG(LTFSDML0713I, type.c_str(), s->get_server().c_str(), s->get_port(),
 				s->get_fd());
 		try {
 			drive->Remove();
 			rc = 0;
-			MSG_LOG(GLESM714I, type.c_str(), s->get_server().c_str(), s->get_port(),
+			MSG(LTFSDML0714I, type.c_str(), s->get_server().c_str(), s->get_port(),
 					s->get_fd());
 		} catch ( AdminLibException& e ) {
-			string msg_oob = e.GetOOBError();
+			std::string msg_oob = e.GetOOBError();
 			if (msg_oob == "LTFSI1090E") {
-				MSG_LOG(GLESM715I, type.c_str(), s->get_server().c_str(), s->get_port(),
+				MSG(LTFSDML0715I, type.c_str(), s->get_server().c_str(), s->get_port(),
 						s->get_fd());
 				rc = 0;
 			} else {
-				MSG_LOG(GLESM709E, "Unassign", type.c_str(), s->get_server().c_str(),
+				MSG(LTFSDML0709E, "Unassign", type.c_str(), s->get_server().c_str(),
 						s->get_port(), s->get_fd(), e.what());
 				rc = -1;
 			}
@@ -280,27 +271,27 @@ int LEControl::UnassignDrive(std::shared_ptr<Drive> drive)
 	return rc;
 }
 
-std::shared_ptr<Cartridge> LEControl::InventoryCartridge(string id,
+std::shared_ptr<Cartridge> LEControl::InventoryCartridge(std::string id,
 													std::shared_ptr<LTFSAdminSession> s,
 													bool force)
 {
 	std::shared_ptr<Cartridge> c = std::shared_ptr<Cartridge>();
 
 	if (s && s->is_alived()) {
-		string type = "tape (" + id + ")";
-		MSG_LOG(GLESM706I, type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd());
+		std::string type = "tape (" + id + ")";
+		MSG(LTFSDML0706I, type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd());
 		try {
-			list<std::shared_ptr <Cartridge> > cartridge_list;
+			std::list<std::shared_ptr <Cartridge> > cartridge_list;
 			s->SessionInventory(cartridge_list, id);
 
 			if (cartridge_list.size() == 1) {
-				MSG_LOG(GLESM707I, type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd());
-				list<std::shared_ptr <Cartridge> >::iterator it = cartridge_list.begin();
+				MSG(LTFSDML0707I, type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd());
+				std::list<std::shared_ptr <Cartridge> >::iterator it = cartridge_list.begin();
 				c = *it;
 			} else
-				MSG_LOG(GLESM716E, s->get_server().c_str(), s->get_port(), s->get_fd());
+				MSG(LTFSDML0716E, s->get_server().c_str(), s->get_port(), s->get_fd());
 		} catch ( AdminLibException& e ) {
-			MSG_LOG(GLESM709E, "Inventory", type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd(), e.what());
+			MSG(LTFSDML0709E, "Inventory", type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd(), e.what());
 			c = std::shared_ptr<Cartridge>();
 		}
 	}
@@ -308,23 +299,23 @@ std::shared_ptr<Cartridge> LEControl::InventoryCartridge(string id,
 	return c;
 }
 
-int LEControl::InventoryCartridge(list<std::shared_ptr<Cartridge> > &cartridges,
+int LEControl::InventoryCartridge(std::list<std::shared_ptr<Cartridge> > &cartridges,
 								  std::shared_ptr<LTFSAdminSession> s,
 								  bool assigned_only, bool force)
 {
 	if (s && s->is_alived()) {
 		try {
 			if (assigned_only) {
-				MSG_LOG(GLESM706I, "assigned tape", s->get_server().c_str(), s->get_port(), s->get_fd());
+				MSG(LTFSDML0706I, "assigned tape", s->get_server().c_str(), s->get_port(), s->get_fd());
 				s->SessionInventory(cartridges, "__ACTIVE_ONLY__", force);
-				MSG_LOG(GLESM707I, "assigned tape", s->get_server().c_str(), s->get_port(), s->get_fd());
+				MSG(LTFSDML0707I, "assigned tape", s->get_server().c_str(), s->get_port(), s->get_fd());
 			} else {
-				MSG_LOG(GLESM706I, "tape", s->get_server().c_str(), s->get_port(), s->get_fd());
+				MSG(LTFSDML0706I, "tape", s->get_server().c_str(), s->get_port(), s->get_fd());
 				s->SessionInventory(cartridges, "", force);
-				MSG_LOG(GLESM707I, "tape", s->get_server().c_str(), s->get_port(), s->get_fd());
+				MSG(LTFSDML0707I, "tape", s->get_server().c_str(), s->get_port(), s->get_fd());
 			}
 		} catch ( AdminLibException& e ) {
-			MSG_LOG(GLESM709E, "Inventory", "tape", s->get_server().c_str(), s->get_port(), s->get_fd(), e.what());
+			MSG(LTFSDML0709E, "Inventory", "tape", s->get_server().c_str(), s->get_port(), s->get_fd(), e.what());
 			cartridges.clear();
 			return -1;
 		}
@@ -335,13 +326,13 @@ int LEControl::InventoryCartridge(list<std::shared_ptr<Cartridge> > &cartridges,
 	return -1;
 }
 
-int LEControl::AssignCartridge(string barcode, std::shared_ptr<LTFSAdminSession> s, string drive_serial)
+int LEControl::AssignCartridge(std::string barcode, std::shared_ptr<LTFSAdminSession> s, std::string drive_serial)
 {
 	int rc = -1;
 
 	if (s && s->is_alived()) {
-		string type = "tape (" + barcode + ")";
-		MSG_LOG(GLESM711I, type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd());
+		std::string type = "tape (" + barcode + ")";
+		MSG(LTFSDML0711I, type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd());
 		try {
 			std::shared_ptr<Cartridge> c = InventoryCartridge(barcode, s);
 			if (!c) {
@@ -360,12 +351,12 @@ int LEControl::AssignCartridge(string barcode, std::shared_ptr<LTFSAdminSession>
 					c->Unmount();
 				}
 				rc = 0;
-				MSG_LOG(GLESM712I, type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd());
+				MSG(LTFSDML0712I, type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd());
 			} else
-				MSG_LOG(GLESM710W, type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd());
+				MSG(LTFSDML0710W, type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd());
 
 		} catch ( AdminLibException& e ) {
-			MSG_LOG(GLESM709E, "Assign", type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd(), e.what());
+			MSG(LTFSDML0709E, "Assign", type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd(), e.what());
 			rc = -1;
 		}
 	}
@@ -380,19 +371,19 @@ int LEControl::UnassignCartridge(std::shared_ptr<Cartridge> cartridge, bool keep
 	if (cartridge) {
 		LTFSAdminSession *s = cartridge->get_session();
 		if (s && s->is_alived()) {
-			string type = "tape (" + cartridge->GetObjectID() + ")";
-			MSG_LOG(GLESM713I, type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd());
+			std::string type = "tape (" + cartridge->GetObjectID() + ")";
+			MSG(LTFSDML0713I, type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd());
 			try {
 				cartridge->Remove(true, keep_on_drive);
 				rc = 0;
-				MSG_LOG(GLESM714I, type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd());
+				MSG(LTFSDML0714I, type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd());
 			} catch ( AdminLibException& e ) {
-				string msg_oob = e.GetOOBError();
+				std::string msg_oob = e.GetOOBError();
 				if (msg_oob == "LTFSI1090E") {
-					MSG_LOG(GLESM715I, type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd());
+					MSG(LTFSDML0715I, type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd());
 					rc = 0;
 				} else {
-					MSG_LOG(GLESM709E, "Unassign", type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd(), e.what());
+					MSG(LTFSDML0709E, "Unassign", type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd(), e.what());
 					rc = -1;
 				}
 			}
@@ -402,20 +393,20 @@ int LEControl::UnassignCartridge(std::shared_ptr<Cartridge> cartridge, bool keep
 	return rc;
 }
 
-int LEControl::MountCartridge(std::shared_ptr<Cartridge> cartridge, string drive_serial)
+int LEControl::MountCartridge(std::shared_ptr<Cartridge> cartridge, std::string drive_serial)
 {
 	int rc = -1;
 	LTFSAdminSession *s = cartridge->get_session();
 
 	if (s && s->is_alived()) {
 		try {
-			string type = cartridge->GetObjectID();
-			MSG_LOG(GLESM717I, type.c_str(), drive_serial.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd());
+			std::string type = cartridge->GetObjectID();
+			MSG(LTFSDML0717I, type.c_str(), drive_serial.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd());
 			rc = cartridge->Mount(drive_serial);
-			MSG_LOG(GLESM718I, type.c_str(), drive_serial.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd());
+			MSG(LTFSDML0718I, type.c_str(), drive_serial.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd());
 		} catch (AdminLibException& e) {
-			string type = cartridge->GetObjectID() + "(" + drive_serial + ")";
-			MSG_LOG(GLESM709E, "Mount", type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd(), e.what());
+			std::string type = cartridge->GetObjectID() + "(" + drive_serial + ")";
+			MSG(LTFSDML0709E, "Mount", type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd(), e.what());
 			return -1;
 		}
 	}
@@ -426,16 +417,16 @@ int LEControl::MountCartridge(std::shared_ptr<Cartridge> cartridge, string drive
 int LEControl::UnmountCartridge(std::shared_ptr<Cartridge> cartridge)
 {
 	int rc = -1;
-	string type = cartridge->GetObjectID();
+	std::string type = cartridge->GetObjectID();
 	LTFSAdminSession *s = cartridge->get_session();
 
 	if (s && s->is_alived()) {
 		try {
-			MSG_LOG(GLESM719I, type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd());
+			MSG(LTFSDML0719I, type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd());
 			rc = cartridge->Unmount();
-			MSG_LOG(GLESM720I, type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd());
+			MSG(LTFSDML0720I, type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd());
 		} catch (AdminLibException& e) {
-			MSG_LOG(GLESM709E, "Unmount", type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd(), e.what());
+			MSG(LTFSDML0709E, "Unmount", type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd(), e.what());
 			return -1;
 		}
 	}
@@ -446,16 +437,16 @@ int LEControl::UnmountCartridge(std::shared_ptr<Cartridge> cartridge)
 int LEControl::SyncCartridge(std::shared_ptr<Cartridge> cartridge)
 {
 	int rc = -1;
-	string type = cartridge->GetObjectID();
+	std::string type = cartridge->GetObjectID();
 	LTFSAdminSession *s = cartridge->get_session();
 
 	if (s && s->is_alived()) {
 		try {
-			MSG_LOG(GLESM721I, type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd());
+			MSG(LTFSDML0721I, type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd());
 			rc = cartridge->Sync();
-			MSG_LOG(GLESM722I, type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd());
+			MSG(LTFSDML0722I, type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd());
 		} catch (AdminLibException& e) {
-			MSG_LOG(GLESM709E, "Sync", type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd(), e.what());
+			MSG(LTFSDML0709E, "Sync", type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd(), e.what());
 			return -1;
 		}
 	}
@@ -463,26 +454,26 @@ int LEControl::SyncCartridge(std::shared_ptr<Cartridge> cartridge)
 	return rc;
 }
 
-const unordered_map<string, int> LEControl::format_errors_ = boost::assign::map_list_of
-	( string("LTFSI1136E"), -LTFSEE_ALREADY_FORMATTED)
-	( string("LTFSI1125E"), -LTFSEE_WRITE_PROTECTED)
-	( string("LTFSI1079E"), -LTFSEE_TAPE_STATE_ERR)
-	( string("LTFSI1080E"), -LTFSEE_TAPE_STATE_ERR)
-	( string("LTFSI1081E"), -LTFSEE_TAPE_STATE_ERR)
-	( string("LTFSI1082E"), -LTFSEE_INACCESSIBLE)
-	( string("LTFSI1083E"), -LTFSEE_TAPE_STATE_ERR)
-	( string("LTFSI1084E"), -LTFSEE_TAPE_STATE_ERR)
-	( string("LTFSI1085E"), -LTFSEE_TAPE_STATE_ERR)
-	( string("LTFSI1086E"), -LTFSEE_TAPE_STATE_ERR)
-	( string("LTFSI1087E"), -LTFSEE_TAPE_STATE_ERR)
-	( string("LTFSI1088E"), -LTFSEE_TAPE_STATE_ERR)
-	;
+const std::unordered_map<std::string, int> LEControl::format_errors_ = {
+	{ std::string("LTFSI1136E"), -Error::LTFSDM_ALREADY_FORMATTED },
+	{ std::string("LTFSI1125E"), -Error::LTFSDM_WRITE_PROTECTED },
+	{ std::string("LTFSI1079E"), -Error::LTFSDM_TAPE_STATE_ERR },
+	{ std::string("LTFSI1080E"), -Error::LTFSDM_TAPE_STATE_ERR },
+	{ std::string("LTFSI1081E"), -Error::LTFSDM_TAPE_STATE_ERR },
+	{ std::string("LTFSI1082E"), -Error::LTFSDM_INACCESSIBLE },
+	{ std::string("LTFSI1083E"), -Error::LTFSDM_TAPE_STATE_ERR },
+	{ std::string("LTFSI1084E"), -Error::LTFSDM_TAPE_STATE_ERR },
+	{ std::string("LTFSI1085E"), -Error::LTFSDM_TAPE_STATE_ERR },
+	{ std::string("LTFSI1086E"), -Error::LTFSDM_TAPE_STATE_ERR },
+	{ std::string("LTFSI1087E"), -Error::LTFSDM_TAPE_STATE_ERR },
+	{ std::string("LTFSI1088E"), -Error::LTFSDM_TAPE_STATE_ERR }};
 
-int LEControl::FormatCartridge(std::shared_ptr<Cartridge> cartridge, string drive_serial, uint8_t density_code, bool force)
+
+int LEControl::FormatCartridge(std::shared_ptr<Cartridge> cartridge, std::string drive_serial, uint8_t density_code, bool force)
 {
 	int rc = -1;
 
-	string type = cartridge->GetObjectID();
+	std::string type = cartridge->GetObjectID();
 	LTFSAdminSession *s = cartridge->get_session();
 
 	if (s && s->is_alived()) {
@@ -490,12 +481,12 @@ int LEControl::FormatCartridge(std::shared_ptr<Cartridge> cartridge, string driv
 			cartridge->Remove(true, true, true);
 		} catch (AdminLibException& e) {
 			// Just ignore and try to format
-			MSG_LOG(GLESM723I, type.c_str(), drive_serial.c_str(), s->get_server().c_str(),
+			MSG(LTFSDML0723I, type.c_str(), drive_serial.c_str(), s->get_server().c_str(),
 					s->get_port(), s->get_fd(), "format");
 		}
 
 		try {
-			MSG_LOG(GLESM724I, type.c_str(), drive_serial.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd());
+			MSG(LTFSDML0724I, type.c_str(), drive_serial.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd());
 			uint8_t actual_density = 0;
 			switch (density_code) {
 				case FORMAT_JAG5:
@@ -509,17 +500,17 @@ int LEControl::FormatCartridge(std::shared_ptr<Cartridge> cartridge, string driv
 					break;
 			}
 			rc = cartridge->Format(drive_serial, actual_density, force);
-			MSG_LOG(GLESM725I, type.c_str(), drive_serial.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd());
+			MSG(LTFSDML0725I, type.c_str(), drive_serial.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd());
 		} catch (AdminLibException& e) {
-			int err = LTFSEE_GENERAL_ERROR;
-			unordered_map<string, int>::const_iterator it;
-			string msg_oob = e.GetOOBError();
+			int err = Error::LTFSDM_GENERAL_ERROR;
+			std::unordered_map<std::string, int>::const_iterator it;
+			std::string msg_oob = e.GetOOBError();
 
 			it = format_errors_.find(msg_oob);
 			if (it != format_errors_.end())
 				err = it->second;
 			else
-				MSG_LOG(GLESM709E, "Format", type.c_str(), s->get_server().c_str(),
+				MSG(LTFSDML0709E, "Format", type.c_str(), s->get_server().c_str(),
 						s->get_port(), s->get_fd(), e.what());
 
 			return err;
@@ -529,11 +520,11 @@ int LEControl::FormatCartridge(std::shared_ptr<Cartridge> cartridge, string driv
 	return rc;
 }
 
-int LEControl::CheckCartridge(std::shared_ptr<Cartridge> cartridge, string drive_serial, bool deep)
+int LEControl::CheckCartridge(std::shared_ptr<Cartridge> cartridge, std::string drive_serial, bool deep)
 {
 	int rc = -1;
 
-	string type = cartridge->GetObjectID();
+	std::string type = cartridge->GetObjectID();
 	LTFSAdminSession *s = cartridge->get_session();
 
 	if (s && s->is_alived()) {
@@ -541,16 +532,16 @@ int LEControl::CheckCartridge(std::shared_ptr<Cartridge> cartridge, string drive
 			cartridge->Remove(true, true, true);
 		} catch (AdminLibException& e) {
 			// Just ignore and try to check
-			MSG_LOG(GLESM723I, type.c_str(), drive_serial.c_str(), s->get_server().c_str(),
+			MSG(LTFSDML0723I, type.c_str(), drive_serial.c_str(), s->get_server().c_str(),
 					s->get_port(), s->get_fd(), "recover");
 		}
 
 		try {
-			MSG_LOG(GLESM726I, type.c_str(), drive_serial.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd());
+			MSG(LTFSDML0726I, type.c_str(), drive_serial.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd());
 			rc = cartridge->Check(drive_serial, deep);
-			MSG_LOG(GLESM727I, type.c_str(), drive_serial.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd());
+			MSG(LTFSDML0727I, type.c_str(), drive_serial.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd());
 		} catch (AdminLibException& e) {
-			MSG_LOG(GLESM709E, "Recovery", type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd(), e.what());
+			MSG(LTFSDML0709E, "Recovery", type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd(), e.what());
 			return -1;
 		}
 	}
@@ -558,12 +549,12 @@ int LEControl::CheckCartridge(std::shared_ptr<Cartridge> cartridge, string drive
 	return rc;
 }
 
-int LEControl::MoveCartridge(std::shared_ptr<Cartridge> cartridge, ltfs_slot_t slot_type, string drive_serial)
+int LEControl::MoveCartridge(std::shared_ptr<Cartridge> cartridge, ltfs_slot_t slot_type, std::string drive_serial)
 {
 	int rc = -1;
 
-	string type = cartridge->GetObjectID();
-	string dest;
+	std::string type = cartridge->GetObjectID();
+	std::string dest;
 	switch(slot_type) {
 		case SLOT_HOME:
 			dest = "home slot";
@@ -583,7 +574,7 @@ int LEControl::MoveCartridge(std::shared_ptr<Cartridge> cartridge, ltfs_slot_t s
 
 	if (s && s->is_alived()) {
 		try {
-			MSG_LOG(GLESM728I, type.c_str(), dest.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd());
+			MSG(LTFSDML0728I, type.c_str(), dest.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd());
 			if (slot_type != SLOT_DRIVE && drive_serial == "") {
 				cartridge->Move(slot_type, drive_serial);
 				rc = 0;
@@ -591,9 +582,9 @@ int LEControl::MoveCartridge(std::shared_ptr<Cartridge> cartridge, ltfs_slot_t s
 				cartridge->Move(slot_type, drive_serial);
 				rc = 0;
 			}
-			MSG_LOG(GLESM729I, type.c_str(), dest.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd());
+			MSG(LTFSDML0729I, type.c_str(), dest.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd());
 		} catch ( AdminLibException& e ) {
-			MSG_LOG(GLESM709E, "Move", type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd(), e.what());
+			MSG(LTFSDML0709E, "Move", type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd(), e.what());
 			return -1;
 		}
 	}
