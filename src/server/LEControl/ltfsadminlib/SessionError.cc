@@ -23,18 +23,16 @@
 
 #include "SessionError.h"
 
-using namespace std;
-using namespace boost;
 using namespace ltfsadmin;
 
-string SessionError::GetOOBError()
+std::string SessionError::GetOOBError()
 {
 	return "ADMINLIB_SESSION";
 }
 
 const char* SessionError::what(void)
 {
-	format msg_formatter("Session Error (%1%): [%2%:%3%] ");
+	boost::format msg_formatter("Session Error (%1%): [%2%:%3%] ");
 
 	msg_formatter % id_;
 	msg_formatter % file_;

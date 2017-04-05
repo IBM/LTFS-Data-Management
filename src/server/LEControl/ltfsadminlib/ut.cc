@@ -1,5 +1,5 @@
 #include <iostream>
-#include <boost/shared_ptr.hpp>
+//#include <boost/std::shared_ptr.hpp>
 
 #include "LTFSAdminSession.h"
 #include "AdminLibException.h"
@@ -11,7 +11,7 @@
 int main(int argc, char **argv)
 {
 	using namespace std;
-	using namespace boost;
+	//using namespace boost;
 	using namespace ltfsadmin;
 
 	/* Set global loglevel */
@@ -30,11 +30,11 @@ int main(int argc, char **argv)
 
 #if 0
 		cout << "Getting Node Inventory...";
-		list<shared_ptr <LTFSObject> > n_list = session->SessionInventory(LTFS_OBJ_LTFS_NODE);
+		list<std::shared_ptr <LTFSObject> > n_list = session->SessionInventory(LTFS_OBJ_LTFS_NODE);
 		cout << "Done" << endl;
 		cout << "---" << endl;
-		for (list<shared_ptr <LTFSObject> >::iterator it = n_list.begin(); it != n_list.end(); ++it) {
-			shared_ptr<LTFSNode> node = shared_polymorphic_downcast<LTFSNode>(*it);
+		for (list<std::shared_ptr <LTFSObject> >::iterator it = n_list.begin(); it != n_list.end(); ++it) {
+			std::shared_ptr<LTFSNode> node = shared_polymorphic_downcast<LTFSNode>(*it);
 			unordered_map<string, string>attrs = node->GetAttributes();
 
 			for (unordered_map<string, string>::iterator attr_it = attrs.begin(); attr_it != attrs.end(); ++attr_it) {
@@ -50,11 +50,11 @@ int main(int argc, char **argv)
 		}
 
 		cout << "Getting Drive Inventory...";
-		list<shared_ptr <LTFSObject> > d_list = session->SessionInventory(LTFS_OBJ_DRIVE);
+		list<std::shared_ptr <LTFSObject> > d_list = session->SessionInventory(LTFS_OBJ_DRIVE);
 		cout << "Done" << endl;
 		cout << "---" << endl;
-		for (list<shared_ptr <LTFSObject> >::iterator it = d_list.begin(); it != d_list.end(); ++it) {
-			shared_ptr<Drive> drv = shared_polymorphic_downcast<Drive>(*it);
+		for (list<std::shared_ptr <LTFSObject> >::iterator it = d_list.begin(); it != d_list.end(); ++it) {
+			std::shared_ptr<Drive> drv = shared_polymorphic_downcast<Drive>(*it);
 			unordered_map<string, string>attrs =  drv->GetAttributes();
 
 			for (unordered_map<string, string>::iterator attr_it = attrs.begin(); attr_it != attrs.end(); ++attr_it) {
@@ -80,11 +80,11 @@ int main(int argc, char **argv)
 
 
 		cout << "Getting Cartridge Inventory...";
-		list<shared_ptr <LTFSObject> > c_list = session->SessionInventory(LTFS_OBJ_CARTRIDGE);
+		list<std::shared_ptr <LTFSObject> > c_list = session->SessionInventory(LTFS_OBJ_CARTRIDGE);
 		cout << "Done" << endl;
 		cout << "---" << endl;
-		for (list<shared_ptr <LTFSObject> >::iterator it = c_list.begin(); it != c_list.end(); ++it) {
-			shared_ptr<Cartridge> cart = shared_polymorphic_downcast<Cartridge>(*it);
+		for (list<std::shared_ptr <LTFSObject> >::iterator it = c_list.begin(); it != c_list.end(); ++it) {
+			std::shared_ptr<Cartridge> cart = shared_polymorphic_downcast<Cartridge>(*it);
 			unordered_map<string, string>attrs =  cart->GetAttributes();
 
 			for (unordered_map<string, string>::iterator attr_it = attrs.begin(); attr_it != attrs.end(); ++attr_it) {
@@ -115,11 +115,11 @@ int main(int argc, char **argv)
 		}
 
 		cout << "Getting Cartridge Inventory (Filtered) ...";
-		list<shared_ptr <LTFSObject> > f_list = session->SessionInventory(LTFS_OBJ_CARTRIDGE, "YAM064L5");
+		list<std::shared_ptr <LTFSObject> > f_list = session->SessionInventory(LTFS_OBJ_CARTRIDGE, "YAM064L5");
 		cout << "Done" << endl;
 		cout << "---" << endl;
-		for (list<shared_ptr <LTFSObject> >::iterator it = f_list.begin(); it != f_list.end(); ++it) {
-			shared_ptr<Cartridge> cart = shared_polymorphic_downcast<Cartridge>(*it);
+		for (list<std::shared_ptr <LTFSObject> >::iterator it = f_list.begin(); it != f_list.end(); ++it) {
+			std::shared_ptr<Cartridge> cart = shared_polymorphic_downcast<Cartridge>(*it);
 			unordered_map<string, string>attrs =  cart->GetAttributes();
 
 			for (unordered_map<string, string>::iterator attr_it = attrs.begin(); attr_it != attrs.end(); ++attr_it) {

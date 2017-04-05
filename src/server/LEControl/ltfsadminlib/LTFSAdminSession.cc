@@ -24,11 +24,18 @@
 
 #include <unistd.h>
 #include <fcntl.h>
+#include <string.h>
 #include <sys/ioctl.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
+
+#include <memory>
+#include <list>
+#include <condition_variable>
+#include <thread>
+
 
 #include "LTFSAdminSession.h"
 #include "Identifier.h"
@@ -40,11 +47,9 @@
 #include "SessionError.h"
 #include "RequestError.h"
 
-using namespace std;
-using namespace boost;
 using namespace ltfsadmin;
 
-LTFSAdminSession::LTFSAdminSession(string server, int port)
+LTFSAdminSession::LTFSAdminSession(std::string server, int port)
 	: server_(server), buf_("")
 {
 	port_       = port;
@@ -72,10 +77,10 @@ int LTFSAdminSession::Connect()
 	struct addrinfo *servaddr_info = NULL, *addr_info = NULL;
 	struct addrinfo hint_info;
 
-	ostringstream msg_stream;
-	ostringstream convert;
+	std::ostringstream msg_stream;
+	std::ostringstream convert;
 	convert << port_;
-	string port_str = convert.str();
+	std::string port_str = convert.str();
 
 	Log(DEBUG2, "Connecting");
 
@@ -86,7 +91,7 @@ int LTFSAdminSession::Connect()
 
 	int ret = getaddrinfo(server_.c_str(), port_str.c_str(), &hint_info, &servaddr_info);
 	if (ret) {
-		vector<string> args;
+		std::vector<std::string> args;
 		args.push_back("Cannot get address info");
 		args.push_back(server_);
 		throw SessionError(__FILE__, __LINE__, "001E", args);
@@ -117,7 +122,7 @@ int LTFSAdminSession::Connect()
 		freeaddrinfo(servaddr_info);
 
 	if (connfd_ < 0) {
-		vector<string> args;
+		std::vector<std::string> args;
 		args.push_back("Cannot connect to server");
 		args.push_back(server_);
 		throw SessionError(__FILE__, __LINE__, "002E", args);
@@ -133,7 +138,7 @@ int LTFSAdminSession::Disconnect()
 	if (receiver_) {
 		Log(DEBUG2, "Waiting to exit receiver thread");
 		receiver_->join();
-		receiver_ = shared_ptr<thread>();;
+		receiver_ = std::shared_ptr<std::thread>();;
 	}
 
 	if (connfd_ > 0) {
@@ -159,54 +164,54 @@ uint64_t LTFSAdminSession::GetSequence(void)
 	return result;
 }
 
-shared_ptr<Result> LTFSAdminSession::IssueRequest(shared_ptr<LTFSRequestMessage> msg, bool terminate_receiver)
+std::shared_ptr<Result> LTFSAdminSession::IssueRequest(std::shared_ptr<LTFSRequestMessage> msg, bool terminate_receiver)
 {
 	session_send(msg->ToString());
 
 	if (terminate_receiver)
 		keep_alive_ = false;
 
-	shared_ptr<Result> res =
-		dynamic_pointer_cast<Result>(ReceiveMessage(msg->GetSequence(), terminate_receiver));
+	std::shared_ptr<Result> res =
+		std::dynamic_pointer_cast<Result>(ReceiveMessage(msg->GetSequence(), terminate_receiver));
 
 	return res;
 }
 
-int LTFSAdminSession::SessionLogin(string user, string password)
+int LTFSAdminSession::SessionLogin(std::string user, std::string password)
 {
 	int rc = 0;
 
-	shared_ptr<Identifier> obj =
-		dynamic_pointer_cast<Identifier>(_ReceiveMessage());
-	ostringstream msg_stream;
+	std::shared_ptr<Identifier> obj =
+		std::dynamic_pointer_cast<Identifier>(_ReceiveMessage());
+	std::ostringstream msg_stream;
 
 	if (obj && obj->GetType() != LTFS_MSG_IDENTIFIER){
-		vector<string> args;
+		std::vector<std::string> args;
 		args.push_back("Response is not Identifier message");
 		throw RequestError(__FILE__, __LINE__, "003E", args);
 		return rc;
 	}
 
 	// Kick background message receiver
-	unique_lock<mutex> receiver_lock(receiver_lock_);
-	receiver_ = shared_ptr<thread>(new thread( &LTFSAdminSession::ReceiveThread, this));
+	std::unique_lock<std::mutex> receiver_lock(receiver_lock_);
+	receiver_ = std::shared_ptr<std::thread>(new std::thread( &LTFSAdminSession::ReceiveThread, this));
 	Log(DEBUG2, "Sleep until receiver thread is started.");
 	receiver_state_.wait(receiver_lock);
 	Log(DEBUG2, "Wake up because receiver thread is running");
 	receiver_lock.unlock();
 
 	// Issue Login request to LTFS
-	shared_ptr<Login> l;
+	std::shared_ptr<Login> l;
 	if (obj->GetAuth())
-		l = shared_ptr<Login>(new Login(GetSequence(), user, password));
+		l = std::shared_ptr<Login>(new Login(GetSequence(), user, password));
 	else
-		l = shared_ptr<Login>(new Login(GetSequence()));
+		l = std::shared_ptr<Login>(new Login(GetSequence()));
 
-	shared_ptr<Result> msg_result =
-		dynamic_pointer_cast<Result>(IssueRequest(l));
+	std::shared_ptr<Result> msg_result =
+		std::dynamic_pointer_cast<Result>(IssueRequest(l));
 	if (msg_result && msg_result->GetStatus() != LTFS_ADMIN_SUCCESS) {
 		rc = -1;
-		vector<string> args;
+		std::vector<std::string> args;
 		args.push_back("Login request is failed");
 		throw RequestError(__FILE__, __LINE__, "004E", args);
 	}
@@ -217,14 +222,14 @@ int LTFSAdminSession::SessionLogin(string user, string password)
 int LTFSAdminSession::SessionLogout(void)
 {
 	int rc = 0;
-	ostringstream msg_stream;
-	shared_ptr<Logout> l = shared_ptr<Logout>(new Logout(GetSequence()));
+	std::ostringstream msg_stream;
+	std::shared_ptr<Logout> l = std::shared_ptr<Logout>(new Logout(GetSequence()));
 
-	shared_ptr<Result> msg_result =
-		dynamic_pointer_cast<Result>(IssueRequest(l, true));
+	std::shared_ptr<Result> msg_result =
+		std::dynamic_pointer_cast<Result>(IssueRequest(l, true));
 	if (msg_result && msg_result->GetStatus() != LTFS_ADMIN_SUCCESS) {
 		rc = -1;
-		vector<string> args;
+		std::vector<std::string> args;
 		args.push_back("Logout request is failed");
 		throw RequestError(__FILE__, __LINE__, "005E", args);
 	}
@@ -232,14 +237,14 @@ int LTFSAdminSession::SessionLogout(void)
 	return rc;
 }
 
-shared_ptr<Result> LTFSAdminSession::SessionInventory(ltfs_object_t type, unordered_map<string, string> options)
+std::shared_ptr<Result> LTFSAdminSession::SessionInventory(ltfs_object_t type, std::unordered_map<std::string, std::string> options)
 {
-	string str_type;
-	ostringstream msg_stream;
-	shared_ptr<Result> null_pointer = shared_ptr<Result>();
+	std::string str_type;
+	std::ostringstream msg_stream;
+	std::shared_ptr<Result> null_pointer = std::shared_ptr<Result>();
 
 	try {
-		vector<string> args;
+		std::vector<std::string> args;
 		switch (type) {
 			case LTFS_OBJ_LTFS_NODE:
 				str_type = "LTFSNode";
@@ -282,12 +287,12 @@ shared_ptr<Result> LTFSAdminSession::SessionInventory(ltfs_object_t type, unorde
 		return null_pointer;
 	}
 
-	shared_ptr<Inventory> i = shared_ptr<Inventory>(new Inventory(GetSequence(), str_type, options));
+	std::shared_ptr<Inventory> i = std::shared_ptr<Inventory>(new Inventory(GetSequence(), str_type, options));
 
-	shared_ptr<Result> msg_result = IssueRequest(i);
+	std::shared_ptr<Result> msg_result = IssueRequest(i);
 	if (msg_result && msg_result->GetStatus() != LTFS_ADMIN_SUCCESS) {
-		list<shared_ptr<LTFSObject> > empty_list;
-		vector<string> args;
+		std::list<std::shared_ptr<LTFSObject> > empty_list;
+		std::vector<std::string> args;
 		args.push_back("Inventory request is failed");
 		args.push_back(str_type);
 		throw RequestError(__FILE__, __LINE__, "007E", args);
@@ -297,9 +302,9 @@ shared_ptr<Result> LTFSAdminSession::SessionInventory(ltfs_object_t type, unorde
 	return msg_result;
 }
 
-list<shared_ptr <LTFSObject> > LTFSAdminSession::SessionInventory(ltfs_object_t type, string filter, bool force)
+std::list<std::shared_ptr <LTFSObject> > LTFSAdminSession::SessionInventory(ltfs_object_t type, std::string filter, bool force)
 {
-	unordered_map<string, string> options;
+	std::unordered_map<std::string, std::string> options;
 
 	if (filter.length())
 		options["filter"] = filter;
@@ -307,17 +312,17 @@ list<shared_ptr <LTFSObject> > LTFSAdminSession::SessionInventory(ltfs_object_t 
 	if (force)
 		options["force"] = "true";
 
-	shared_ptr<Result> result = SessionInventory(type, options);
-	list<shared_ptr<LTFSObject> > obj_list;
+	std::shared_ptr<Result> result = SessionInventory(type, options);
+	std::list<std::shared_ptr<LTFSObject> > obj_list;
 	if (result)
 		obj_list = result->GetObjects();
 
 	return obj_list;
 }
 
-void LTFSAdminSession::SessionInventory(list<shared_ptr<LTFSNode> > &nodes, string filter, bool force)
+void LTFSAdminSession::SessionInventory(std::list<std::shared_ptr<LTFSNode> > &nodes, std::string filter, bool force)
 {
-	unordered_map<string, string> options;
+	std::unordered_map<std::string, std::string> options;
 
 	if (filter.length())
 		options["filter"] = filter;
@@ -325,16 +330,16 @@ void LTFSAdminSession::SessionInventory(list<shared_ptr<LTFSNode> > &nodes, stri
 	if (force)
 		options["force"] = "true";
 
-	shared_ptr<Result> result = SessionInventory(LTFS_OBJ_LTFS_NODE, options);
+	std::shared_ptr<Result> result = SessionInventory(LTFS_OBJ_LTFS_NODE, options);
 	if (result)
 		nodes = result->GetLTFSNodes();
 
 	return;
 }
 
-void LTFSAdminSession::SessionInventory(list<shared_ptr<Cartridge> > &cartridges, string filter, bool force)
+void LTFSAdminSession::SessionInventory(std::list<std::shared_ptr<Cartridge> > &cartridges, std::string filter, bool force)
 {
-	unordered_map<string, string> options;
+	std::unordered_map<std::string, std::string> options;
 
 	if (filter.length())
 		options["filter"] = filter;
@@ -342,16 +347,16 @@ void LTFSAdminSession::SessionInventory(list<shared_ptr<Cartridge> > &cartridges
 	if (force)
 		options["force"] = "true";
 
-	shared_ptr<Result> result = SessionInventory(LTFS_OBJ_CARTRIDGE, options);
+	std::shared_ptr<Result> result = SessionInventory(LTFS_OBJ_CARTRIDGE, options);
 	if (result)
 		cartridges = result->GetCartridges();
 
 	return;
 }
 
-void LTFSAdminSession::SessionInventory(list<shared_ptr<Drive> > &drives, string filter, bool force)
+void LTFSAdminSession::SessionInventory(std::list<std::shared_ptr<Drive> > &drives, std::string filter, bool force)
 {
-	unordered_map<string, string> options;
+	std::unordered_map<std::string, std::string> options;
 
 	if (filter.length())
 		options["filter"] = filter;
@@ -359,23 +364,23 @@ void LTFSAdminSession::SessionInventory(list<shared_ptr<Drive> > &drives, string
 	if (force)
 		options["force"] = "true";
 
-	shared_ptr<Result> result = SessionInventory(LTFS_OBJ_DRIVE, options);
+	std::shared_ptr<Result> result = SessionInventory(LTFS_OBJ_DRIVE, options);
 	if (result)
 		drives = result->GetDrives();
 
 	return;
 }
 
-shared_ptr<Result> LTFSAdminSession::SessionAction(shared_ptr<Action> msg)
+std::shared_ptr<Result> LTFSAdminSession::SessionAction(std::shared_ptr<Action> msg)
 {
 	session_send(msg->ToString());
-	shared_ptr<Result> res =
-		dynamic_pointer_cast<Result>(ReceiveMessage(msg->GetSequence()));
+	std::shared_ptr<Result> res =
+		std::dynamic_pointer_cast<Result>(ReceiveMessage(msg->GetSequence()));
 
 	return res;
 }
 
-int LTFSAdminSession::session_send(string message)
+int LTFSAdminSession::session_send(std::string message)
 {
 	ssize_t len, n_written;
 
@@ -385,7 +390,7 @@ int LTFSAdminSession::session_send(string message)
 	send_lock_.unlock();
 
 	if (n_written < 0) {
-		vector<string> args;
+		std::vector<std::string> args;
 		args.push_back("Cannot send message");
 		args.push_back(server_);
 		throw SessionError(__FILE__, __LINE__, "008E", args);
@@ -397,20 +402,20 @@ int LTFSAdminSession::session_send(string message)
 	return n_written;
 }
 
-string LTFSAdminSession::session_receive()
+std::string LTFSAdminSession::session_receive()
 {
 	ssize_t n_read = 0;
-	string::size_type found;
+	std::string::size_type found;
 	char buf[2048];
-	string msg;
+	std::string msg;
 
 	/* Receive new data from the socket if current buffer has no delimiter */
-	if ((found = buf_.find_first_of('\0', 0)) == string::npos) {
+	if ((found = buf_.find_first_of('\0', 0)) == std::string::npos) {
 		memset(buf, 0, sizeof(buf));
 		while (true) {
 			n_read = recv(connfd_, buf, sizeof(buf) - 1, 0);
 
-			ostringstream os;
+			std::ostringstream os;
 			os << "Receive from socket: " << n_read;
 			Log(DEBUG3, os.str().c_str());
 
@@ -422,7 +427,7 @@ string LTFSAdminSession::session_receive()
 				connfd_ = -1;
 				sequence_ = 0;
 				keep_alive_ = false;
-				msg = string(buf_);
+				msg = std::string(buf_);
 				buf_.clear();
 				break;
 			} else if (n_read == 0) {
@@ -431,25 +436,25 @@ string LTFSAdminSession::session_receive()
 				connfd_ = -1;
 				sequence_ = 0;
 				keep_alive_ = false;
-				msg = string(buf_);
+				msg = std::string(buf_);
 				buf_.clear();
 				break;
 			} else {
 				buf_.append(buf, n_read);
-				if ((found = buf_.find_first_of('\0', 0)) != string::npos)
+				if ((found = buf_.find_first_of('\0', 0)) != std::string::npos)
 					break;
 				memset(buf, 0, n_read);
 			}
 		}
 	}
 
-	if (found != string::npos) {
-		msg = string(buf_, 0, found);
+	if (found != std::string::npos) {
+		msg = std::string(buf_, 0, found);
 		if (found == buf_.length() - 1) {
 			buf_.clear();
 		} else
-			buf_ = string(buf_, found + 1);
-			ostringstream os;
+			buf_ = std::string(buf_, found + 1);
+			std::ostringstream os;
 			os << "Receive message: " << found;
 			Log(DEBUG0, os.str().c_str());
 	}
@@ -460,23 +465,23 @@ string LTFSAdminSession::session_receive()
 	return msg;
 }
 
-shared_ptr<LTFSResponseMessage> LTFSAdminSession::_ReceiveMessage()
+std::shared_ptr<LTFSResponseMessage> LTFSAdminSession::_ReceiveMessage()
 {
-	shared_ptr<LTFSResponseMessage> obj;
+	std::shared_ptr<LTFSResponseMessage> obj;
 
 	receive_lock_.lock();
-	string xml = session_receive();
-	shared_ptr<LTFSResponseMessage> res = shared_ptr<LTFSResponseMessage>(new LTFSResponseMessage(xml));
+	std::string xml = session_receive();
+	std::shared_ptr<LTFSResponseMessage> res = std::shared_ptr<LTFSResponseMessage>(new LTFSResponseMessage(xml));
 
 	switch(res->GetType()) {
 		case LTFS_MSG_IDENTIFIER:
-			obj = shared_ptr<LTFSResponseMessage>(new Identifier(xml));
+			obj = std::shared_ptr<LTFSResponseMessage>(new Identifier(xml));
 			break;
 		case LTFS_MSG_RESULT:
-			obj = shared_ptr<LTFSResponseMessage>(new Result(xml, this));
+			obj = std::shared_ptr<LTFSResponseMessage>(new Result(xml, this));
 			break;
 		default:
-			vector<string> args;
+			std::vector<std::string> args;
 			args.push_back("Unexpected message type is detected");
 			args.push_back(server_);
 			receive_lock_.unlock();
@@ -491,9 +496,9 @@ shared_ptr<LTFSResponseMessage> LTFSAdminSession::_ReceiveMessage()
 
 void LTFSAdminSession::ReceiveThread(void)
 {
-	shared_ptr<LTFSResponseMessage> obj;
+	std::shared_ptr<LTFSResponseMessage> obj;
 
-	unique_lock<mutex> receiver_lock(receiver_lock_);
+	std::unique_lock<std::mutex> receiver_lock(receiver_lock_);
 	keep_alive_ = true;
 	Log(DEBUG2, "Notify receiver thread is running");
 	receiver_state_.notify_one();
@@ -501,19 +506,19 @@ void LTFSAdminSession::ReceiveThread(void)
 
 	while (keep_alive_) {
 		receive_lock_.lock();
-		string xml = session_receive();
+		std::string xml = session_receive();
 		if (xml.size()) {
-			shared_ptr<LTFSResponseMessage> res = shared_ptr<LTFSResponseMessage>(new LTFSResponseMessage(xml));
+			std::shared_ptr<LTFSResponseMessage> res = std::shared_ptr<LTFSResponseMessage>(new LTFSResponseMessage(xml));
 
 			switch(res->GetType()) {
 				case LTFS_MSG_IDENTIFIER:
-					obj = shared_ptr<LTFSResponseMessage>(new Identifier(xml));
+					obj = std::shared_ptr<LTFSResponseMessage>(new Identifier(xml));
 					break;
 				case LTFS_MSG_RESULT:
-					obj = shared_ptr<LTFSResponseMessage>(new Result(xml, this));
+					obj = std::shared_ptr<LTFSResponseMessage>(new Result(xml, this));
 					break;
 				default:
-					vector<string> args;
+					std::vector<std::string> args;
 					args.push_back("Unexpected message type is detected");
 					args.push_back(server_);
 					receive_lock_.unlock();
@@ -521,12 +526,12 @@ void LTFSAdminSession::ReceiveThread(void)
 					break;
 			}
 
-			unique_lock<mutex> response_lock(response_lock_);
+			std::unique_lock<std::mutex> response_lock(response_lock_);
 			received_response_[res->GetSequence()] = obj;
 			response_state_.notify_all();
 			response_lock.unlock();
 		} else {
-			unique_lock<mutex> response_lock(response_lock_);
+			std::unique_lock<std::mutex> response_lock(response_lock_);
 			response_state_.notify_all();
 			response_lock.unlock();
 		}
@@ -542,13 +547,13 @@ void LTFSAdminSession::ReceiveThread(void)
 static const char *session_error_xml =
 "<?xml version=\"1.0\" encoding=\"UTF-8\"?><ltfsadmin_message version=\"2.0.0\" sequence=\"0\" type=\"result\"><status>Disconnected</status></ltfsadmin_message>";
 
-shared_ptr<LTFSResponseMessage> LTFSAdminSession::ReceiveMessage(uint64_t sequence, bool force)
+std::shared_ptr<LTFSResponseMessage> LTFSAdminSession::ReceiveMessage(uint64_t sequence, bool force)
 {
-	shared_ptr<LTFSResponseMessage> obj;
+	std::shared_ptr<LTFSResponseMessage> obj;
 	int count = 0;
 
 	while (keep_alive_ || force) {
-		unique_lock<mutex> response_lock(response_lock_);
+		std::unique_lock<std::mutex> response_lock(response_lock_);
 
 		if (received_response_.find(sequence) != received_response_.end()) {
 			obj = received_response_[sequence];
@@ -556,7 +561,7 @@ shared_ptr<LTFSResponseMessage> LTFSAdminSession::ReceiveMessage(uint64_t sequen
 			break;
 		}
 
-		response_state_.timed_wait(response_lock, boost::posix_time::seconds(10));
+		response_state_.wait_for(response_lock, std::chrono::seconds(10));
 		Log(DEBUG2, "Wake up because of Message Receive Event");
 
 		/* Check message one more time on Logout case */
@@ -568,8 +573,8 @@ shared_ptr<LTFSResponseMessage> LTFSAdminSession::ReceiveMessage(uint64_t sequen
 
 	if (!keep_alive_ && !obj) {
 		Log(DEBUG0, "NULL object is returning because of session error...");
-		string xml(session_error_xml);
-		obj = shared_ptr<LTFSResponseMessage>(new Result(xml, this));
+		std::string xml(session_error_xml);
+		obj = std::shared_ptr<LTFSResponseMessage>(new Result(xml, this));
 	}
 
 	return obj;

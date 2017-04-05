@@ -23,9 +23,13 @@
 #include <string>
 
 #include <stdint.h>                /* Shall be replaced to cstdint in C++11 */
-#include <boost/shared_ptr.hpp>    /* Shall be replaced to shared in C++11 */
-#include <boost/unordered_map.hpp> /* Shall be replaced to unordered_map in C++11 */
-#include <boost/thread.hpp>        /* Shall be replaced to thread in C++11 */
+////#include <boost/std::shared_ptr.hpp>    /* Shall be replaced to shared in C++11 */
+////#include <boost/unordered_map.hpp> /* Shall be replaced to unordered_map in C++11 */
+////#include <boost/thread.hpp>        /* Shall be replaced to thread in C++11 */
+
+#include <unordered_map>
+
+#include <mutex>
 
 #include "LTFSAdminBase.h"
 #include "LTFSRequestMessage.h"
@@ -105,10 +109,10 @@ public:
 	 *  @param force force inventory is required (default = false)
 	 *  @return list pointer of LTFS Objects on success, otherwise non-zero;
 	 */
-	list<boost::shared_ptr <LTFSObject> > SessionInventory(ltfs_object_t type, string filter = "", bool force = false);
-	void SessionInventory(list<boost::shared_ptr<LTFSNode> > &nodes, string filter = "", bool force = false);
-	void SessionInventory(list<boost::shared_ptr<Drive> > &drives, string filter = "", bool force = false);
-	void SessionInventory(list<boost::shared_ptr<Cartridge> > &cartridges, string filter = "", bool force = false);
+	std::list<std::shared_ptr <LTFSObject> > SessionInventory(ltfs_object_t type, std::string filter = "", bool force = false);
+	void SessionInventory(std::list<std::shared_ptr<LTFSNode> > &nodes, std::string filter = "", bool force = false);
+	void SessionInventory(std::list<std::shared_ptr<Drive> > &drives, std::string filter = "", bool force = false);
+	void SessionInventory(std::list<std::shared_ptr<Cartridge> > &cartridges, std::string filter = "", bool force = false);
 
 	/** Issue Action request
 	 *
@@ -117,7 +121,7 @@ public:
 	 *  @param msg Action object to be sent to admin channel
 	 *  @return pointer of Result Object
 	 */
-	boost::shared_ptr<Result> SessionAction(boost::shared_ptr<Action> msg);
+	std::shared_ptr<Result> SessionAction(std::shared_ptr<Action> msg);
 
 	/** Check session is avived or not
 	 *
@@ -135,23 +139,23 @@ private:
 	std::string   version_;
 	int           loglevel_;
 
-	boost::mutex  seq_lock_;
+	std::mutex  seq_lock_;
 	uint64_t      sequence_;
 
 	int           connfd_;
-	boost::mutex  send_lock_;
-	boost::mutex  receive_lock_;
+	std::mutex  send_lock_;
+	std::mutex  receive_lock_;
 
-	boost::mutex  receiver_lock_;
-	boost::condition_variable receiver_state_;
-	boost::shared_ptr<boost::thread> receiver_;
-	boost::mutex  response_lock_;
-	boost::condition_variable response_state_;
-	boost::unordered_map<uint64_t, boost::shared_ptr<LTFSResponseMessage> > received_response_;
+	std::mutex  receiver_lock_;
+	std::condition_variable receiver_state_;
+	std::shared_ptr<std::thread> receiver_;
+	std::mutex  response_lock_;
+	std::condition_variable response_state_;
+	std::unordered_map<uint64_t, std::shared_ptr<LTFSResponseMessage> > received_response_;
 	std::string   buf_;
 	bool keep_alive_;
 
-	boost::shared_ptr<Result> IssueRequest(boost::shared_ptr<LTFSRequestMessage> msg, bool terminate_receiver = false);
+	std::shared_ptr<Result> IssueRequest(std::shared_ptr<LTFSRequestMessage> msg, bool terminate_receiver = false);
 	int session_send(std::string message);
 	std::string session_receive();
 
@@ -162,7 +166,7 @@ private:
 	 *
 	 *  Receive a message from received_response_. Must call this function when receiver thread is running.
 	 */
-	boost::shared_ptr<LTFSResponseMessage> ReceiveMessage(uint64_t sequence, bool force = false);
+	std::shared_ptr<LTFSResponseMessage> ReceiveMessage(uint64_t sequence, bool force = false);
 
 	/** Receiver thread function
 	 *
@@ -175,10 +179,10 @@ private:
 	 *  This is low level function to receive a message from LTFS admin channel. Must not call this function when receiver
 	 *  thread is running.
 	 */
-	boost::shared_ptr<LTFSResponseMessage> _ReceiveMessage();
+	std::shared_ptr<LTFSResponseMessage> _ReceiveMessage();
 
-	boost::shared_ptr<Result> SessionInventory(ltfs_object_t type,
-											   boost::unordered_map<std::string, std::string> options);
+	std::shared_ptr<Result> SessionInventory(ltfs_object_t type,
+											   std::unordered_map<std::string, std::string> options);
 
 };
 

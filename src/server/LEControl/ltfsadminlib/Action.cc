@@ -18,14 +18,16 @@
 **
 *************************************************************************************
 */
+
+#include <unordered_map>
+#include <vector>
+
 #include "Action.h"
 #include "InternalError.h"
 
-using namespace std;
-using namespace boost;
 using namespace ltfsadmin;
 
-string Action::ToString()
+std::string Action::ToString()
 {
 	if (!doc_) {
 		Prepare();
@@ -34,14 +36,14 @@ string Action::ToString()
 		if (method_.length()) {
 			xmlNewTextChild(root_, NULL, BAD_CAST "method", BAD_CAST method_.c_str());
 		} else {
-			vector<string> args;
+			std::vector<std::string> args;
 			args.push_back("Cannot build action string: method not specified");
 			throw InternalError(__FILE__, __LINE__, "060E", args);
 			return "";
 		}
 
 		// Genarate target string
-		string str_type;
+		std::string str_type;
 		ltfs_object_t type = target_->GetObjectType();
 		switch (type) {
 			case LTFS_OBJ_CARTRIDGE:
@@ -56,7 +58,7 @@ string Action::ToString()
 			case LTFS_OBJ_LTFS_NODE:
 			case LTFS_OBJ_PRIVILEGE:
 			default:
-				vector<string> args;
+				std::vector<std::string> args;
 				args.push_back("Cannot build action string because of unexpected type");
 				throw InternalError(__FILE__, __LINE__, "061E", args);
 				return "";
@@ -69,7 +71,7 @@ string Action::ToString()
 			xmlNewNsProp(object, NULL, BAD_CAST "type", BAD_CAST str_type.c_str());
 			xmlNewNsProp(object, NULL, BAD_CAST "id", BAD_CAST target_->GetObjectID().c_str());
 		} else {
-			vector<string> args;
+			std::vector<std::string> args;
 			args.push_back("Cannot build action string: cannot get object ID");
 			throw InternalError(__FILE__, __LINE__, "062E", args);
 			return "";
@@ -77,14 +79,14 @@ string Action::ToString()
 
 		// Handle options here
 		if (options_.size()) {
-			for (unordered_map<string, string>::iterator it = options_.begin(); it != options_.end(); ++it) {
+			for (std::unordered_map<std::string, std::string>::iterator it = options_.begin(); it != options_.end(); ++it) {
 				xmlNode* opt_node = xmlNewTextChild(root_, NULL, BAD_CAST "option", BAD_CAST it->second.c_str());
 				xmlNewNsProp(opt_node, NULL, BAD_CAST "name", BAD_CAST it->first.c_str());
 			}
 		}
 	}
 
-	string ret = LTFSRequestMessage::ToString();
+	std::string ret = LTFSRequestMessage::ToString();
 
 	return ret;
 }

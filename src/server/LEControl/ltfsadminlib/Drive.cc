@@ -19,26 +19,27 @@
 *************************************************************************************
 */
 
-#include "Drive.h"
-
-#include <boost/lexical_cast.hpp>
+#include <memory>
+#include <list>
+#include <condition_variable>
+#include <thread>
 
 #include "LTFSAdminSession.h"
 #include "Action.h"
 #include "Result.h"
 #include "RequestError.h"
 
-using namespace std;
-using namespace boost;
+#include "Drive.h"
+
 using namespace ltfsadmin;
 
-Drive::Drive(unordered_map<string, string> elems, LTFSAdminSession *session) :
+Drive::Drive(std::unordered_map<std::string, std::string> elems, LTFSAdminSession *session) :
 	LTFSObject(LTFS_OBJ_DRIVE, elems, session)
 {
 	slot_ = 0;
 }
 
-Drive::Drive(string drive_name, LTFSAdminSession *session) :
+Drive::Drive(std::string drive_name, LTFSAdminSession *session) :
 	LTFSObject(LTFS_OBJ_DRIVE, drive_name, session)
 {
 	slot_ = 0;
@@ -47,16 +48,16 @@ Drive::Drive(string drive_name, LTFSAdminSession *session) :
 int Drive::Add()
 {
 	int rc = 0;
-	unordered_map<string, string> empty;
+	std::unordered_map<std::string, std::string> empty;
 
-	shared_ptr<Action> act = shared_ptr<Action>(new Action(session_->GetSequence(), "add", this, empty));
-	shared_ptr<Result> res = session_->SessionAction(act);
+	std::shared_ptr<Action> act = std::shared_ptr<Action>(new Action(session_->GetSequence(), "add", this, empty));
+	std::shared_ptr<Result> res = session_->SessionAction(act);
 
 	ltfs_status_t status = res->GetStatus();
 	if (status == LTFS_ADMIN_SUCCESS)
 		rc = 0;
 	else {
-		vector<string> args;
+		std::vector<std::string> args;
 		args.push_back("Drive add is failed");
 		args.push_back(res->GetOutput());
 		throw RequestError(__FILE__, __LINE__, "080E", args);
@@ -69,16 +70,16 @@ int Drive::Add()
 int Drive::Remove()
 {
 	int rc = 0;
-	unordered_map<string, string> empty;
+	std::unordered_map<std::string, std::string> empty;
 
-	shared_ptr<Action> act = shared_ptr<Action>(new Action(session_->GetSequence(), "remove", this, empty));
-	shared_ptr<Result> res = session_->SessionAction(act);
+	std::shared_ptr<Action> act = std::shared_ptr<Action>(new Action(session_->GetSequence(), "remove", this, empty));
+	std::shared_ptr<Result> res = session_->SessionAction(act);
 
 	ltfs_status_t status = res->GetStatus();
 	if (status == LTFS_ADMIN_SUCCESS)
 		rc = 0;
 	else {
-		vector<string> args;
+		std::vector<std::string> args;
 		args.push_back("Drive remove is failed");
 		args.push_back(res->GetOutput());
 		throw RequestError(__FILE__, __LINE__, "081E", args);
@@ -90,7 +91,7 @@ int Drive::Remove()
 
 void Drive::ParseElems()
 {
-	string tmp;
+	std::string tmp;
 
 	// Set status "Disconnected" if session is disconnected
 	if (! session_ || ! session_->is_alived() ) {
@@ -127,7 +128,7 @@ void Drive::ParseElems()
 	if (tmp == "")
 		slot_ = 0;
 	else
-		slot_ = lexical_cast<uint16_t>(tmp);
+		slot_ = (uint16_t) std::stoul(tmp);
 
 	node_ = elems_["node"];
 	if (node_ == "")

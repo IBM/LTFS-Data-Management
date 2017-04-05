@@ -29,12 +29,7 @@
 
 #include <string>
 
-#include <boost/unordered_map.hpp>
-
 #include <stdarg.h>
-
-using namespace std;
-using namespace boost;
 
 #define MAX_LEN_MSG_BUF (29162 * 2 + 1024) /* hopefully enough size */
 
@@ -75,12 +70,12 @@ public:
 	 *  @param level Log level
 	 *  @param s string to print
 	 */
-	virtual void Log(loglevel_t level, string s) = 0;
+	virtual void Log(loglevel_t level, std::string s) = 0;
 
-	virtual void Msg(loglevel_t level, string id, ...) = 0;
-	virtual void Msg(loglevel_t level, string id, va_list ap) = 0;
+	virtual void Msg(loglevel_t level, std::string id, ...) = 0;
+	virtual void Msg(loglevel_t level, std::string id, va_list ap) = 0;
 
-	static boost::unordered_map<string, string> msg_table_;
+	static std::unordered_map<std::string, std::string> msg_table_;
 
 private:
 	loglevel_t level_;

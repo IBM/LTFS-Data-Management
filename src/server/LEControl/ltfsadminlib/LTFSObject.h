@@ -29,7 +29,7 @@
 
 #include <string>
 
-#include <boost/unordered_map.hpp>
+//#include <boost/unordered_map.hpp>
 
 #include "LTFSAdminBase.h"
 
@@ -68,7 +68,7 @@ public:
 	 *  @param elems Attribute list of this object
 	 *  @param session Pinter to LTFSAdminSession. This is used when an action is kicked.
 	 */
-	LTFSObject(ltfs_object_t type, boost::unordered_map<std::string, std::string> elems, LTFSAdminSession *session) :
+	LTFSObject(ltfs_object_t type, std::unordered_map<std::string, std::string> elems, LTFSAdminSession *session) :
 		obj_type_(type) , elems_(elems) , elems_parsed_(false) , session_(session) {};
 
 	/** Another Constructor to have Object by ID
@@ -105,7 +105,7 @@ public:
 	 *
 	 *  @return Reference of attribute list as unordered_map
 	 */
-	boost::unordered_map<std::string, std::string>& GetAttributes();
+	std::unordered_map<std::string, std::string>& GetAttributes();
 
 	/** Get corresponded session pointer
 	 *
@@ -116,7 +116,7 @@ public:
 protected:
 	ltfs_object_t                                  obj_type_;     /**< Object type */
 	std::string                                    obj_id_;       /**< Object ID */
-	boost::unordered_map<std::string, std::string> elems_;        /**< Attribute list */
+	std::unordered_map<std::string, std::string> elems_;        /**< Attribute list */
 	bool                                           elems_parsed_; /**< Attribute list was already interpureted and
 																	   mapped to the each object by PaseElems() funtion or not. */
 	virtual void ParseElems() = 0;

@@ -23,18 +23,16 @@
 
 #include "InternalError.h"
 
-using namespace std;
-using namespace boost;
 using namespace ltfsadmin;
 
-string InternalError::GetOOBError()
+std::string InternalError::GetOOBError()
 {
 	return "ADMINLIB_INTERNAL";
 }
 
 const char* InternalError::what(void)
 {
-	format msg_formatter("Internal Error (%1%): [%2%:%3%] ");
+	boost::format msg_formatter("Internal Error (%1%): [%2%:%3%] ");
 
 	msg_formatter % id_;
 	msg_formatter % file_;

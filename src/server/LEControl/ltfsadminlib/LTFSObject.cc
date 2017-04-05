@@ -19,11 +19,11 @@
 *************************************************************************************
 */
 
+#include <unordered_map>
+
 #include "LTFSObject.h"
 #include "InternalError.h"
 
-using namespace std;
-using namespace boost;
 using namespace ltfsadmin;
 
 LTFSObject::LTFSObject(ltfs_object_t type, std::string id_name, LTFSAdminSession *session) :
@@ -33,13 +33,13 @@ LTFSObject::LTFSObject(ltfs_object_t type, std::string id_name, LTFSAdminSession
 	elems_parsed_ = false;
 };
 
-string& LTFSObject::GetObjectID()
+std::string& LTFSObject::GetObjectID()
 {
 	if(! obj_id_.length())
 		obj_id_ = elems_["id"];
 
 	if(! obj_id_.length()) {
-		vector<string> args;
+		std::vector<std::string> args;
 		args.push_back("Cannot get Object ID");
 		throw InternalError(__FILE__, __LINE__, "031E", args);
 	}
@@ -52,13 +52,13 @@ ltfs_object_t LTFSObject::GetObjectType()
 	return obj_type_;
 };
 
-unordered_map<string, string>& LTFSObject::GetAttributes()
+std::unordered_map<std::string, std::string>& LTFSObject::GetAttributes()
 {
 	if(! obj_id_.length())
 		obj_id_ = elems_["id"];
 
 	if(! obj_id_.length()) {
-		vector<string> args;
+		std::vector<std::string> args;
 		args.push_back("Cannot get attributes");
 		throw InternalError(__FILE__, __LINE__, "033E", args);
 	}

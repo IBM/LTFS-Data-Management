@@ -23,7 +23,7 @@
 #include <string>
 
 #include <stdint.h>
-#include <boost/unordered_map.hpp>
+//#include <boost/unordered_map.hpp>
 
 #include "LTFSObject.h"
 
@@ -43,8 +43,8 @@ typedef enum {
 
 class Cartridge : public LTFSObject {
 public:
-	Cartridge(boost::unordered_map<std::string, std::string> elems, LTFSAdminSession *session);
-	Cartridge(string cart_name, LTFSAdminSession *session);
+	Cartridge(std::unordered_map<std::string, std::string> elems, LTFSAdminSession *session);
+	Cartridge(std::string cart_name, LTFSAdminSession *session);
 	virtual ~Cartridge() {};
 
 	/*
@@ -82,7 +82,7 @@ public:
 	 *  @param drive_serial drive serial to mount
 	 *  @return 0 on success, otherwise non-zero;
 	 */
-	int Mount(string drive_serial);
+	int Mount(std::string drive_serial);
 
 	/** Unmount cartridge
 	 *
@@ -107,7 +107,7 @@ public:
 	 *  @force force flag
 	 *  @return 0 on success, otherwise non-zero;
 	 */
-	int Format(string drive_serial, uint8_t density_code = 0, bool force = false);
+	int Format(std::string drive_serial, uint8_t density_code = 0, bool force = false);
 
 	/** Check cartridge (Automatic recovery, ltfsck)
 	 *  Throw an exception inheritated from AdminLibException when cartridge remove request is failed
@@ -116,7 +116,7 @@ public:
 	 *  @deep deep_recovery flag
 	 *  @return 0 on success, otherwise non-zero;
 	 */
-	int Check(string drive_serial, bool deep = false);
+	int Check(std::string drive_serial, bool deep = false);
 
 	/** Move cartridge
 	 *
@@ -126,32 +126,32 @@ public:
 	 *  @param drive_serial drive serial only available when dest is SLOT_DRIVE
 	 *  @return 0 on success, otherwise non-zero;
 	 */
-	int Move(ltfs_slot_t dest, string drive_serial = "");
+	int Move(ltfs_slot_t dest, std::string drive_serial = "");
 
 	// Accessors
 	uint16_t    get_home_slot()          { ParseElems(); return home_slot_;}
 	uint16_t    get_slot()               { ParseElems(); return slot_;}
-	string      get_slot_type()          { ParseElems(); return slot_type_;}
+	std::string      get_slot_type()          { ParseElems(); return slot_type_;}
 	uint64_t    get_total_cap()          { ParseElems(); return total_cap_;}
 	uint64_t    get_remaining_cap()      { ParseElems(); return remaining_cap_;}
 	uint64_t    get_total_blocks()       { ParseElems(); return total_blocks_;}
 	uint64_t    get_valid_blocks()       { ParseElems(); return valid_blocks_;}
 	uint8_t     get_density_code()       { ParseElems(); return density_code_;}
-	string      get_mount_node()         { ParseElems(); return mount_node_;}
-	string      get_status()             { ParseElems(); return status_;}
+	std::string      get_mount_node()         { ParseElems(); return mount_node_;}
+	std::string      get_status()             { ParseElems(); return status_;}
 	bool        get_placed_by_operator() { ParseElems(); return placed_by_operator_;}
 
 private:
 	uint16_t home_slot_;
 	uint16_t slot_;
-	string   slot_type_;
+	std::string   slot_type_;
 	uint64_t total_cap_;
 	uint64_t remaining_cap_;
 	uint64_t total_blocks_;
 	uint64_t valid_blocks_;
 	uint8_t  density_code_;
-	string   mount_node_;
-	string   status_;
+	std::string   mount_node_;
+	std::string   status_;
 	bool     placed_by_operator_;
 
 	/** Move cartridge (Internal function)
@@ -165,7 +165,7 @@ private:
 	 *                 drive sserial number chall be specified as value.
 	 *  @return 0 on success, otherwise non-zero;
 	 */
-	int Move(boost::unordered_map<std::string, std::string> options);
+	int Move(std::unordered_map<std::string, std::string> options);
 
 	virtual void ParseElems();
 };

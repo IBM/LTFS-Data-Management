@@ -22,14 +22,14 @@
 #include <cstring>
 #include <vector>
 
+#include <unordered_map>
+
 #include "Identifier.h"
 #include "RequestError.h"
 
-using namespace std;
-using namespace boost;
 using namespace ltfsadmin;
 
-Identifier::Identifier(string& xml) : LTFSResponseMessage(xml)
+Identifier::Identifier(std::string& xml) : LTFSResponseMessage(xml)
 {
 	auth_ = false;
 };
@@ -49,12 +49,12 @@ void Identifier::Parse(void)
 
 	// Parse authentication option
 	if (root_) {
-		unordered_map<string, string> opts = GetOptions(root_);
+		std::unordered_map<std::string, std::string> opts = GetOptions(root_);
 
 		if ( opts.count("userauth") && ! strcmp(opts["userauth"].c_str(), "required"))
 			auth_ = true;
 	} else {
-		vector<string> args;
+		std::vector<std::string> args;
 		args.push_back("Cannot parse authentication option in Identifier message");
 		throw RequestError(__FILE__, __LINE__, "001E", args);
 	}

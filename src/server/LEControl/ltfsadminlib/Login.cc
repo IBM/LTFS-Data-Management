@@ -19,12 +19,13 @@
 *************************************************************************************
 */
 
+#include <unordered_map>
+
 #include "Login.h"
 
-using namespace std;
 using namespace ltfsadmin;
 
-string Login::ToString()
+std::string Login::ToString()
 {
 	if (!doc_) {
 		Prepare();
@@ -34,7 +35,7 @@ string Login::ToString()
 		}
 	}
 
-	string ret = LTFSRequestMessage::ToString();
+	std::string ret = LTFSRequestMessage::ToString();
 
 	return ret;
 }

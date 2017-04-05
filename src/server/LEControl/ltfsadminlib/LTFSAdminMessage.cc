@@ -24,6 +24,9 @@
 #include <string>
 #include <cstring>
 
+#include <unordered_map>
+
+
 #include "LTFSAdminMessage.h"
 #include "XMLError.h"
 
@@ -33,7 +36,6 @@
 #define ERROR_PARSE_WRONG_TYPE     (4)
 #define ERROR_PARSE_WRONG_MESSAGE  (5)
 
-using namespace std;
 using namespace ltfsadmin;
 
 LTFSAdminMessage::LTFSAdminMessage()
@@ -46,7 +48,7 @@ LTFSAdminMessage::LTFSAdminMessage(ltfs_message_t type, uint64_t seq)
 {
 }
 
-LTFSAdminMessage::LTFSAdminMessage(const string& xml)
+LTFSAdminMessage::LTFSAdminMessage(const std::string& xml)
 	: version_(""), sequence_(0), type_(LTFS_MSG_UNKNOWN), xml_(xml), doc_(NULL), root_(NULL)
 {
 }
@@ -67,7 +69,7 @@ void LTFSAdminMessage::Parse(void)
 		doc_ = xmlReadMemory(xml_.c_str(), xml_.length(), NULL, NULL,
 								   XML_PARSE_NOERROR | XML_PARSE_NOWARNING);
 		if (! doc_) {
-			vector<string> args;
+			std::vector<std::string> args;
 			args.push_back("Cannot create XML document");
 			throw XMLError(__FILE__, __LINE__, "020E", args);
 		}
@@ -78,7 +80,7 @@ void LTFSAdminMessage::Parse(void)
 		Log(DEBUG2, "Getting the root element");
 		root_ = xmlDocGetRootElement(doc_);
 		if (! root_) {
-			vector<string> args;
+			std::vector<std::string> args;
 			args.push_back("Cannot get root element of XML docuemnt");
 			throw XMLError(__FILE__, __LINE__, "021E", args);
 		}
@@ -89,15 +91,15 @@ void LTFSAdminMessage::Parse(void)
 		if (! strcmp((const char*)root_->name, "ltfsadmin_message")) {
 			xmlChar *val = xmlGetProp(root_, BAD_CAST "version");
 			if (val) {
-				version_ = string((const char*)val);
+				version_ = std::string((const char*)val);
 				xmlFree(val);
 			} else
 				throw ERROR_PARSE_NO_VERSION_TAG;
 
 			val = xmlGetProp(root_, BAD_CAST "sequence");
 			if (val) {
-				string v = string((const char*)val);
-				istringstream iss(v);
+				std::string v = std::string((const char*)val);
+				std::istringstream iss(v);
 				if (! ((iss) >> sequence_)) {
 					xmlFree(val);
 					throw ERROR_PARSE_NO_SEQ_TAG;
@@ -123,7 +125,7 @@ void LTFSAdminMessage::Parse(void)
 		} else
 			throw ERROR_PARSE_WRONG_MESSAGE;
 	} catch (int err) {
-		vector<string> args;
+		std::vector<std::string> args;
 		args.push_back("Cannot parse LTFSAdminMessage correctly");
 		switch (err) {
 			case ERROR_PARSE_NO_VERSION_TAG:
@@ -171,7 +173,7 @@ void LTFSAdminMessage::Prepare(void)
 				break;
 			default:
 				Log(DEBUG2, "Unable to create LTFSAdminMessage");
-				vector<string> args;
+				std::vector<std::string> args;
 				args.push_back("Cannot build LTFSAdminMessage correctly");
 				throw XMLError(__FILE__, __LINE__, "023E", args);
 				break;
@@ -183,7 +185,7 @@ void LTFSAdminMessage::Prepare(void)
 }
 
 #include <string.h>
-string LTFSAdminMessage::ToString()
+std::string LTFSAdminMessage::ToString()
 {
 	xmlChar* xml;
 	int      xml_size;
@@ -194,7 +196,7 @@ string LTFSAdminMessage::ToString()
 	if (!xml_.length()) {
 		// Output xml to member variables xml_
 		xmlDocDumpMemoryEnc(doc_, &xml, &xml_size, "UTF-8");
-		xml_ = string((const char*)xml, xml_size);
+		xml_ = std::string((const char*)xml, xml_size);
 		xmlFree(xml);
 		Log(DEBUG2, "Built LTFSAdminMessage as XML");
 	}

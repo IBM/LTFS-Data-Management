@@ -25,13 +25,14 @@
  *  @author Atsushi Abe (piste@jp.ibm.com), IBM Tokyo Lab., Japan
  */
 
+#include "stdio.h"
+#include <string.h>
+
 #include <iostream>
 
-#include "stdio.h"
+#include <unordered_map>
 
 #include "LTFSAdminBase.h"
-
-#include <string.h>
 
 using namespace ltfsadmin;
 
@@ -39,19 +40,19 @@ loglevel_t LTFSAdminBase::log_level_ = INFO;
 
 LTFSAdminLog *LTFSAdminBase::logger_ = NULL;
 
-void LTFSAdminBase::Log(loglevel_t level, string s)
+void LTFSAdminBase::Log(loglevel_t level, std::string s)
 {
 	if (logger_)
 		logger_->Log(level, s);
 	else {
 		if (level <= GetLogLevel()) {
-			cerr << s;
-			cerr << endl;
+			std::cerr << s;
+			std::cerr << std::endl;
 		}
 	}
 }
 
-void LTFSAdminBase::Msg(loglevel_t level, string id, ...)
+void LTFSAdminBase::Msg(loglevel_t level, std::string id, ...)
 {
 	if (logger_) {
 		va_list ap;
@@ -66,12 +67,12 @@ void LTFSAdminBase::Msg(loglevel_t level, string id, ...)
 	}
 }
 
-void LTFSAdminBase::Msg(loglevel_t level, string id, va_list ap)
+void LTFSAdminBase::Msg(loglevel_t level, std::string id, va_list ap)
 {
 	if (LTFSAdminLog::msg_table_.count(id)) {
 		if (level <= GetLogLevel()) {
 			char arg[MAX_LEN_MSG_BUF + 1];
-			string fmt = LTFSAdminLog::msg_table_[id];
+			std::string fmt = LTFSAdminLog::msg_table_[id];
 			strncpy(arg, fmt.c_str(), MAX_LEN_MSG_BUF);
 			vfprintf(stderr, arg, ap);
 			fprintf(stderr, "\n");

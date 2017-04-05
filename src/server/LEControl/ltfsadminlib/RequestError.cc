@@ -22,18 +22,18 @@
 #include <boost/format.hpp>
 #include <boost/algorithm/string.hpp>
 
+#include <vector>
+
 #include "RequestError.h"
 
-using namespace std;
-using namespace boost;
 using namespace ltfsadmin;
 
-string RequestError::GetOOBError()
+std::string RequestError::GetOOBError()
 {
 	if (args_.size() < 2)
 		return "ADMINLIB_REQUEST";
 
-	vector<string> msgs;
+	std::vector<std::string> msgs;
 
 	boost::algorithm::split(msgs, args_[1], boost::is_any_of(" "));
 	if (msgs.size() < 2) {
@@ -45,13 +45,13 @@ string RequestError::GetOOBError()
 
 const char* RequestError::what(void)
 {
-	format msg_formatter("Request Error (%1%): [%2%:%3%]%4%");
+	boost::format msg_formatter("Request Error (%1%): [%2%:%3%]%4%");
 
 	msg_formatter % id_;
 	msg_formatter % file_;
 	msg_formatter % line_;
 
-	string arg;
+	std::string arg;
 	for (unsigned int i = 0; i < args_.size(); ++i) {
 		arg = arg + ": " + args_[i];
 	}

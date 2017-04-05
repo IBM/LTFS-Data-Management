@@ -33,8 +33,6 @@
 
 #include "LTFSAdminLog.h"
 
-using namespace std;
-
 namespace ltfsadmin {
 
 /** All base calss for ltfsadmin library
@@ -80,10 +78,10 @@ protected:
 	 *  @param level Log level
 	 *  @param s string to print
 	 */
-	void Log(loglevel_t level, string s);
+	void Log(loglevel_t level, std::string s);
 
-	void Msg(loglevel_t level, string id, ...);
-	void Msg(loglevel_t level, string id, va_list ap);
+	void Msg(loglevel_t level, std::string id, ...);
+	void Msg(loglevel_t level, std::string id, va_list ap);
 
 
 private:

@@ -19,16 +19,18 @@
 *************************************************************************************
 */
 
+#include <unordered_map>
+#include <memory>
+#include <list>
+#include <condition_variable>
+#include <thread>
+
 #include "LTFSNode.h"
 #include "LTFSAdminSession.h"
 
-#include <boost/lexical_cast.hpp>
-
-using namespace std;
-using namespace boost;
 using namespace ltfsadmin;
 
-LTFSNode::LTFSNode(unordered_map<string, string> elems, LTFSAdminSession *session) :
+LTFSNode::LTFSNode(std::unordered_map<std::string, std::string> elems, LTFSAdminSession *session) :
 	LTFSObject(LTFS_OBJ_LTFS_NODE, elems, session)
 {
 	admin_port_num_    = 0;
@@ -42,7 +44,7 @@ LTFSNode::LTFSNode(unordered_map<string, string> elems, LTFSAdminSession *sessio
 
 void LTFSNode::ParseElems()
 {
-	string tmp;
+	std::string tmp;
 
 	// Set status "Disconnected" if session is disconnected
 	if (! session_ || ! session_->is_alived() ) {
@@ -115,43 +117,43 @@ void LTFSNode::ParseElems()
 	if (tmp == "")
 		admin_port_num_ = UINT16_MAX;
 	else
-		admin_port_num_ = lexical_cast<uint16_t>(tmp);
+		admin_port_num_ = (uint16_t) std::stoul(tmp);
 
 	tmp = elems_["slots"];
 	if (tmp == "")
 		slots_ = UINT32_MAX;
 	else
-		slots_ = lexical_cast<uint32_t>(tmp);
+		slots_ = (uint32_t) std::stoul(tmp);
 
 	tmp = elems_["used_slots"];
 	if (tmp == "")
 		used_slots_ = UINT32_MAX;
 	else
-		used_slots_ = lexical_cast<uint32_t>(tmp);
+		used_slots_ = (uint32_t) std::stoul(tmp);
 
 	tmp = elems_["remaining_slots"];
 	if (tmp == "")
 		remaining_slots_ = UINT32_MAX;
 	else
-		remaining_slots_ = lexical_cast<uint32_t>(tmp);
+		remaining_slots_ = (uint32_t) std::stoul(tmp);
 
 	tmp = elems_["ieslots"];
 	if (tmp == "")
 		ieslots_ = UINT32_MAX;
 	else
-		ieslots_ = lexical_cast<uint32_t>(tmp);
+		ieslots_ = (uint32_t) std::stoul(tmp);
 
 	tmp = elems_["used_ieslots"];
 	if (tmp == "")
 		used_ieslots_ = UINT32_MAX;
 	else
-		used_ieslots_ = lexical_cast<uint32_t>(tmp);
+		used_ieslots_ = (uint32_t) std::stoul(tmp);
 
 	tmp = elems_["remaining_ieslots"];
 	if (tmp == "")
 		remaining_ieslots_ = UINT32_MAX;
 	else
-		remaining_ieslots_ = lexical_cast<uint32_t>(tmp);
+		remaining_ieslots_ = (uint32_t) std::stoul(tmp);
 
 	elems_parsed_ = true;
 

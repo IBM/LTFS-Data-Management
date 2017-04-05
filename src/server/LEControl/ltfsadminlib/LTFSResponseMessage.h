@@ -21,8 +21,8 @@
 #pragma once
 
 #include <string>
-#include <boost/shared_ptr.hpp>
-#include <boost/unordered_map.hpp>
+/* //#include <boost/std::shared_ptr.hpp> */
+/* //#include <boost/unordered_map.hpp> */
 
 #include "LTFSAdminMessage.h"
 
@@ -41,7 +41,7 @@ protected:
 	virtual void Parse(void);
 	virtual void Prepare(void) {}; // Prepare method is not needed to response message classes */
 	std::vector<xmlNode*> GetNode(xmlNode* parent, const char* tag);
-	boost::unordered_map<std::string, std::string> GetOptions(xmlNode* msg);
+	std::unordered_map<std::string, std::string> GetOptions(xmlNode* msg);
 };
 
 }

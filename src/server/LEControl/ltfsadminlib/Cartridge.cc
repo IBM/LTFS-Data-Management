@@ -19,26 +19,30 @@
 *************************************************************************************
 */
 
-#include "Cartridge.h"
-
+#include <sstream>
 #include <iomanip>
-#include <boost/lexical_cast.hpp>
+#include <unordered_map>
+#include <memory>
+#include <list>
+#include <condition_variable>
+#include <thread>
+
 
 #include "LTFSAdminSession.h"
 #include "Action.h"
 #include "Result.h"
 #include "RequestError.h"
 
-using namespace std;
-using namespace boost;
+#include "Cartridge.h"
+
 using namespace ltfsadmin;
 
-Cartridge::Cartridge(unordered_map<string, string> elems, LTFSAdminSession *session) :
+Cartridge::Cartridge(std::unordered_map<std::string, std::string> elems, LTFSAdminSession *session) :
 	LTFSObject(LTFS_OBJ_CARTRIDGE, elems, session)
 {
 }
 
-Cartridge::Cartridge(string cart_name, LTFSAdminSession *session) :
+Cartridge::Cartridge(std::string cart_name, LTFSAdminSession *session) :
 	LTFSObject(LTFS_OBJ_CARTRIDGE, cart_name, session)
 {
 }
@@ -46,16 +50,16 @@ Cartridge::Cartridge(string cart_name, LTFSAdminSession *session) :
 int Cartridge::Add()
 {
 	int rc = 0;
-	unordered_map<string, string> empty;
+	std::unordered_map<std::string, std::string> empty;
 
-	shared_ptr<Action> act = shared_ptr<Action>(new Action(session_->GetSequence(), "add", this, empty));
-	shared_ptr<Result> res = session_->SessionAction(act);
+	std::shared_ptr<Action> act = std::shared_ptr<Action>(new Action(session_->GetSequence(), "add", this, empty));
+	std::shared_ptr<Result> res = session_->SessionAction(act);
 
 	ltfs_status_t status = res->GetStatus();
 	if (status == LTFS_ADMIN_SUCCESS)
 		rc = 0;
 	else {
-		vector<string> args;
+		std::vector<std::string> args;
 		args.push_back("Cartridge add is failed");
 		args.push_back(res->GetOutput());
 		throw RequestError(__FILE__, __LINE__, "070E", args);
@@ -68,7 +72,7 @@ int Cartridge::Add()
 int Cartridge::Remove(bool keep_cache, bool keep_on_drive, bool force)
 {
 	int rc = 0;
-	unordered_map<string, string> options;
+	std::unordered_map<std::string, std::string> options;
 
 	if (force)
 		options["force"] = "true";
@@ -79,14 +83,14 @@ int Cartridge::Remove(bool keep_cache, bool keep_on_drive, bool force)
 	if (keep_on_drive)
 		options["keep_on_drive"] = "true";
 
-	shared_ptr<Action> act = shared_ptr<Action>(new Action(session_->GetSequence(), "remove", this, options));
-	shared_ptr<Result> res = session_->SessionAction(act);
+	std::shared_ptr<Action> act = std::shared_ptr<Action>(new Action(session_->GetSequence(), "remove", this, options));
+	std::shared_ptr<Result> res = session_->SessionAction(act);
 
 	ltfs_status_t status = res->GetStatus();
 	if (status == LTFS_ADMIN_SUCCESS || force)
 		rc = 0;
 	else {
-		vector<string> args;
+		std::vector<std::string> args;
 		args.push_back("Cartridge remove is failed");
 		args.push_back(res->GetOutput());
 		throw RequestError(__FILE__, __LINE__, "071E", args);
@@ -96,13 +100,13 @@ int Cartridge::Remove(bool keep_cache, bool keep_on_drive, bool force)
 	return rc;
 }
 
-int Cartridge::Mount(string drive_serial)
+int Cartridge::Mount(std::string drive_serial)
 {
 	int rc = 0;
-	unordered_map<string, string> options;
+	std::unordered_map<std::string, std::string> options;
 
 	if (!drive_serial.length()) {
-		vector<string> args;
+		std::vector<std::string> args;
 		args.push_back("No target drive is specified");
 		throw RequestError(__FILE__, __LINE__, "075E", args);
 		return -1;
@@ -111,14 +115,14 @@ int Cartridge::Mount(string drive_serial)
 	options["destination"] = "drive";
 	options["drive_serial"] = drive_serial;
 
-	shared_ptr<Action> act = shared_ptr<Action>(new Action(session_->GetSequence(), "mount", this, options));
-	shared_ptr<Result> res = session_->SessionAction(act);
+	std::shared_ptr<Action> act = std::shared_ptr<Action>(new Action(session_->GetSequence(), "mount", this, options));
+	std::shared_ptr<Result> res = session_->SessionAction(act);
 
 	ltfs_status_t status = res->GetStatus();
 	if (status == LTFS_ADMIN_SUCCESS)
 		rc = 0;
 	else {
-		vector<string> args;
+		std::vector<std::string> args;
 		args.push_back("Cartridge mount is failed");
 		args.push_back(res->GetOutput());
 		throw RequestError(__FILE__, __LINE__, "076E", args);
@@ -131,16 +135,16 @@ int Cartridge::Mount(string drive_serial)
 int Cartridge::Unmount()
 {
 	int rc = 0;
-	unordered_map<string, string> empty;
+	std::unordered_map<std::string, std::string> empty;
 
-	shared_ptr<Action> act = shared_ptr<Action>(new Action(session_->GetSequence(), "unmount", this, empty));
-	shared_ptr<Result> res = session_->SessionAction(act);
+	std::shared_ptr<Action> act = std::shared_ptr<Action>(new Action(session_->GetSequence(), "unmount", this, empty));
+	std::shared_ptr<Result> res = session_->SessionAction(act);
 
 	ltfs_status_t status = res->GetStatus();
 	if (status == LTFS_ADMIN_SUCCESS)
 		rc = 0;
 	else {
-		vector<string> args;
+		std::vector<std::string> args;
 		args.push_back("Cartridge unmount is failed");
 		args.push_back(res->GetOutput());
 		throw RequestError(__FILE__, __LINE__, "077E", args);
@@ -153,16 +157,16 @@ int Cartridge::Unmount()
 int Cartridge::Sync()
 {
 	int rc = 0;
-	unordered_map<string, string> empty;
+	std::unordered_map<std::string, std::string> empty;
 
-	shared_ptr<Action> act = shared_ptr<Action>(new Action(session_->GetSequence(), "sync", this, empty));
-	shared_ptr<Result> res = session_->SessionAction(act);
+	std::shared_ptr<Action> act = std::shared_ptr<Action>(new Action(session_->GetSequence(), "sync", this, empty));
+	std::shared_ptr<Result> res = session_->SessionAction(act);
 
 	ltfs_status_t status = res->GetStatus();
 	if (status == LTFS_ADMIN_SUCCESS)
 		rc = 0;
 	else {
-		vector<string> args;
+		std::vector<std::string> args;
 		args.push_back("Cartridge sync is failed");
 		args.push_back(res->GetOutput());
 		throw RequestError(__FILE__, __LINE__, "078E", args);
@@ -172,13 +176,13 @@ int Cartridge::Sync()
 	return rc;
 }
 
-int Cartridge::Format(string drive_serial, uint8_t density_code, bool force)
+int Cartridge::Format(std::string drive_serial, uint8_t density_code, bool force)
 {
 	int rc = 0;
-	unordered_map<string, string> options;
+	std::unordered_map<std::string, std::string> options;
 
 	if (!drive_serial.length()) {
-		vector<string> args;
+		std::vector<std::string> args;
 		args.push_back("No target drive is specified");
 		throw RequestError(__FILE__, __LINE__, "079E", args);
 		return -1;
@@ -187,22 +191,22 @@ int Cartridge::Format(string drive_serial, uint8_t density_code, bool force)
 	options["drive_serial"] = drive_serial;
 
 	if (density_code) {
-		ostringstream os;
-		os << "0x" << setw(2) << setfill('0') << hex << (unsigned int)density_code;
+		std::ostringstream os;
+		os << "0x" << std::setw(2) << std::setfill('0') << std::hex << (unsigned int)density_code;
 		options["density"] = os.str();
 	}
 
 	if (force)
 		options["force"] = "true";
 
-	shared_ptr<Action> act = shared_ptr<Action>(new Action(session_->GetSequence(), "format", this, options));
-	shared_ptr<Result> res = session_->SessionAction(act);
+	std::shared_ptr<Action> act = std::shared_ptr<Action>(new Action(session_->GetSequence(), "format", this, options));
+	std::shared_ptr<Result> res = session_->SessionAction(act);
 
 	ltfs_status_t status = res->GetStatus();
 	if (status == LTFS_ADMIN_SUCCESS)
 		rc = 0;
 	else {
-		vector<string> args;
+		std::vector<std::string> args;
 		args.push_back("Cartridge format is failed");
 		args.push_back(res->GetOutput());
 		throw RequestError(__FILE__, __LINE__, "080E", args);
@@ -212,13 +216,13 @@ int Cartridge::Format(string drive_serial, uint8_t density_code, bool force)
 	return rc;
 }
 
-int Cartridge::Check(string drive_serial, bool deep)
+int Cartridge::Check(std::string drive_serial, bool deep)
 {
 	int rc = 0;
-	unordered_map<string, string> options;
+	std::unordered_map<std::string, std::string> options;
 
 	if (!drive_serial.length()) {
-		vector<string> args;
+		std::vector<std::string> args;
 		args.push_back("No target drive is specified");
 		throw RequestError(__FILE__, __LINE__, "081E", args);
 		return -1;
@@ -229,14 +233,14 @@ int Cartridge::Check(string drive_serial, bool deep)
 	if (deep)
 		options["deep_recovery"] = "true";
 
-	shared_ptr<Action> act = shared_ptr<Action>(new Action(session_->GetSequence(), "recovery", this, options));
-	shared_ptr<Result> res = session_->SessionAction(act);
+	std::shared_ptr<Action> act = std::shared_ptr<Action>(new Action(session_->GetSequence(), "recovery", this, options));
+	std::shared_ptr<Result> res = session_->SessionAction(act);
 
 	ltfs_status_t status = res->GetStatus();
 	if (status == LTFS_ADMIN_SUCCESS)
 		rc = 0;
 	else {
-		vector<string> args;
+		std::vector<std::string> args;
 		args.push_back("Cartridge recovery is failed");
 		args.push_back(res->GetOutput());
 		throw RequestError(__FILE__, __LINE__, "082E", args);
@@ -246,9 +250,9 @@ int Cartridge::Check(string drive_serial, bool deep)
 	return rc;
 }
 
-int Cartridge::Move(ltfs_slot_t dest, string drive_serial)
+int Cartridge::Move(ltfs_slot_t dest, std::string drive_serial)
 {
-	unordered_map<string, string> options;
+	std::unordered_map<std::string, std::string> options;
 
 	switch (dest) {
 		case SLOT_HOME:
@@ -262,14 +266,14 @@ int Cartridge::Move(ltfs_slot_t dest, string drive_serial)
 			if (drive_serial.length())
 				options["drive_serial"] = drive_serial;
 			else {
-				vector<string> args;
+				std::vector<std::string> args;
 				args.push_back("Drive serial is required");
 				throw RequestError(__FILE__, __LINE__, "072E", args);
 				return -1;
 			}
 			break;
 		default:
-			vector<string> args;
+			std::vector<std::string> args;
 			args.push_back("Invalid destination");
 			throw RequestError(__FILE__, __LINE__, "073E", args);
 			return -1;
@@ -279,18 +283,18 @@ int Cartridge::Move(ltfs_slot_t dest, string drive_serial)
 	return Move(options);
 }
 
-int Cartridge::Move(unordered_map<string, string> options)
+int Cartridge::Move(std::unordered_map<std::string, std::string> options)
 {
 	int rc = 0;
 
-	shared_ptr<Action> act = shared_ptr<Action>(new Action(session_->GetSequence(), "move", this, options));
-	shared_ptr<Result> res = session_->SessionAction(act);
+	std::shared_ptr<Action> act = std::shared_ptr<Action>(new Action(session_->GetSequence(), "move", this, options));
+	std::shared_ptr<Result> res = session_->SessionAction(act);
 
 	ltfs_status_t status = res->GetStatus();
 	if (status == LTFS_ADMIN_SUCCESS)
 		rc = 0;
 	else {
-		vector<string> args;
+		std::vector<std::string> args;
 		args.push_back("Cartridge move is failed");
 		args.push_back(res->GetOutput());
 		throw RequestError(__FILE__, __LINE__, "074E", args);
@@ -302,7 +306,7 @@ int Cartridge::Move(unordered_map<string, string> options)
 
 void Cartridge::ParseElems()
 {
-	string tmp;
+	std::string tmp;
 
 	// Set status "Disconnected" if session is disconnected
 	if (! session_ || ! session_->is_alived() ) {
@@ -323,13 +327,13 @@ void Cartridge::ParseElems()
 	if (tmp == "")
 		home_slot_ = 0;
 	else
-		home_slot_ = lexical_cast<uint16_t>(tmp);
+		home_slot_ = (uint16_t) std::stoul(tmp);
 
 	tmp = elems_["slot"];
 	if (tmp == "")
 		slot_ = 0;
 	else
-		slot_ = lexical_cast<uint16_t>(tmp);
+		slot_ = (uint16_t) std::stoul(tmp);
 
 	slot_type_ = elems_["slot_type"];
 	if (slot_type_ == "")
@@ -339,31 +343,31 @@ void Cartridge::ParseElems()
 	if (tmp == "")
 		total_cap_ = 0;
 	else
-		total_cap_ = lexical_cast<uint64_t>(tmp);
+		total_cap_ = (uint64_t) std::stoul(tmp);
 
 	tmp = elems_["remaining_cap"];
 	if (tmp == "")
 		remaining_cap_ = 0;
 	else
-		remaining_cap_ = lexical_cast<uint64_t>(tmp);
+		remaining_cap_ = (uint64_t) std::stoul(tmp);
 
 	tmp = elems_["total_blocks"];
 	if (tmp == "")
 		total_blocks_ = 0;
 	else
-		total_blocks_ = lexical_cast<uint64_t>(tmp);
+		total_blocks_ = (uint64_t) std::stoul(tmp);
 
 	tmp = elems_["valid_blocks"];
 	if (tmp == "")
 		valid_blocks_ = 0;
 	else
-		valid_blocks_ = lexical_cast<uint64_t>(tmp);
+		valid_blocks_ = (uint64_t) std::stoul(tmp);
 
 	tmp = elems_["density_code"];
 	if (tmp == "")
 		density_code_ = 0;
 	else {
-		stringstream ss;
+		std::stringstream ss;
 		int temp_value;
 
 		ss << tmp;

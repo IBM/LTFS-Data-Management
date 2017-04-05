@@ -22,14 +22,14 @@
 #include <string>
 #include <cstring>
 
+#include <unordered_map>
+
 #include "LTFSResponseMessage.h"
 #include "XMLError.h"
 
-using namespace std;
-using namespace boost;
 using namespace ltfsadmin;
 
-LTFSResponseMessage::LTFSResponseMessage(const string& xml)
+LTFSResponseMessage::LTFSResponseMessage(const std::string& xml)
 	: LTFSAdminMessage(xml)
 {
 }
@@ -55,13 +55,13 @@ void LTFSResponseMessage::Parse(void)
 	LTFSAdminMessage::Parse();
 }
 
-vector<xmlNode*> LTFSResponseMessage::GetNode(xmlNode* parent, const char* tag)
+std::vector<xmlNode*> LTFSResponseMessage::GetNode(xmlNode* parent, const char* tag)
 {
-	vector<xmlNode*> nodes;
+	std::vector<xmlNode*> nodes;
 
 	for (xmlNode* cur = parent->children; cur; cur = cur->next) {
 		if (cur->type == XML_ELEMENT_NODE && ! strcmp((const char*)cur->name, tag)) {
-			Log(DEBUG3, "Found Node: " + string(tag));
+			Log(DEBUG3, "Found Node: " + std::string(tag));
 			nodes.push_back(cur);
 		}
 	}
@@ -69,29 +69,29 @@ vector<xmlNode*> LTFSResponseMessage::GetNode(xmlNode* parent, const char* tag)
 	return nodes;
 }
 
-unordered_map<string, string> LTFSResponseMessage::GetOptions(xmlNode* msg)
+std::unordered_map<std::string, std::string> LTFSResponseMessage::GetOptions(xmlNode* msg)
 {
-	unordered_map<string, string> ret;
-	vector<xmlNode*> opts = GetNode(msg, "option");
+	std::unordered_map<std::string, std::string> ret;
+	std::vector<xmlNode*> opts = GetNode(msg, "option");
 
-	for (vector<xmlNode*>::iterator it = opts.begin(); it != opts.end(); ++it) {
+	for (std::vector<xmlNode*>::iterator it = opts.begin(); it != opts.end(); ++it) {
 		xmlChar* n = xmlGetProp(*it, BAD_CAST "name");
 		if (n) {
-			string name = string((const char*)n);
+			std::string name = std::string((const char*)n);
 			xmlFree(n);
 
 			xmlChar* t = xmlNodeGetContent(*it);
 			if (t) {
-				string content = string((const char*)t);
+				std::string content = std::string((const char*)t);
 				ret[name] = content;
 				xmlFree(t);
 			} else {
-				vector<string> args;
+				std::vector<std::string> args;
 				args.push_back("Failed to get node content");
 				throw XMLError(__FILE__, __LINE__, "041E", args);
 			}
 		} else {
-			vector<string> args;
+			std::vector<std::string> args;
 			args.push_back("Failed to get option name");
 			throw XMLError(__FILE__, __LINE__, "042E", args);
 		}

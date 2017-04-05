@@ -23,8 +23,8 @@
 #include <string>
 #include <list>
 
-#include <boost/unordered_map.hpp>
-#include <boost/shared_ptr.hpp>
+/* //#include <boost/unordered_map.hpp> */
+/* //#include <boost/std::shared_ptr.hpp> */
 
 #include "LTFSResponseMessage.h"
 
@@ -49,10 +49,10 @@ public:
 	virtual ~Result() {};
 	ltfs_status_t GetStatus(void);
 	std::string GetOutput(void);
-	std::list<boost::shared_ptr <LTFSObject> >& GetObjects();
-	std::list<boost::shared_ptr <LTFSNode> >& GetLTFSNodes();
-	std::list<boost::shared_ptr <Drive> >& GetDrives();
-	std::list<boost::shared_ptr <Cartridge> >& GetCartridges();
+	std::list<std::shared_ptr <LTFSObject> >& GetObjects();
+	std::list<std::shared_ptr <LTFSNode> >& GetLTFSNodes();
+	std::list<std::shared_ptr <Drive> >& GetDrives();
+	std::list<std::shared_ptr <Cartridge> >& GetCartridges();
 
 private:
 	LTFSAdminSession *session_;
@@ -60,14 +60,14 @@ private:
 	ltfs_status_t status_;
 	std::string output_;
 
-	std::list<boost::shared_ptr <LTFSObject> > objects_;
-	std::list<boost::shared_ptr <LTFSNode> >   nodes_;
-	std::list<boost::shared_ptr <Drive> >      drives_;
-	std::list<boost::shared_ptr <Cartridge> >  cartridges_;
+	std::list<std::shared_ptr <LTFSObject> > objects_;
+	std::list<std::shared_ptr <LTFSNode> >   nodes_;
+	std::list<std::shared_ptr <Drive> >      drives_;
+	std::list<std::shared_ptr <Cartridge> >  cartridges_;
 
 	std::string GetObjectType(xmlNode* obj);
 	std::string GetObjectID(xmlNode* obj);
-	boost::unordered_map<string, string> GetObjectAttributes(xmlNode* obj);
+	std::unordered_map<std::string, std::string> GetObjectAttributes(xmlNode* obj);
 
 	virtual void Parse(void);
 };

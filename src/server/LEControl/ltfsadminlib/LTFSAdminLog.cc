@@ -20,15 +20,11 @@
 **  ZZ_Copyright_END
 */
 
-#include <boost/assign.hpp>
+#include <unordered_map>
 
 #include "LTFSAdminLog.h"
 
-using namespace std;
-using namespace boost;
-
-unordered_map<string, string> ltfsadmin::LTFSAdminLog::msg_table_ = boost::assign::map_list_of
-	( string("100I"), string("Socket was terminated (%d)"))
-	( string("101I"), string("Socket error EINTR"))
-	( string("102I"), string("Socket error on recv (%d, %d)"))
-	;
+std::unordered_map<std::string, std::string> ltfsadmin::LTFSAdminLog::msg_table_ = {
+	{ std::string("100I"), std::string("Socket was terminated (%d)")},
+	{ std::string("101I"), std::string("Socket error EINTR")},
+	{ std::string("102I"), std::string("Socket error on recv (%d, %d)")}};

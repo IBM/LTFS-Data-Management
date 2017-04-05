@@ -19,10 +19,6 @@
 *************************************************************************************
 */
 
-#include <string>
-
-using namespace std;
-
 namespace ltfsadmin {
 
 class Logout:public LTFSRequestMessage {

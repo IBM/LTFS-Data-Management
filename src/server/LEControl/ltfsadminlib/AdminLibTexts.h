@@ -22,8 +22,6 @@
 
 #include <string>
 
-#include "boost/unordered_map.hpp"
-
 namespace ltfsadmin {
 
 class AdminLibTexts {
@@ -36,7 +34,7 @@ public:
 	virtual ~AdminLibTexts() {};
 
 protected:
-	boost::unordered_map<string, string> messages_;
+	std::unordered_map<string, string> messages_;
 };
 
 }

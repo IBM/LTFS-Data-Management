@@ -23,7 +23,7 @@
 #include <string>
 
 #include <stdint.h>
-#include <boost/unordered_map.hpp>
+//#include <boost/unordered_map.hpp>
 
 #include "LTFSObject.h"
 
@@ -33,7 +33,7 @@ class LTFSAdminSession;
 
 class Drive : public LTFSObject {
 public:
-	Drive(boost::unordered_map<std::string, std::string> elems, LTFSAdminSession *session);
+	Drive(std::unordered_map<std::string, std::string> elems, LTFSAdminSession *session);
 	Drive(std::string, LTFSAdminSession *session);
 	virtual ~Drive() {};
 

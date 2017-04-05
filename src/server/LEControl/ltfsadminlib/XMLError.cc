@@ -23,18 +23,16 @@
 
 #include "XMLError.h"
 
-using namespace std;
-using namespace boost;
 using namespace ltfsadmin;
 
-string XMLError::GetOOBError()
+std::string XMLError::GetOOBError()
 {
 	return "ADMINLIB_XML";
 }
 
 const char* XMLError::what(void)
 {
-	format msg_formatter("XML Error (%1%): [%2%:%3%] ");
+	boost::format msg_formatter("XML Error (%1%): [%2%:%3%] ");
 
 	msg_formatter % id_;
 	msg_formatter % file_;

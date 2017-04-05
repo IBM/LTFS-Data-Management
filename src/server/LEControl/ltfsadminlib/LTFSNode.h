@@ -26,7 +26,7 @@
 #include <string>
 #include <stdint.h>
 
-#include <boost/unordered_map.hpp>
+//#include <boost/unordered_map.hpp>
 
 #include "LTFSObject.h"
 
@@ -36,7 +36,7 @@ class LTFSAdminSession;
 
 class LTFSNode:public LTFSObject {
 public:
-	LTFSNode(boost::unordered_map<std::string, std::string> elems, LTFSAdminSession *session);
+	LTFSNode(std::unordered_map<std::string, std::string> elems, LTFSAdminSession *session);
 	virtual ~LTFSNode() {};
 
 	//bool force_to_sync();

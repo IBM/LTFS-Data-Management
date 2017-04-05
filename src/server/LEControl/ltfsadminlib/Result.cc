@@ -22,6 +22,10 @@
 #include <vector>
 #include <cstring>
 
+#include <unordered_map>
+#include <memory>
+#include <list>
+
 #include "Result.h"
 #include "XMLError.h"
 
@@ -29,11 +33,9 @@
 #include "Drive.h"
 #include "Cartridge.h"
 
-using namespace std;
-using namespace boost;
 using namespace ltfsadmin;
 
-Result::Result(string& xml, LTFSAdminSession *session)
+Result::Result(std::string& xml, LTFSAdminSession *session)
 	: LTFSResponseMessage(xml), session_(session)
 {
 };
@@ -46,7 +48,7 @@ ltfs_status_t Result::GetStatus(void)
 	return status_;
 }
 
-string Result::GetOutput(void)
+std::string Result::GetOutput(void)
 {
 	if (!root_)
 		Parse();
@@ -54,13 +56,13 @@ string Result::GetOutput(void)
 	return output_;
 }
 
-list<shared_ptr <LTFSObject> >& Result::GetObjects()
+std::list<std::shared_ptr <LTFSObject> >& Result::GetObjects()
 {
 	if (!root_)
 		Parse();
 
 	if (! root_) {
-		vector<string> args;
+		std::vector<std::string> args;
 		args.push_back("Cannot parse object");
 		throw XMLError(__FILE__, __LINE__, "050E", args);
 	}
@@ -68,13 +70,13 @@ list<shared_ptr <LTFSObject> >& Result::GetObjects()
 	return objects_;
 }
 
-list<shared_ptr <LTFSNode> >& Result::GetLTFSNodes()
+std::list<std::shared_ptr <LTFSNode> >& Result::GetLTFSNodes()
 {
 	if (!root_)
 		Parse();
 
 	if (! root_) {
-		vector<string> args;
+		std::vector<std::string> args;
 		args.push_back("Cannot parse object");
 		throw XMLError(__FILE__, __LINE__, "050E", args);
 	}
@@ -82,13 +84,13 @@ list<shared_ptr <LTFSNode> >& Result::GetLTFSNodes()
 	return nodes_;
 }
 
-list<shared_ptr <Drive> >& Result::GetDrives()
+std::list<std::shared_ptr <Drive> >& Result::GetDrives()
 {
 	if (!root_)
 		Parse();
 
 	if (! root_) {
-		vector<string> args;
+		std::vector<std::string> args;
 		args.push_back("Cannot parse object");
 		throw XMLError(__FILE__, __LINE__, "050E", args);
 	}
@@ -96,13 +98,13 @@ list<shared_ptr <Drive> >& Result::GetDrives()
 	return drives_;
 }
 
-list<shared_ptr <Cartridge> >& Result::GetCartridges()
+std::list<std::shared_ptr <Cartridge> >& Result::GetCartridges()
 {
 	if (!root_)
 		Parse();
 
 	if (! root_) {
-		vector<string> args;
+		std::vector<std::string> args;
 		args.push_back("Cannot parse object");
 		throw XMLError(__FILE__, __LINE__, "050E", args);
 	}
@@ -110,36 +112,36 @@ list<shared_ptr <Cartridge> >& Result::GetCartridges()
 	return cartridges_;
 }
 
-unordered_map<string, string> Result::GetObjectAttributes(xmlNode* obj)
+std::unordered_map<std::string, std::string> Result::GetObjectAttributes(xmlNode* obj)
 {
-	unordered_map<string, string> ret;
-	vector<xmlNode*> attrs = GetNode(obj, "attribute");
+	std::unordered_map<std::string, std::string> ret;
+	std::vector<xmlNode*> attrs = GetNode(obj, "attribute");
 
-	for (vector<xmlNode*>::iterator it = attrs.begin(); it != attrs.end(); ++it) {
+	for (std::vector<xmlNode*>::iterator it = attrs.begin(); it != attrs.end(); ++it) {
 		xmlChar* n = xmlGetProp(*it, BAD_CAST "name");
 		if (n) {
-			string name = string((const char*)n);
+			std::string name = std::string((const char*)n);
 			xmlFree(n);
 
-			vector<xmlNode*> v = GetNode(*it, "value");
+			std::vector<xmlNode*> v = GetNode(*it, "value");
 			if (v.size() == 1) {
 				xmlChar* t = xmlNodeGetContent(v[0]);
 				if (t) {
-					string content = string((const char*)t);
+					std::string content = std::string((const char*)t);
 					ret[name] = content;
 					xmlFree(t);
 				} else {
-					vector<string> args;
+					std::vector<std::string> args;
 					args.push_back("Failed to get attribute value");
 					throw XMLError(__FILE__, __LINE__, "051E", args);
 				}
 			} else {
-				vector<string> args;
+				std::vector<std::string> args;
 				args.push_back("Failed to get correct attribute value");
 				throw XMLError(__FILE__, __LINE__, "052E", args);
 			}
 		} else {
-				vector<string> args;
+				std::vector<std::string> args;
 				args.push_back("Failed to get attribute name");
 				throw XMLError(__FILE__, __LINE__, "053E", args);
 		}
@@ -148,16 +150,16 @@ unordered_map<string, string> Result::GetObjectAttributes(xmlNode* obj)
 	return ret;
 }
 
-string Result::GetObjectType(xmlNode* obj)
+std::string Result::GetObjectType(xmlNode* obj)
 {
-	string type = "";
+	std::string type = "";
 	xmlChar* t = xmlGetProp(obj, BAD_CAST "type");
 
 	if (t) {
-		type = string((const char*)t);
+		type = std::string((const char*)t);
 		xmlFree(t);
 	} else {
-		vector<string> args;
+		std::vector<std::string> args;
 		args.push_back("Cannot get object type");
 		throw XMLError(__FILE__, __LINE__, "054E", args);
 	}
@@ -165,16 +167,16 @@ string Result::GetObjectType(xmlNode* obj)
 	return type;
 }
 
-string Result::GetObjectID(xmlNode* obj)
+std::string Result::GetObjectID(xmlNode* obj)
 {
-	string id = "";
+	std::string id = "";
 	xmlChar* i = xmlGetProp(obj, BAD_CAST "id");
 
 	if (i) {
-		id = string((const char*)i);
+		id = std::string((const char*)i);
 		xmlFree(i);
 	} else {
-		vector<string> args;
+		std::vector<std::string> args;
 		args.push_back("Cannot get object ID");
 		throw XMLError(__FILE__, __LINE__, "055E", args);
 	}
@@ -189,9 +191,9 @@ void Result::Parse(void)
 
 	if (root_) {
 		/* Parse status from received XML */
-		vector<xmlNode*> statuses = GetNode(root_, "status");
-		vector<xmlNode*> outputs = GetNode(root_, "output");
-		vector<string> args;
+		std::vector<xmlNode*> statuses = GetNode(root_, "status");
+		std::vector<xmlNode*> outputs = GetNode(root_, "output");
+		std::vector<std::string> args;
 
 		switch (statuses.size()) {
 			case 1:
@@ -221,25 +223,25 @@ void Result::Parse(void)
 		for (unsigned int i = 0; i < outputs.size(); ++i) {
 			xmlChar* o = xmlNodeGetContent(outputs[i]);
 			if (i)
-				output_ = output_ + " " + string((const char*)o);
+				output_ = output_ + " " + std::string((const char*)o);
 			else
-				output_ = string((const char*)o);
+				output_ = std::string((const char*)o);
 			xmlFree(o);
 		}
 		Log(DEBUG2, "Output: " + output_);
 
 		/* Parse Objects here if required */
-		vector<xmlNode*> object_root = GetNode(root_, "objects");
+		std::vector<xmlNode*> object_root = GetNode(root_, "objects");
 		if (object_root.size() > 1) {
-			vector<string> args;
+			std::vector<std::string> args;
 			args.push_back("Multiple object tags are found");
 			throw XMLError(__FILE__, __LINE__, "058E", args);
 		} else if (object_root.size() == 1) {
-			vector<xmlNode*> objects = GetNode(object_root[0], "object");
-			for (vector<xmlNode*>::iterator it = objects.begin(); it != objects.end(); ++it) {
-				string type = GetObjectType(*it);
-				string id = GetObjectID(*it);
-				unordered_map<string, string> elems = GetObjectAttributes(*it);
+			std::vector<xmlNode*> objects = GetNode(object_root[0], "object");
+			for (std::vector<xmlNode*>::iterator it = objects.begin(); it != objects.end(); ++it) {
+				std::string type = GetObjectType(*it);
+				std::string id = GetObjectID(*it);
+				std::unordered_map<std::string, std::string> elems = GetObjectAttributes(*it);
 
 				/* Ignore 0-byte ID objects */
 				if (id.size() == 0)
@@ -248,26 +250,26 @@ void Result::Parse(void)
 				Log(DEBUG2, "Found a object: type = " + type + ", id =" + id);
 				elems["id"] = id;
 
-				shared_ptr<LTFSObject> obj;
+				std::shared_ptr<LTFSObject> obj;
 				if (type == "LTFSNode") {
-					shared_ptr<LTFSNode> node = shared_ptr<LTFSNode>(new LTFSNode(elems, session_));
+					std::shared_ptr<LTFSNode> node = std::shared_ptr<LTFSNode>(new LTFSNode(elems, session_));
 					nodes_.push_back(node);
-					obj = shared_ptr<LTFSObject>(node);
+					obj = std::shared_ptr<LTFSObject>(node);
 				} else if (type == "cartridge") {
-					shared_ptr<Cartridge> cart = shared_ptr<Cartridge>(new Cartridge(elems, session_));
+					std::shared_ptr<Cartridge> cart = std::shared_ptr<Cartridge>(new Cartridge(elems, session_));
 					cartridges_.push_back(cart);
-					obj = shared_ptr<LTFSObject>(cart);
+					obj = std::shared_ptr<LTFSObject>(cart);
 				} else if (type == "drive") {
-					shared_ptr<Drive> drive = shared_ptr<Drive>(new Drive(elems, session_));
+					std::shared_ptr<Drive> drive = std::shared_ptr<Drive>(new Drive(elems, session_));
 					drives_.push_back(drive);
-					obj = shared_ptr<LTFSObject>(drive);
+					obj = std::shared_ptr<LTFSObject>(drive);
 				}
 
 				objects_.push_back(obj);
 			}
 		}
 	} else {
-		vector<string> args;
+		std::vector<std::string> args;
 		args.push_back("Document root element is not found");
 		throw XMLError(__FILE__, __LINE__, "059E", args);
 	}

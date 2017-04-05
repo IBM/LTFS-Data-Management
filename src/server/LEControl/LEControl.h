@@ -66,7 +66,7 @@ enum ltfsle_node_status {
 	NODE_STATUS_OUT_OF_SYNC,
 	NODE_STATUS_LICENSE_EXPIRED,
 	NODE_STATUS_DISCONNECTED,    // Session is down
-	NODE_STATUS_NOT_CONFIGURED,  // LE is not configured correctly   
+	NODE_STATUS_NOT_CONFIGURED,  // LE is not configured correctly
 	NODE_STATUS_UNKNOWN          // should be max value in node status
 };
 
@@ -79,36 +79,36 @@ enum ltfsle_tape_location {
 
 class LEControl {
 public:
-	static boost::shared_ptr<LTFSAdminSession> Connect(std::string ip_address, uint16_t port);
-	static boost::shared_ptr<LTFSAdminSession> Reconnect(boost::shared_ptr<LTFSAdminSession> session);
-	static void Disconnect(boost::shared_ptr<LTFSAdminSession> session);
-	static boost::shared_ptr<LTFSNode> InventoryNode(boost::shared_ptr<LTFSAdminSession> session);
-	static boost::shared_ptr<Drive> InventoryDrive(std::string id,
-												   boost::shared_ptr<LTFSAdminSession> session,
+	static std::shared_ptr<LTFSAdminSession> Connect(std::string ip_address, uint16_t port);
+	static std::shared_ptr<LTFSAdminSession> Reconnect(std::shared_ptr<LTFSAdminSession> session);
+	static void Disconnect(std::shared_ptr<LTFSAdminSession> session);
+	static std::shared_ptr<LTFSNode> InventoryNode(std::shared_ptr<LTFSAdminSession> session);
+	static std::shared_ptr<Drive> InventoryDrive(std::string id,
+												   std::shared_ptr<LTFSAdminSession> session,
 												   bool force = false);
-	static int InventoryDrive(std::list<boost::shared_ptr<Drive> > &drives,
-							  boost::shared_ptr<LTFSAdminSession> session,
+	static int InventoryDrive(std::list<std::shared_ptr<Drive> > &drives,
+							  std::shared_ptr<LTFSAdminSession> session,
 							  bool assigned_only = true,
 							  bool force = false);
-	static boost::shared_ptr<Cartridge> InventoryCartridge(std::string id,
-														   boost::shared_ptr<LTFSAdminSession> session,
+	static std::shared_ptr<Cartridge> InventoryCartridge(std::string id,
+														   std::shared_ptr<LTFSAdminSession> session,
 														   bool force = false);
-	static int InventoryCartridge(std::list<boost::shared_ptr<Cartridge> > &cartridges,
-								  boost::shared_ptr<LTFSAdminSession> session,
+	static int InventoryCartridge(std::list<std::shared_ptr<Cartridge> > &cartridges,
+								  std::shared_ptr<LTFSAdminSession> session,
 								  bool assigned_only = true,
 								  bool force = false);
-	static int AssignDrive(std::string serial, boost::shared_ptr<LTFSAdminSession> session);
-	static int UnassignDrive(boost::shared_ptr<Drive> drive);
-	static int AssignCartridge(std::string barcode, boost::shared_ptr<LTFSAdminSession> session, std::string drive_serial = "");
-	static int UnassignCartridge(boost::shared_ptr<Cartridge> cartridge, bool keep_on_drive = false);
+	static int AssignDrive(std::string serial, std::shared_ptr<LTFSAdminSession> session);
+	static int UnassignDrive(std::shared_ptr<Drive> drive);
+	static int AssignCartridge(std::string barcode, std::shared_ptr<LTFSAdminSession> session, std::string drive_serial = "");
+	static int UnassignCartridge(std::shared_ptr<Cartridge> cartridge, bool keep_on_drive = false);
 
-	static int MountCartridge(boost::shared_ptr<Cartridge> cartridge, std::string drive_serial);
-	static int UnmountCartridge(boost::shared_ptr<Cartridge> cartridge);
-	static int SyncCartridge(boost::shared_ptr<Cartridge> cartridge);
-	static int FormatCartridge(boost::shared_ptr<Cartridge> cartridge, std::string drive_serial, uint8_t density_code = 0, bool force = false);
-	static int CheckCartridge(boost::shared_ptr<Cartridge> cartridge, std::string drive_serial, bool deep = false);
+	static int MountCartridge(std::shared_ptr<Cartridge> cartridge, std::string drive_serial);
+	static int UnmountCartridge(std::shared_ptr<Cartridge> cartridge);
+	static int SyncCartridge(std::shared_ptr<Cartridge> cartridge);
+	static int FormatCartridge(std::shared_ptr<Cartridge> cartridge, std::string drive_serial, uint8_t density_code = 0, bool force = false);
+	static int CheckCartridge(std::shared_ptr<Cartridge> cartridge, std::string drive_serial, bool deep = false);
 
-	static int MoveCartridge(boost::shared_ptr<Cartridge> cartridge,
+	static int MoveCartridge(std::shared_ptr<Cartridge> cartridge,
 						  ltfs_slot_t slot_type, std::string drive_serial = "");
 
 	// Move Cartridge Assign
@@ -118,55 +118,4 @@ public:
 private:
 	static const boost::unordered_map<std::string, int> format_errors_;
 	static LTFSAdminLog *logger_;
-};
-
-#include "mmm/debug.h"
-
-class LELogger : public LTFSAdminLog {
-public:
-	virtual void Log(loglevel_t level, string s)
-	{
-		if (level <= INFO) {
-			syslog(LOG_WARNING, s.c_str());
-			dbgprintf(0, "%s", s.c_str());
-		} else if (level <= GetLogLevel()) {
-			int level_mmm = 3;
-			switch((int)level) {
-				case DEBUG0:
-				case DEBUG1:
-					level_mmm = 1;
-					break;
-				case DEBUG2:
-					level_mmm = 2;
-					break;
-				case DEBUG3:
-					level_mmm = 3;
-					break;
-				default:
-					break;
-			}
-			dbgprintf(level_mmm, "%s", s.c_str());
-		}
-	}
-
-	virtual void Msg(loglevel_t level, string id, ...)
-	{
-		va_list ap;
-		va_start(ap, id);
-		Msg(level, id, ap);
-		va_end(ap);
-	}
-
-	virtual void Msg(loglevel_t level, string id, va_list ap)
-	{
-		if (LTFSAdminLog::msg_table_.count(id)) {
-			if (level <= GetLogLevel()) {
-				char arg[MAX_LEN_MSG_BUF + 1];
-				string fmt = LTFSAdminLog::msg_table_[id];
-				fmt = "GLESA" + id + ": " + fmt;
-				strncpy(arg, fmt.c_str(), MAX_LEN_MSG_BUF);
-				vsyslog(LOG_INFO, arg, ap);
-			}
-		}
-	}
 };
