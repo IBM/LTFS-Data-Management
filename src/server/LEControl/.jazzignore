@@ -1,0 +1,90 @@
+### Jazz Ignore 0
+# Default value for core.ignore.recursive is *.class
+#  Changing this value changes check-in behaviour for the entire project.
+#
+# Default value for core.ignore is bin
+#  Changing this value changes check-in behaviour for the local directory.
+#
+# Ignored files and folders will not be committed, but may be modified during
+# accept or update.
+# Ignore properties should contain a space separated list of filename patterns.
+# Each pattern is case sensitive and surrounded by braces ('{' and '}').
+# "*" matches zero or more characters, and "?" matches single characters.
+#
+#   e.g: {*.sh} {\.*}    ignores shell scripts and hidden files
+
+# NOTE: modifying ignore files will not change the ignore status of derived
+# resources.
+
+core.ignore.recursive= \
+	{*.class} \
+	{*.la} \
+	{*.lo} \
+	{*.o}  \
+	{*.dylib} \
+	{*.a} \
+	{*.so} \
+	{*.dll} \
+	{*.dat} \
+	{*.exe} \
+	{*.pyc} \
+	{GTAGS} \
+	{GPATH} \
+	{GRTAGS} \
+	{GSYMS} \
+	{.DS_Store} \
+	{Makefile.in} \
+	{.deps} \
+	{.libs} \
+	{ltfs.conf} \
+	{ltfs-simulator.conf} \
+	{expand_dcache} \
+	{aclocal.m4} \
+	{autom4te.cache} \
+	{m4} \
+	{build-aux} \
+	{config.h.in} \
+	{config.log} \
+	{config.status} \
+	{config.guess} \
+	{config.sub} \
+	{configure} \
+	{depcomp} \
+	{install-sh} \
+	{ltmain.sh} \
+	{missing} \
+	{libtool} \
+	{stamp-h1} \
+	{ltfsee_reconcile} \
+	{reconcile_tape} \
+	{reconcile_scan_ext_prog} \
+	{reclaim_source} \
+	{reclaim_target} \
+	{deldmapi} \
+	{setdmapi} \
+	{mkltfs} \
+	{ltfsck} \
+	{expand_dcache} \
+	{messages.c} \
+	{msg_table.h} \
+	{msg_table.cc} \
+	{mmm.h} \
+	{mmm_clnt.cc} \
+	{mmm_svc.cc} \
+	{mmm_tbl.i} \
+	{mmm_xdr.cc} \
+	{runjob} \
+	{ltfsee} \
+	{ltfseecp} \
+	{ltfsee_catcsvlog} \
+	{glues_ut} \
+	{sample_code} \
+	{test_logging} \
+	{test_migtrace} \
+	{prot_version.h} \
+	{*.BAK*} \
+	{*.bak*} \
+	{*.d} \
+	{*~}
+
+core.ignore=
