@@ -4,7 +4,7 @@ msgdefs.h
 src/common/comm/test
 bin/msgcompiler
 src/common/msgcompiler/msgcompiler
-msgtest
+ltfstest
 lib/*
 ltfsdm
 ltfsdmd

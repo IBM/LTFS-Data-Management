@@ -9,45 +9,21 @@
 #include <set>
 
 #include "LEControl.h"
+#include "ltfsadminlib/Cartridge.h"
 
-int main(int argc, char **argv)
+using namespace ltfsadmin;
+
+void printTapeInventory(std::shared_ptr<LTFSAdminSession> sess)
 
 {
-	LEControl lec;
-	std::list<std::shared_ptr<Drive> > drives;
 	std::list<std::shared_ptr<Cartridge> > tapes;
 	int rc;
 
-	std::shared_ptr<LTFSAdminSession> sess = lec.Connect("127.0.0.1", 7600);
-
-	if ( !sess ) {
-		std::cout << "unable to connect" << std::endl;
-		return 1;
-	}
-
-	rc = lec.InventoryDrive(drives, sess);
+	rc = LEControl::InventoryCartridge(tapes, sess);
 
 	if ( rc == -1 ) {
 		std::cout << "unable to perform a drive inventory" << std::endl;
-		lec.Disconnect(sess);
-		return 1;
-	}
-
-	for (auto i : drives) {
-		std::cout << "id: "  << i->GetObjectID()
-				  << ", devname: " << i->get_devname()
-				  << ", slot: " << i->get_slot()
-				  << ", status: " << i->get_status() << std::endl;
-	}
-
-	std::cout << std::endl;
-
-	rc = lec.InventoryCartridge(tapes, sess);
-
-	if ( rc == -1 ) {
-		std::cout << "unable to perform a drive inventory" << std::endl;
-		lec.Disconnect(sess);
-		return 1;
+		return;
 	}
 
 	for (auto i : tapes) {
@@ -57,9 +33,86 @@ int main(int argc, char **argv)
 				  << ", remaining capacity: " << i->get_remaining_cap()
 				  << ", status: " << i->get_status() << std::endl;
 	}
+}
+
+int main(int argc, char **argv)
+
+{
+	std::list<std::shared_ptr<Drive> > drives;
+	std::list<std::shared_ptr<Cartridge> > tapes;
+
+	std::string tapeID;
+	std::string driveID;
+	uint16_t slot;
+	bool justList = true;
+	int rc;
+
+	if ( argc == 2 ) {
+		tapeID = std::string(argv[1]);
+		justList = false;
+	}
+
+	std::shared_ptr<LTFSAdminSession> sess = LEControl::Connect("127.0.0.1", 7600);
 
 
-	lec.Disconnect(sess);
+	if ( !sess ) {
+		std::cout << "unable to connect" << std::endl;
+		return 1;
+	}
+
+	rc = LEControl::InventoryDrive(drives, sess);
+
+	if ( rc == -1 ) {
+		std::cout << "unable to perform a drive inventory" << std::endl;
+		LEControl::Disconnect(sess);
+		return 1;
+	}
+
+	for (auto i : drives) {
+		driveID = i->GetObjectID();
+		slot = i->get_slot();
+		std::cout << "id: "  << i->GetObjectID()
+				  << ", devname: " << i->get_devname()
+				  << ", slot: " << i->get_slot()
+				  << ", status: " << i->get_status() << std::endl;
+	}
+
+	std::cout << std::endl;
+
+	rc = LEControl::InventoryCartridge(tapes, sess);
+
+	if ( rc == -1 ) {
+		std::cout << "unable to perform a drive inventory" << std::endl;
+		LEControl::Disconnect(sess);
+		return 1;
+	}
+
+	printTapeInventory(sess);
+
+	std::shared_ptr<Cartridge> tapeToMount, tapeToUnmount;
+
+	for (auto i : tapes) {
+		if ( tapeID.compare(i->GetObjectID()) == 0 )
+			tapeToMount = i;
+		if ( i->get_slot() == slot )
+			tapeToUnmount = i;
+	}
+
+	if ( justList == false ) {
+		if ( slot == tapeToMount->get_slot() ) {
+			std::cout << "tape " << tapeID << " is already mounted" << std::endl;
+		}
+		else {
+			std::cout << "unmounting " << tapeToUnmount->GetObjectID() << std::endl;
+			tapeToUnmount->Unmount();
+			std::cout << "mounting " << tapeToMount->GetObjectID() << std::endl;
+			tapeToMount->Mount(driveID);
+			printTapeInventory(sess);
+		}
+	}
+
+
+	LEControl::Disconnect(sess);
 
 
 	return 0;
