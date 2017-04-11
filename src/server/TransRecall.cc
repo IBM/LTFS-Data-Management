@@ -385,7 +385,7 @@ void recallStep(int reqNum, std::string tapeId)
 		Connector::respondRecallEvent(recinfo, succeeded);
 	}
 
-	TRACE(Trace::medium, numFiles);
+	TRACE(Trace::error, numFiles);
 
 	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 

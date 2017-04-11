@@ -23,7 +23,7 @@ namespace Const {
 	const std::string DMAPI_SESSION_NAME = std::string("ltfsdm");
 	const std::string LTFS_PATH = std::string("/mnt/ltfs");
 	const std::string LTFS_NAME = std::string("ltfsdm");
-	const std::string LTFS_SYNC_ATTR = std::string("ltfs.sync");
+	const std::string LTFS_SYNC_ATTR = std::string("user.ltfs.sync");
 	const std::string LTFS_SYNC_VAL = std::string("1");
 	const std::string DMAPI_ATTR_MIG = std::string("LTFSDMMIG");
 	const std::string DMAPI_ATTR_FS = std::string("LTFSDMFS");

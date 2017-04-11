@@ -72,8 +72,12 @@ int main(int argc, char **argv)
 		driveID = i->GetObjectID();
 		slot = i->get_slot();
 		std::cout << "id: "  << i->GetObjectID()
+				  << ", product id: " << i->get_product_id()
+				  << ", firmware revision: " << i->get_fw_revision()
+				  << ", vendor: " << i->get_vendor()
 				  << ", devname: " << i->get_devname()
 				  << ", slot: " << i->get_slot()
+				  << ", node: " << i->get_node()
 				  << ", status: " << i->get_status() << std::endl;
 	}
 
