@@ -13,20 +13,10 @@
 
 using namespace ltfsadmin;
 
-void printTapeInventory(std::shared_ptr<LTFSAdminSession> sess)
+void printTapeInventory(std::list<std::shared_ptr<Cartridge> > tapes)
 
 {
-	std::list<std::shared_ptr<Cartridge> > tapes;
-	int rc;
-
-	rc = LEControl::InventoryCartridge(tapes, sess);
-
-	if ( rc == -1 ) {
-		std::cout << "unable to perform a drive inventory" << std::endl;
-		return;
-	}
-
-	for (auto i : tapes) {
+	for (std::shared_ptr<Cartridge> i : tapes) {
 		std::cout << "id: " << i->GetObjectID()
 				  << ", slot: " << i->get_slot()
 				  << ", total capacity: " << i->get_total_cap()
@@ -68,7 +58,7 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	for (auto i : drives) {
+	for (std::shared_ptr<Drive> i : drives) {
 		driveID = i->GetObjectID();
 		slot = i->get_slot();
 		std::cout << "id: "  << i->GetObjectID()
@@ -91,11 +81,11 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	printTapeInventory(sess);
+	printTapeInventory(tapes);
 
 	std::shared_ptr<Cartridge> tapeToMount, tapeToUnmount;
 
-	for (auto i : tapes) {
+	for (std::shared_ptr<Cartridge> i : tapes) {
 		if ( tapeID.compare(i->GetObjectID()) == 0 )
 			tapeToMount = i;
 		if ( i->get_slot() == slot )
@@ -111,7 +101,16 @@ int main(int argc, char **argv)
 			tapeToUnmount->Unmount();
 			std::cout << "mounting " << tapeToMount->GetObjectID() << std::endl;
 			tapeToMount->Mount(driveID);
-			printTapeInventory(sess);
+
+			rc = LEControl::InventoryCartridge(tapes, sess);
+
+			if ( rc == -1 ) {
+				std::cout << "unable to perform a drive inventory" << std::endl;
+				LEControl::Disconnect(sess);
+				return 1;
+			}
+
+			printTapeInventory(tapes);
 		}
 	}
 
