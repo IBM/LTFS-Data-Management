@@ -13,30 +13,30 @@
 
 using namespace ltfsadmin;
 
-class SingleDrive : public Drive {
+class OpenLTFSDrive : public Drive {
 private:
 	bool busy;
 public:
-	SingleDrive(Drive drive) : Drive(drive), busy(false) {}
+	OpenLTFSDrive(Drive drive) : Drive(drive), busy(false) {}
 	bool isBusy() { return busy; }
 	//	Drive *getDrive() { return dynamic_cast<Drive*>(this); }
 };
 
 
-class SingleTape : public Cartridge {
+class OpenLTFSCartridge : public Cartridge {
 private:
 	unsigned long inProgress;
 public:
-	SingleTape(Cartridge tape) : Cartridge(tape), inProgress(0) {}
-	//	std::shared_ptr<Cartridge> getTape() { return tape; }
+	OpenLTFSCartridge(Cartridge cartridge) : Cartridge(cartridge), inProgress(0) {}
+	//	std::shared_ptr<Cartridge> getCartridge() { return cartridge; }
 	unsigned long getInProgress() { return inProgress; }
 };
 
 
-void printTapeInventory(std::list<std::shared_ptr<SingleTape>> mytps)
+void printCartridgeInventory(std::list<std::shared_ptr<OpenLTFSCartridge>> mytps)
 
 {
-	for (std::shared_ptr<SingleTape> i : mytps) {
+	for (std::shared_ptr<OpenLTFSCartridge> i : mytps) {
 		std::cout << "id: " << i->GetObjectID()
 				  << ", slot: " << i->get_slot()
 				  << ", total capacity: " << i->get_total_cap()
@@ -49,18 +49,18 @@ int main(int argc, char **argv)
 
 {
 	std::list<std::shared_ptr<Drive> > drives;
-	std::list<std::shared_ptr<SingleDrive>> mydrvs;
-	std::list<std::shared_ptr<Cartridge>> tapes;
-	std::list<std::shared_ptr<SingleTape>> mytps;
+	std::list<std::shared_ptr<OpenLTFSDrive>> mydrvs;
+	std::list<std::shared_ptr<Cartridge>> cartridges;
+	std::list<std::shared_ptr<OpenLTFSCartridge>> mytps;
 
-	std::string tapeID;
+	std::string cartridgeID;
 	std::string driveID;
 	uint16_t slot;
 	bool justList = true;
 	int rc;
 
 	if ( argc == 2 ) {
-		tapeID = std::string(argv[1]);
+		cartridgeID = std::string(argv[1]);
 		justList = false;
 	}
 
@@ -74,6 +74,7 @@ int main(int argc, char **argv)
 
 	rc = LEControl::InventoryDrive(drives, sess);
 
+
 	if ( rc == -1 ) {
 		std::cout << "unable to perform a drive inventory" << std::endl;
 		LEControl::Disconnect(sess);
@@ -81,9 +82,9 @@ int main(int argc, char **argv)
 	}
 
 	for (std::shared_ptr<Drive> i : drives)
-		mydrvs.push_back(std::make_shared<SingleDrive>(SingleDrive(*i)));
+		mydrvs.push_back(std::make_shared<OpenLTFSDrive>(OpenLTFSDrive(*i)));
 
-	for (std::shared_ptr<SingleDrive> i : mydrvs) {
+	for (std::shared_ptr<OpenLTFSDrive> i : mydrvs) {
 		driveID = i->GetObjectID();
 		slot = i->get_slot();
 		std::cout << "id: "  << i->GetObjectID()
@@ -99,7 +100,7 @@ int main(int argc, char **argv)
 
 	std::cout << std::endl;
 
-	rc = LEControl::InventoryCartridge(tapes, sess);
+	rc = LEControl::InventoryCartridge(cartridges, sess);
 
 	if ( rc == -1 ) {
 		std::cout << "unable to perform a drive inventory" << std::endl;
@@ -107,31 +108,31 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	for(std::shared_ptr<Cartridge> i : tapes)
-		mytps.push_back(std::make_shared<SingleTape>(SingleTape(*i)));
+	for(std::shared_ptr<Cartridge> i : cartridges)
+		mytps.push_back(std::make_shared<OpenLTFSCartridge>(OpenLTFSCartridge(*i)));
 
-	printTapeInventory(mytps);
+	printCartridgeInventory(mytps);
 
-	std::shared_ptr<SingleTape> tapeToMount, tapeToUnmount;
+	std::shared_ptr<OpenLTFSCartridge> cartridgeToMount, cartridgeToUnmount;
 
-	for (std::shared_ptr<SingleTape> i : mytps) {
-		if ( tapeID.compare(i->GetObjectID()) == 0 )
-			tapeToMount = i;
+	for (std::shared_ptr<OpenLTFSCartridge> i : mytps) {
+		if ( cartridgeID.compare(i->GetObjectID()) == 0 )
+			cartridgeToMount = i;
 		if ( i->get_slot() == slot )
-			tapeToUnmount = i;
+			cartridgeToUnmount = i;
 	}
 
 	if ( justList == false ) {
-		if ( slot == tapeToMount->get_slot() ) {
-			std::cout << "tape " << tapeID << " is already mounted" << std::endl;
+		if ( slot == cartridgeToMount->get_slot() ) {
+			std::cout << "cartridge " << cartridgeID << " is already mounted" << std::endl;
 		}
 		else {
-			std::cout << "unmounting " << tapeToUnmount->GetObjectID() << std::endl;
-			tapeToUnmount->Unmount();
-			*tapeToUnmount = *(LEControl::InventoryCartridge(tapeToUnmount->GetObjectID(), sess));
-			std::cout << "mounting " << tapeToMount->GetObjectID() << std::endl;
-			tapeToMount->Mount(driveID);
-			*tapeToMount = *(LEControl::InventoryCartridge(tapeToMount->GetObjectID(), sess));
+			std::cout << "unmounting " << cartridgeToUnmount->GetObjectID() << std::endl;
+			cartridgeToUnmount->Unmount();
+			*cartridgeToUnmount = *(LEControl::InventoryCartridge(cartridgeToUnmount->GetObjectID(), sess));
+			std::cout << "mounting " << cartridgeToMount->GetObjectID() << std::endl;
+			cartridgeToMount->Mount(driveID);
+			*cartridgeToMount = *(LEControl::InventoryCartridge(cartridgeToMount->GetObjectID(), sess));
 
 			if ( rc == -1 ) {
 				std::cout << "unable to perform a drive inventory" << std::endl;
@@ -139,7 +140,7 @@ int main(int argc, char **argv)
 				return 1;
 			}
 
-			printTapeInventory(mytps);
+			printCartridgeInventory(mytps);
 		}
 	}
 
