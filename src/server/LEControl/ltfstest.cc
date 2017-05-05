@@ -19,7 +19,6 @@ private:
 public:
 	OpenLTFSDrive(Drive drive) : Drive(drive), busy(false) {}
 	bool isBusy() { return busy; }
-	//	Drive *getDrive() { return dynamic_cast<Drive*>(this); }
 };
 
 
@@ -28,7 +27,6 @@ private:
 	unsigned long inProgress;
 public:
 	OpenLTFSCartridge(Cartridge cartridge) : Cartridge(cartridge), inProgress(0) {}
-	//	std::shared_ptr<Cartridge> getCartridge() { return cartridge; }
 	unsigned long getInProgress() { return inProgress; }
 };
 
