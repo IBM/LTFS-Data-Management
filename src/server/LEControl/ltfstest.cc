@@ -18,17 +18,34 @@ private:
 	bool busy;
 public:
 	OpenLTFSDrive(Drive drive) : Drive(drive), busy(false) {}
+	void update(Drive drive);
 	bool isBusy() { return busy; }
+	void setBusy() { busy = true; }
 };
 
+void OpenLTFSDrive::update(Drive drive)
+
+{
+	Drive *thisDrive = dynamic_cast<Drive*>(this);
+	*thisDrive = drive;
+}
 
 class OpenLTFSCartridge : public Cartridge {
 private:
 	unsigned long inProgress;
 public:
 	OpenLTFSCartridge(Cartridge cartridge) : Cartridge(cartridge), inProgress(0) {}
+	void update(Cartridge cartridge);
 	unsigned long getInProgress() { return inProgress; }
+	void setInProgress(unsigned long size) { inProgress = size; }
 };
+
+void OpenLTFSCartridge::update(Cartridge cartridge)
+
+{
+	Cartridge *thisCartridge = dynamic_cast<Cartridge*>(this);
+	*thisCartridge = cartridge;
+}
 
 
 void printCartridgeInventory(std::list<std::shared_ptr<OpenLTFSCartridge>> mytps)
@@ -39,8 +56,10 @@ void printCartridgeInventory(std::list<std::shared_ptr<OpenLTFSCartridge>> mytps
 				  << ", slot: " << i->get_slot()
 				  << ", total capacity: " << i->get_total_cap()
 				  << ", remaining capacity: " << i->get_remaining_cap()
-				  << ", status: " << i->get_status() << std::endl;
+				  << ", status: " << i->get_status()
+				  << ", in progress: " << i->getInProgress() << std::endl;
 	}
+	std::cout << std::endl;
 }
 
 int main(int argc, char **argv)
@@ -125,12 +144,17 @@ int main(int argc, char **argv)
 			std::cout << "cartridge " << cartridgeID << " is already mounted" << std::endl;
 		}
 		else {
+			cartridgeToUnmount->setInProgress(100);
+			printCartridgeInventory(mytps);
+
 			std::cout << "unmounting " << cartridgeToUnmount->GetObjectID() << std::endl;
 			cartridgeToUnmount->Unmount();
-			*cartridgeToUnmount = *(LEControl::InventoryCartridge(cartridgeToUnmount->GetObjectID(), sess));
+			cartridgeToUnmount->update(*(LEControl::InventoryCartridge(cartridgeToUnmount->GetObjectID(), sess)));
+			printCartridgeInventory(mytps);
+
 			std::cout << "mounting " << cartridgeToMount->GetObjectID() << std::endl;
 			cartridgeToMount->Mount(driveID);
-			*cartridgeToMount = *(LEControl::InventoryCartridge(cartridgeToMount->GetObjectID(), sess));
+			cartridgeToMount->update(*(LEControl::InventoryCartridge(cartridgeToMount->GetObjectID(), sess)));
 
 			if ( rc == -1 ) {
 				std::cout << "unable to perform a drive inventory" << std::endl;
