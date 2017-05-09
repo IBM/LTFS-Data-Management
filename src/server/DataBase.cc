@@ -1,25 +1,5 @@
 #include "ServerIncludes.h"
 
-/*
-#include <unistd.h>
-#include <sys/resource.h>
-
-#include <string>
-#include <sstream>
-#include <set>
-#include <vector>
-
-#include <sqlite3.h>
-
-#include "src/common/util/util.h"
-#include "src/common/messages/Message.h"
-#include "src/common/tracing/Trace.h"
-#include "src/common/errors/errors.h"
-#include "src/common/const/Const.h"
-
-#include "DataBase.h"
-*/
-
 DataBase DB;
 
 std::mutex DataBase::trans_mutex;
