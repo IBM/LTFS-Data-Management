@@ -1,25 +1,4 @@
-#include <sys/resource.h>
-
-#include <iostream>
-#include <sstream>
-#include <string>
-#include <map>
-#include <set>
-#include <vector>
-#include <mutex>
-
-#include <sqlite3.h>
-
-#include "src/common/util/util.h"
-#include "src/common/messages/Message.h"
-#include "src/common/tracing/Trace.h"
-#include "src/common/errors/errors.h"
-#include "src/common/const/Const.h"
-
-#include "src/server/DataBase.h"
-#include "src/connector/Connector.h"
-
-#include "src/server/Status.h"
+#include "ServerIncludes.h"
 
 Status  mrStatus;
 

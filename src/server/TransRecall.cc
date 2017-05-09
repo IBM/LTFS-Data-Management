@@ -1,34 +1,4 @@
-#include <limits.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/resource.h>
-#include <fcntl.h>
-
-#include <map>
-#include <set>
-#include <vector>
-#include <atomic>
-#include <condition_variable>
-#include <mutex>
-#include <thread>
-
-#include <sqlite3.h>
-
-#include "src/common/util/util.h"
-#include "src/common/messages/Message.h"
-#include "src/common/tracing/Trace.h"
-#include "src/common/errors/errors.h"
-#include "src/common/const/Const.h"
-
-#include "src/connector/Connector.h"
-
-#include "DataBase.h"
-#include "Receiver.h"
-#include "SubServer.h"
-#include "Server.h"
-#include "Scheduler.h"
-#include "TransRecall.h"
-
+#include "ServerIncludes.h"
 
 void TransRecall::addRequest(Connector::rec_info_t recinfo, std::string tapeId, long reqNum, bool newReq)
 

@@ -13,6 +13,7 @@ private:
 	std::vector<std::string> tapeList;
 	std::vector<std::string> getTapes();
 
+public:
 	struct mig_info_t {
 		std::string fileName;
 		int reqNumber;
@@ -22,6 +23,8 @@ private:
 		FsObj::file_state fromState;
 		FsObj::file_state toState;
 	};
+
+private:
 	static unsigned long preMigrate(std::string tapeId, long secs, long nsecs, mig_info_t miginfo);
 	static void stub(mig_info_t mig_info);
 	static bool migrationStep(int reqNumber, int numRepl, int replNum, int colGrp, std::string tapeId, FsObj::file_state fromState, FsObj::file_state toState);

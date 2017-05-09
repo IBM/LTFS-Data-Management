@@ -1,25 +1,4 @@
-#include <sys/resource.h>
-
-#include <string>
-#include <sstream>
-#include <mutex>
-#include <condition_variable>
-
-#include <sqlite3.h>
-#include "src/common/comm/ltfsdm.pb.h"
-
-#include "src/common/util/util.h"
-#include "src/common/messages/Message.h"
-#include "src/common/tracing/Trace.h"
-#include "src/common/errors/errors.h"
-#include "src/common/const/Const.h"
-
-#include "src/connector/Connector.h"
-
-#include "DataBase.h"
-#include "Scheduler.h"
-#include "Status.h"
-#include "FileOperation.h"
+#include "ServerIncludes.h"
 
 bool FileOperation::queryResult(long reqNumber, long *resident,
 								long *premigrated, long *migrated,

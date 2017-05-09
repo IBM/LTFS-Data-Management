@@ -1,31 +1,4 @@
-#include <sys/resource.h>
-
-#include <string>
-#include <atomic>
-#include <condition_variable>
-#include <thread>
-
-#include <sqlite3.h>
-
-#include "src/common/messages/Message.h"
-#include "src/common/tracing/Trace.h"
-#include "src/common/errors/errors.h"
-#include "src/common/const/Const.h"
-
-#include "src/common/comm/ltfsdm.pb.h"
-#include "src/common/comm/LTFSDmComm.h"
-
-#include "src/connector/Connector.h"
-#include "src/server/SubServer.h"
-#include "src/server/Server.h"
-#include "src/server/Receiver.h"
-
-#include "FileOperation.h"
-#include "Scheduler.h"
-#include "Migration.h"
-#include "SelRecall.h"
-#include "DataBase.h"
-#include "MessageParser.h"
+#include "ServerIncludes.h"
 
 void MessageParser::getObjects(LTFSDmCommServer *command, long localReqNumber,
 							   unsigned long pid, long requestNumber, FileOperation *fopt)
@@ -530,6 +503,121 @@ void MessageParser::infoJobsMessage(long key, LTFSDmCommServer *command, long lo
 	}
 }
 
+void MessageParser::infoDrivesMessage(long key, LTFSDmCommServer *command)
+
+{
+	const LTFSDmProtocol::LTFSDmInfoDrivesRequest infodrives = command->infodrivesrequest();
+	long keySent = infodrives.key();
+
+	TRACE(Trace::error, __PRETTY_FUNCTION__);
+
+	if ( key != keySent ) {
+		MSG(LTFSDMS0008E, keySent);
+		return;
+	}
+
+	inventory->lock();
+
+	for (OpenLTFSDrive i : inventory->getDrives()) {
+		LTFSDmProtocol::LTFSDmInfoDrivesResp *infodrivesresp = command->mutable_infodrivesresp();
+
+		infodrivesresp->set_id(i.GetObjectID());
+		infodrivesresp->set_devname(i.get_devname());
+		infodrivesresp->set_slot(i.get_slot());
+		infodrivesresp->set_status(i.get_status());
+		infodrivesresp->set_busy(i.isBusy());
+
+		try {
+			command->send();
+		}
+		catch(...) {
+			MSG(LTFSDMS0007E);
+		}
+	}
+
+	inventory->unlock();
+
+	LTFSDmProtocol::LTFSDmInfoDrivesResp *infodrivesresp = command->mutable_infodrivesresp();
+
+	infodrivesresp->set_id("");
+	infodrivesresp->set_devname("");
+	infodrivesresp->set_slot(0);
+	infodrivesresp->set_status("");
+	infodrivesresp->set_busy(false);
+
+	try {
+		command->send();
+	}
+	catch(...) {
+		MSG(LTFSDMS0007E);
+	}
+}
+
+void MessageParser::infoTapesMessage(long key, LTFSDmCommServer *command)
+
+{
+	const LTFSDmProtocol::LTFSDmInfoTapesRequest infotapes = command->infotapesrequest();
+	long keySent = infotapes.key();
+	std::string state;
+
+	TRACE(Trace::error, __PRETTY_FUNCTION__);
+
+	if ( key != keySent ) {
+		MSG(LTFSDMS0008E, keySent);
+		return;
+	}
+
+	inventory->lock();
+
+	for (OpenLTFSCartridge i : inventory->getCartridges()) {
+		LTFSDmProtocol::LTFSDmInfoTapesResp *infotapesresp = command->mutable_infotapesresp();
+
+		infotapesresp->set_id(i.GetObjectID());
+		infotapesresp->set_slot(i.get_slot());
+		infotapesresp->set_totalcap(i.get_total_cap());
+		infotapesresp->set_remaincap(i.get_remaining_cap());
+		infotapesresp->set_status(i.get_status());
+		infotapesresp->set_inprogress(i.getInProgress());
+		infotapesresp->set_pool(i.getPool());
+		switch ( i.getState() ) {
+			case OpenLTFSCartridge::INUSE: state = messages[LTFSDMS0055I]; break;
+			case OpenLTFSCartridge::MOUNTED: state = messages[LTFSDMS0056I]; break;
+			case OpenLTFSCartridge::MOVING: state = messages[LTFSDMS0057I]; break;
+			case OpenLTFSCartridge::UNMOUNTED: state = messages[LTFSDMS0058I]; break;
+			case OpenLTFSCartridge::INVALID: state = messages[LTFSDMS0059I]; break;
+			default: state = "-";
+		}
+
+		infotapesresp->set_state(state);
+
+		try {
+			command->send();
+		}
+		catch(...) {
+			MSG(LTFSDMS0007E);
+		}
+	}
+
+	inventory->unlock();
+
+	LTFSDmProtocol::LTFSDmInfoTapesResp *infotapesresp = command->mutable_infotapesresp();
+
+	infotapesresp->set_id("");
+	infotapesresp->set_slot(0);
+	infotapesresp->set_totalcap(0);
+	infotapesresp->set_remaincap(0);
+	infotapesresp->set_status("");
+	infotapesresp->set_inprogress(0);
+	infotapesresp->set_pool("");
+	infotapesresp->set_status("");
+
+	try {
+		command->send();
+	}
+	catch(...) {
+		MSG(LTFSDMS0007E);
+	}
+}
 
 void MessageParser::run(long key, LTFSDmCommServer command, Connector *connector)
 
@@ -586,6 +674,12 @@ void MessageParser::run(long key, LTFSDmCommServer command, Connector *connector
 			}
 			else if ( command.has_infojobsrequest() ) {
 				infoJobsMessage(key, &command, localReqNumber);
+			}
+			else if ( command.has_infodrivesrequest() ) {
+				infoDrivesMessage(key, &command);
+			}
+			else if ( command.has_infotapesrequest() ) {
+				infoTapesMessage(key, &command);
 			}
 			else {
 				TRACE(Trace::error, "unkown command\n");

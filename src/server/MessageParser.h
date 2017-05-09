@@ -18,6 +18,8 @@ private:
 	void addMessage(long key, LTFSDmCommServer *command, long localReqNumber, Connector *connector);
 	void infoRequestsMessage(long key, LTFSDmCommServer *command, long localReqNumber);
 	void infoJobsMessage(long key, LTFSDmCommServer *command, long localReqNumber);
+	void infoDrivesMessage(long key, LTFSDmCommServer *command);
+	void infoTapesMessage(long key, LTFSDmCommServer *command);
 public:
 	MessageParser() {}
 	~MessageParser() {};

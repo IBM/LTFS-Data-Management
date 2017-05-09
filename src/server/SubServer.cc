@@ -1,17 +1,4 @@
-#include <sys/resource.h>
-#include <limits.h>
-
-#include <atomic>
-#include <condition_variable>
-#include <mutex>
-#include <thread>
-
-#include "src/common/messages/Message.h"
-#include "src/common/tracing/Trace.h"
-#include "src/common/errors/errors.h"
-#include "src/common/const/Const.h"
-
-#include "SubServer.h"
+#include "ServerIncludes.h"
 
 void SubServer::waitThread(std::thread *thrd, std::thread *thrdprev)
 

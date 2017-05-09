@@ -26,6 +26,8 @@
 #include "InfoJobsCommand.h"
 #include "InfoFsCommand.h"
 #include "StatusCommand.h"
+#include "InfoDrivesCommand.h"
+#include "InfoTapesCommand.h"
 
 int main(int argc, char *argv[])
 
@@ -99,6 +101,12 @@ int main(int argc, char *argv[])
 		}
 		else if ( InfoFsCommand().compare(command) ) {
 			openLTFSCommand = dynamic_cast<OpenLTFSCommand*>(new InfoFsCommand());
+		}
+		else if ( InfoDrivesCommand().compare(command) ) {
+			openLTFSCommand = dynamic_cast<OpenLTFSCommand*>(new InfoDrivesCommand());
+		}
+		else if ( InfoTapesCommand().compare(command) ) {
+			openLTFSCommand = dynamic_cast<OpenLTFSCommand*>(new InfoTapesCommand());
 		}
 		else {
 			MSG(LTFSDMC0012E, command.c_str());

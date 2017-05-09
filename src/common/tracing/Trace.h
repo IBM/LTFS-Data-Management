@@ -24,6 +24,7 @@ private:
 	std::ofstream tracefile;
 public:
 	enum traceLevel {
+		always,
 		error,
 		little,
 		medium,

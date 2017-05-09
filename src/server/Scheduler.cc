@@ -1,31 +1,4 @@
-#include <sys/types.h>
-#include <sys/xattr.h>
-#include <sys/stat.h>
-#include <sys/resource.h>
-#include <fcntl.h>
-
-#include <string>
-#include <sstream>
-#include <mutex>
-#include <condition_variable>
-#include <thread>
-#include <typeinfo>
-#include <map>
-
-#include <sqlite3.h>
-#include "src/common/comm/ltfsdm.pb.h"
-
-#include "src/common/tracing/Trace.h"
-#include "src/common/util/util.h"
-#include "src/connector/Connector.h"
-#include "SubServer.h"
-#include "Server.h"
-#include "DataBase.h"
-#include "FileOperation.h"
-#include "Migration.h"
-#include "SelRecall.h"
-#include "TransRecall.h"
-#include "Scheduler.h"
+#include "ServerIncludes.h"
 
 std::mutex Scheduler::mtx;
 std::condition_variable Scheduler::cond;

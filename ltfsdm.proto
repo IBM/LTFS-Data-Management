@@ -141,6 +141,33 @@ message LTFSDmInfoJobsResp {
 	required bytes state = 7;
 }
 
+message LTFSDmInfoDrivesRequest {
+	required uint64 key = 1;
+}
+
+message LTFSDmInfoDrivesResp {
+	required bytes id = 1;
+	required bytes devname = 2;
+	required uint64 slot = 3;
+	required bytes status = 4;
+	required bool busy = 5;
+}
+
+message LTFSDmInfoTapesRequest {
+	required uint64 key = 1;
+}
+
+message LTFSDmInfoTapesResp {
+	required bytes id = 1;
+	required uint64 slot = 2;
+	required uint64 totalcap = 3;
+	required uint64 remaincap = 4;
+	required bytes status = 5;
+	required uint64 inprogress = 6;
+	required bytes pool = 7;
+	required bytes state = 8;
+}
+
 message Command {
 	oneof commands {
 		LTFSDmReqNumber reqnum = 1;
@@ -163,5 +190,9 @@ message Command {
 		LTFSDmInfoRequestsResp inforequestsresp = 18;
 		LTFSDmInfoJobsRequest infojobsrequest = 19;
 		LTFSDmInfoJobsResp infojobsresp = 20;
+		LTFSDmInfoDrivesRequest infodrivesrequest = 21;
+		LTFSDmInfoDrivesResp infodrivesresp = 22;
+		LTFSDmInfoTapesRequest infotapesrequest = 23;
+		LTFSDmInfoTapesResp infotapesresp = 24;
 	}
 }

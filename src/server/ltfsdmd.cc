@@ -1,26 +1,4 @@
-#include <unistd.h>
-#include <signal.h>
-#include <fcntl.h>
-#include <limits.h>
-#include <sys/resource.h>
-#include <errno.h>
-
-#include <string>
-#include <set>
-#include <vector>
-#include <condition_variable>
-#include <thread>
-
-#include "src/common/util/util.h"
-#include "src/common/messages/Message.h"
-#include "src/common/tracing/Trace.h"
-#include "src/common/errors/errors.h"
-#include "src/common/const/Const.h"
-
-#include "src/connector/Connector.h"
-#include "src/server/SubServer.h"
-#include "src/server/Server.h"
-
+#include "ServerIncludes.h"
 
 int main(int argc, char **argv)
 
@@ -85,6 +63,7 @@ int main(int argc, char **argv)
 		if ( detach )
 			ltfsdmd.daemonize();
 
+		inventory = new OpenLTFSInventory();
 		connector = new Connector(true);
 		ltfsdmd.run(connector, set);
 	}
@@ -94,6 +73,8 @@ int main(int argc, char **argv)
 	}
 
 end:
+	if ( inventory )
+		delete(inventory);
 	if ( connector )
 		delete(connector);
 	return (int) err;

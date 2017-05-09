@@ -1,39 +1,4 @@
-#include <unistd.h>
-#include <signal.h>
-#include <fcntl.h>
-#include <stdlib.h>
-#include <sys/stat.h>
-#include <sys/file.h>
-#include <limits.h>
-#include <sys/resource.h>
-#include <errno.h>
-
-#include <string>
-#include <fstream>
-#include <condition_variable>
-#include <thread>
-#include <map>
-#include <set>
-#include <vector>
-
-#include <sqlite3.h>
-
-#include "src/common/util/util.h"
-#include "src/common/messages/Message.h"
-#include "src/common/tracing/Trace.h"
-#include "src/common/errors/errors.h"
-#include "src/common/const/Const.h"
-
-#include "src/common/comm/ltfsdm.pb.h"
-#include "src/common/comm/LTFSDmComm.h"
-
-#include "src/connector/Connector.h"
-#include "DataBase.h"
-#include "Receiver.h"
-#include "SubServer.h"
-#include "Scheduler.h"
-#include "TransRecall.h"
-#include "Server.h"
+#include "ServerIncludes.h"
 
 std::atomic<bool> terminate;
 std::mutex Server::termmtx;
