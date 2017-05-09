@@ -18,16 +18,16 @@ private:
 	bool busy;
 public:
 	OpenLTFSDrive(Drive drive) : Drive(drive), busy(false) {}
-	void update(Drive drive);
+	void update(std::shared_ptr<LTFSAdminSession> sess);
 	bool isBusy() { return busy; }
 	void setBusy() { busy = true; }
 };
 
-void OpenLTFSDrive::update(Drive drive)
+void OpenLTFSDrive::update(std::shared_ptr<LTFSAdminSession> sess)
 
 {
-	Drive *thisDrive = dynamic_cast<Drive*>(this);
-	*thisDrive = drive;
+	Drive *drive = dynamic_cast<Drive*>(this);
+	*drive = *(LEControl::InventoryDrive(GetObjectID(), sess));
 }
 
 class OpenLTFSCartridge : public Cartridge {
@@ -35,16 +35,16 @@ private:
 	unsigned long inProgress;
 public:
 	OpenLTFSCartridge(Cartridge cartridge) : Cartridge(cartridge), inProgress(0) {}
-	void update(Cartridge cartridge);
+	void update(std::shared_ptr<LTFSAdminSession> sess);
 	unsigned long getInProgress() { return inProgress; }
 	void setInProgress(unsigned long size) { inProgress = size; }
 };
 
-void OpenLTFSCartridge::update(Cartridge cartridge)
+void OpenLTFSCartridge::update(std::shared_ptr<LTFSAdminSession> sess)
 
 {
-	Cartridge *thisCartridge = dynamic_cast<Cartridge*>(this);
-	*thisCartridge = cartridge;
+	Cartridge *cartridge = dynamic_cast<Cartridge*>(this);
+	*cartridge = *(LEControl::InventoryCartridge(GetObjectID(), sess));
 }
 
 
@@ -149,12 +149,12 @@ int main(int argc, char **argv)
 
 			std::cout << "unmounting " << cartridgeToUnmount->GetObjectID() << std::endl;
 			cartridgeToUnmount->Unmount();
-			cartridgeToUnmount->update(*(LEControl::InventoryCartridge(cartridgeToUnmount->GetObjectID(), sess)));
+			cartridgeToUnmount->update(sess);
 			printCartridgeInventory(mytps);
 
 			std::cout << "mounting " << cartridgeToMount->GetObjectID() << std::endl;
 			cartridgeToMount->Mount(driveID);
-			cartridgeToMount->update(*(LEControl::InventoryCartridge(cartridgeToMount->GetObjectID(), sess)));
+			cartridgeToMount->update(sess);
 
 			if ( rc == -1 ) {
 				std::cout << "unable to perform a drive inventory" << std::endl;
