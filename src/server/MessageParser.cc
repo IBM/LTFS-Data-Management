@@ -585,6 +585,7 @@ void MessageParser::infoTapesMessage(long key, LTFSDmCommServer *command)
 			case OpenLTFSCartridge::MOVING: state = messages[LTFSDMS0057I]; break;
 			case OpenLTFSCartridge::UNMOUNTED: state = messages[LTFSDMS0058I]; break;
 			case OpenLTFSCartridge::INVALID: state = messages[LTFSDMS0059I]; break;
+			case OpenLTFSCartridge::UNKNOWN: state = messages[LTFSDMS0060I]; break;
 			default: state = "-";
 		}
 

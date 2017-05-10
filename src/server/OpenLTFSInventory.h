@@ -23,9 +23,10 @@ public:
 		MOUNTED,
 		MOVING,
 		UNMOUNTED,
-		INVALID
+		INVALID,
+		UNKNOWN
 	} state;
-	OpenLTFSCartridge(ltfsadmin::Cartridge cartridge) : ltfsadmin::Cartridge(cartridge), inProgress(0), pool("-") {}
+	OpenLTFSCartridge(ltfsadmin::Cartridge cartridge) : ltfsadmin::Cartridge(cartridge), inProgress(0), pool("-"), state(OpenLTFSCartridge::UNKNOWN) {}
 	void update(std::shared_ptr<LTFSAdminSession> sess);
 	void setInProgress(unsigned long size) { inProgress = size; }
 	unsigned long getInProgress() { return inProgress; }
