@@ -1,24 +1,3 @@
-/*
-**  %Z% %I% %W% %G% %U%
-**
-**  ZZ_Copyright_BEGIN
-**  ZZ_Copyright_END
-**
-*************************************************************************************
-**
-** COMPONENT NAME:  IBM Linear Tape File System
-**
-** FILE NAME:       XMLError.cc
-**
-** DESCRIPTION:     Error class for reporting when XML parsing or XML creation is failed
-**
-** AUTHORS:         Atsushi Abe
-**                  IBM Tokyo Lab., Japan
-**                  piste@jp.ibm.com
-**
-*************************************************************************************
-*/
-
 #include <boost/format.hpp>
 
 #include "XMLError.h"

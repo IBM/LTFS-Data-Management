@@ -1,24 +1,3 @@
-/*
-**  %Z% %I% %W% %G% %U%
-**
-**  ZZ_Copyright_BEGIN
-**  ZZ_Copyright_END
-**
-*************************************************************************************
-**
-** COMPONENT NAME:  IBM Linear Tape File System
-**
-** FILE NAME:       LTFSAdminLog.h
-**
-** DESCRIPTION:     Base class for LTFS admin library logging facillity
-**
-** AUTHORS:         Atsushi Abe
-**                  IBM Tokyo Lab., Japan
-**                  piste@jp.ibm.com
-**
-*************************************************************************************
-*/
-
 /**
  *  @file   LTFSAdminLog.h
  *  @brief  Base class definition for LTFS admin library logging facility

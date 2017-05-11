@@ -1,24 +1,3 @@
-/*
-**  %Z% %I% %W% %G% %U%
-**
-**  ZZ_Copyright_BEGIN
-
-**  ZZ_Copyright_END
-**
-*************************************************************************************
-**
-** COMPONENT NAME:  IBM Linear Tape File System
-**
-** FILE NAME:       LTFSNode.h
-**
-** DESCRIPTION:     LTFS Node class which LTFS admin server treats
-**
-** AUTHORS:         Atsushi Abe
-**                  IBM Tokyo Lab., Japan
-**                  piste@jp.ibm.com
-**
-*************************************************************************************
-*/
 #pragma once
 
 #define __STDC_LIMIT_MACROS

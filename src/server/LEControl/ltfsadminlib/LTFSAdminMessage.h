@@ -1,23 +1,3 @@
-/*
-**  %Z% %I% %W% %G% %U%
-**
-**  ZZ_Copyright_BEGIN
-**  ZZ_Copyright_END
-**
-*************************************************************************************
-**
-** COMPONENT NAME:  IBM Linear Tape File System
-**
-** FILE NAME:       LTFSAdminMessage.h
-**
-** DESCRIPTION:     Base class for LTFS admin channel message
-**
-** AUTHORS:         Atsushi Abe
-**                  IBM Tokyo Lab., Japan
-**                  piste@jp.ibm.com
-**
-*************************************************************************************
-*/
 #pragma once
 
 #include <string>

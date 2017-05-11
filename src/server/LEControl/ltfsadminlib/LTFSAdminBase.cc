@@ -1,24 +1,3 @@
-/*
-**  %Z% %I% %W% %G% %U%
-**
-**  ZZ_Copyright_BEGIN
-**  ZZ_Copyright_END
-**
-*************************************************************************************
-**
-** COMPONENT NAME:  IBM Linear Tape File System
-**
-** FILE NAME:       LTFSAdminBase.cc
-**
-** DESCRIPTION:     Base class for LTFS admin library
-**
-** AUTHORS:         Atsushi Abe
-**                  IBM Tokyo Lab., Japan
-**                  piste@jp.ibm.com
-**
-*************************************************************************************
-*/
-
 /**
  *  @file   LTFSAdminBase.cc
  *  @brief  Base class implementation for LTFS admin library
