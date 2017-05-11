@@ -117,7 +117,7 @@ void OpenLTFSInventory::poolCreate(std::string poolname)
 {
 	for ( std::shared_ptr<OpenLTFSPool> pool : pools ) {
 		if ( pool->getPoolName().compare(poolname) == 0 ) {
-			MSG(LTFSDMS0064E, poolname);
+			MSG(LTFSDMX0023E, poolname);
 			throw(Error::LTFSDM_POOL_EXISTS);
 		}
 	}
@@ -131,7 +131,7 @@ void OpenLTFSInventory::poolDelete(std::string poolname)
 	for ( std::shared_ptr<OpenLTFSPool> pool : pools ) {
 		if ( pool->getPoolName().compare(poolname) == 0 ) {
 			if ( pool->getCartridges().size() > 0 ) {
-				MSG(LTFSDMS0065E, poolname);
+				MSG(LTFSDMX0024E, poolname);
 				throw(Error::LTFSDM_POOL_NOT_EMPTY);
 			}
 			pools.remove(pool);
@@ -139,7 +139,7 @@ void OpenLTFSInventory::poolDelete(std::string poolname)
 		}
 	}
 
-	MSG(LTFSDMS0066E, poolname);
+	MSG(LTFSDMX0025E, poolname);
 	throw(Error::LTFSDM_POOL_NOT_EXISTS);
 }
 
@@ -153,7 +153,7 @@ void OpenLTFSInventory::poolAdd(std::string poolname, std::string cartridgeid)
 		}
 	}
 
-	MSG(LTFSDMS0066E, poolname);
+	MSG(LTFSDMX0025E, poolname);
 	throw(Error::LTFSDM_POOL_NOT_EXISTS);
 }
 
@@ -167,7 +167,7 @@ void OpenLTFSInventory::poolRemove(std::string poolname, std::string cartridgeid
 		}
 	}
 
-	MSG(LTFSDMS0066E, poolname);
+	MSG(LTFSDMX0024E, poolname);
 	throw(Error::LTFSDM_POOL_NOT_EXISTS);
 }
 
