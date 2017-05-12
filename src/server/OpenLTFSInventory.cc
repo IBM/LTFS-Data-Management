@@ -5,17 +5,19 @@ OpenLTFSInventory *inventory = NULL;
 void OpenLTFSInventory::writePools()
 
 {
-	bool first;
-	std::ofstream conffiletmp(Const::TMP_CONFIG_FILE, conffiletmp.trunc);
+	{
+		bool first;
+		std::ofstream conffiletmp(Const::TMP_CONFIG_FILE, conffiletmp.trunc);
 
-	for ( std::shared_ptr<OpenLTFSPool>  pool : pools ) {
-		first = true;
-		conffiletmp << pool->getPoolName() << std::endl;
-		for ( OpenLTFSCartridge cartridge : pool->getCartridges() ) {
-			conffiletmp << (first ? "" : " ") << cartridge.GetObjectID();
-			first = false;
+		for ( std::shared_ptr<OpenLTFSPool>  pool : pools ) {
+			first = true;
+			conffiletmp << pool->getPoolName() << std::endl;
+			for ( OpenLTFSCartridge cartridge : pool->getCartridges() ) {
+				conffiletmp << (first ? "" : " ") << cartridge.GetObjectID();
+				first = false;
+			}
+			conffiletmp << std::endl;
 		}
-		conffiletmp << std::endl;
 	}
 
 	if ( rename(Const::TMP_CONFIG_FILE.c_str(), Const::CONFIG_FILE.c_str()) == -1 )
