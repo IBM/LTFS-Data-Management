@@ -87,7 +87,7 @@ void PoolRemoveCommand::doCommand(int argc, char **argv)
 				MSG(LTFSDMC0084E,tapeid);
 				break;
 			case Error::LTFSDM_TAPE_NOT_EXISTS_IN_POOL:
-				MSG(LTFSDMX0022E, tapeid);
+				MSG(LTFSDMX0022E, tapeid, poolName);
 				break;
 			default:
 				MSG(LTFSDMC0085E, tapeid, poolName);

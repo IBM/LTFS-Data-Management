@@ -172,7 +172,7 @@ void OpenLTFSInventory::poolRemove(std::string poolname, std::string cartridgeid
 			cartridge = getCartridge(cartridgeid);
 			if ( cartridge == nullptr )
 				throw(Error::LTFSDM_TAPE_NOT_EXISTS);
-			pool->remove(getCartridge(cartridgeid));
+			pool->remove(cartridge);
 			return;
 		}
 	}
