@@ -6,6 +6,7 @@
 #include <set>
 #include <vector>
 #include <list>
+#include <algorithm>
 
 #include "src/common/util/util.h"
 #include "src/common/messages/Message.h"
@@ -34,6 +35,11 @@ void PoolCreateCommand::doCommand(int argc, char **argv)
 
 	if ( argc != optind ) {
 		printUsage();
+		throw Error::LTFSDM_GENERAL_ERROR;
+	}
+
+	if ( std::count(poolName.begin(), poolName.end(), 10) > 0 ) {
+		MSG(LTFSDMC0091E);
 		throw Error::LTFSDM_GENERAL_ERROR;
 	}
 
