@@ -4,6 +4,7 @@
 #include <sstream>
 #include <set>
 #include <vector>
+#include <list>
 
 #include "src/common/util/util.h"
 #include "src/common/messages/Message.h"
@@ -28,6 +29,11 @@
 #include "StatusCommand.h"
 #include "InfoDrivesCommand.h"
 #include "InfoTapesCommand.h"
+#include "PoolCommand.h"
+#include "PoolCreateCommand.h"
+#include "PoolDeleteCommand.h"
+#include "PoolAddCommand.h"
+#include "PoolRemoveCommand.h"
 
 int main(int argc, char *argv[])
 
@@ -81,7 +87,7 @@ int main(int argc, char *argv[])
 	}
 	else if ( InfoCommand().compare(command) ) {
 		if ( argc < 3 ) {
-			INFO(LTFSDMC0011E);
+			MSG(LTFSDMC0011E);
 			InfoCommand().printUsage();
 			rc =  Error::LTFSDM_GENERAL_ERROR;
 			goto cleanup;
@@ -107,6 +113,36 @@ int main(int argc, char *argv[])
 		}
 		else if ( InfoTapesCommand().compare(command) ) {
 			openLTFSCommand = dynamic_cast<OpenLTFSCommand*>(new InfoTapesCommand());
+		}
+		else {
+			MSG(LTFSDMC0012E, command.c_str());
+			openLTFSCommand = dynamic_cast<OpenLTFSCommand*>(new HelpCommand());
+			rc = Error::LTFSDM_GENERAL_ERROR;
+			goto cleanup;
+		}
+	}
+	else if ( PoolCommand().compare(command) ) {
+		if ( argc < 3 ) {
+			MSG(LTFSDMC0074E);
+			PoolCommand().printUsage();
+			rc =  Error::LTFSDM_GENERAL_ERROR;
+			goto cleanup;
+		}
+		argc--;
+		argv++;
+		command = std::string(argv[1]);
+		TRACE(Trace::little, command.c_str());
+		if      ( PoolCreateCommand().compare(command) ) {
+			openLTFSCommand = dynamic_cast<OpenLTFSCommand*>(new PoolCreateCommand());
+		}
+		else if ( PoolDeleteCommand().compare(command) ) {
+			openLTFSCommand = dynamic_cast<OpenLTFSCommand*>(new PoolDeleteCommand());
+		}
+		else if ( PoolAddCommand().compare(command) ) {
+			openLTFSCommand = dynamic_cast<OpenLTFSCommand*>(new PoolAddCommand());
+		}
+		else if ( PoolRemoveCommand().compare(command) ) {
+			openLTFSCommand = dynamic_cast<OpenLTFSCommand*>(new PoolRemoveCommand());
 		}
 		else {
 			MSG(LTFSDMC0012E, command.c_str());

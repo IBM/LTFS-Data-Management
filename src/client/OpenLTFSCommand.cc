@@ -4,6 +4,7 @@
 #include <sys/resource.h>
 #include <string>
 #include <fstream>
+#include <list>
 
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
@@ -67,6 +68,12 @@ void OpenLTFSCommand::processOptions(int argc, char **argv)
 				break;
 			case 'N':
 				fsName = std::string(optarg);
+				break;
+			case 'P':
+				poolName = std::string(optarg);
+				break;
+			case 't':
+				tapeList.push_back(std::string(optarg));
 				break;
 			case ':':
 				INFO(LTFSDMC0014E);

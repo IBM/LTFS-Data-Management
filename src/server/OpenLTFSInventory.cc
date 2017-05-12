@@ -146,9 +146,14 @@ void OpenLTFSInventory::poolDelete(std::string poolname)
 void OpenLTFSInventory::poolAdd(std::string poolname, std::string cartridgeid)
 
 {
+	std::shared_ptr<OpenLTFSCartridge> cartridge;
+
 	for ( std::shared_ptr<OpenLTFSPool> pool : pools ) {
 		if ( pool->getPoolName().compare(poolname) == 0 ) {
-			pool->add(getCartridge(cartridgeid));
+			cartridge = getCartridge(cartridgeid);
+			if ( cartridge == nullptr )
+				throw(Error::LTFSDM_TAPE_NOT_EXISTS);
+			pool->add(cartridge);
 			return;
 		}
 	}
@@ -160,8 +165,13 @@ void OpenLTFSInventory::poolAdd(std::string poolname, std::string cartridgeid)
 void OpenLTFSInventory::poolRemove(std::string poolname, std::string cartridgeid)
 
 {
+	std::shared_ptr<OpenLTFSCartridge> cartridge;
+
 	for ( std::shared_ptr<OpenLTFSPool> pool : pools ) {
 		if ( pool->getPoolName().compare(poolname) == 0 ) {
+			cartridge = getCartridge(cartridgeid);
+			if ( cartridge == nullptr )
+				throw(Error::LTFSDM_TAPE_NOT_EXISTS);
 			pool->remove(getCartridge(cartridgeid));
 			return;
 		}

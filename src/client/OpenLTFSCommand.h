@@ -17,6 +17,8 @@ protected:
 		fsName(""),
 		mountPoint(""),
 		startTime(time(NULL)),
+		poolName(""),
+		tapeList({}),
 	    key(Const::UNSET) {};
 	bool waitForCompletion;
 	bool preMigrate;
@@ -31,6 +33,8 @@ protected:
 	std::string mountPoint;
 	std::ifstream fileListStrm;
 	time_t startTime;
+	std::string poolName;
+	std::list<std::string> tapeList;
 	long key;
 	LTFSDmCommClient commCommand;
 

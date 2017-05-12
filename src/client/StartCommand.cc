@@ -14,6 +14,7 @@
 
 #include <string>
 #include <sstream>
+#include <list>
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
 #include "src/common/errors/errors.h"

@@ -168,6 +168,35 @@ message LTFSDmInfoTapesResp {
 	required bytes state = 8;
 }
 
+message LTFSDmPoolCreateRequest {
+	required uint64 key = 1;
+	required bytes poolname = 2;
+}
+
+message LTFSDmPoolDeleteRequest {
+	required uint64 key = 1;
+	required bytes poolname = 2;
+}
+
+message LTFSDmPoolAddRequest {
+	required uint64 key = 1;
+	required bytes poolname = 2;
+	repeated bytes tapeid = 3;
+}
+
+message LTFSDmPoolRemoveRequest {
+	required uint64 key = 1;
+	required bytes poolname = 2;
+	repeated bytes tapeid = 3;
+}
+
+message LTFSDmPoolResp {
+	required int64 response = 1;
+	optional bytes tapeid = 2;
+}
+
+
+
 message Command {
 	oneof commands {
 		LTFSDmReqNumber reqnum = 1;
@@ -194,5 +223,10 @@ message Command {
 		LTFSDmInfoDrivesResp infodrivesresp = 22;
 		LTFSDmInfoTapesRequest infotapesrequest = 23;
 		LTFSDmInfoTapesResp infotapesresp = 24;
+		LTFSDmPoolCreateRequest poolcreaterequest = 25;
+		LTFSDmPoolDeleteRequest pooldeleterequest = 26;
+		LTFSDmPoolAddRequest pooladdrequest = 27;
+		LTFSDmPoolRemoveRequest poolremoverequest = 28;
+		LTFSDmPoolResp poolresp = 29;
 	}
 }

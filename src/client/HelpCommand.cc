@@ -2,6 +2,7 @@
 
 #include <string>
 #include <sstream>
+#include <list>
 
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
@@ -20,12 +21,23 @@
 #include "InfoCommand.h"
 #include "InfoRequestsCommand.h"
 #include "InfoFilesCommand.h"
+#include "InfoJobsCommand.h"
+#include "InfoFsCommand.h"
+#include "StatusCommand.h"
+#include "InfoDrivesCommand.h"
+#include "InfoTapesCommand.h"
+#include "PoolCommand.h"
+#include "PoolCreateCommand.h"
+#include "PoolDeleteCommand.h"
+#include "PoolAddCommand.h"
+#include "PoolRemoveCommand.h"
 #include "HelpCommand.h"
 
 void HelpCommand::printUsage()
 {
 	INFO(LTFSDMC0008I);
 	INFO(LTFSDMC0020I);
+	INFO(LTFSDMC0073I);
 }
 
 void HelpCommand::doCommand(int argc, char **argv)
@@ -78,8 +90,44 @@ void HelpCommand::doCommand(int argc, char **argv)
 			else if ( InfoFilesCommand().compare(command) ) {
 				openLTFSCommand = new InfoFilesCommand();
 			}
+			else if ( InfoJobsCommand().compare(command) ) {
+				openLTFSCommand = new InfoJobsCommand();
+			}
+			else if ( InfoFsCommand().compare(command) ) {
+				openLTFSCommand = new InfoFsCommand();
+			}
+			else if ( InfoDrivesCommand().compare(command) ) {
+				openLTFSCommand = new InfoDrivesCommand();
+			}
+			else if ( InfoTapesCommand().compare(command) ) {
+				openLTFSCommand = new InfoTapesCommand();
+			}
 			else {
 				openLTFSCommand = new InfoCommand();
+			}
+		}
+	}
+	else if ( PoolCommand().compare(command) ) {
+		if ( argc < 3 ) {
+			openLTFSCommand = new PoolCommand();
+		}
+		else {
+			command = std::string(argv[2]);
+			TRACE(Trace::little, command.c_str());
+			if      ( PoolCreateCommand().compare(command) ) {
+				openLTFSCommand = new PoolCreateCommand();
+			}
+			else if ( PoolDeleteCommand().compare(command) ) {
+				openLTFSCommand = new PoolDeleteCommand();
+			}
+			else if ( PoolAddCommand().compare(command) ) {
+				openLTFSCommand = new PoolAddCommand();
+			}
+			else if ( PoolRemoveCommand().compare(command) ) {
+				openLTFSCommand = new PoolRemoveCommand();
+			}
+			else {
+				openLTFSCommand = new PoolCommand();
 			}
 		}
 	}

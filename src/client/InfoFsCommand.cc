@@ -7,6 +7,7 @@
 #include <string>
 #include <set>
 #include <vector>
+#include <list>
 
 #include "src/common/util/util.h"
 #include "src/common/messages/Message.h"

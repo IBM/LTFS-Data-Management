@@ -620,6 +620,184 @@ void MessageParser::infoTapesMessage(long key, LTFSDmCommServer *command)
 	}
 }
 
+void MessageParser::poolCreateMessage(long key, LTFSDmCommServer *command)
+
+{
+	const LTFSDmProtocol::LTFSDmPoolCreateRequest poolcreate = command->poolcreaterequest();
+	long keySent = poolcreate.key();
+	std::string poolName;
+	int response = Error::LTFSDM_OK;
+
+	TRACE(Trace::error, __PRETTY_FUNCTION__);
+
+	if ( key != keySent ) {
+		MSG(LTFSDMS0008E, keySent);
+		return;
+	}
+
+	poolName = poolcreate.poolname();
+
+	inventory->lock();
+
+	try {
+		inventory->poolCreate(poolName);
+	}
+	catch ( int error ) {
+		response = error;
+	}
+
+	inventory->unlock();
+
+	LTFSDmProtocol::LTFSDmPoolResp *poolresp = command->mutable_poolresp();
+
+	poolresp->set_response(response);
+
+	try {
+		command->send();
+	}
+	catch(...) {
+		MSG(LTFSDMS0007E);
+	}
+}
+
+void MessageParser::poolDeleteMessage(long key, LTFSDmCommServer *command)
+
+{
+	const LTFSDmProtocol::LTFSDmPoolDeleteRequest pooldelete = command->pooldeleterequest();
+	long keySent = pooldelete.key();
+	std::string poolName;
+	int response = Error::LTFSDM_OK;
+
+	TRACE(Trace::error, __PRETTY_FUNCTION__);
+
+	if ( key != keySent ) {
+		MSG(LTFSDMS0008E, keySent);
+		return;
+	}
+
+	poolName = pooldelete.poolname();
+
+	inventory->lock();
+
+	try {
+		inventory->poolDelete(poolName);
+	}
+	catch ( int error ) {
+		response = error;
+	}
+
+	inventory->unlock();
+
+	LTFSDmProtocol::LTFSDmPoolResp *poolresp = command->mutable_poolresp();
+
+	poolresp->set_response(response);
+
+	try {
+		command->send();
+	}
+	catch(...) {
+		MSG(LTFSDMS0007E);
+	}
+}
+
+void MessageParser::poolAddMessage(long key, LTFSDmCommServer *command)
+
+{
+	const LTFSDmProtocol::LTFSDmPoolAddRequest pooladd = command->pooladdrequest();
+	long keySent = pooladd.key();
+	std::string poolName;
+	std::list<std::string> tapeids;
+	int response;
+
+	TRACE(Trace::error, __PRETTY_FUNCTION__);
+
+	if ( key != keySent ) {
+		MSG(LTFSDMS0008E, keySent);
+		return;
+	}
+
+	poolName = pooladd.poolname();
+
+	for ( int i = 0; i < pooladd.tapeid_size(); i++ )
+		tapeids.push_back(pooladd.tapeid(i));
+
+	for ( std::string tapeid : tapeids ) {
+		response = Error::LTFSDM_OK;
+
+		inventory->lock();
+
+		try {
+			inventory->poolAdd(poolName, tapeid);
+		}
+		catch ( int error ) {
+			response = error;
+		}
+
+		inventory->unlock();
+
+		LTFSDmProtocol::LTFSDmPoolResp *poolresp = command->mutable_poolresp();
+
+		poolresp->set_tapeid(tapeid);
+		poolresp->set_response(response);
+
+		try {
+			command->send();
+		}
+		catch(...) {
+			MSG(LTFSDMS0007E);
+		}
+	}
+}
+
+void MessageParser::poolRemoveMessage(long key, LTFSDmCommServer *command)
+
+{
+	const LTFSDmProtocol::LTFSDmPoolRemoveRequest poolremove = command->poolremoverequest();
+	long keySent = poolremove.key();
+	std::string poolName;
+	std::list<std::string> tapeids;
+	int response;
+
+	TRACE(Trace::error, __PRETTY_FUNCTION__);
+
+	if ( key != keySent ) {
+		MSG(LTFSDMS0008E, keySent);
+		return;
+	}
+
+	poolName = poolremove.poolname();
+
+	for ( int i = 0; i < poolremove.tapeid_size(); i++ )
+		tapeids.push_back(poolremove.tapeid(i));
+
+	for ( std::string tapeid : tapeids ) {
+		response = Error::LTFSDM_OK;
+
+		inventory->lock();
+
+		try {
+			inventory->poolRemove(poolName, tapeid);
+		}
+		catch ( int error ) {
+			response = error;
+		}
+
+		inventory->unlock();
+
+		LTFSDmProtocol::LTFSDmPoolResp *poolresp = command->mutable_poolresp();
+
+		poolresp->set_tapeid(tapeid);
+		poolresp->set_response(response);
+
+		try {
+			command->send();
+		}
+		catch(...) {
+			MSG(LTFSDMS0007E);
+		}
+	}
+}
+
 void MessageParser::run(long key, LTFSDmCommServer command, Connector *connector)
 
 {
@@ -681,6 +859,18 @@ void MessageParser::run(long key, LTFSDmCommServer command, Connector *connector
 			}
 			else if ( command.has_infotapesrequest() ) {
 				infoTapesMessage(key, &command);
+			}
+			else if ( command.has_poolcreaterequest() ) {
+				poolCreateMessage(key, &command);
+			}
+			else if ( command.has_pooldeleterequest() ) {
+				poolDeleteMessage(key, &command);
+			}
+			else if ( command.has_pooladdrequest() ) {
+				poolAddMessage(key, &command);
+			}
+			else if ( command.has_poolremoverequest() ) {
+				poolRemoveMessage(key, &command);
 			}
 			else {
 				TRACE(Trace::error, "unkown command\n");

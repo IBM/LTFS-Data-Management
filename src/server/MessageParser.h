@@ -20,6 +20,10 @@ private:
 	void infoJobsMessage(long key, LTFSDmCommServer *command, long localReqNumber);
 	void infoDrivesMessage(long key, LTFSDmCommServer *command);
 	void infoTapesMessage(long key, LTFSDmCommServer *command);
+	void poolCreateMessage(long key, LTFSDmCommServer *command);
+	void poolDeleteMessage(long key, LTFSDmCommServer *command);
+	void poolAddMessage(long key, LTFSDmCommServer *command);
+	void poolRemoveMessage(long key, LTFSDmCommServer *command);
 public:
 	MessageParser() {}
 	~MessageParser() {};

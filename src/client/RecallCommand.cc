@@ -2,6 +2,7 @@
 #include <sys/resource.h>
 
 #include <string>
+#include <list>
 
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
