@@ -798,6 +798,69 @@ void MessageParser::poolRemoveMessage(long key, LTFSDmCommServer *command)
 	}
 }
 
+void MessageParser::infoPoolsMessage(long key, LTFSDmCommServer *command)
+
+{
+	const LTFSDmProtocol::LTFSDmInfoPoolsRequest infopools = command->infopoolsrequest();
+	long keySent = infopools.key();
+	std::string state;
+
+	TRACE(Trace::error, __PRETTY_FUNCTION__);
+
+	if ( key != keySent ) {
+		MSG(LTFSDMS0008E, keySent);
+		return;
+	}
+
+	inventory->lock();
+
+	for (OpenLTFSPool pool : inventory->getPools()) {
+		int numCartridges = 0;
+		unsigned long total = 0;
+		unsigned long free = 0;
+		unsigned long unref = 0;
+
+		LTFSDmProtocol::LTFSDmInfoPoolsResp *infopoolsresp = command->mutable_infopoolsresp();
+
+		for (OpenLTFSCartridge cartridge : pool.getCartridges()) {
+			numCartridges++;
+			total += cartridge.get_total_cap();
+			free += cartridge.get_remaining_cap();
+			// unref?
+		}
+
+		infopoolsresp->set_poolname(pool.getPoolName());
+		infopoolsresp->set_total(total);
+		infopoolsresp->set_free(free);
+		infopoolsresp->set_unref(unref);
+		infopoolsresp->set_numtapes(numCartridges);
+
+		try {
+			command->send();
+		}
+		catch(...) {
+			MSG(LTFSDMS0007E);
+		}
+	}
+
+	inventory->unlock();
+
+	LTFSDmProtocol::LTFSDmInfoPoolsResp *infopoolsresp = command->mutable_infopoolsresp();
+
+	infopoolsresp->set_poolname("");
+	infopoolsresp->set_total(0);
+	infopoolsresp->set_free(0);
+	infopoolsresp->set_unref(0);
+	infopoolsresp->set_numtapes(0);
+
+	try {
+		command->send();
+	}
+	catch(...) {
+		MSG(LTFSDMS0007E);
+	}
+}
+
 void MessageParser::run(long key, LTFSDmCommServer command, Connector *connector)
 
 {
@@ -871,6 +934,9 @@ void MessageParser::run(long key, LTFSDmCommServer command, Connector *connector
 			}
 			else if ( command.has_poolremoverequest() ) {
 				poolRemoveMessage(key, &command);
+			}
+			else if ( command.has_infopoolsrequest() ) {
+				infoPoolsMessage(key, &command);
 			}
 			else {
 				TRACE(Trace::error, "unkown command\n");

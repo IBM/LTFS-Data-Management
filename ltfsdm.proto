@@ -195,6 +195,17 @@ message LTFSDmPoolResp {
 	optional bytes tapeid = 2;
 }
 
+message LTFSDmInfoPoolsRequest {
+	required uint64 key = 1;
+}
+
+message LTFSDmInfoPoolsResp {
+	required bytes poolname = 1;
+	required uint64 total = 2;
+	required uint64 free = 3;
+	required uint64 unref = 4;
+	required uint64 numtapes = 5;
+}
 
 
 message Command {
@@ -228,5 +239,7 @@ message Command {
 		LTFSDmPoolAddRequest pooladdrequest = 27;
 		LTFSDmPoolRemoveRequest poolremoverequest = 28;
 		LTFSDmPoolResp poolresp = 29;
+		LTFSDmInfoPoolsRequest infopoolsrequest = 30;
+		LTFSDmInfoPoolsResp infopoolsresp = 31;
 	}
 }

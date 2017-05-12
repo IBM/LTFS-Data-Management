@@ -31,6 +31,7 @@
 #include "PoolDeleteCommand.h"
 #include "PoolAddCommand.h"
 #include "PoolRemoveCommand.h"
+#include "InfoPoolsCommand.h"
 #include "HelpCommand.h"
 
 void HelpCommand::printUsage()
@@ -101,6 +102,9 @@ void HelpCommand::doCommand(int argc, char **argv)
 			}
 			else if ( InfoTapesCommand().compare(command) ) {
 				openLTFSCommand = new InfoTapesCommand();
+			}
+			else if ( InfoPoolsCommand().compare(command) ) {
+				openLTFSCommand = new InfoPoolsCommand();
 			}
 			else {
 				openLTFSCommand = new InfoCommand();
