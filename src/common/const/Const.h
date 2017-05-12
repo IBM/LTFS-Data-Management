@@ -13,6 +13,8 @@ namespace Const {
 	const std::string SOCKET_FILE = LTFSDM_TMP_DIR + DELIM + std::string("OpenLTFS.soc");
 	const std::string KEY_FILE = LTFSDM_TMP_DIR + DELIM + std::string("OpenLTFS.key");
 	const std::string DB_FILE = LTFSDM_TMP_DIR + DELIM + std::string("OpenLTFS.db");
+	const std::string CONFIG_FILE = std::string("/etc/ltfsdm.conf");
+	const std::string TMP_CONFIG_FILE = std::string("/etc/ltfsdm.tmp.conf");
 	//const std::string DB_FILE = std::string(":memory:");
 	const int MAX_RECEIVER_THREADS = 40;
 	const int MAX_TRANSPARENT_RECALL_THREADS = 8192;

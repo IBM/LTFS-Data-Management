@@ -2,12 +2,34 @@
 
 OpenLTFSInventory *inventory = NULL;
 
+void OpenLTFSInventory::writePools()
+
+{
+	bool first;
+	std::ofstream conffiletmp(Const::TMP_CONFIG_FILE, conffiletmp.trunc);
+
+	for ( std::shared_ptr<OpenLTFSPool>  pool : pools ) {
+		first = true;
+		conffiletmp << pool->getPoolName() << std::endl;
+		for ( OpenLTFSCartridge cartridge : pool->getCartridges() ) {
+			conffiletmp << (first ? "" : " ") << cartridge.GetObjectID();
+			first = false;
+		}
+		conffiletmp << std::endl;
+	}
+
+	if ( rename(Const::TMP_CONFIG_FILE.c_str(), Const::CONFIG_FILE.c_str()) == -1 )
+		MSG(LTFSDMS0062E);
+}
+
 OpenLTFSInventory::OpenLTFSInventory() : lck(mtx, std::defer_lock)
 
 {
 	std::lock_guard<std::mutex> llck(mtx);
 	std::list<std::shared_ptr<Drive> > drvs;
 	std::list<std::shared_ptr<Cartridge>> crts;
+	std::ifstream conffile(Const::CONFIG_FILE);
+	std::string line;
 	int rc;
 
 	sess = LEControl::Connect("127.0.0.1", 7600);
@@ -39,6 +61,35 @@ OpenLTFSInventory::OpenLTFSInventory() : lck(mtx, std::defer_lock)
 		MSG(LTFSDMS0054I, i->GetObjectID());
 		cartridges.push_back(std::make_shared<OpenLTFSCartridge>(OpenLTFSCartridge(*i)));
 	}
+
+	while (std::getline(conffile, line))
+	{
+		std::string poolName = line;
+		std::list<std::string> tapeids;
+		std::string::size_type pos = 0;
+
+		if ( ! std::getline(conffile, line) )
+			return;
+
+		while ((pos = line.find(" ")) != std::string::npos) {
+			tapeids.push_back(line.substr(0, pos));
+			line.erase(0, pos + 1);
+		}
+
+		tapeids.push_back(line);
+
+		try {
+			poolCreate(poolName);
+			for ( std::string tapeid : tapeids )
+				poolAdd(poolName, tapeid);
+		}
+		catch(int error) {
+			MSG(LTFSDMS0061E, poolName);
+			throw(Error::LTFSDM_GENERAL_ERROR);
+		}
+	}
+
+	writePools();
 }
 
 void OpenLTFSInventory::reinventorize()
@@ -123,6 +174,7 @@ void OpenLTFSInventory::poolCreate(std::string poolname)
 	}
 
 	pools.push_back(std::make_shared<OpenLTFSPool>(OpenLTFSPool(poolname)));
+	writePools();
 }
 
 void OpenLTFSInventory::poolDelete(std::string poolname)
@@ -135,6 +187,7 @@ void OpenLTFSInventory::poolDelete(std::string poolname)
 				throw(Error::LTFSDM_POOL_NOT_EMPTY);
 			}
 			pools.remove(pool);
+			writePools();
 			return;
 		}
 	}
@@ -154,6 +207,7 @@ void OpenLTFSInventory::poolAdd(std::string poolname, std::string cartridgeid)
 			if ( cartridge == nullptr )
 				throw(Error::LTFSDM_TAPE_NOT_EXISTS);
 			pool->add(cartridge);
+			writePools();
 			return;
 		}
 	}
@@ -173,6 +227,7 @@ void OpenLTFSInventory::poolRemove(std::string poolname, std::string cartridgeid
 			if ( cartridge == nullptr )
 				throw(Error::LTFSDM_TAPE_NOT_EXISTS);
 			pool->remove(cartridge);
+			writePools();
 			return;
 		}
 	}

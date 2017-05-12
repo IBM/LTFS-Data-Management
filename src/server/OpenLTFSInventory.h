@@ -56,6 +56,7 @@ private:
 	std::shared_ptr<ltfsadmin::LTFSAdminSession> sess;
 	std::mutex mtx;
 	std::unique_lock<std::mutex> lck;
+	void writePools();
 public:
 	OpenLTFSInventory();
 	~OpenLTFSInventory();
