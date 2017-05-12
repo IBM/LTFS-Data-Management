@@ -16,7 +16,7 @@
 
 void InfoPoolsCommand::printUsage()
 {
-	INFO(LTFSDMC0065I);
+	INFO(LTFSDMC0087I);
 }
 
 void InfoPoolsCommand::doCommand(int argc, char **argv)
