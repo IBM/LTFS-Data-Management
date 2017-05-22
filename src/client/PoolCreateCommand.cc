@@ -38,8 +38,13 @@ void PoolCreateCommand::doCommand(int argc, char **argv)
 		throw Error::LTFSDM_GENERAL_ERROR;
 	}
 
-	if ( std::count(poolName.begin(), poolName.end(), 10) > 0 ) {
+	if ( std::count(poolNames.begin(), poolNames.end(), 10) > 0 ) {
 		MSG(LTFSDMC0091E);
+		throw Error::LTFSDM_GENERAL_ERROR;
+	}
+
+	if ( std::count(poolNames.begin(), poolNames.end(), 44) > 0 ) {
+		MSG(LTFSDMC0092E);
 		throw Error::LTFSDM_GENERAL_ERROR;
 	}
 
@@ -53,7 +58,7 @@ void PoolCreateCommand::doCommand(int argc, char **argv)
 
 	LTFSDmProtocol::LTFSDmPoolCreateRequest *poolcreatereq = commCommand.mutable_poolcreaterequest();
 	poolcreatereq->set_key(key);
-	poolcreatereq->set_poolname(poolName);
+	poolcreatereq->set_poolname(poolNames);
 
 	try {
 		commCommand.send();
@@ -75,12 +80,12 @@ void PoolCreateCommand::doCommand(int argc, char **argv)
 
 	switch ( poolresp.response() ) {
 		case Error::LTFSDM_OK:
-			INFO(LTFSDMC0079I, poolName);
+			INFO(LTFSDMC0079I, poolNames);
 			break;
 		case Error::LTFSDM_POOL_EXISTS:
-			MSG(LTFSDMX0023E, poolName);
+			MSG(LTFSDMX0023E, poolNames);
 			break;
 		default:
-			MSG(LTFSDMC0080E, poolName);
+			MSG(LTFSDMC0080E, poolNames);
 	}
 }

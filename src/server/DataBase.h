@@ -16,10 +16,6 @@ public:
 		REQ_INPROGRESS,
 		REQ_COMPLETED
 	};
-	enum tape_state {
-		TAPE_FREE,
-		TAPE_INUSE
-	};
 	static std::mutex trans_mutex;
 	DataBase() : db(NULL), dbNeedsClosed(false) {}
 	~DataBase();

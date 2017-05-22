@@ -37,8 +37,7 @@ void MigrationCommand::talkToBackend(std::stringstream *parmList)
 	migreq->set_key(key);
 	migreq->set_reqnumber(requestNumber);
 	migreq->set_pid(getpid());
-	migreq->set_numreplica(numReplica);
-	migreq->set_colfactor(collocationFactor);
+	migreq->set_pools(poolNames);
 
 	if ( preMigrate == true )
 		migreq->set_state(LTFSDmProtocol::LTFSDmMigRequest::PREMIGRATED);
@@ -63,23 +62,32 @@ void MigrationCommand::talkToBackend(std::stringstream *parmList)
 
 	const LTFSDmProtocol::LTFSDmMigRequestResp migreqresp = commCommand.migrequestresp();
 
-	if( migreqresp.success() == true ) {
-		if ( getpid() != migreqresp.pid() ) {
-			MSG(LTFSDMC0036E);
-			TRACE(Trace::error, getpid());
-			TRACE(Trace::error, migreqresp.pid());
+	switch ( migreqresp.error() ) {
+		case Error::LTFSDM_OK:
+			if ( getpid() != migreqresp.pid() ) {
+				MSG(LTFSDMC0036E);
+				TRACE(Trace::error, getpid());
+				TRACE(Trace::error, migreqresp.pid());
+				throw(Error::LTFSDM_GENERAL_ERROR);
+			}
+			if ( requestNumber !=  migreqresp.reqnumber() ) {
+				MSG(LTFSDMC0037E);
+				TRACE(Trace::error, requestNumber);
+				TRACE(Trace::error, migreqresp.reqnumber());
+				throw(Error::LTFSDM_GENERAL_ERROR);
+			}
+			break;
+		case Error::LTFSDM_WRONG_POOLNUM:
+			MSG(LTFSDMS0063E);
 			throw(Error::LTFSDM_GENERAL_ERROR);
-		}
-		if ( requestNumber !=  migreqresp.reqnumber() ) {
-			MSG(LTFSDMC0037E);
-			TRACE(Trace::error, requestNumber);
-			TRACE(Trace::error, migreqresp.reqnumber());
+			break;
+		case Error::LTFSDM_NOT_ALL_POOLS_EXIST:
+			MSG(LTFSDMS0064E);
 			throw(Error::LTFSDM_GENERAL_ERROR);
-		}
-	}
-	else {
-		MSG(LTFSDMC0029E);
-		throw(Error::LTFSDM_GENERAL_ERROR);
+			break;
+		default:
+			MSG(LTFSDMC0029E);
+			throw(Error::LTFSDM_GENERAL_ERROR);
 	}
 
 	sendObjects(parmList);

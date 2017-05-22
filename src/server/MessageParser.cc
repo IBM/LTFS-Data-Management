@@ -136,6 +136,9 @@ void MessageParser::migrationMessage(long key, LTFSDmCommServer *command, long l
 	long requestNumber;
 	const LTFSDmProtocol::LTFSDmMigRequest migreq = command->migrequest();
 	long keySent = migreq.key();
+	std::set<std::string> pools;
+	std::string pool;
+	int error = 0;
 
 	TRACE(Trace::error, __PRETTY_FUNCTION__);
 	TRACE(Trace::little, keySent);
@@ -148,11 +151,29 @@ void MessageParser::migrationMessage(long key, LTFSDmCommServer *command, long l
 	requestNumber = migreq.reqnumber();
 	pid = migreq.pid();
 
-	Migration mig( pid, requestNumber, migreq.numreplica(), migreq.colfactor(), migreq.state());
+	std::stringstream poolss(migreq.pools());
+
+	inventory->lock();
+	while ( std::getline(poolss	, pool, ',') ) {
+		std::shared_ptr<OpenLTFSPool> poolp = inventory->getPool(pool);
+		if (poolp == nullptr ) {
+			error = Error::LTFSDM_NOT_ALL_POOLS_EXIST;
+			break;
+		}
+		if ( pools.count(pool) == 0 )
+			pools.insert(pool);
+	}
+	inventory->unlock();
+
+	if ( !error && (pools.size() > 3) ) {
+		error = Error::LTFSDM_WRONG_POOLNUM;
+	}
+
+	Migration mig( pid, requestNumber, pools, pools.size(), migreq.state());
 
 	LTFSDmProtocol::LTFSDmMigRequestResp *migreqresp = command->mutable_migrequestresp();
 
-	migreqresp->set_success(true);
+	migreqresp->set_error(error);
 	migreqresp->set_reqnumber(requestNumber);
 	migreqresp->set_pid(pid);
 
@@ -165,11 +186,11 @@ void MessageParser::migrationMessage(long key, LTFSDmCommServer *command, long l
 		return;
 	}
 
-	getObjects(command, localReqNumber, pid, requestNumber, dynamic_cast<FileOperation*> (&mig));
-
-	mig.addRequest();
-
-	reqStatusMessage(key, command, dynamic_cast<FileOperation*> (&mig));
+	if ( !error ) {
+		getObjects(command, localReqNumber, pid, requestNumber, dynamic_cast<FileOperation*> (&mig));
+		mig.addRequest();
+		reqStatusMessage(key, command, dynamic_cast<FileOperation*> (&mig));
+	}
 }
 
 void  MessageParser::selRecallMessage(long key, LTFSDmCommServer *command, long localReqNumber)

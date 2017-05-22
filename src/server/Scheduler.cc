@@ -92,15 +92,13 @@ void Scheduler::run(long key)
 		ssql.str("");
 		ssql.clear();
 		ssql << "SELECT OPERATION, REQ_NUM, TARGET_STATE, NUM_REPL,"
-			 << " REPL_NUM, COLOC_GRP, TAPE_ID"
+			 << " REPL_NUM, TAPE_POOL, TAPE_ID"
 			 << " FROM REQUEST_QUEUE WHERE STATE=" << DataBase::REQ_NEW
 			 << " ORDER BY OPERATION,REQ_NUM;";
 
 		sqlite3_statement::prepare(ssql.str(), &stmt);
 
 		while ( (rc = sqlite3_statement::step(stmt)) == SQLITE_ROW ) {
-			sqlite3_stmt *stmt2;
-
 			const char *tape_id = reinterpret_cast<const char*>(sqlite3_column_text (stmt, 6));
 			if (tape_id == NULL) {
 				MSG(LTFSDMS0020E);
@@ -108,92 +106,87 @@ void Scheduler::run(long key)
 			}
 			std::string tapeId = std::string(tape_id);
 
-			ssql.str("");
-			ssql.clear();
-			ssql << "SELECT STATE FROM TAPE_LIST WHERE TAPE_ID='" << tapeId << "';";
-
-			sqlite3_statement::prepare(ssql.str(), &stmt2);
-			while ( (rc = sqlite3_statement::step(stmt2)) == SQLITE_ROW ) {
-				if ( sqlite3_column_int(stmt2, 0) != DataBase::TAPE_FREE ) {
-					if ( sqlite3_column_int(stmt, 0) == DataBase::SELRECALL ||
-						 sqlite3_column_int(stmt, 0) == DataBase::TRARECALL) {
-						suspend_map[tapeId] = true;
-					}
-					continue;
+			inventory->lock();
+			OpenLTFSCartridge::state_t state = inventory->getCartridge(tapeId)->getState();
+			if ( state == OpenLTFSCartridge::INUSE ) {
+				if ( sqlite3_column_int(stmt, 0) == DataBase::SELRECALL ||
+					 sqlite3_column_int(stmt, 0) == DataBase::TRARECALL) {
+					suspend_map[tapeId] = true;
 				}
-
-				sqlite3_stmt *stmt3;
-
-				ssql.str("");
-				ssql.clear();
-				ssql << "UPDATE TAPE_LIST SET STATE=" << DataBase::TAPE_INUSE
-					 << " WHERE TAPE_ID='" << tapeId << "';";
-				sqlite3_statement::prepare(ssql.str(), &stmt3);
-				rc = sqlite3_statement::step(stmt3);
-				sqlite3_statement::checkRcAndFinalize(stmt3, rc, SQLITE_DONE);
-
-				int reqNum = sqlite3_column_int(stmt, 1);
-				int tgtState = sqlite3_column_int(stmt, 2);
-				int numRepl = sqlite3_column_int(stmt, 3);
-				int replNum = sqlite3_column_int(stmt, 4);
-				int colGrp = sqlite3_column_int(stmt, 5);
-
-				TRACE(Trace::little, reqNum);
-				TRACE(Trace::little, tgtState);
-				TRACE(Trace::little, numRepl);
-				TRACE(Trace::little, replNum);
-				TRACE(Trace::little, colGrp);
-				TRACE(Trace::little, tape_id);
-
-
-				std::stringstream thrdinfo;
-
-				switch (sqlite3_column_int(stmt, 0)) {
-					case DataBase::MIGRATION:
-						ssql.str("");
-						ssql.clear();
-						ssql << "UPDATE REQUEST_QUEUE SET STATE=" << DataBase::REQ_INPROGRESS
-							 << " WHERE REQ_NUM=" << reqNum
-							 << " AND REPL_NUM=" << replNum
-							 << " AND COLOC_GRP=" << colGrp << ";";
-						sqlite3_statement::prepare(ssql.str(), &stmt3);
-						rc = sqlite3_statement::step(stmt3);
-						sqlite3_statement::checkRcAndFinalize(stmt3, rc, SQLITE_DONE);
-
-						thrdinfo << "Mig(" << reqNum << "," << replNum << "," << colGrp << ")";
-						subs.enqueue(thrdinfo.str(), Migration::execRequest, reqNum, tgtState, numRepl, replNum, colGrp, tapeId, true /* needsTape */);
-						break;
-					case DataBase::SELRECALL:
-						ssql.str("");
-						ssql.clear();
-						ssql << "UPDATE REQUEST_QUEUE SET STATE=" << DataBase::REQ_INPROGRESS
-							 << " WHERE REQ_NUM=" << reqNum
-							 << " AND TAPE_ID='" << tapeId << "';";
-						sqlite3_statement::prepare(ssql.str(), &stmt3);
-						rc = sqlite3_statement::step(stmt3);
-						sqlite3_statement::checkRcAndFinalize(stmt3, rc, SQLITE_DONE);
-
-						thrdinfo << "SelRec(" << reqNum << ")";
-						subs.enqueue(thrdinfo.str(), SelRecall::execRequest, reqNum, tgtState, tapeId, true /* needsTape */);
-						break;
-					case DataBase::TRARECALL:
-						ssql.str("");
-						ssql.clear();
-						ssql << "UPDATE REQUEST_QUEUE SET STATE=" << DataBase::REQ_INPROGRESS
-							 << " WHERE REQ_NUM=" << reqNum
-							 << " AND TAPE_ID='" << tapeId << "';";
-						sqlite3_statement::prepare(ssql.str(), &stmt3);
-						rc = sqlite3_statement::step(stmt3);
-						sqlite3_statement::checkRcAndFinalize(stmt3, rc, SQLITE_DONE);
-
-						thrdinfo << "TraRec(" << reqNum << ")";
-						subs.enqueue(thrdinfo.str(), TransRecall::execRequest, reqNum, tapeId);
-						break;
-					default:
-						TRACE(Trace::error, sqlite3_column_int(stmt, 0));
-				}
+				inventory->unlock();
+				continue;
 			}
-			sqlite3_statement::checkRcAndFinalize(stmt2, rc, SQLITE_DONE);
+			inventory->getCartridge(tapeId)->setState(OpenLTFSCartridge::INUSE);
+			inventory->unlock();
+
+			sqlite3_stmt *stmt3;
+
+			int reqNum = sqlite3_column_int(stmt, 1);
+			int tgtState = sqlite3_column_int(stmt, 2);
+			int numRepl = sqlite3_column_int(stmt, 3);
+			int replNum = sqlite3_column_int(stmt, 4);
+
+			int colGrp = sqlite3_column_int(stmt, 5);
+
+			std::string pool = "";
+			const char *pool_ctr = reinterpret_cast<const char*>(sqlite3_column_text (stmt, 5));
+			if ( pool_ctr != NULL)
+				pool = std::string(pool_ctr);
+
+			TRACE(Trace::little, reqNum);
+			TRACE(Trace::little, tgtState);
+			TRACE(Trace::little, numRepl);
+			TRACE(Trace::little, replNum);
+			TRACE(Trace::little, colGrp);
+			TRACE(Trace::little, pool);
+
+
+			std::stringstream thrdinfo;
+
+			switch (sqlite3_column_int(stmt, 0)) {
+				case DataBase::MIGRATION:
+					ssql.str("");
+					ssql.clear();
+					ssql << "UPDATE REQUEST_QUEUE SET STATE=" << DataBase::REQ_INPROGRESS
+						 << " WHERE REQ_NUM=" << reqNum
+						 << " AND REPL_NUM=" << replNum
+						 << " AND TAPE_POOL='" << pool << "';";
+					sqlite3_statement::prepare(ssql.str(), &stmt3);
+					rc = sqlite3_statement::step(stmt3);
+					sqlite3_statement::checkRcAndFinalize(stmt3, rc, SQLITE_DONE);
+
+					thrdinfo << "Mig(" << reqNum << "," << replNum << "," << colGrp << ")";
+					subs.enqueue(thrdinfo.str(), Migration::execRequest, reqNum, tgtState, numRepl, replNum, pool, tapeId, true /* needsTape */);
+					break;
+				case DataBase::SELRECALL:
+					ssql.str("");
+					ssql.clear();
+					ssql << "UPDATE REQUEST_QUEUE SET STATE=" << DataBase::REQ_INPROGRESS
+						 << " WHERE REQ_NUM=" << reqNum
+						 << " AND TAPE_ID='" << tapeId << "';";
+					sqlite3_statement::prepare(ssql.str(), &stmt3);
+					rc = sqlite3_statement::step(stmt3);
+					sqlite3_statement::checkRcAndFinalize(stmt3, rc, SQLITE_DONE);
+
+					thrdinfo << "SelRec(" << reqNum << ")";
+					subs.enqueue(thrdinfo.str(), SelRecall::execRequest, reqNum, tgtState, tapeId, true /* needsTape */);
+					break;
+				case DataBase::TRARECALL:
+					ssql.str("");
+					ssql.clear();
+					ssql << "UPDATE REQUEST_QUEUE SET STATE=" << DataBase::REQ_INPROGRESS
+						 << " WHERE REQ_NUM=" << reqNum
+						 << " AND TAPE_ID='" << tapeId << "';";
+					sqlite3_statement::prepare(ssql.str(), &stmt3);
+					rc = sqlite3_statement::step(stmt3);
+					sqlite3_statement::checkRcAndFinalize(stmt3, rc, SQLITE_DONE);
+
+					thrdinfo << "TraRec(" << reqNum << ")";
+					subs.enqueue(thrdinfo.str(), TransRecall::execRequest, reqNum, tapeId);
+					break;
+				default:
+					TRACE(Trace::error, sqlite3_column_int(stmt, 0));
+			}
 		}
 		sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 	}

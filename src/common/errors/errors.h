@@ -14,6 +14,8 @@ namespace Error {
 	const int LTFSDM_POOL_NOT_EXISTS             =  1008;
 	const int LTFSDM_TAPE_NOT_EXISTS             =  1009;
 	const int LTFSDM_POOL_NOT_EMPTY              =  1010;
+	const int LTFSDM_WRONG_POOLNUM               =  1011;
+	const int LTFSDM_NOT_ALL_POOLS_EXIST         =  1012;
 
 	const int LTFSDM_ALREADY_FORMATTED           =  1050;
 	const int LTFSDM_WRITE_PROTECTED             =  1051;

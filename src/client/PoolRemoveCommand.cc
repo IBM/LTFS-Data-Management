@@ -47,7 +47,7 @@ void PoolRemoveCommand::doCommand(int argc, char **argv)
 
 	LTFSDmProtocol::LTFSDmPoolRemoveRequest *poolremovereq = commCommand.mutable_poolremoverequest();
 	poolremovereq->set_key(key);
-	poolremovereq->set_poolname(poolName);
+	poolremovereq->set_poolname(poolNames);
 
 	for ( std::string tapeid : tapeList )
 		poolremovereq->add_tapeid(tapeid);
@@ -78,19 +78,19 @@ void PoolRemoveCommand::doCommand(int argc, char **argv)
 
 		switch ( poolresp.response() ) {
 			case Error::LTFSDM_OK:
-				INFO(LTFSDMC0086I, tapeid, poolName);
+				INFO(LTFSDMC0086I, tapeid, poolNames);
 				break;
 			case Error::LTFSDM_POOL_NOT_EXISTS:
-				MSG(LTFSDMX0025E, poolName);
+				MSG(LTFSDMX0025E, poolNames);
 				break;
 			case Error::LTFSDM_TAPE_NOT_EXISTS:
 				MSG(LTFSDMC0084E,tapeid);
 				break;
 			case Error::LTFSDM_TAPE_NOT_EXISTS_IN_POOL:
-				MSG(LTFSDMX0022E, tapeid, poolName);
+				MSG(LTFSDMX0022E, tapeid, poolNames);
 				break;
 			default:
-				MSG(LTFSDMC0085E, tapeid, poolName);
+				MSG(LTFSDMC0085E, tapeid, poolNames);
 		}
 	}
 }

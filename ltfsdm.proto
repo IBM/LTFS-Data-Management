@@ -33,12 +33,11 @@ message LTFSDmMigRequest {
 		MIGRATED = 1;
 	}
 	required State state = 4;
-	required int64 numReplica = 5;
-	required int64 colFactor = 6;
+	required bytes pools = 5;
 }
 
 message LTFSDmMigRequestResp {
-	required bool success = 1;
+	required int64 error = 1;
 	required int64 reqNumber = 2;
 	required int64 pid = 3;
 }

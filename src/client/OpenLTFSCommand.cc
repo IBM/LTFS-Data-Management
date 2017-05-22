@@ -54,14 +54,8 @@ void OpenLTFSCommand::processOptions(int argc, char **argv)
 					throw(Error::LTFSDM_GENERAL_ERROR);
 				}
 				break;
-			case 'c':
-				collocationFactor = strtoul(optarg, NULL, 0);
-				break;
 			case 'f':
 				fileList = std::string(optarg);
-				break;
-			case 'R':
-				numReplica = strtoul(optarg, NULL, 0);
 				break;
 			case 'm':
 				mountPoint = std::string(optarg);
@@ -70,7 +64,7 @@ void OpenLTFSCommand::processOptions(int argc, char **argv)
 				fsName = std::string(optarg);
 				break;
 			case 'P':
-				poolName = std::string(optarg);
+				poolNames = std::string(optarg);
 				break;
 			case 't':
 				tapeList.push_back(std::string(optarg));
@@ -94,9 +88,8 @@ void OpenLTFSCommand::traceParms()
 	TRACE(Trace::little, preMigrate);
 	TRACE(Trace::little, recToResident);
 	TRACE(Trace::little, requestNumber);
-	TRACE(Trace::little, collocationFactor);
+	TRACE(Trace::little, poolNames);
 	TRACE(Trace::little, fileList);
-	TRACE(Trace::little, numReplica);
 	TRACE(Trace::little, command);
 	TRACE(Trace::little, optionStr);
 	TRACE(Trace::little, key);
@@ -176,11 +169,6 @@ void OpenLTFSCommand::checkOptions(int argc, char **argv)
 {
 	if ( (requestNumber != Const::UNSET) && (argc != 3) )
 		throw(Error::LTFSDM_GENERAL_ERROR);
-
-	if ( numReplica < 1 || numReplica > 3 ) {
-			INFO(LTFSDMC0015E);
-			throw(Error::LTFSDM_GENERAL_ERROR);
-	}
 
 	if (optind != argc) {
 		if (fileList.compare("")) {

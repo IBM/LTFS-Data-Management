@@ -385,11 +385,9 @@ void TransRecall::execRequest(int reqNum, std::string tapeId)
 
 	std::unique_lock<std::mutex> lock(Scheduler::mtx);
 
-	ssql << "UPDATE TAPE_LIST SET STATE=" << DataBase::TAPE_FREE
-		 << " WHERE TAPE_ID='" << tapeId << "';";
-	sqlite3_statement::prepare(ssql.str(), &stmt);
-	rc = sqlite3_statement::step(stmt);
-	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+	inventory->lock();
+	inventory->getCartridge(tapeId)->setState(OpenLTFSCartridge::MOUNTED);
+	inventory->unlock();
 
 	ssql.str("");
 	ssql.clear();

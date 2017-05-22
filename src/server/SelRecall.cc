@@ -111,11 +111,10 @@ void SelRecall::addRequest()
 		std::string tapeId = std::string(cstr ? cstr : "");
 
 		ssql2 << "INSERT INTO REQUEST_QUEUE (OPERATION, REQ_NUM, TARGET_STATE, "
-			  << "COLOC_GRP, TAPE_ID, TIME_ADDED, STATE) "
+			  << "TAPE_ID, TIME_ADDED, STATE) "
 			  << "VALUES (" << DataBase::SELRECALL << ", "                          // OPERATION
 			  << reqNumber << ", "                                                  // REQ_NUM
 			  << targetState << ", "                                                // TARGET_STATE
-			  << "NULL" << ", "                                                     // COLOC_GRP
 			  << "'" << tapeId << "', "                                             // TAPE_ID
 			  << time(NULL) << ", ";                                                // TIME_ADDED
 		if ( tapeId.compare(Const::FAILED_TAPE_ID) == 0 )
@@ -364,12 +363,10 @@ void SelRecall::execRequest(int reqNumber, int tgtState, std::string tapeId, boo
 		recallStep(reqNumber, tapeId, FsObj::RESIDENT, needsTape);
 
 	std::unique_lock<std::mutex> lock(Scheduler::mtx);
-	ssql << "UPDATE TAPE_LIST SET STATE=" << DataBase::TAPE_FREE
-		 << " WHERE TAPE_ID='" << tapeId << "';";
-	sqlite3_statement::prepare(ssql.str(), &stmt);
-	rc = sqlite3_statement::step(stmt);
-	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
-	Scheduler::cond.notify_one();
+
+	inventory->lock();
+	inventory->getCartridge(tapeId)->setState(OpenLTFSCartridge::MOUNTED);
+	inventory->unlock();
 
 	std::unique_lock<std::mutex> updlock(Scheduler::updmtx);
 

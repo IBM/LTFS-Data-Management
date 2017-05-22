@@ -79,7 +79,7 @@ void DataBase::createTables()
 		 << "REQ_NUM INT NOT NULL, "
 		 << "TARGET_STATE INT NOT NULL, "
 		 << "REPL_NUM INT, "
-		 << "COLOC_GRP INT, "
+		 << "TAPE_POOL VARCHAR, "
 		 << "FILE_SIZE BIGINT NOT NULL, "
 		 << "FS_ID BIGINT NOT NULL, "
 		 << "I_GEN INT NOT NULL, "
@@ -109,51 +109,11 @@ void DataBase::createTables()
 		 << "TARGET_STATE INT, "
 		 << "NUM_REPL, "
 		 << "REPL_NUM INT, "
-		 << "COLOC_GRP INT, "
+		 << "TAPE_POOL VARCHAR, "
 		 << "TAPE_ID CHAR(9), "
 		 << "TIME_ADDED INT NOT NULL, "
 		 << "STATE INT NOT NULL, "
-		 << "CONSTRAINT REQUEST_QUEUE_UNIQUE UNIQUE(REQ_NUM, REPL_NUM, COLOC_GRP, TAPE_ID));";
-
-	sqlite3_statement::prepare(ssql.str(), &stmt);
-
-	rc = sqlite3_statement::step(stmt);
-
-	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
-
-	ssql.str("");
-	ssql.clear();
-
-	ssql << "CREATE TABLE TAPE_LIST("
-		 << "TAPE_ID CHAR(9), "
-		 << "STATE INT NOT NULL);";
-
-	sqlite3_statement::prepare(ssql.str(), &stmt);
-
-	rc = sqlite3_statement::step(stmt);
-
-	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
-
-	/* temporary for this prototype add two specific tapes initalially */
-
-	ssql.str("");
-	ssql.clear();
-
-	ssql << "INSERT INTO TAPE_LIST (TAPE_ID, STATE) VALUES ";
-
-	std::vector<std::string> tapeIds = LTFSDM::getTapeIds();
-	bool first = true;
-	for(auto const& tapeId: tapeIds) {
-		if ( first ) {
-			ssql << "('" << tapeId << "', " << DataBase::TAPE_FREE;
-			first = false;
-		}
-		else {
-			ssql << "), ('" << tapeId << "', " << DataBase::TAPE_FREE;
-		}
-	}
-
-	ssql << ");";
+		 << "CONSTRAINT REQUEST_QUEUE_UNIQUE UNIQUE(REQ_NUM, REPL_NUM, TAPE_POOL, TAPE_ID));";
 
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 

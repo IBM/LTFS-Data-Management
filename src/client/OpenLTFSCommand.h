@@ -9,31 +9,27 @@ protected:
 		preMigrate(false),
 		recToResident(false),
 		requestNumber(Const::UNSET),
-		collocationFactor(1),
 		fileList(""),
-		numReplica(1),
 	    command(command_),
 		optionStr(optionStr_),
 		fsName(""),
 		mountPoint(""),
 		startTime(time(NULL)),
-		poolName(""),
+		poolNames(""),
 		tapeList({}),
 	    key(Const::UNSET) {};
 	bool waitForCompletion;
 	bool preMigrate;
 	bool recToResident;
 	long requestNumber;
-	unsigned long collocationFactor;
 	std::string fileList;
-	long numReplica;
 	std::string command;
 	std::string optionStr;
 	std::string fsName;
 	std::string mountPoint;
 	std::ifstream fileListStrm;
 	time_t startTime;
-	std::string poolName;
+	std::string poolNames;
 	std::list<std::string> tapeList;
 	long key;
 	LTFSDmCommClient commCommand;

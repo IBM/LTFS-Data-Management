@@ -47,7 +47,7 @@ void PoolDeleteCommand::doCommand(int argc, char **argv)
 
 	LTFSDmProtocol::LTFSDmPoolDeleteRequest *pooldeletereq = commCommand.mutable_pooldeleterequest();
 	pooldeletereq->set_key(key);
-	pooldeletereq->set_poolname(poolName);
+	pooldeletereq->set_poolname(poolNames);
 
 	try {
 		commCommand.send();
@@ -69,16 +69,16 @@ void PoolDeleteCommand::doCommand(int argc, char **argv)
 
 	switch ( poolresp.response() ) {
 		case Error::LTFSDM_OK:
-			INFO(LTFSDMC0082I, poolName);
+			INFO(LTFSDMC0082I, poolNames);
 			break;
 		case Error::LTFSDM_POOL_NOT_EXISTS:
-			MSG(LTFSDMX0025E, poolName);
+			MSG(LTFSDMX0025E, poolNames);
 			break;
 		case Error::LTFSDM_POOL_NOT_EMPTY:
-			MSG(LTFSDMX0024E, poolName);
+			MSG(LTFSDMX0024E, poolNames);
 			break;
 		default:
-			MSG(LTFSDMC0081E, poolName);
+			MSG(LTFSDMC0081E, poolNames);
 	}
 
 }

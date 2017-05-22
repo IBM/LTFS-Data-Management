@@ -7,7 +7,7 @@ class MigrationCommand : public OpenLTFSCommand
 private:
 	void talkToBackend(std::stringstream *parmList);
 public:
-    MigrationCommand() : OpenLTFSCommand("migrate", ":+hwpc:n:f:R:") {};
+    MigrationCommand() : OpenLTFSCommand("migrate", ":+hwpn:f:P:") {};
     ~MigrationCommand() {};
     void printUsage();
     void doCommand(int argc, char **argv);

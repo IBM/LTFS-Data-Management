@@ -47,7 +47,7 @@ void PoolAddCommand::doCommand(int argc, char **argv)
 
 	LTFSDmProtocol::LTFSDmPoolAddRequest *pooladdreq = commCommand.mutable_pooladdrequest();
 	pooladdreq->set_key(key);
-	pooladdreq->set_poolname(poolName);
+	pooladdreq->set_poolname(poolNames);
 
 	for ( std::string tapeid : tapeList )
 		pooladdreq->add_tapeid(tapeid);
@@ -76,10 +76,10 @@ void PoolAddCommand::doCommand(int argc, char **argv)
 
 		switch ( poolresp.response() ) {
 			case Error::LTFSDM_OK:
-				INFO(LTFSDMC0083I, tapeid, poolName);
+				INFO(LTFSDMC0083I, tapeid, poolNames);
 				break;
 			case Error::LTFSDM_POOL_NOT_EXISTS:
-				MSG(LTFSDMX0025E, poolName);
+				MSG(LTFSDMX0025E, poolNames);
 				break;
 			case Error::LTFSDM_TAPE_NOT_EXISTS:
 				MSG(LTFSDMC0084E,tapeid);
@@ -88,7 +88,7 @@ void PoolAddCommand::doCommand(int argc, char **argv)
 				MSG(LTFSDMX0021E, tapeid);
 				break;
 			default:
-				MSG(LTFSDMC0085E, tapeid, poolName);
+				MSG(LTFSDMC0085E, tapeid, poolNames);
 		}
 	}
 }
