@@ -14,11 +14,9 @@ OpenLTFSPool::OpenLTFSPool(std::string _poolName)
 void OpenLTFSPool::add(std::shared_ptr<OpenLTFSCartridge> cartridge)
 
 {
-	for ( std::shared_ptr<OpenLTFSCartridge> ctrg : cartridges ) {
-		if ( ctrg == cartridge ) {
-			MSG(LTFSDMX0021E, ctrg->GetObjectID());
-			throw(Error::LTFSDM_TAPE_EXISTS_IN_POOL);
-		}
+	if ( cartridge->getPool().compare("") != 0 ) {
+		MSG(LTFSDMX0021E, cartridge->GetObjectID());
+		throw(Error::LTFSDM_TAPE_EXISTS_IN_POOL);
 	}
 
 	cartridge->setPool(poolName);
