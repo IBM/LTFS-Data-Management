@@ -876,6 +876,40 @@ void MessageParser::infoPoolsMessage(long key, LTFSDmCommServer *command)
 	}
 }
 
+void MessageParser::retrieveMessage(long key, LTFSDmCommServer *command)
+
+{
+   	const LTFSDmProtocol::LTFSDmRetrieveRequest retrievereq = command->retrieverequest();
+	long keySent = retrievereq.key();
+	bool success = true;
+
+	TRACE(Trace::little, keySent);
+	TRACE(Trace::error, __PRETTY_FUNCTION__);
+
+	if ( key != keySent ) {
+		MSG(LTFSDMS0008E, keySent);
+		return;
+	}
+
+	try {
+		inventory->inventorize();
+	}
+	catch(int error) {
+		success = false;
+	}
+
+	LTFSDmProtocol::LTFSDmRetrieveResp *retrieveresp = command->mutable_retrieveresp();
+
+	retrieveresp->set_success(success);
+
+	try {
+		command->send();
+	}
+	catch(...) {
+		MSG(LTFSDMS0007E);
+	}
+}
+
 void MessageParser::run(long key, LTFSDmCommServer command, Connector *connector)
 
 {
@@ -952,6 +986,9 @@ void MessageParser::run(long key, LTFSDmCommServer command, Connector *connector
 			}
 			else if ( command.has_infopoolsrequest() ) {
 				infoPoolsMessage(key, &command);
+			}
+			else if ( command.has_retrieverequest() ) {
+				retrieveMessage(key, &command);
 			}
 			else {
 				TRACE(Trace::error, "unkown command\n");

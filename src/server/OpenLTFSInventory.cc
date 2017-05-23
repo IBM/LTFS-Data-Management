@@ -24,17 +24,20 @@ void OpenLTFSInventory::writePools()
 		MSG(LTFSDMS0062E);
 }
 
-OpenLTFSInventory::OpenLTFSInventory()
+void OpenLTFSInventory::inventorize()
 
 {
 	std::lock_guard<std::mutex> llck(mtx);
+
 	std::list<std::shared_ptr<Drive> > drvs;
 	std::list<std::shared_ptr<Cartridge>> crts;
 	std::ifstream conffile(Const::CONFIG_FILE);
 	std::string line;
 	int rc;
 
-	sess = LEControl::Connect("127.0.0.1", 7600);
+	drives.clear();
+	cartridges.clear();
+	pools.clear();
 
 	rc = LEControl::InventoryDrive(drvs, sess);
 
@@ -106,11 +109,13 @@ OpenLTFSInventory::OpenLTFSInventory()
 	}
 }
 
-void OpenLTFSInventory::reinventorize()
+OpenLTFSInventory::OpenLTFSInventory()
 
 {
-}
+	sess = LEControl::Connect("127.0.0.1", 7600);
 
+	inventorize();
+}
 
 std::list<OpenLTFSDrive> OpenLTFSInventory::getDrives()
 

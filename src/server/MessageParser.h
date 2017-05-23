@@ -25,6 +25,7 @@ private:
 	void poolAddMessage(long key, LTFSDmCommServer *command);
 	void poolRemoveMessage(long key, LTFSDmCommServer *command);
 	void infoPoolsMessage(long key, LTFSDmCommServer *command);
+	void retrieveMessage(long key, LTFSDmCommServer *command);
 public:
 	MessageParser() {}
 	~MessageParser() {};

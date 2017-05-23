@@ -14,6 +14,7 @@ ARC_SRC_FILES += InfoJobsCommand.cc
 ARC_SRC_FILES += InfoFilesCommand.cc
 ARC_SRC_FILES += InfoFsCommand.cc
 ARC_SRC_FILES += StatusCommand.cc
+ARC_SRC_FILES += RetrieveCommand.cc
 ARC_SRC_FILES += InfoDrivesCommand.cc
 ARC_SRC_FILES += InfoTapesCommand.cc
 ARC_SRC_FILES += PoolCreateCommand.cc

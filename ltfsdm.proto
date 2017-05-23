@@ -206,6 +206,13 @@ message LTFSDmInfoPoolsResp {
 	required uint64 numtapes = 5;
 }
 
+message LTFSDmRetrieveRequest {
+	required uint64 key = 1;
+}
+
+message LTFSDmRetrieveResp {
+	required bool success = 1;
+}
 
 message Command {
 	oneof commands {
@@ -240,5 +247,7 @@ message Command {
 		LTFSDmPoolResp poolresp = 29;
 		LTFSDmInfoPoolsRequest infopoolsrequest = 30;
 		LTFSDmInfoPoolsResp infopoolsresp = 31;
+		LTFSDmRetrieveRequest retrieverequest = 32;
+		LTFSDmRetrieveResp retrieveresp = 33;
 	}
 }

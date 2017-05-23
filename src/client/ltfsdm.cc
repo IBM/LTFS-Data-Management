@@ -35,6 +35,7 @@
 #include "PoolAddCommand.h"
 #include "PoolRemoveCommand.h"
 #include "InfoPoolsCommand.h"
+#include "RetrieveCommand.h"
 
 int main(int argc, char *argv[])
 
@@ -85,6 +86,9 @@ int main(int argc, char *argv[])
 	}
 	else if ( StatusCommand().compare(command) ) {
 		openLTFSCommand =dynamic_cast<OpenLTFSCommand*>(new StatusCommand());
+	}
+	else if ( RetrieveCommand().compare(command) ) {
+		openLTFSCommand =dynamic_cast<OpenLTFSCommand*>(new RetrieveCommand());
 	}
 	else if ( InfoCommand().compare(command) ) {
 		if ( argc < 3 ) {

@@ -61,7 +61,7 @@ public:
 
 	std::mutex mtx;
 
-	void reinventorize();
+	void inventorize();
 
 	std::list<OpenLTFSDrive> getDrives();
 	std::shared_ptr<OpenLTFSDrive> getDrive(std::string driveid);
