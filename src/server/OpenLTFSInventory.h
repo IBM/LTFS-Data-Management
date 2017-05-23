@@ -54,14 +54,14 @@ private:
 	std::list<std::shared_ptr<OpenLTFSCartridge>> cartridges;
 	std::list<std::shared_ptr<OpenLTFSPool>> pools;
 	std::shared_ptr<ltfsadmin::LTFSAdminSession> sess;
-	std::mutex mtx;
 	std::unique_lock<std::mutex> lck;
 	void writePools();
 public:
 	OpenLTFSInventory();
 	~OpenLTFSInventory();
-	void lock() { lck.lock(); }
-	void unlock() { lck.unlock(); }
+
+	std::mutex mtx;
+
 	void reinventorize();
 
 	std::list<OpenLTFSDrive> getDrives();

@@ -364,9 +364,10 @@ void SelRecall::execRequest(int reqNumber, int tgtState, std::string tapeId, boo
 
 	std::unique_lock<std::mutex> lock(Scheduler::mtx);
 
-	inventory->lock();
-	inventory->getCartridge(tapeId)->setState(OpenLTFSCartridge::MOUNTED);
-	inventory->unlock();
+	{
+		std::lock_guard<std::mutex> lock(inventory->mtx);
+		inventory->getCartridge(tapeId)->setState(OpenLTFSCartridge::MOUNTED);
+	}
 
 	std::unique_lock<std::mutex> updlock(Scheduler::updmtx);
 

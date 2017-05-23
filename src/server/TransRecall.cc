@@ -385,9 +385,10 @@ void TransRecall::execRequest(int reqNum, std::string tapeId)
 
 	std::unique_lock<std::mutex> lock(Scheduler::mtx);
 
-	inventory->lock();
-	inventory->getCartridge(tapeId)->setState(OpenLTFSCartridge::MOUNTED);
-	inventory->unlock();
+	{
+		std::lock_guard<std::mutex> lock(inventory->mtx);
+		inventory->getCartridge(tapeId)->setState(OpenLTFSCartridge::MOUNTED);
+	}
 
 	ssql.str("");
 	ssql.clear();

@@ -106,18 +106,18 @@ void Scheduler::run(long key)
 			}
 			std::string tapeId = std::string(tape_id);
 
-			inventory->lock();
-			OpenLTFSCartridge::state_t state = inventory->getCartridge(tapeId)->getState();
-			if ( state == OpenLTFSCartridge::INUSE ) {
-				if ( sqlite3_column_int(stmt, 0) == DataBase::SELRECALL ||
-					 sqlite3_column_int(stmt, 0) == DataBase::TRARECALL) {
-					suspend_map[tapeId] = true;
+			{
+				std::lock_guard<std::mutex> lock(inventory->mtx);
+				OpenLTFSCartridge::state_t state = inventory->getCartridge(tapeId)->getState();
+				if ( state == OpenLTFSCartridge::INUSE ) {
+					if ( sqlite3_column_int(stmt, 0) == DataBase::SELRECALL ||
+						 sqlite3_column_int(stmt, 0) == DataBase::TRARECALL) {
+						suspend_map[tapeId] = true;
+					}
+					continue;
 				}
-				inventory->unlock();
-				continue;
+				inventory->getCartridge(tapeId)->setState(OpenLTFSCartridge::INUSE);
 			}
-			inventory->getCartridge(tapeId)->setState(OpenLTFSCartridge::INUSE);
-			inventory->unlock();
 
 			sqlite3_stmt *stmt3;
 

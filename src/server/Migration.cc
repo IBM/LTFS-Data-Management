@@ -64,7 +64,7 @@ void Migration::addJob(std::string fileName)
 					}
 					bool tapeFound = false;
 					for ( std::string pool : pools ) {
-						inventory->lock();
+						std::lock_guard<std::mutex> lock(inventory->mtx);
 						std::list<OpenLTFSCartridge> carts = inventory->getPool(pool)->getCartridges();
 						for ( OpenLTFSCartridge cart : carts ) {
 							if ( cart.GetObjectID().compare(attr.tapeId[i]) == 0 ) {
@@ -72,7 +72,6 @@ void Migration::addJob(std::string fileName)
 								break;
 							}
 						}
-						inventory->unlock();
 						if ( tapeFound )
 							break;
 					}
@@ -163,9 +162,8 @@ void Migration::addRequest()
 		ssql.clear();
 
 		if ( needsTape ) {
-			inventory->lock();
+			std::lock_guard<std::mutex> lock(inventory->mtx);
 			tapeId = inventory->getPool(pool)->getCartridges().front().GetObjectID();
-			inventory->unlock();
 		}
 		else {
 			tapeId = "";
@@ -560,9 +558,8 @@ void Migration::execRequest(int reqNumber, int targetState, int numRepl,
 			}
 		}
 
-		inventory->lock();
+		std::lock_guard<std::mutex> lock(inventory->mtx);
 		inventory->getCartridge(tapeId)->setState(OpenLTFSCartridge::MOUNTED);
-		inventory->unlock();
 
 		Scheduler::cond.notify_one();
 
