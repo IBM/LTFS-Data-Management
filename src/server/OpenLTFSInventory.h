@@ -54,7 +54,6 @@ private:
 	std::list<std::shared_ptr<OpenLTFSCartridge>> cartridges;
 	std::list<std::shared_ptr<OpenLTFSPool>> pools;
 	std::shared_ptr<ltfsadmin::LTFSAdminSession> sess;
-	std::unique_lock<std::mutex> lck;
 	void writePools();
 public:
 	OpenLTFSInventory();

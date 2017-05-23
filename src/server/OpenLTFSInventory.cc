@@ -24,7 +24,7 @@ void OpenLTFSInventory::writePools()
 		MSG(LTFSDMS0062E);
 }
 
-OpenLTFSInventory::OpenLTFSInventory() : lck(mtx, std::defer_lock)
+OpenLTFSInventory::OpenLTFSInventory()
 
 {
 	std::lock_guard<std::mutex> llck(mtx);
@@ -58,10 +58,12 @@ OpenLTFSInventory::OpenLTFSInventory() : lck(mtx, std::defer_lock)
 		throw(Error::LTFSDM_GENERAL_ERROR);
 	}
 
-	for(std::shared_ptr<Cartridge> i : crts) {
-		TRACE(Trace::always, i->GetObjectID());
-		MSG(LTFSDMS0054I, i->GetObjectID());
-		cartridges.push_back(std::make_shared<OpenLTFSCartridge>(OpenLTFSCartridge(*i)));
+	for(std::shared_ptr<Cartridge> c : crts) {
+		if ( c->get_status().compare("Not Supported") == 0 )
+			continue;
+		TRACE(Trace::always, c->GetObjectID());
+		MSG(LTFSDMS0054I, c->GetObjectID());
+		cartridges.push_back(std::make_shared<OpenLTFSCartridge>(OpenLTFSCartridge(*c)));
 	}
 
 	while (std::getline(conffile, line))
@@ -92,6 +94,16 @@ OpenLTFSInventory::OpenLTFSInventory() : lck(mtx, std::defer_lock)
 	}
 
 	writePools();
+
+	for ( std::shared_ptr<OpenLTFSCartridge> c : cartridges ) {
+		c->setState(OpenLTFSCartridge::UNMOUNTED);
+		for ( std::shared_ptr<OpenLTFSDrive> d : drives ) {
+			if ( c->get_slot() == d->get_slot() ) {
+				c->setState(OpenLTFSCartridge::MOUNTED);
+				break;
+			}
+		}
+	}
 }
 
 void OpenLTFSInventory::reinventorize()
