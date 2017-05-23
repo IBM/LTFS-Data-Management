@@ -27,8 +27,6 @@ void OpenLTFSInventory::writePools()
 void OpenLTFSInventory::inventorize()
 
 {
-	std::lock_guard<std::mutex> llck(mtx);
-
 	std::list<std::shared_ptr<Drive> > drvs;
 	std::list<std::shared_ptr<Cartridge>> crts;
 	std::ifstream conffile(Const::CONFIG_FILE);
@@ -114,6 +112,7 @@ OpenLTFSInventory::OpenLTFSInventory()
 {
 	sess = LEControl::Connect("127.0.0.1", 7600);
 
+	std::lock_guard<std::mutex> lck(mtx);
 	inventorize();
 }
 

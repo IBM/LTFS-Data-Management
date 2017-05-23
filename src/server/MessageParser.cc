@@ -892,6 +892,7 @@ void MessageParser::retrieveMessage(long key, LTFSDmCommServer *command)
 	}
 
 	try {
+		std::lock_guard<std::mutex> lck(inventory->mtx);
 		inventory->inventorize();
 	}
 	catch(int error) {
