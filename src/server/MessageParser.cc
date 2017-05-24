@@ -540,14 +540,14 @@ void MessageParser::infoDrivesMessage(long key, LTFSDmCommServer *command)
 
 	{
 		std::lock_guard<std::mutex> lock(inventory->mtx);
-		for (OpenLTFSDrive i : inventory->getDrives()) {
+		for (std::shared_ptr<OpenLTFSDrive> d : inventory->getDrives()) {
 			LTFSDmProtocol::LTFSDmInfoDrivesResp *infodrivesresp = command->mutable_infodrivesresp();
 
-			infodrivesresp->set_id(i.GetObjectID());
-			infodrivesresp->set_devname(i.get_devname());
-			infodrivesresp->set_slot(i.get_slot());
-			infodrivesresp->set_status(i.get_status());
-			infodrivesresp->set_busy(i.isBusy());
+			infodrivesresp->set_id(d->GetObjectID());
+			infodrivesresp->set_devname(d->get_devname());
+			infodrivesresp->set_slot(d->get_slot());
+			infodrivesresp->set_status(d->get_status());
+			infodrivesresp->set_busy(d->isBusy());
 
 			try {
 				command->send();
@@ -590,17 +590,17 @@ void MessageParser::infoTapesMessage(long key, LTFSDmCommServer *command)
 
 	{
 		std::lock_guard<std::mutex> lock(inventory->mtx);
-		for (OpenLTFSCartridge i : inventory->getCartridges()) {
+		for (std::shared_ptr<OpenLTFSCartridge> c : inventory->getCartridges()) {
 			LTFSDmProtocol::LTFSDmInfoTapesResp *infotapesresp = command->mutable_infotapesresp();
 
-			infotapesresp->set_id(i.GetObjectID());
-			infotapesresp->set_slot(i.get_slot());
-			infotapesresp->set_totalcap(i.get_total_cap());
-			infotapesresp->set_remaincap(i.get_remaining_cap());
-			infotapesresp->set_status(i.get_status());
-			infotapesresp->set_inprogress(i.getInProgress());
-			infotapesresp->set_pool(i.getPool());
-			switch ( i.getState() ) {
+			infotapesresp->set_id(c->GetObjectID());
+			infotapesresp->set_slot(c->get_slot());
+			infotapesresp->set_totalcap(c->get_total_cap());
+			infotapesresp->set_remaincap(c->get_remaining_cap());
+			infotapesresp->set_status(c->get_status());
+			infotapesresp->set_inprogress(c->getInProgress());
+			infotapesresp->set_pool(c->getPool());
+			switch ( c->getState() ) {
 				case OpenLTFSCartridge::INUSE: state = messages[LTFSDMS0055I]; break;
 				case OpenLTFSCartridge::MOUNTED: state = messages[LTFSDMS0056I]; break;
 				case OpenLTFSCartridge::MOVING: state = messages[LTFSDMS0057I]; break;
@@ -830,7 +830,7 @@ void MessageParser::infoPoolsMessage(long key, LTFSDmCommServer *command)
 
 	{
 		std::lock_guard<std::mutex> lock(inventory->mtx);
-		for (OpenLTFSPool pool : inventory->getPools()) {
+		for (std::shared_ptr<OpenLTFSPool> pool : inventory->getPools()) {
 			int numCartridges = 0;
 			unsigned long total = 0;
 			unsigned long free = 0;
@@ -838,14 +838,14 @@ void MessageParser::infoPoolsMessage(long key, LTFSDmCommServer *command)
 
 			LTFSDmProtocol::LTFSDmInfoPoolsResp *infopoolsresp = command->mutable_infopoolsresp();
 
-			for (OpenLTFSCartridge cartridge : pool.getCartridges()) {
+			for (std::shared_ptr<OpenLTFSCartridge> c : pool->getCartridges()) {
 				numCartridges++;
-				total += cartridge.get_total_cap();
-				free += cartridge.get_remaining_cap();
+				total += c->get_total_cap();
+				free += c->get_remaining_cap();
 				// unref?
 			}
 
-			infopoolsresp->set_poolname(pool.getPoolName());
+			infopoolsresp->set_poolname(pool->getPoolName());
 			infopoolsresp->set_total(total);
 			infopoolsresp->set_free(free);
 			infopoolsresp->set_unref(unref);

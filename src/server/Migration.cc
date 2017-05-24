@@ -65,9 +65,10 @@ void Migration::addJob(std::string fileName)
 					bool tapeFound = false;
 					for ( std::string pool : pools ) {
 						std::lock_guard<std::mutex> lock(inventory->mtx);
-						std::list<OpenLTFSCartridge> carts = inventory->getPool(pool)->getCartridges();
-						for ( OpenLTFSCartridge cart : carts ) {
-							if ( cart.GetObjectID().compare(attr.tapeId[i]) == 0 ) {
+						std::list<std::shared_ptr<OpenLTFSCartridge>> carts
+							= inventory->getPool(pool)->getCartridges();
+						for ( std::shared_ptr<OpenLTFSCartridge> cart : carts ) {
+							if ( cart->GetObjectID().compare(attr.tapeId[i]) == 0 ) {
 								tapeFound = true;
 								break;
 							}
@@ -161,13 +162,15 @@ void Migration::addRequest()
 		ssql.str("");
 		ssql.clear();
 
-		if ( needsTape ) {
-			std::lock_guard<std::mutex> lock(inventory->mtx);
-			tapeId = inventory->getPool(pool)->getCartridges().front().GetObjectID();
-		}
-		else {
-			tapeId = "";
-		}
+		// if ( needsTape ) {
+		// 	std::lock_guard<std::mutex> lock(inventory->mtx);
+		// 	tapeId = inventory->getPool(pool)->getCartridges()->front().GetObjectID();
+		// }
+		// else {
+		// 	tapeId = "";
+		// }
+
+		tapeId = "";
 
 		ssql  << "INSERT INTO REQUEST_QUEUE (OPERATION, REQ_NUM, TARGET_STATE, "
 			  << "NUM_REPL, REPL_NUM, TAPE_POOL, TAPE_ID, TIME_ADDED, STATE) "
@@ -560,9 +563,15 @@ void Migration::execRequest(int reqNumber, int targetState, int numRepl,
 
 		std::lock_guard<std::mutex> lock(inventory->mtx);
 		inventory->getCartridge(tapeId)->setState(OpenLTFSCartridge::MOUNTED);
-
+		bool found = false;
+		for ( std::shared_ptr<OpenLTFSDrive> d : inventory->getDrives() ) {
+			if ( d->get_slot() == inventory->getCartridge(tapeId)->get_slot() ) {
+				d->setFree();
+				found = true;
+			}
+		}
+		assert(found == true);
 		Scheduler::cond.notify_one();
-
 	}
 
 	if ( !failed && targetState != LTFSDmProtocol::LTFSDmMigRequest::PREMIGRATED )

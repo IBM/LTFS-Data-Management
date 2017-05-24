@@ -369,6 +369,19 @@ void SelRecall::execRequest(int reqNumber, int tgtState, std::string tapeId, boo
 		inventory->getCartridge(tapeId)->setState(OpenLTFSCartridge::MOUNTED);
 	}
 
+	{
+		std::lock_guard<std::mutex> inventorylock(inventory->mtx);
+		inventory->getCartridge(tapeId)->setState(OpenLTFSCartridge::MOUNTED);
+		bool found = false;
+		for ( std::shared_ptr<OpenLTFSDrive> d : inventory->getDrives() ) {
+			if ( d->get_slot() == inventory->getCartridge(tapeId)->get_slot() ) {
+				d->setFree();
+				found = true;
+			}
+		}
+		assert(found == true);
+	}
+
 	std::unique_lock<std::mutex> updlock(Scheduler::updmtx);
 
 	ssql.str("");
@@ -381,4 +394,5 @@ void SelRecall::execRequest(int reqNumber, int tgtState, std::string tapeId, boo
 
 	Scheduler::updReq[reqNumber] = true;
 	Scheduler::updcond.notify_all();
+	Scheduler::cond.notify_one();
 }

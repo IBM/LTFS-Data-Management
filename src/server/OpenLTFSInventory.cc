@@ -12,8 +12,8 @@ void OpenLTFSInventory::writePools()
 		for ( std::shared_ptr<OpenLTFSPool>  pool : pools ) {
 			first = true;
 			conffiletmp << pool->getPoolName() << std::endl;
-			for ( OpenLTFSCartridge cartridge : pool->getCartridges() ) {
-				conffiletmp << (first ? "" : " ") << cartridge.GetObjectID();
+			for ( std::shared_ptr<OpenLTFSCartridge> cartridge : pool->getCartridges() ) {
+				conffiletmp << (first ? "" : " ") << cartridge->GetObjectID();
 				first = false;
 			}
 			conffiletmp << std::endl;
@@ -116,15 +116,10 @@ OpenLTFSInventory::OpenLTFSInventory()
 	inventorize();
 }
 
-std::list<OpenLTFSDrive> OpenLTFSInventory::getDrives()
+std::list<std::shared_ptr<OpenLTFSDrive>> OpenLTFSInventory::getDrives()
 
 {
-	std::list<OpenLTFSDrive> driveids;
-
-	for ( std::shared_ptr<OpenLTFSDrive> drive : drives )
-		driveids.push_back(*drive);
-
-	return driveids;
+	return drives;
 }
 
 std::shared_ptr<OpenLTFSDrive> OpenLTFSInventory::getDrive(std::string driveid)
@@ -137,15 +132,10 @@ std::shared_ptr<OpenLTFSDrive> OpenLTFSInventory::getDrive(std::string driveid)
 	return nullptr;
 }
 
-std::list<OpenLTFSCartridge> OpenLTFSInventory::getCartridges()
+std::list<std::shared_ptr<OpenLTFSCartridge>> OpenLTFSInventory::getCartridges()
 
 {
-	std::list<OpenLTFSCartridge> crtds;
-
-	for ( std::shared_ptr<OpenLTFSCartridge> cartridge : cartridges )
-		crtds.push_back(*cartridge);
-
-	return crtds;
+	return cartridges;
 }
 
 std::shared_ptr<OpenLTFSCartridge> OpenLTFSInventory::getCartridge(std::string cartridgeid)
@@ -159,15 +149,10 @@ std::shared_ptr<OpenLTFSCartridge> OpenLTFSInventory::getCartridge(std::string c
 }
 
 
-std::list<OpenLTFSPool> OpenLTFSInventory::getPools()
+std::list<std::shared_ptr<OpenLTFSPool>> OpenLTFSInventory::getPools()
 
 {
-	std::list<OpenLTFSPool> pls;
-
-	for ( std::shared_ptr<OpenLTFSPool> pool: pools )
-		pls.push_back(*pool);
-
-	return pls;
+	return pools;
 }
 
 std::shared_ptr<OpenLTFSPool> OpenLTFSInventory::getPool(std::string poolname)
@@ -258,11 +243,13 @@ void OpenLTFSInventory::poolRemove(std::string poolname, std::string cartridgeid
 void OpenLTFSInventory::mount(std::string driveid, std::string cartridgeid)
 
 {
+	MSG(LTFSDMS0068I, cartridgeid, driveid);
+
 	std::shared_ptr<OpenLTFSCartridge> ctg = nullptr;
 	std::shared_ptr<OpenLTFSDrive> drv = nullptr;
 
 	{
-		std::lock_guard<std::mutex> llck(mtx);
+		std::lock_guard<std::mutex> lock(mtx);
 		for ( std::shared_ptr<OpenLTFSCartridge> cartridge : cartridges )
 			if ( cartridge->GetObjectID().compare(cartridgeid) == 0 )
 				ctg = cartridge;
@@ -274,33 +261,39 @@ void OpenLTFSInventory::mount(std::string driveid, std::string cartridgeid)
 			if ( drive->GetObjectID().compare(driveid) == 0 )
 				drv = drive;
 
-		if ( drv == nullptr || drv->isBusy() == true )
+		if ( drv == nullptr )
 			throw(Error::LTFSDM_GENERAL_ERROR);
 
 		ctg->setState(OpenLTFSCartridge::MOVING);
-		drv->setBusy();
 	}
 
 	ctg->Mount(driveid);
 
 	{
-		std::lock_guard<std::mutex> llck(mtx);
+		std::lock_guard<std::mutex> lock(mtx);
 
 		ctg->update(sess);
 		ctg->setState(OpenLTFSCartridge::MOUNTED);
 		drv->setFree();
 	}
+
+	MSG(LTFSDMS0069I, cartridgeid, driveid);
+
+	std::unique_lock<std::mutex> updlock(Scheduler::mtx);
+	Scheduler::cond.notify_one();
 }
 
 void OpenLTFSInventory::unmount(std::string cartridgeid)
 
 {
+	MSG(LTFSDMS0070I, cartridgeid);
+
 	std::shared_ptr<OpenLTFSCartridge> ctg = nullptr;
 	std::shared_ptr<OpenLTFSDrive> drv = nullptr;
 	int slot = Const::UNSET;
 
 	{
-		std::lock_guard<std::mutex> llck(mtx);
+		std::lock_guard<std::mutex> lock(mtx);
 		for ( std::shared_ptr<OpenLTFSCartridge> cartridge : cartridges )
 			if ( cartridge->GetObjectID().compare(cartridgeid) == 0 )
 				ctg = cartridge;
@@ -315,22 +308,26 @@ void OpenLTFSInventory::unmount(std::string cartridgeid)
 			}
 		}
 
-		if ( drv->isBusy() == true  || slot == Const::UNSET )
+		if ( slot == Const::UNSET )
 			throw(Error::LTFSDM_GENERAL_ERROR);
 
 		ctg->setState(OpenLTFSCartridge::MOVING);
-		drv->setBusy();
 	}
 
 	ctg->Unmount();
 
 	{
-		std::lock_guard<std::mutex> llck(mtx);
+		std::lock_guard<std::mutex> lock(mtx);
 
 		ctg->update(sess);
 		ctg->setState(OpenLTFSCartridge::UNMOUNTED);
 		drv->setFree();
 	}
+
+	MSG(LTFSDMS0071I, cartridgeid);
+
+	std::unique_lock<std::mutex> updlock(Scheduler::mtx);
+	Scheduler::cond.notify_one();
 }
 
 void OpenLTFSInventory::format(std::string cartridgeid)

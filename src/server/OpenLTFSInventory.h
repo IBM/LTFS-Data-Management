@@ -45,7 +45,7 @@ public:
 	std::string getPoolName() { return poolName; }
 	void add(std::shared_ptr<OpenLTFSCartridge> cartridge);
 	void remove(std::shared_ptr<OpenLTFSCartridge> cartridge);
-	std::list<OpenLTFSCartridge> getCartridges();
+	std::list<std::shared_ptr<OpenLTFSCartridge>> getCartridges();
 };
 
 class OpenLTFSInventory {
@@ -63,11 +63,11 @@ public:
 
 	void inventorize();
 
-	std::list<OpenLTFSDrive> getDrives();
+	std::list<std::shared_ptr<OpenLTFSDrive>> getDrives();
 	std::shared_ptr<OpenLTFSDrive> getDrive(std::string driveid);
-	std::list<OpenLTFSCartridge> getCartridges();
+	std::list<std::shared_ptr<OpenLTFSCartridge>> getCartridges();
 	std::shared_ptr<OpenLTFSCartridge> getCartridge(std::string cartridgeid);
-	std::list<OpenLTFSPool> getPools();
+	std::list<std::shared_ptr<OpenLTFSPool>> getPools();
 	std::shared_ptr<OpenLTFSPool> getPool(std::string poolname);
 
 	void poolCreate(std::string poolname);

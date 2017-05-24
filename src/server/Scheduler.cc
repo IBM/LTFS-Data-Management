@@ -41,6 +41,139 @@ std::string Scheduler::getTapeName(unsigned long long fsid, unsigned int igen,
 	return tapeName.str();
 }
 
+bool Scheduler::poolResAvail()
+
+{
+	bool found;
+
+	assert(pool.compare("") != 0 );
+
+	for ( std::shared_ptr<OpenLTFSCartridge> card : inventory->getPool(pool)->getCartridges() ) {
+		if ( card->getState() == OpenLTFSCartridge::MOUNTED ) {
+			tapeId = card->GetObjectID();
+			found = false;
+			for ( std::shared_ptr<OpenLTFSDrive> drive : inventory->getDrives() ) {
+				if ( drive->get_slot() == card->get_slot() ) {
+					assert(drive->isBusy() == false);
+					drive->setBusy();
+					found = true;
+					break;
+				}
+			}
+			assert(found == true );
+			return true;
+		}
+	}
+
+	for ( std::shared_ptr<OpenLTFSDrive> drive : inventory->getDrives() ) {
+		if ( drive->isBusy() == true )
+			continue;
+		found = false;
+		for ( std::shared_ptr<OpenLTFSCartridge> card : inventory->getCartridges() ) {
+			if ( (drive->get_slot() == card->get_slot()) &&
+				 (card->getState() == OpenLTFSCartridge::MOUNTED)) {
+				found = true;
+				break;
+			}
+		}
+		if ( found == false ) {
+			for ( std::shared_ptr<OpenLTFSCartridge> card : inventory->getPool(pool)->getCartridges() ) {
+				if ( card->getState() == OpenLTFSCartridge::UNMOUNTED ) {
+					drive->setBusy();
+					std::thread t(mount, drive->GetObjectID(), card->GetObjectID());
+					t.detach();
+					return false;
+				}
+			}
+		}
+	}
+
+	for ( std::shared_ptr<OpenLTFSDrive> drive : inventory->getDrives() ) {
+		if ( drive->isBusy() == true )
+			continue;
+		for ( std::shared_ptr<OpenLTFSCartridge> card : inventory->getCartridges() ) {
+			if ( (drive->get_slot() == card->get_slot()) &&
+				 (card->getState() == OpenLTFSCartridge::MOUNTED)) {
+				drive->setBusy();
+				std::thread t(unmount, card->GetObjectID());
+				t.detach();
+				return false;
+			}
+		}
+	}
+
+	return false;
+}
+
+
+bool Scheduler::tapeResAvail()
+
+{
+	bool found;
+
+	assert(tapeId.compare("") != 0 );
+
+	if ( inventory->getCartridge(tapeId)->getState() == OpenLTFSCartridge::MOUNTED ) {
+		found = false;
+		for ( std::shared_ptr<OpenLTFSDrive> drive : inventory->getDrives() ) {
+			if ( drive->get_slot() == inventory->getCartridge(tapeId)->get_slot() ) {
+				assert(drive->isBusy() == false);
+				drive->setBusy();
+				found = true;
+				break;
+			}
+		}
+		assert(found == true );
+		return true;
+	}
+
+	for ( std::shared_ptr<OpenLTFSDrive> drive : inventory->getDrives() ) {
+		if ( drive->isBusy() == true )
+			continue;
+		found = false;
+		for ( std::shared_ptr<OpenLTFSCartridge> card : inventory->getCartridges() ) {
+			if ( (drive->get_slot() == card->get_slot()) &&
+				 (card->getState() == OpenLTFSCartridge::MOUNTED)) {
+				found = true;
+				break;
+			}
+		}
+		if ( found == false ) {
+			if ( inventory->getCartridge(tapeId)->getState() == OpenLTFSCartridge::UNMOUNTED ) {
+				drive->setBusy();
+				std::thread t(mount, drive->GetObjectID(), tapeId);
+				t.detach();
+				return false;
+			}
+		}
+	}
+
+	for ( std::shared_ptr<OpenLTFSDrive> drive : inventory->getDrives() ) {
+		if ( drive->isBusy() == true )
+			continue;
+		for ( std::shared_ptr<OpenLTFSCartridge> card : inventory->getCartridges() ) {
+			if ( (drive->get_slot() == card->get_slot()) &&
+				 (card->getState() == OpenLTFSCartridge::MOUNTED)) {
+				drive->setBusy();
+				std::thread t(unmount, card->GetObjectID());
+				t.detach();
+				return false;
+			}
+		}
+	}
+
+	return false;
+}
+
+
+bool Scheduler::resAvail()
+
+{
+	if ( op == DataBase::MIGRATION )
+		return poolResAvail();
+	else
+		return tapeResAvail();
+}
 
 long Scheduler::getStartBlock(std::string tapeName)
 
@@ -78,9 +211,9 @@ void Scheduler::run(long key)
 	SubServer subs;
 	int rc;
 
-	std::vector<std::string> tapeIds = LTFSDM::getTapeIds();
-	for(auto const& tapeId: tapeIds)
-		suspend_map[tapeId] = false;
+	// std::vector<std::string> tapeIds = LTFSDM::getTapeIds();
+	// for(auto const& tapeId: tapeIds)
+	// 	suspend_map[tapeId] = false;
 
 	while (true) {
 		cond.wait(lock);
@@ -99,51 +232,54 @@ void Scheduler::run(long key)
 		sqlite3_statement::prepare(ssql.str(), &stmt);
 
 		while ( (rc = sqlite3_statement::step(stmt)) == SQLITE_ROW ) {
-			const char *tape_id = reinterpret_cast<const char*>(sqlite3_column_text (stmt, 6));
-			if (tape_id == NULL) {
-				MSG(LTFSDMS0020E);
-				continue;
-			}
-			std::string tapeId = std::string(tape_id);
+			op = static_cast<DataBase::operation>(sqlite3_column_int(stmt, 0));
 
+			/* needs to be changed/moved
 			{
 				std::lock_guard<std::mutex> lock(inventory->mtx);
 				OpenLTFSCartridge::state_t state = inventory->getCartridge(tapeId)->getState();
 				if ( state == OpenLTFSCartridge::INUSE ) {
-					if ( sqlite3_column_int(stmt, 0) == DataBase::SELRECALL ||
-						 sqlite3_column_int(stmt, 0) == DataBase::TRARECALL) {
+					if ( op == DataBase::SELRECALL ||
+						 op == DataBase::TRARECALL) {
 						suspend_map[tapeId] = true;
 					}
 					continue;
 				}
 				inventory->getCartridge(tapeId)->setState(OpenLTFSCartridge::INUSE);
 			}
+			*/
 
-			sqlite3_stmt *stmt3;
-
-			int reqNum = sqlite3_column_int(stmt, 1);
-			int tgtState = sqlite3_column_int(stmt, 2);
-			int numRepl = sqlite3_column_int(stmt, 3);
-			int replNum = sqlite3_column_int(stmt, 4);
-
-			int colGrp = sqlite3_column_int(stmt, 5);
-
-			std::string pool = "";
+			reqNum = sqlite3_column_int(stmt, 1);
+			tgtState = sqlite3_column_int(stmt, 2);
+			numRepl = sqlite3_column_int(stmt, 3);
+			replNum = sqlite3_column_int(stmt, 4);
 			const char *pool_ctr = reinterpret_cast<const char*>(sqlite3_column_text (stmt, 5));
 			if ( pool_ctr != NULL)
 				pool = std::string(pool_ctr);
+			else
+				pool = "";
+			const char *tape_id = reinterpret_cast<const char*>(sqlite3_column_text (stmt, 6));
+			if (tape_id == NULL) {
+				MSG(LTFSDMS0020E);
+				continue;
+			}
+			tapeId = std::string(tape_id);
+
+			std::lock_guard<std::mutex> lock(inventory->mtx);
+
+			if ( resAvail() == false )
+				continue;
 
 			TRACE(Trace::little, reqNum);
 			TRACE(Trace::little, tgtState);
 			TRACE(Trace::little, numRepl);
 			TRACE(Trace::little, replNum);
-			TRACE(Trace::little, colGrp);
 			TRACE(Trace::little, pool);
 
-
 			std::stringstream thrdinfo;
+			sqlite3_stmt *stmt3;
 
-			switch (sqlite3_column_int(stmt, 0)) {
+			switch ( op ) {
 				case DataBase::MIGRATION:
 					ssql.str("");
 					ssql.clear();
@@ -155,7 +291,7 @@ void Scheduler::run(long key)
 					rc = sqlite3_statement::step(stmt3);
 					sqlite3_statement::checkRcAndFinalize(stmt3, rc, SQLITE_DONE);
 
-					thrdinfo << "Mig(" << reqNum << "," << replNum << "," << colGrp << ")";
+					thrdinfo << "Mig(" << reqNum << "," << replNum << "," << pool << ")";
 					subs.enqueue(thrdinfo.str(), Migration::execRequest, reqNum, tgtState, numRepl, replNum, pool, tapeId, true /* needsTape */);
 					break;
 				case DataBase::SELRECALL:

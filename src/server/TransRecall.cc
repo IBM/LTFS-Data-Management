@@ -399,6 +399,19 @@ void TransRecall::execRequest(int reqNum, std::string tapeId)
 				remaining = sqlite3_column_int(stmt, 1);
 	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 
+	{
+		std::lock_guard<std::mutex> inventorylock(inventory->mtx);
+		inventory->getCartridge(tapeId)->setState(OpenLTFSCartridge::MOUNTED);
+		bool found = false;
+		for ( std::shared_ptr<OpenLTFSDrive> d : inventory->getDrives() ) {
+			if ( d->get_slot() == inventory->getCartridge(tapeId)->get_slot() ) {
+				d->setFree();
+				found = true;
+			}
+		}
+		assert(found == true);
+	}
+
 	ssql.str("");
 	ssql.clear();
 	ssql << "UPDATE REQUEST_QUEUE SET STATE=" << (remaining ? DataBase::REQ_NEW : DataBase::REQ_COMPLETED )

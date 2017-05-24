@@ -38,13 +38,8 @@ void OpenLTFSPool::remove(std::shared_ptr<OpenLTFSCartridge> cartridge)
 	throw(Error::LTFSDM_TAPE_NOT_EXISTS_IN_POOL);
 }
 
-std::list<OpenLTFSCartridge> OpenLTFSPool::getCartridges()
+std::list<std::shared_ptr<OpenLTFSCartridge>> OpenLTFSPool::getCartridges()
 
 {
-	std::list<OpenLTFSCartridge> ctds;
-
-	for ( std::shared_ptr<OpenLTFSCartridge> i : cartridges )
-		ctds.push_back(*i);
-
-	return ctds;
+	return cartridges;
 }

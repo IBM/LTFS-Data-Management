@@ -52,8 +52,7 @@
 #include "SelRecall.h"
 #include "TransRecall.h"
 #include "WorkQueue.h"
-#include "Scheduler.h"
 #include "OpenLTFSInventory.h"
-
+#include "Scheduler.h"
 
 #endif /* _SERVERINCLUDES_H */

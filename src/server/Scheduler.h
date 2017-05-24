@@ -4,6 +4,17 @@
 class Scheduler
 
 {
+private:
+	DataBase::operation op;
+	int reqNum;
+	int tgtState;
+	int numRepl;
+	int replNum;
+	std::string tapeId;
+	std::string pool;
+	bool poolResAvail();
+	bool tapeResAvail();
+	bool resAvail();
 public:
 	static std::mutex mtx;
 	static std::condition_variable cond;
@@ -15,6 +26,14 @@ public:
 	static std::string getTapeName(unsigned long long fsid, unsigned int igen,
 								   unsigned long long ino, std::string tapeId);
 	static long getStartBlock(std::string tapeName);
+	static void mount(std::string driveid, std::string cartridgeid)
+	{
+		inventory->mount(driveid, cartridgeid);
+	}
+	static void unmount(std::string cartridgeid)
+	{
+		inventory->unmount(cartridgeid);
+	}
 	Scheduler() {}
 	~Scheduler() {};
 	void run(long key);
