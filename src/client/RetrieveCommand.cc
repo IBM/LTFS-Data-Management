@@ -55,8 +55,14 @@ void RetrieveCommand::doCommand(int argc, char **argv)
 
 	const LTFSDmProtocol::LTFSDmRetrieveResp retrieveresp = commCommand.retrieveresp();
 
-	if( retrieveresp.success() == false ) {
-		MSG(LTFSDMC0094E);
-		throw(Error::LTFSDM_GENERAL_ERROR);
+	switch ( retrieveresp.error() ) {
+		case Error::LTFSDM_DRIVE_BUSY:
+			MSG(LTFSDMC0095I);
+			break;
+		case Error::LTFSDM_OK:
+			break;
+		default:
+			MSG(LTFSDMC0094E);
+			throw(Error::LTFSDM_GENERAL_ERROR);
 	}
 }

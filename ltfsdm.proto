@@ -211,7 +211,7 @@ message LTFSDmRetrieveRequest {
 }
 
 message LTFSDmRetrieveResp {
-	required bool success = 1;
+	required int64 error = 1;
 }
 
 message Command {

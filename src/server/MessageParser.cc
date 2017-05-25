@@ -881,7 +881,7 @@ void MessageParser::retrieveMessage(long key, LTFSDmCommServer *command)
 {
    	const LTFSDmProtocol::LTFSDmRetrieveRequest retrievereq = command->retrieverequest();
 	long keySent = retrievereq.key();
-	bool success = true;
+	int error = Error::LTFSDM_OK;
 
 	TRACE(Trace::little, keySent);
 	TRACE(Trace::error, __PRETTY_FUNCTION__);
@@ -895,13 +895,13 @@ void MessageParser::retrieveMessage(long key, LTFSDmCommServer *command)
 		std::lock_guard<std::mutex> lck(inventory->mtx);
 		inventory->inventorize();
 	}
-	catch(int error) {
-		success = false;
+	catch(int err) {
+		error = err;
 	}
 
 	LTFSDmProtocol::LTFSDmRetrieveResp *retrieveresp = command->mutable_retrieveresp();
 
-	retrieveresp->set_success(success);
+	retrieveresp->set_error(error);
 
 	try {
 		command->send();

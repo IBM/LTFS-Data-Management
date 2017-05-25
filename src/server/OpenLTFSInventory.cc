@@ -33,6 +33,10 @@ void OpenLTFSInventory::inventorize()
 	std::string line;
 	int rc;
 
+	for ( std::shared_ptr<OpenLTFSDrive> d : drives )
+		if ( d->isBusy() == true )
+			throw(Error::LTFSDM_DRIVE_BUSY);
+
 	drives.clear();
 	cartridges.clear();
 	pools.clear();
