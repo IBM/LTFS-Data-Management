@@ -378,6 +378,7 @@ void SelRecall::execRequest(int reqNumber, int tgtState, std::string tapeId, boo
 				TRACE(Trace::always, std::string("SET FREE: ") + d->GetObjectID());
 				d->setFree();
 				found = true;
+				break;
 			}
 		}
 		assert(found == true);

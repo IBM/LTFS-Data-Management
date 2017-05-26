@@ -569,6 +569,7 @@ void Migration::execRequest(int reqNumber, int targetState, int numRepl,
 				TRACE(Trace::always, std::string("SET FREE: ") + d->GetObjectID());
 				d->setFree();
 				found = true;
+				break;
 			}
 		}
 		assert(found == true);

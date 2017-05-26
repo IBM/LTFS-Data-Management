@@ -408,6 +408,7 @@ void TransRecall::execRequest(int reqNum, std::string tapeId)
 				TRACE(Trace::always, std::string("SET FREE: ") + d->GetObjectID());
 				d->setFree();
 				found = true;
+				break;
 			}
 		}
 		assert(found == true);
