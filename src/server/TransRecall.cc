@@ -417,6 +417,7 @@ void TransRecall::execRequest(int reqNum, std::string tapeId)
 	ssql.str("");
 	ssql.clear();
 	ssql << "UPDATE REQUEST_QUEUE SET STATE=" << (remaining ? DataBase::REQ_NEW : DataBase::REQ_COMPLETED )
+		 << ", TIME_ADDED=" << time(NULL)
 		 << " WHERE REQ_NUM=" << reqNum << " AND TAPE_ID='" << tapeId << "';";
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 	rc = sqlite3_statement::step(stmt);

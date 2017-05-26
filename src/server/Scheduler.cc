@@ -82,6 +82,7 @@ bool Scheduler::poolResAvail()
 				if ( card->getState() == OpenLTFSCartridge::UNMOUNTED ) {
 					TRACE(Trace::always, std::string("SET BUSY: ") + drive->GetObjectID());
 					drive->setBusy();
+					drive->setUnmountReqNum(reqNum);
 					card->setState(OpenLTFSCartridge::MOVING);
 					std::thread t(mount, drive->GetObjectID(), card->GetObjectID());
 					t.detach();
@@ -91,6 +92,10 @@ bool Scheduler::poolResAvail()
 		}
 	}
 
+	for ( std::shared_ptr<OpenLTFSDrive> drive : inventory->getDrives() )
+		if ( drive->getUnmountReqNum() == reqNum )
+			return false;
+
 	for ( std::shared_ptr<OpenLTFSDrive> drive : inventory->getDrives() ) {
 		if ( drive->isBusy() == true )
 			continue;
@@ -99,6 +104,7 @@ bool Scheduler::poolResAvail()
 				 (card->getState() == OpenLTFSCartridge::MOUNTED)) {
 				TRACE(Trace::always, std::string("SET BUSY: ") + drive->GetObjectID());
 				drive->setBusy();
+				drive->setUnmountReqNum(reqNum);
 				card->setState(OpenLTFSCartridge::MOVING);
 				std::thread t(unmount, drive->GetObjectID(), card->GetObjectID());
 				t.detach();
@@ -149,6 +155,7 @@ bool Scheduler::tapeResAvail()
 			if ( inventory->getCartridge(tapeId)->getState() == OpenLTFSCartridge::UNMOUNTED ) {
 				TRACE(Trace::always, std::string("SET BUSY: ") + drive->GetObjectID());
 				drive->setBusy();
+				drive->setUnmountReqNum(reqNum);
 				inventory->getCartridge(tapeId)->setState(OpenLTFSCartridge::MOVING);
 				std::thread t(mount, drive->GetObjectID(), tapeId);
 				t.detach();
@@ -156,6 +163,10 @@ bool Scheduler::tapeResAvail()
 			}
 		}
 	}
+
+	for ( std::shared_ptr<OpenLTFSDrive> drive : inventory->getDrives() )
+		if ( drive->getUnmountReqNum() == reqNum )
+			return false;
 
 	for ( std::shared_ptr<OpenLTFSDrive> drive : inventory->getDrives() ) {
 		if ( drive->isBusy() == true )
@@ -165,6 +176,7 @@ bool Scheduler::tapeResAvail()
 				 (card->getState() == OpenLTFSCartridge::MOUNTED)) {
 				TRACE(Trace::always, std::string("SET BUSY: ") + drive->GetObjectID());
 				drive->setBusy();
+				drive->setUnmountReqNum(reqNum);
 				card->setState(OpenLTFSCartridge::MOVING);
 				std::thread t(unmount, drive->GetObjectID(), card->GetObjectID());
 				t.detach();
@@ -238,7 +250,7 @@ void Scheduler::run(long key)
 		ssql << "SELECT OPERATION, REQ_NUM, TARGET_STATE, NUM_REPL,"
 			 << " REPL_NUM, TAPE_POOL, TAPE_ID"
 			 << " FROM REQUEST_QUEUE WHERE STATE=" << DataBase::REQ_NEW
-			 << " ORDER BY OPERATION,REQ_NUM;";
+			 << " ORDER BY OPERATION,TIME_ADDED ASC;";
 
 		sqlite3_statement::prepare(ssql.str(), &stmt);
 

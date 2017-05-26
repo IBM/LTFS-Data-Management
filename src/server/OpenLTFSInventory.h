@@ -4,13 +4,17 @@
 class OpenLTFSDrive : public ltfsadmin::Drive {
 private:
 	bool busy;
+	int umountReqNum;
 	WorkQueue<std::string, long, long, Migration::mig_info_t> *wqp;
 public:
-	OpenLTFSDrive(ltfsadmin::Drive drive) : ltfsadmin::Drive(drive), busy(false) {}
+    OpenLTFSDrive(ltfsadmin::Drive drive) : ltfsadmin::Drive(drive), busy(false), umountReqNum(Const::UNSET) {}
 	void update(std::shared_ptr<LTFSAdminSession> sess);
 	bool isBusy() { return busy; }
 	void setBusy() { busy = true; }
 	void setFree() { busy = false; }
+	void setUnmountReqNum(int reqnum) { umountReqNum = reqnum; }
+	int getUnmountReqNum() { return umountReqNum; }
+	void unsetUnmountReqNum() { umountReqNum = Const::UNSET; }
 };
 
 class OpenLTFSCartridge : public ltfsadmin::Cartridge {

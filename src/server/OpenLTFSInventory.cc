@@ -267,6 +267,7 @@ void OpenLTFSInventory::mount(std::string driveid, std::string cartridgeid)
 		cartridge->setState(OpenLTFSCartridge::MOUNTED);
 		TRACE(Trace::always, std::string("SET FREE: ") + drive->GetObjectID());
 		drive->setFree();
+		drive->unsetUnmountReqNum();
 	}
 
 	MSG(LTFSDMS0069I, cartridgeid, driveid);
@@ -299,6 +300,7 @@ void OpenLTFSInventory::unmount(std::string driveid, std::string cartridgeid)
 		cartridge->setState(OpenLTFSCartridge::UNMOUNTED);
 		TRACE(Trace::always, std::string("SET FREE: ") + drive->GetObjectID());
 		drive->setFree();
+		drive->unsetUnmountReqNum();
 	}
 
 	MSG(LTFSDMS0071I, cartridgeid);
