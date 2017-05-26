@@ -30,9 +30,9 @@ public:
 	{
 		inventory->mount(driveid, cartridgeid);
 	}
-	static void unmount(std::string cartridgeid)
+	static void unmount(std::string driveid, std::string cartridgeid)
 	{
-		inventory->unmount(cartridgeid);
+		inventory->unmount(driveid, cartridgeid);
 	}
 	Scheduler() {}
 	~Scheduler() {};

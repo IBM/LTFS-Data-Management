@@ -55,6 +55,7 @@ bool Scheduler::poolResAvail()
 			for ( std::shared_ptr<OpenLTFSDrive> drive : inventory->getDrives() ) {
 				if ( drive->get_slot() == card->get_slot() ) {
 					assert(drive->isBusy() == false);
+					TRACE(Trace::always, std::string("SET BUSY: ") + drive->GetObjectID());
 					drive->setBusy();
 					found = true;
 					break;
@@ -79,7 +80,9 @@ bool Scheduler::poolResAvail()
 		if ( found == false ) {
 			for ( std::shared_ptr<OpenLTFSCartridge> card : inventory->getPool(pool)->getCartridges() ) {
 				if ( card->getState() == OpenLTFSCartridge::UNMOUNTED ) {
+					TRACE(Trace::always, std::string("SET BUSY: ") + drive->GetObjectID());
 					drive->setBusy();
+					card->setState(OpenLTFSCartridge::MOVING);
 					std::thread t(mount, drive->GetObjectID(), card->GetObjectID());
 					t.detach();
 					return false;
@@ -94,8 +97,10 @@ bool Scheduler::poolResAvail()
 		for ( std::shared_ptr<OpenLTFSCartridge> card : inventory->getCartridges() ) {
 			if ( (drive->get_slot() == card->get_slot()) &&
 				 (card->getState() == OpenLTFSCartridge::MOUNTED)) {
+				TRACE(Trace::always, std::string("SET BUSY: ") + drive->GetObjectID());
 				drive->setBusy();
-				std::thread t(unmount, card->GetObjectID());
+				card->setState(OpenLTFSCartridge::MOVING);
+				std::thread t(unmount, drive->GetObjectID(), card->GetObjectID());
 				t.detach();
 				return false;
 			}
@@ -118,7 +123,9 @@ bool Scheduler::tapeResAvail()
 		for ( std::shared_ptr<OpenLTFSDrive> drive : inventory->getDrives() ) {
 			if ( drive->get_slot() == inventory->getCartridge(tapeId)->get_slot() ) {
 				assert(drive->isBusy() == false);
+				TRACE(Trace::always, std::string("SET BUSY: ") + drive->GetObjectID());
 				drive->setBusy();
+
 				found = true;
 				break;
 			}
@@ -140,7 +147,9 @@ bool Scheduler::tapeResAvail()
 		}
 		if ( found == false ) {
 			if ( inventory->getCartridge(tapeId)->getState() == OpenLTFSCartridge::UNMOUNTED ) {
+				TRACE(Trace::always, std::string("SET BUSY: ") + drive->GetObjectID());
 				drive->setBusy();
+				inventory->getCartridge(tapeId)->setState(OpenLTFSCartridge::MOVING);
 				std::thread t(mount, drive->GetObjectID(), tapeId);
 				t.detach();
 				return false;
@@ -154,8 +163,10 @@ bool Scheduler::tapeResAvail()
 		for ( std::shared_ptr<OpenLTFSCartridge> card : inventory->getCartridges() ) {
 			if ( (drive->get_slot() == card->get_slot()) &&
 				 (card->getState() == OpenLTFSCartridge::MOUNTED)) {
+				TRACE(Trace::always, std::string("SET BUSY: ") + drive->GetObjectID());
 				drive->setBusy();
-				std::thread t(unmount, card->GetObjectID());
+				card->setState(OpenLTFSCartridge::MOVING);
+				std::thread t(unmount, drive->GetObjectID(), card->GetObjectID());
 				t.detach();
 				return false;
 			}

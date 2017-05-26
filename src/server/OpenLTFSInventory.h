@@ -76,7 +76,7 @@ public:
 	void poolRemove(std::string poolname, std::string cartridgeid);
 
 	void mount(std::string driveid, std::string cartridgeid);
-	void unmount(std::string cartridgeid);
+	void unmount(std::string driveid, std::string cartridgeid);
 	void format(std::string cartridgeid);
 	void check(std::string cartridgeid);
 };

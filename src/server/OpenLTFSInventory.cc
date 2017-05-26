@@ -249,36 +249,24 @@ void OpenLTFSInventory::mount(std::string driveid, std::string cartridgeid)
 {
 	MSG(LTFSDMS0068I, cartridgeid, driveid);
 
-	std::shared_ptr<OpenLTFSCartridge> ctg = nullptr;
-	std::shared_ptr<OpenLTFSDrive> drv = nullptr;
+	std::shared_ptr<OpenLTFSDrive> drive = inventory->getDrive(driveid);
+	std::shared_ptr<OpenLTFSCartridge> cartridge = inventory->getCartridge(cartridgeid);
 
-	{
-		std::lock_guard<std::mutex> lock(mtx);
-		for ( std::shared_ptr<OpenLTFSCartridge> cartridge : cartridges )
-			if ( cartridge->GetObjectID().compare(cartridgeid) == 0 )
-				ctg = cartridge;
+	assert(drive != nullptr);
+	assert(cartridge != nullptr);
 
-		if ( ctg == nullptr || ctg->getState() != OpenLTFSCartridge::UNMOUNTED )
-			throw(Error::LTFSDM_GENERAL_ERROR);
+	assert(drive->isBusy() == true);
+	assert(cartridge->getState() == OpenLTFSCartridge::MOVING);
 
-		for ( std::shared_ptr<OpenLTFSDrive> drive : drives )
-			if ( drive->GetObjectID().compare(driveid) == 0 )
-				drv = drive;
-
-		if ( drv == nullptr )
-			throw(Error::LTFSDM_GENERAL_ERROR);
-
-		ctg->setState(OpenLTFSCartridge::MOVING);
-	}
-
-	ctg->Mount(driveid);
+	cartridge->Mount(driveid);
 
 	{
 		std::lock_guard<std::mutex> lock(mtx);
 
-		ctg->update(sess);
-		ctg->setState(OpenLTFSCartridge::MOUNTED);
-		drv->setFree();
+		cartridge->update(sess);
+		cartridge->setState(OpenLTFSCartridge::MOUNTED);
+		TRACE(Trace::always, std::string("SET FREE: ") + drive->GetObjectID());
+		drive->setFree();
 	}
 
 	MSG(LTFSDMS0069I, cartridgeid, driveid);
@@ -287,45 +275,30 @@ void OpenLTFSInventory::mount(std::string driveid, std::string cartridgeid)
 	Scheduler::cond.notify_one();
 }
 
-void OpenLTFSInventory::unmount(std::string cartridgeid)
+void OpenLTFSInventory::unmount(std::string driveid, std::string cartridgeid)
 
 {
-	MSG(LTFSDMS0070I, cartridgeid);
+	MSG(LTFSDMS0070I, cartridgeid, driveid);
 
-	std::shared_ptr<OpenLTFSCartridge> ctg = nullptr;
-	std::shared_ptr<OpenLTFSDrive> drv = nullptr;
-	int slot = Const::UNSET;
+	std::shared_ptr<OpenLTFSDrive> drive = inventory->getDrive(driveid);
+	std::shared_ptr<OpenLTFSCartridge> cartridge = inventory->getCartridge(cartridgeid);
 
-	{
-		std::lock_guard<std::mutex> lock(mtx);
-		for ( std::shared_ptr<OpenLTFSCartridge> cartridge : cartridges )
-			if ( cartridge->GetObjectID().compare(cartridgeid) == 0 )
-				ctg = cartridge;
+	assert(drive != nullptr);
+	assert(cartridge != nullptr);
 
-		if ( ctg == nullptr || ctg->getState() != OpenLTFSCartridge::MOUNTED )
-			throw(Error::LTFSDM_GENERAL_ERROR);
+	assert(drive->isBusy() == true);
+	assert(cartridge->getState() == OpenLTFSCartridge::MOVING);
+	assert(drive->get_slot() == cartridge->get_slot());
 
-		for ( std::shared_ptr<OpenLTFSDrive> drive : drives ) {
-			if ( drive->get_slot() == ctg->get_slot() ) {
-				drv = drive;
-				slot = ctg->get_slot();
-			}
-		}
-
-		if ( slot == Const::UNSET )
-			throw(Error::LTFSDM_GENERAL_ERROR);
-
-		ctg->setState(OpenLTFSCartridge::MOVING);
-	}
-
-	ctg->Unmount();
+	cartridge->Unmount();
 
 	{
 		std::lock_guard<std::mutex> lock(mtx);
 
-		ctg->update(sess);
-		ctg->setState(OpenLTFSCartridge::UNMOUNTED);
-		drv->setFree();
+		cartridge->update(sess);
+		cartridge->setState(OpenLTFSCartridge::UNMOUNTED);
+		TRACE(Trace::always, std::string("SET FREE: ") + drive->GetObjectID());
+		drive->setFree();
 	}
 
 	MSG(LTFSDMS0071I, cartridgeid);

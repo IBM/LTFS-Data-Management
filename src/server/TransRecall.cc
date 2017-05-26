@@ -405,6 +405,7 @@ void TransRecall::execRequest(int reqNum, std::string tapeId)
 		bool found = false;
 		for ( std::shared_ptr<OpenLTFSDrive> d : inventory->getDrives() ) {
 			if ( d->get_slot() == inventory->getCartridge(tapeId)->get_slot() ) {
+				TRACE(Trace::always, std::string("SET FREE: ") + d->GetObjectID());
 				d->setFree();
 				found = true;
 			}

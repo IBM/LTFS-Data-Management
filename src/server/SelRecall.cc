@@ -375,6 +375,7 @@ void SelRecall::execRequest(int reqNumber, int tgtState, std::string tapeId, boo
 		bool found = false;
 		for ( std::shared_ptr<OpenLTFSDrive> d : inventory->getDrives() ) {
 			if ( d->get_slot() == inventory->getCartridge(tapeId)->get_slot() ) {
+				TRACE(Trace::always, std::string("SET FREE: ") + d->GetObjectID());
 				d->setFree();
 				found = true;
 			}
