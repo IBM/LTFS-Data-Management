@@ -15,6 +15,7 @@ private:
 	bool poolResAvail();
 	bool tapeResAvail();
 	bool resAvail();
+	SubServer subs;
 public:
 	static std::mutex mtx;
 	static std::condition_variable cond;

@@ -59,8 +59,8 @@ bool Scheduler::poolResAvail()
 					drive->setBusy();
 					found = true;
 					break;
-				}
-			}
+				}}
+
 			assert(found == true );
 			return true;
 		}
@@ -84,8 +84,8 @@ bool Scheduler::poolResAvail()
 					drive->setBusy();
 					drive->setUnmountReqNum(reqNum);
 					card->setState(OpenLTFSCartridge::MOVING);
-					std::thread t(mount, drive->GetObjectID(), card->GetObjectID());
-					t.detach();
+					subs.enqueue(std::string("m:") + card->GetObjectID(), mount,
+											 drive->GetObjectID(), card->GetObjectID());
 					return false;
 				}
 			}
@@ -106,8 +106,8 @@ bool Scheduler::poolResAvail()
 				drive->setBusy();
 				drive->setUnmountReqNum(reqNum);
 				card->setState(OpenLTFSCartridge::MOVING);
-				std::thread t(unmount, drive->GetObjectID(), card->GetObjectID());
-				t.detach();
+				subs.enqueue(std::string("unm:") + card->GetObjectID(), unmount,
+										 drive->GetObjectID(), card->GetObjectID());
 				return false;
 			}
 		}
@@ -157,8 +157,7 @@ bool Scheduler::tapeResAvail()
 				drive->setBusy();
 				drive->setUnmountReqNum(reqNum);
 				inventory->getCartridge(tapeId)->setState(OpenLTFSCartridge::MOVING);
-				std::thread t(mount, drive->GetObjectID(), tapeId);
-				t.detach();
+				subs.enqueue(std::string("m:") + tapeId, mount, drive->GetObjectID(), tapeId);
 				return false;
 			}
 		}
@@ -178,8 +177,8 @@ bool Scheduler::tapeResAvail()
 				drive->setBusy();
 				drive->setUnmountReqNum(reqNum);
 				card->setState(OpenLTFSCartridge::MOVING);
-				std::thread t(unmount, drive->GetObjectID(), card->GetObjectID());
-				t.detach();
+				subs.enqueue(std::string("unm:") + card->GetObjectID(), unmount,
+										 drive->GetObjectID(), card->GetObjectID());
 				return false;
 			}
 		}
@@ -231,7 +230,6 @@ void Scheduler::run(long key)
 	sqlite3_stmt *stmt;
 	std::stringstream ssql;
 	std::unique_lock<std::mutex> lock(mtx);
-	SubServer subs;
 	int rc;
 
 	// std::vector<std::string> tapeIds = LTFSDM::getTapeIds();
