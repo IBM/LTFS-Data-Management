@@ -23,16 +23,16 @@ public:
 	};
 
 private:
-	static unsigned long preMigrate(std::string tapeId, long secs, long nsecs, mig_info_t miginfo);
-	static void stub(mig_info_t mig_info);
 	static bool migrationStep(int reqNumber, int numRepl, int replNum, std::string tapeId, FsObj::file_state fromState, FsObj::file_state toState);
 public:
-Migration(unsigned long _pid, long _reqNumber, std::set<std::string> _pools,
+	Migration(unsigned long _pid, long _reqNumber, std::set<std::string> _pools,
 		  int _numReplica, LTFSDmProtocol::LTFSDmMigRequest::State _targetState) :
 	pid(_pid), reqNumber(_reqNumber), pools(_pools), numReplica(_numReplica),
 	    targetState(_targetState), jobnum(0) {}
 	void addJob(std::string fileName);
 	void addRequest();
+	static unsigned long preMigrate(std::string tapeId, long secs, long nsecs, mig_info_t miginfo);
+	static void stub(mig_info_t mig_info);
 	static void execRequest(int reqNumber, int targetState, int numRepl, int replNum,
 							std::string pool, std::string tapeId, bool needsTape);
 };

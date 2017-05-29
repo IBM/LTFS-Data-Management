@@ -5,9 +5,10 @@ class OpenLTFSDrive : public ltfsadmin::Drive {
 private:
 	bool busy;
 	int umountReqNum;
-	WorkQueue<std::string, long, long, Migration::mig_info_t> *wqp;
 public:
-    OpenLTFSDrive(ltfsadmin::Drive drive) : ltfsadmin::Drive(drive), busy(false), umountReqNum(Const::UNSET) {}
+	WorkQueue<std::string, long, long, Migration::mig_info_t> *wqp;
+	OpenLTFSDrive(ltfsadmin::Drive drive);
+	~OpenLTFSDrive();
 	void update(std::shared_ptr<LTFSAdminSession> sess);
 	bool isBusy() { return busy; }
 	void setBusy() { busy = true; }

@@ -7,6 +7,7 @@ std::condition_variable Scheduler::updcond;
 std::map<int, std::atomic<bool>> Scheduler::updReq;
 std::map<std::string, std::atomic<bool>> Scheduler::suspend_map;
 
+WorkQueue<Migration::mig_info_t> *Scheduler::wqs;
 
 std::string Scheduler::getTapeName(std::string fileName, std::string tapeId)
 
@@ -59,8 +60,8 @@ bool Scheduler::poolResAvail()
 					drive->setBusy();
 					found = true;
 					break;
-				}}
-
+				}
+			}
 			assert(found == true );
 			return true;
 		}
@@ -89,6 +90,7 @@ bool Scheduler::poolResAvail()
 					return false;
 				}
 			}
+
 		}
 	}
 
@@ -227,14 +229,13 @@ void Scheduler::run(long key)
 
 {
 	TRACE(Trace::much, __PRETTY_FUNCTION__);
+
 	sqlite3_stmt *stmt;
 	std::stringstream ssql;
 	std::unique_lock<std::mutex> lock(mtx);
 	int rc;
 
-	// std::vector<std::string> tapeIds = LTFSDM::getTapeIds();
-	// for(auto const& tapeId: tapeIds)
-	// 	suspend_map[tapeId] = false;
+	Scheduler::wqs = new WorkQueue<Migration::mig_info_t>(&Migration::stub, 64, "stub-wq");
 
 	while (true) {
 		cond.wait(lock);
@@ -348,4 +349,9 @@ void Scheduler::run(long key)
 		sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 	}
 	subs.waitAllRemaining();
+
+	for ( std::shared_ptr<OpenLTFSDrive> drive : inventory->getDrives() )
+		drive->wqp->terminate();
+
+	Scheduler::wqs->terminate();
 }

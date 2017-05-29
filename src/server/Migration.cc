@@ -162,14 +162,6 @@ void Migration::addRequest()
 		ssql.str("");
 		ssql.clear();
 
-		// if ( needsTape ) {
-		// 	std::lock_guard<std::mutex> lock(inventory->mtx);
-		// 	tapeId = inventory->getPool(pool)->getCartridges()->front().GetObjectID();
-		// }
-		// else {
-		// 	tapeId = "";
-		// }
-
 		tapeId = "";
 
 		ssql  << "INSERT INTO REQUEST_QUEUE (OPERATION, REQ_NUM, TARGET_STATE, "
@@ -378,15 +370,9 @@ bool Migration::migrationStep(int reqNumber, int numRepl, int replNum, std::stri
 	time_t start;
 	long secs;
 	long nsecs;
-	WorkQueue<std::string, long, long, Migration::mig_info_t> *wqp;
-	WorkQueue<Migration::mig_info_t> *wqs;
 	time_t steptime;
 	FsObj::file_state state;
-
-	if ( toState == FsObj::PREMIGRATED )
-		wqp = new WorkQueue<std::string, long, long, Migration::mig_info_t>(&preMigrate, 16);
-	else
-		wqs = new WorkQueue<Migration::mig_info_t>(&stub, 16);
+	std::shared_ptr<OpenLTFSDrive> drive = nullptr;
 
 	TRACE(Trace::much, reqNumber);
 
@@ -397,6 +383,16 @@ bool Migration::migrationStep(int reqNumber, int numRepl, int replNum, std::stri
 	}
 
 	steptime = time(NULL);
+
+	if ( toState == FsObj::PREMIGRATED ) {
+		for ( std::shared_ptr<OpenLTFSDrive> d : inventory->getDrives() ) {
+			if ( d->get_slot() == inventory->getCartridge(tapeId)->get_slot() ) {
+				drive = d;
+				break;
+			}
+		}
+		assert(drive != nullptr);
+	}
 
 	state = ((toState == FsObj::PREMIGRATED) ? FsObj::PREMIGRATING : FsObj::STUBBING);
 	ssql << "UPDATE JOB_QUEUE SET FILE_STATE=" <<  state
@@ -459,10 +455,10 @@ bool Migration::migrationStep(int reqNumber, int numRepl, int replNum, std::stri
 					}
 					TRACE(Trace::much, secs);
 					TRACE(Trace::much, nsecs);
-					wqp->enqueue(tapeId, secs, nsecs, mig_info);
+					drive->wqp->enqueue(reqNumber, tapeId, secs, nsecs, mig_info);
 				}
 				else {
-					wqs->enqueue(mig_info);
+					Scheduler::wqs->enqueue(reqNumber, mig_info);
 				}
 			}
 			catch (int error) {
@@ -487,12 +483,10 @@ bool Migration::migrationStep(int reqNumber, int numRepl, int replNum, std::stri
 	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 
 	if ( toState == FsObj::PREMIGRATED ) {
-		wqp->terminate();
-		delete(wqp);
+		drive->wqp->waitCompletion(reqNumber);
 	}
 	else {
-		wqs->terminate();
-		delete(wqs);
+		Scheduler::wqs->waitCompletion(reqNumber);
 	}
 
 	ssql.str("");

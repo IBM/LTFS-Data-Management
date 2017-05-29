@@ -23,6 +23,9 @@ public:
 	static std::condition_variable updcond;
 	static std::map<int, std::atomic<bool>> updReq;
 	static std::map<std::string, std::atomic<bool>> suspend_map;
+
+	static WorkQueue<Migration::mig_info_t> *wqs;
+
 	static std::string getTapeName(std::string fileName, std::string tapeId);
 	static std::string getTapeName(unsigned long long fsid, unsigned int igen,
 								   unsigned long long ino, std::string tapeId);
