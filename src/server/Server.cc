@@ -184,10 +184,18 @@ void Server::run(Connector *connector, sigset_t set)
 
 	terminate = false;
 
+	Scheduler::wqs = new WorkQueue<Migration::mig_info_t>
+		(&Migration::stub, Const::NUM_STUBBING_THREADS, "stub-wq");
+
 	subs.enqueue("Scheduler", &Scheduler::run, &sched, key);
 	subs.enqueue("Receiver", &Receiver::run, &recv, key, connector);
 	subs.enqueue("Signal Handler", &Server::signalHandler, set, key);
 	subs.enqueue("RecallD", &TransRecall::run, &trec, connector);
 
 	subs.waitAllRemaining();
+
+	for ( std::shared_ptr<OpenLTFSDrive> drive : inventory->getDrives() )
+		drive->wqp->terminate();
+
+	Scheduler::wqs->terminate();
 }

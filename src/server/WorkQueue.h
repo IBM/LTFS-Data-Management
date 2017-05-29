@@ -125,6 +125,8 @@ public:
 		for (int i=0; i<num_thrds; i++) {
 			threads[i].join();
 		}
+		threads.clear();
+		num_thrds = 0;
 	}
 };
 

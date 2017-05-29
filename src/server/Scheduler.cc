@@ -235,8 +235,6 @@ void Scheduler::run(long key)
 	std::unique_lock<std::mutex> lock(mtx);
 	int rc;
 
-	Scheduler::wqs = new WorkQueue<Migration::mig_info_t>(&Migration::stub, 64, "stub-wq");
-
 	while (true) {
 		cond.wait(lock);
 		if(terminate == true) {
@@ -349,9 +347,4 @@ void Scheduler::run(long key)
 		sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 	}
 	subs.waitAllRemaining();
-
-	for ( std::shared_ptr<OpenLTFSDrive> drive : inventory->getDrives() )
-		drive->wqp->terminate();
-
-	Scheduler::wqs->terminate();
 }

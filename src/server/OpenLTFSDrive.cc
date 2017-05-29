@@ -3,7 +3,8 @@
 OpenLTFSDrive::OpenLTFSDrive(ltfsadmin::Drive drive) : ltfsadmin::Drive(drive), busy(false), umountReqNum(Const::UNSET)
 
 {
-	wqp = new WorkQueue<std::string, long, long, Migration::mig_info_t>(&Migration::preMigrate, 16, "pmig-wq");
+	wqp = new WorkQueue<std::string, long, long, Migration::mig_info_t>
+		(&Migration::preMigrate, Const::NUM_PREMIG_THREADS, "pmig-wq");
 }
 
 OpenLTFSDrive::~OpenLTFSDrive() {}
