@@ -7,8 +7,7 @@ private:
 	int umountReqNum;
 public:
 	WorkQueue<std::string, long, long, Migration::mig_info_t> *wqp;
-	OpenLTFSDrive(ltfsadmin::Drive drive);
-	~OpenLTFSDrive();
+	OpenLTFSDrive(ltfsadmin::Drive drive) : ltfsadmin::Drive(drive), busy(false), umountReqNum(Const::UNSET) {}
 	void update(std::shared_ptr<LTFSAdminSession> sess);
 	bool isBusy() { return busy; }
 	void setBusy() { busy = true; }
