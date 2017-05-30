@@ -68,7 +68,10 @@ void StartCommand::startServer()
 	struct stat statbuf;
 	FILE *ltfsdmd = NULL;
 	char line[Const::OUTPUT_LINE_SIZE];
+	int pid;
 	int ret;
+	int retry = 0;
+	bool success = false;
 
 	if ( stat(serverPath.str().c_str(), &statbuf ) == -1 ) {
 		MSG(LTFSDMC0021E);
@@ -76,6 +79,8 @@ void StartCommand::startServer()
 		TRACE(Trace::error, errno);
 		throw Error::LTFSDM_GENERAL_ERROR;
 	}
+
+	MSG(LTFSDMC0099I);
 
 	ltfsdmd = popen(serverPath.str().c_str(), "r");
 
@@ -99,6 +104,58 @@ void StartCommand::startServer()
 		TRACE(Trace::error, WEXITSTATUS(ret));
 		throw Error::LTFSDM_GENERAL_ERROR;
 	}
+
+	sleep(1);
+
+	MSG(LTFSDMC0100I);
+	while ( retry < 10 ) {
+		try {
+			connect();
+			success = true;
+			break;
+		}
+		catch (int error) {
+			retry++;
+			sleep(1);
+		}
+	}
+
+	if ( success == false ) {
+		MSG(LTFSDMC0096E);
+		return;
+	}
+
+	LTFSDmProtocol::LTFSDmStatusRequest *statusreq = commCommand.mutable_statusrequest();
+	statusreq->set_key(key);
+	statusreq->set_reqnumber(requestNumber);
+
+	try {
+		commCommand.send();
+	}
+	catch(...) {
+		MSG(LTFSDMC0027E);
+		throw Error::LTFSDM_GENERAL_ERROR;
+	}
+
+	try {
+		commCommand.recv();
+	}
+	catch(...) {
+		MSG(LTFSDMC0098E);
+		throw(Error::LTFSDM_GENERAL_ERROR);
+	}
+
+	const LTFSDmProtocol::LTFSDmStatusResp statusresp = commCommand.statusresp();
+
+	if( statusresp.success() == true ) {
+		pid = statusresp.pid();
+		MSG(LTFSDMC0097I, pid);
+	}
+	else {
+		MSG(LTFSDMC0098E);
+		throw(Error::LTFSDM_GENERAL_ERROR);
+	}
+
 }
 
 void StartCommand::doCommand(int argc, char **argv)

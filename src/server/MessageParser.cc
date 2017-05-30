@@ -661,6 +661,7 @@ void MessageParser::poolCreateMessage(long key, LTFSDmCommServer *command)
 		std::lock_guard<std::mutex> lock(inventory->mtx);
 		try {
 			inventory->poolCreate(poolName);
+			inventory->writePools();
 		}
 		catch ( int error ) {
 			response = error;
@@ -700,6 +701,7 @@ void MessageParser::poolDeleteMessage(long key, LTFSDmCommServer *command)
 		std::lock_guard<std::mutex> lock(inventory->mtx);
 		try {
 			inventory->poolDelete(poolName);
+			inventory->writePools();
 		}
 		catch ( int error ) {
 			response = error;
@@ -746,6 +748,7 @@ void MessageParser::poolAddMessage(long key, LTFSDmCommServer *command)
 			std::lock_guard<std::mutex> lock(inventory->mtx);
 			try {
 				inventory->poolAdd(poolName, tapeid);
+				inventory->writePools();
 			}
 			catch ( int error ) {
 				response = error;
@@ -794,6 +797,7 @@ void MessageParser::poolRemoveMessage(long key, LTFSDmCommServer *command)
 			std::lock_guard<std::mutex> lock(inventory->mtx);
 			try {
 				inventory->poolRemove(poolName, tapeid);
+				inventory->writePools();
 			}
 			catch ( int error ) {
 				response = error;

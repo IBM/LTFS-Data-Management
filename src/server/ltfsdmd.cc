@@ -60,6 +60,7 @@ int main(int argc, char **argv)
 
 	try {
 		ltfsdmd.initialize(dbUseMemory);
+
 		if ( detach )
 			ltfsdmd.daemonize();
 

@@ -58,13 +58,13 @@ private:
 	std::list<std::shared_ptr<OpenLTFSCartridge>> cartridges;
 	std::list<std::shared_ptr<OpenLTFSPool>> pools;
 	std::shared_ptr<ltfsadmin::LTFSAdminSession> sess;
-	void writePools();
 public:
 	OpenLTFSInventory();
 	~OpenLTFSInventory();
 
 	std::mutex mtx;
 
+	void writePools();
 	void inventorize();
 
 	std::list<std::shared_ptr<OpenLTFSDrive>> getDrives();

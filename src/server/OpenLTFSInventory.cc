@@ -98,8 +98,6 @@ void OpenLTFSInventory::inventorize()
 		}
 	}
 
-	writePools();
-
 	for ( std::shared_ptr<OpenLTFSCartridge> c : cartridges ) {
 		c->setState(OpenLTFSCartridge::UNMOUNTED);
 		for ( std::shared_ptr<OpenLTFSDrive> d : drives ) {
@@ -114,10 +112,22 @@ void OpenLTFSInventory::inventorize()
 OpenLTFSInventory::OpenLTFSInventory()
 
 {
-	sess = LEControl::Connect("127.0.0.1", 7600);
+	try {
+		sess = LEControl::Connect("127.0.0.1", 7600);
+	}
+	catch ( int error ) {
+		throw(Error::LTFSDM_GENERAL_ERROR);
+	}
 
 	std::lock_guard<std::mutex> lck(mtx);
-	inventorize();
+	try {
+		inventorize();
+		writePools();
+	}
+	catch ( int error ) {
+		LEControl::Disconnect(sess);
+		throw(Error::LTFSDM_GENERAL_ERROR);
+	}
 }
 
 std::list<std::shared_ptr<OpenLTFSDrive>> OpenLTFSInventory::getDrives()
@@ -181,7 +191,6 @@ void OpenLTFSInventory::poolCreate(std::string poolname)
 	}
 
 	pools.push_back(std::make_shared<OpenLTFSPool>(OpenLTFSPool(poolname)));
-	writePools();
 }
 
 void OpenLTFSInventory::poolDelete(std::string poolname)
@@ -194,7 +203,6 @@ void OpenLTFSInventory::poolDelete(std::string poolname)
 				throw(Error::LTFSDM_POOL_NOT_EMPTY);
 			}
 			pools.remove(pool);
-			writePools();
 			return;
 		}
 	}
@@ -214,7 +222,6 @@ void OpenLTFSInventory::poolAdd(std::string poolname, std::string cartridgeid)
 			if ( cartridge == nullptr )
 				throw(Error::LTFSDM_TAPE_NOT_EXISTS);
 			pool->add(cartridge);
-			writePools();
 			return;
 		}
 	}
@@ -234,7 +241,6 @@ void OpenLTFSInventory::poolRemove(std::string poolname, std::string cartridgeid
 			if ( cartridge == nullptr )
 				throw(Error::LTFSDM_TAPE_NOT_EXISTS);
 			pool->remove(cartridge);
-			writePools();
 			return;
 		}
 	}
