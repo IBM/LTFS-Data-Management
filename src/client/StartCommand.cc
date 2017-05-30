@@ -98,7 +98,7 @@ void StartCommand::startServer()
 	ret = pclose(ltfsdmd);
 
     if(  !WIFEXITED(ret) || WEXITSTATUS(ret) ) {
-		MSG(LTFSDMC0023E, WEXITSTATUS(ret));
+		MSG(LTFSDMC0022E);
 		TRACE(Trace::error, ret);
 		TRACE(Trace::error, WIFEXITED(ret));
 		TRACE(Trace::error, WEXITSTATUS(ret));

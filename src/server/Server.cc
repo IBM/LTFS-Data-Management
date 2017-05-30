@@ -77,7 +77,7 @@ void Server::lockServer()
 		TRACE(Trace::error, errno);
 		if ( errno == EWOULDBLOCK ) {
 			MSG(LTFSDMS0002I);
-			throw(Error::LTFSDM_OK);
+			throw(Error::LTFSDM_GENERAL_ERROR);
 		}
 		else {
 			MSG(LTFSDMS0001E);

@@ -62,7 +62,7 @@ public:
 
 			wq_data->occupied--;
 			wq_data->numJobs[reqNum]--;
-			wq_data->cond_fin.notify_one();
+			wq_data->cond_fin.notify_all();
 			if ( wq_data->occupied == num_thrds - 1)
 				wq_data->cond_cont.notify_one();
 		}
