@@ -57,6 +57,7 @@ bool Scheduler::poolResAvail(unsigned long minFileSize)
 				if ( drive->get_slot() == card->get_slot() &&
 					 1024*1024*card->get_remaining_cap() >= minFileSize ) {
 					assert(drive->isBusy() == false);
+					card->setState(OpenLTFSCartridge::INUSE);
 					TRACE(Trace::always, std::string("SET BUSY: ") + drive->GetObjectID());
 					drive->setBusy();
 					found = true;
@@ -133,10 +134,10 @@ bool Scheduler::tapeResAvail()
 		found = false;
 		for ( std::shared_ptr<OpenLTFSDrive> drive : inventory->getDrives() ) {
 			if ( drive->get_slot() == inventory->getCartridge(tapeId)->get_slot() ) {
+				inventory->getCartridge(tapeId)->setState(OpenLTFSCartridge::INUSE);
 				assert(drive->isBusy() == false);
 				TRACE(Trace::always, std::string("SET BUSY: ") + drive->GetObjectID());
 				drive->setBusy();
-
 				found = true;
 				break;
 			}
@@ -292,7 +293,6 @@ void Scheduler::run(long key)
 					}
 					continue;
 				}
-				inventory->getCartridge(tapeId)->setState(OpenLTFSCartridge::INUSE);
 			}
 			*/
 
