@@ -42,7 +42,7 @@ std::string Scheduler::getTapeName(unsigned long long fsid, unsigned int igen,
 	return tapeName.str();
 }
 
-bool Scheduler::poolResAvail()
+bool Scheduler::poolResAvail(unsigned long minFileSize)
 
 {
 	bool found;
@@ -54,7 +54,8 @@ bool Scheduler::poolResAvail()
 			tapeId = card->GetObjectID();
 			found = false;
 			for ( std::shared_ptr<OpenLTFSDrive> drive : inventory->getDrives() ) {
-				if ( drive->get_slot() == card->get_slot() ) {
+				if ( drive->get_slot() == card->get_slot() &&
+					 1024*1024*card->get_remaining_cap() >= minFileSize ) {
 					assert(drive->isBusy() == false);
 					TRACE(Trace::always, std::string("SET BUSY: ") + drive->GetObjectID());
 					drive->setBusy();
@@ -72,15 +73,16 @@ bool Scheduler::poolResAvail()
 			continue;
 		found = false;
 		for ( std::shared_ptr<OpenLTFSCartridge> card : inventory->getCartridges() ) {
-			if ( (drive->get_slot() == card->get_slot()) &&
-				 (card->getState() == OpenLTFSCartridge::MOUNTED)) {
+			if ( drive->get_slot() == card->get_slot() &&
+				 card->getState() == OpenLTFSCartridge::MOUNTED ) {
 				found = true;
 				break;
 			}
 		}
 		if ( found == false ) {
 			for ( std::shared_ptr<OpenLTFSCartridge> card : inventory->getPool(pool)->getCartridges() ) {
-				if ( card->getState() == OpenLTFSCartridge::UNMOUNTED ) {
+				if ( card->getState() == OpenLTFSCartridge::UNMOUNTED &&
+					 1024*1024*card->get_remaining_cap() >= minFileSize ) {
 					TRACE(Trace::always, std::string("SET BUSY: ") + drive->GetObjectID());
 					drive->setBusy();
 					drive->setUnmountReqNum(reqNum);
@@ -190,11 +192,11 @@ bool Scheduler::tapeResAvail()
 }
 
 
-bool Scheduler::resAvail()
+bool Scheduler::resAvail(unsigned long minFileSize)
 
 {
-	if ( op == DataBase::MIGRATION )
-		return poolResAvail();
+	if ( op == DataBase::MIGRATION && tapeId.compare("") == 0 )
+		return poolResAvail(minFileSize);
 	else
 		return tapeResAvail();
 }
@@ -224,6 +226,29 @@ long Scheduler::getStartBlock(std::string tapeName)
 		return startBlock;
 }
 
+unsigned long Scheduler::smallestMigJob(int reqNum, int replNum)
+
+{
+	sqlite3_stmt *stmt;
+	std::stringstream ssql;
+	int rc;
+	unsigned long min;
+
+	ssql << "SELECT MIN(FILE_SIZE) FROM JOB_QUEUE WHERE"
+		 << " REQ_NUM=" << reqNum
+		 << " AND FILE_STATE=" << FsObj::RESIDENT
+		 << " AND REPL_NUM=" << replNum;
+
+	sqlite3_statement::prepare(ssql.str(), &stmt);
+
+	rc = sqlite3_statement::step(stmt);
+
+	min = (unsigned long) sqlite3_column_int64(stmt, 0);
+
+	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_ROW);
+
+	return min;
+}
 
 void Scheduler::run(long key)
 
@@ -233,6 +258,7 @@ void Scheduler::run(long key)
 	sqlite3_stmt *stmt;
 	std::stringstream ssql;
 	std::unique_lock<std::mutex> lock(mtx);
+	unsigned long minFileSize;
 	int rc;
 
 	while (true) {
@@ -287,7 +313,12 @@ void Scheduler::run(long key)
 
 			std::lock_guard<std::mutex> lock(inventory->mtx);
 
-			if ( resAvail() == false )
+			if (op == DataBase::MIGRATION)
+				minFileSize = smallestMigJob(reqNum, replNum);
+			else
+				minFileSize = 0;
+
+			if ( resAvail(minFileSize) == false )
 				continue;
 
 			TRACE(Trace::little, reqNum);

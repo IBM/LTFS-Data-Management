@@ -59,6 +59,10 @@ public:
 				return messages[LTFSDMX0010I];
 			case FAILED:
 				return messages[LTFSDMX0019I];
+			case PREMIGRATING:
+				return messages[LTFSDMX0026I];
+			case STUBBING:
+				return messages[LTFSDMX0027I];
 			default:
 				return "";
 		}

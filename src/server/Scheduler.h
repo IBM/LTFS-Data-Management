@@ -12,10 +12,12 @@ private:
 	int replNum;
 	std::string tapeId;
 	std::string pool;
-	bool poolResAvail();
-	bool tapeResAvail();
-	bool resAvail();
 	SubServer subs;
+
+	bool poolResAvail(unsigned long minFileSize);
+	bool tapeResAvail();
+	bool resAvail(unsigned long minFileSize);
+	unsigned long smallestMigJob(int reqNum, int replNum);
 public:
 	static std::mutex mtx;
 	static std::condition_variable cond;

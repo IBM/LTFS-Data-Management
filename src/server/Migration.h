@@ -10,7 +10,10 @@ private:
 	LTFSDmProtocol::LTFSDmMigRequest::State targetState;
 	int jobnum;
 	bool needsTape = false;
-
+    struct req_return_t {
+		bool remaining;
+		bool suspended;
+	};
 public:
 	struct mig_info_t {
 		std::string fileName;
@@ -23,7 +26,7 @@ public:
 	};
 
 private:
-	static bool migrationStep(int reqNumber, int numRepl, int replNum, std::string tapeId, FsObj::file_state fromState, FsObj::file_state toState);
+	static req_return_t migrationStep(int reqNumber, int numRepl, int replNum, std::string tapeId, FsObj::file_state fromState, FsObj::file_state toState);
 public:
 	Migration(unsigned long _pid, long _reqNumber, std::set<std::string> _pools,
 		  int _numReplica, LTFSDmProtocol::LTFSDmMigRequest::State _targetState) :

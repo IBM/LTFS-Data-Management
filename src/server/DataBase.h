@@ -5,6 +5,7 @@ class DataBase {
 private:
 	sqlite3 *db;
 	bool dbNeedsClosed;
+	static void fits(sqlite3_context *ctx, int argc, sqlite3_value **argv);
 public:
 	enum operation {
 		TRARECALL,
@@ -24,6 +25,7 @@ public:
 	void createTables();
 	void beginTransaction();
 	void endTransaction();
+	int lastUpdates();
 	sqlite3 *getDB() { return db; }
 	static std::string opStr(operation op);
 	static std::string reqStateStr(req_state reqs);

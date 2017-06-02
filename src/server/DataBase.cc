@@ -20,6 +20,31 @@ void DataBase::cleanup()
 	unlink((Const::DB_FILE + std::string("-journal")).c_str());
 }
 
+void DataBase::fits(sqlite3_context *ctx, int argc, sqlite3_value **argv)
+
+{
+	if (argc == 5) {
+		unsigned long inode = sqlite3_value_int64(argv[0]);
+		unsigned long size = sqlite3_value_int64(argv[1]);
+		unsigned long *free = (unsigned long *) sqlite3_value_int64(argv[2]);
+		unsigned long *num_found = (unsigned long *) sqlite3_value_int64(argv[3]);
+		unsigned long *total = (unsigned long *) sqlite3_value_int64(argv[4]);
+
+		if ( *free  >= size ) {
+			*free -= size;
+			(*total)++;
+			(*num_found)++;
+			sqlite3_result_int64(ctx, inode);
+			return;
+		}
+		else {
+			(*total)++;
+		}
+	}
+
+	sqlite3_result_null(ctx);
+}
+
 void DataBase::open(bool dbUseMemory)
 
 {
@@ -64,6 +89,8 @@ void DataBase::open(bool dbUseMemory)
 	}
 
 	dbNeedsClosed = true;
+
+	sqlite3_create_function(db, "FITS", 5, SQLITE_UTF8, NULL, &DataBase::fits, NULL, NULL);
 }
 
 void DataBase::createTables()
@@ -180,6 +207,13 @@ std::string DataBase::reqStateStr(DataBase::req_state reqs)
 		default:
 			return "";
 	}
+}
+
+
+int DataBase::lastUpdates()
+
+{
+	return sqlite3_changes(db);
 }
 
 
