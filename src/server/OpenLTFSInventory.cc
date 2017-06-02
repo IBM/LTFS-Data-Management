@@ -179,6 +179,17 @@ std::shared_ptr<OpenLTFSPool> OpenLTFSInventory::getPool(std::string poolname)
 	return nullptr;
 }
 
+void OpenLTFSInventory::update(std::shared_ptr<OpenLTFSDrive> drive)
+
+{
+	drive->update(sess);
+}
+
+void OpenLTFSInventory::update(std::shared_ptr<OpenLTFSCartridge> cartridge)
+
+{
+	cartridge->update(sess);
+}
 
 void OpenLTFSInventory::poolCreate(std::string poolname)
 

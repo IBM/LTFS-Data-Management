@@ -74,6 +74,9 @@ public:
 	std::list<std::shared_ptr<OpenLTFSPool>> getPools();
 	std::shared_ptr<OpenLTFSPool> getPool(std::string poolname);
 
+	void update(std::shared_ptr<OpenLTFSDrive>);
+	void update(std::shared_ptr<OpenLTFSCartridge>);
+
 	void poolCreate(std::string poolname);
 	void poolDelete(std::string poolname);
 	void poolAdd(std::string poolname, std::string cartridgeid);

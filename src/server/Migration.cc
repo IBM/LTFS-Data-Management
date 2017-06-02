@@ -552,6 +552,11 @@ void Migration::execRequest(int reqNumber, int targetState, int numRepl,
 	if ( needsTape ) {
 		retval = migrationStep(reqNumber, numRepl, replNum, tapeId,  FsObj::RESIDENT, FsObj::PREMIGRATED);
 
+		{
+			std::lock_guard<std::mutex> lock(inventory->mtx);
+			inventory->update(inventory->getCartridge(tapeId));
+		}
+
 		tapePath << Const::LTFS_PATH << "/" << tapeId;
 
 		if ( setxattr(tapePath.str().c_str(), Const::LTFS_SYNC_ATTR.c_str(),

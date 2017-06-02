@@ -63,8 +63,9 @@ bool Scheduler::poolResAvail(unsigned long minFileSize)
 					break;
 				}
 			}
-			assert(found == true );
-			return true;
+			assert(found == true || 1024*1024*card->get_remaining_cap() < minFileSize);
+			if ( found == true )
+				return true;
 		}
 	}
 
