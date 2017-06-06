@@ -31,11 +31,15 @@ void OpenLTFSInventory::inventorize()
 	std::list<std::shared_ptr<Cartridge>> crts;
 	std::ifstream conffile(Const::CONFIG_FILE);
 	std::string line;
+	int i = 0;
 	int rc;
 
 	for ( std::shared_ptr<OpenLTFSDrive> d : drives )
 		if ( d->isBusy() == true )
 			throw(Error::LTFSDM_DRIVE_BUSY);
+
+	for ( std::shared_ptr<OpenLTFSDrive> d : drives )
+		d->wqp->terminate();
 
 	drives.clear();
 	cartridges.clear();
@@ -106,6 +110,13 @@ void OpenLTFSInventory::inventorize()
 				break;
 			}
 		}
+	}
+
+	for ( std::shared_ptr<OpenLTFSDrive> drive : drives ) {
+		std::stringstream threadName;
+		threadName << "pmig" << i++ << "-wq";
+		drive->wqp = new WorkQueue<std::string, long, long, Migration::mig_info_t>
+			(&Migration::preMigrate, Const::NUM_PREMIG_THREADS, threadName.str());
 	}
 }
 

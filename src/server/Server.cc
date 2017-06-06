@@ -181,16 +181,8 @@ void Server::run(Connector *connector, sigset_t set)
 	Scheduler sched;
 	Receiver recv;
 	TransRecall trec;
-	int i = 0;
 
 	terminate = false;
-
-	for ( std::shared_ptr<OpenLTFSDrive> drive : inventory->getDrives() ) {
-		std::stringstream threadName;
-		threadName << "pmig" << i++ << "-wq";
-		drive->wqp = new WorkQueue<std::string, long, long, Migration::mig_info_t>
-			(&Migration::preMigrate, Const::NUM_PREMIG_THREADS, threadName.str());
-	}
 
 	Scheduler::wqs = new WorkQueue<Migration::mig_info_t>
 		(&Migration::stub, Const::NUM_STUBBING_THREADS, "stub-wq");

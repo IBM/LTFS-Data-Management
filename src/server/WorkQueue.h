@@ -38,11 +38,11 @@ public:
 
 		while ( true ) {
 			wq_data->cond_add.wait(lock);
+			if ( wq_data->terminate == true )
+				return;
 			wq_data->occupied++;
 			reqNum = wq_data->reqNum;
 			wq_data->numJobs[reqNum]++;
-			if ( wq_data->terminate == true )
-				return;
 
 			ltask = std::move(wq_data->task);
 
