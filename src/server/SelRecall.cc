@@ -357,6 +357,8 @@ void SelRecall::execRequest(int reqNumber, int tgtState, std::string tapeId, boo
 	sqlite3_stmt *stmt;
 	int rc;
 
+	mrStatus.add(reqNumber);
+
 	if ( tgtState == LTFSDmProtocol::LTFSDmMigRequest::PREMIGRATED )
 		recallStep(reqNumber, tapeId, FsObj::PREMIGRATED, needsTape);
 	else

@@ -431,9 +431,6 @@ Migration::req_return_t Migration::migrationStep(int reqNumber, int numRepl, int
 	if ( total > num_found )
 		retval.remaining = true;
 
-	// std::cout << "check now!!!" << std::endl;
-	// sleep(60);
-
 	ssql.str("");
 	ssql.clear();
 
@@ -548,6 +545,8 @@ void Migration::execRequest(int reqNumber, int targetState, int numRepl,
 	std::stringstream tapePath;
 	Migration::req_return_t retval = (Migration::req_return_t) {false, false};
 	bool failed = false;
+
+	mrStatus.add(reqNumber);
 
 	if ( needsTape ) {
 		retval = migrationStep(reqNumber, numRepl, replNum, tapeId,  FsObj::RESIDENT, FsObj::PREMIGRATED);

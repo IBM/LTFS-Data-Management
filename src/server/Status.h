@@ -11,9 +11,9 @@ private:
 	};
 	std::map<int, singleState> allStates;
 	std::mutex mtx;
-	void add(int reqNumber);
 public:
 	Status() {}
+	void add(int reqNumber);
 	void remove(int reqNumber);
 	void updateSuccess(int reqNumber, FsObj::file_state from, FsObj::file_state to);
 	void updateFailed(int reqNumber, FsObj::file_state from);
