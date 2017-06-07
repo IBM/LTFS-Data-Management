@@ -9,6 +9,10 @@ void Status::add(int reqNumber)
 	sqlite3_stmt *stmt;
 	int rc;
 
+	std::lock_guard<std::mutex> lock(Status::mtx);
+
+	assert( allStates.count(reqNumber) == 0 );
+
 	ssql << "SELECT FILE_STATE, COUNT(*) FROM JOB_QUEUE WHERE REQ_NUM="
 		 << reqNumber << " GROUP BY FILE_STATE";
 
@@ -64,8 +68,7 @@ void Status::updateSuccess(int reqNumber, FsObj::file_state from, FsObj::file_st
 {
 	std::lock_guard<std::mutex> lock(Status::mtx);
 
-	if ( allStates.count(reqNumber) == 0 )
-		add(reqNumber);
+	assert( allStates.count(reqNumber) != 0 );
 
 	singleState state = allStates[reqNumber];
 
@@ -105,9 +108,6 @@ void Status::updateFailed(int reqNumber, FsObj::file_state from)
 {
 	std::lock_guard<std::mutex> lock(Status::mtx);
 
-	if ( allStates.count(reqNumber) == 0 )
-		add(reqNumber);
-
 	singleState state = allStates[reqNumber];
 
 	switch (from) {
@@ -133,9 +133,6 @@ void Status::get(int reqNumber, long *resident, long *premigrated, long *migrate
 
 {
 	std::lock_guard<std::mutex> lock(Status::mtx);
-
-	if ( allStates.count(reqNumber) == 0 )
-		add(reqNumber);
 
 	*resident = allStates[reqNumber].resident;
 	*premigrated = allStates[reqNumber].premigrated;
