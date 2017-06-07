@@ -75,6 +75,9 @@ void OpenLTFSInventory::inventorize()
 		cartridges.push_back(std::make_shared<OpenLTFSCartridge>(OpenLTFSCartridge(*c)));
 	}
 
+	cartridges.sort([] (const std::shared_ptr<Cartridge> c1, const std::shared_ptr<Cartridge> c2)
+					{return (c1->GetObjectID().compare(c2->GetObjectID()) < 0);});
+
 	while (std::getline(conffile, line))
 	{
 		std::string poolName = line;
