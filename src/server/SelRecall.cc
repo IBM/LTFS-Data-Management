@@ -367,7 +367,7 @@ void SelRecall::execRequest(int reqNumber, int tgtState, std::string tapeId, boo
 	std::unique_lock<std::mutex> lock(Scheduler::mtx);
 
 	{
-		std::lock_guard<std::mutex> lock(inventory->mtx);
+		std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
 		inventory->getCartridge(tapeId)->setState(OpenLTFSCartridge::MOUNTED);
 		bool found = false;
 		for ( std::shared_ptr<OpenLTFSDrive> d : inventory->getDrives() ) {

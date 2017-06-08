@@ -385,10 +385,7 @@ void TransRecall::execRequest(int reqNum, std::string tapeId)
 
 	std::unique_lock<std::mutex> lock(Scheduler::mtx);
 
-	{
-		std::lock_guard<std::mutex> lock(inventory->mtx);
-		inventory->getCartridge(tapeId)->setState(OpenLTFSCartridge::MOUNTED);
-	}
+	inventory->getCartridge(tapeId)->setState(OpenLTFSCartridge::MOUNTED);
 
 	ssql.str("");
 	ssql.clear();
@@ -400,7 +397,7 @@ void TransRecall::execRequest(int reqNum, std::string tapeId)
 	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 
 	{
-		std::lock_guard<std::mutex> inventorylock(inventory->mtx);
+		std::lock_guard<std::recursive_mutex> inventorylock(OpenLTFSInventory::mtx);
 		inventory->getCartridge(tapeId)->setState(OpenLTFSCartridge::MOUNTED);
 		bool found = false;
 		for ( std::shared_ptr<OpenLTFSDrive> d : inventory->getDrives() ) {

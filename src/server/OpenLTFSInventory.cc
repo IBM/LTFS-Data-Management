@@ -1,10 +1,13 @@
 #include "ServerIncludes.h"
 
 OpenLTFSInventory *inventory = NULL;
+std::recursive_mutex OpenLTFSInventory::mtx;
 
 void OpenLTFSInventory::writePools()
 
 {
+	std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+
 	{
 		bool first;
 		std::ofstream conffiletmp(Const::TMP_CONFIG_FILE, conffiletmp.trunc);
@@ -33,6 +36,8 @@ void OpenLTFSInventory::inventorize()
 	std::string line;
 	int i = 0;
 	int rc;
+
+	std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
 
 	for ( std::shared_ptr<OpenLTFSDrive> d : drives )
 		if ( d->isBusy() == true )
@@ -126,6 +131,8 @@ void OpenLTFSInventory::inventorize()
 OpenLTFSInventory::OpenLTFSInventory()
 
 {
+	std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+
 	try {
 		sess = LEControl::Connect("127.0.0.1", 7600);
 	}
@@ -133,7 +140,6 @@ OpenLTFSInventory::OpenLTFSInventory()
 		throw(Error::LTFSDM_GENERAL_ERROR);
 	}
 
-	std::lock_guard<std::mutex> lck(mtx);
 	try {
 		inventorize();
 		writePools();
@@ -147,12 +153,16 @@ OpenLTFSInventory::OpenLTFSInventory()
 std::list<std::shared_ptr<OpenLTFSDrive>> OpenLTFSInventory::getDrives()
 
 {
+	std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+
 	return drives;
 }
 
 std::shared_ptr<OpenLTFSDrive> OpenLTFSInventory::getDrive(std::string driveid)
 
 {
+	std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+
 	for ( std::shared_ptr<OpenLTFSDrive> drive : drives )
 		if ( drive->GetObjectID().compare(driveid) == 0 )
 			return drive;
@@ -163,12 +173,16 @@ std::shared_ptr<OpenLTFSDrive> OpenLTFSInventory::getDrive(std::string driveid)
 std::list<std::shared_ptr<OpenLTFSCartridge>> OpenLTFSInventory::getCartridges()
 
 {
+	std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+
 	return cartridges;
 }
 
 std::shared_ptr<OpenLTFSCartridge> OpenLTFSInventory::getCartridge(std::string cartridgeid)
 
 {
+	std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+
 	for ( std::shared_ptr<OpenLTFSCartridge> cartridge : cartridges )
 		if ( cartridge->GetObjectID().compare(cartridgeid) == 0 )
 			return cartridge;
@@ -180,12 +194,16 @@ std::shared_ptr<OpenLTFSCartridge> OpenLTFSInventory::getCartridge(std::string c
 std::list<std::shared_ptr<OpenLTFSPool>> OpenLTFSInventory::getPools()
 
 {
+	std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+
 	return pools;
 }
 
 std::shared_ptr<OpenLTFSPool> OpenLTFSInventory::getPool(std::string poolname)
 
 {
+	std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+
 	for ( std::shared_ptr<OpenLTFSPool> pool : pools )
 		if ( pool->getPoolName().compare(poolname) == 0 )
 			return pool;
@@ -196,18 +214,24 @@ std::shared_ptr<OpenLTFSPool> OpenLTFSInventory::getPool(std::string poolname)
 void OpenLTFSInventory::update(std::shared_ptr<OpenLTFSDrive> drive)
 
 {
+	std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+
 	drive->update(sess);
 }
 
 void OpenLTFSInventory::update(std::shared_ptr<OpenLTFSCartridge> cartridge)
 
 {
+	std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+
 	cartridge->update(sess);
 }
 
 void OpenLTFSInventory::poolCreate(std::string poolname)
 
 {
+	std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+
 	for ( std::shared_ptr<OpenLTFSPool> pool : pools ) {
 		if ( pool->getPoolName().compare(poolname) == 0 ) {
 			MSG(LTFSDMX0023E, poolname);
@@ -221,6 +245,8 @@ void OpenLTFSInventory::poolCreate(std::string poolname)
 void OpenLTFSInventory::poolDelete(std::string poolname)
 
 {
+	std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+
 	for ( std::shared_ptr<OpenLTFSPool> pool : pools ) {
 		if ( pool->getPoolName().compare(poolname) == 0 ) {
 			if ( pool->getCartridges().size() > 0 ) {
@@ -239,6 +265,8 @@ void OpenLTFSInventory::poolDelete(std::string poolname)
 void OpenLTFSInventory::poolAdd(std::string poolname, std::string cartridgeid)
 
 {
+	std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+
 	std::shared_ptr<OpenLTFSCartridge> cartridge;
 
 	for ( std::shared_ptr<OpenLTFSPool> pool : pools ) {
@@ -258,6 +286,8 @@ void OpenLTFSInventory::poolAdd(std::string poolname, std::string cartridgeid)
 void OpenLTFSInventory::poolRemove(std::string poolname, std::string cartridgeid)
 
 {
+	std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+
 	std::shared_ptr<OpenLTFSCartridge> cartridge;
 
 	for ( std::shared_ptr<OpenLTFSPool> pool : pools ) {
@@ -292,7 +322,7 @@ void OpenLTFSInventory::mount(std::string driveid, std::string cartridgeid)
 	cartridge->Mount(driveid);
 
 	{
-		std::lock_guard<std::mutex> lock(mtx);
+		std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
 
 		cartridge->update(sess);
 		cartridge->setState(OpenLTFSCartridge::MOUNTED);
@@ -325,7 +355,7 @@ void OpenLTFSInventory::unmount(std::string driveid, std::string cartridgeid)
 	cartridge->Unmount();
 
 	{
-		std::lock_guard<std::mutex> lock(mtx);
+		std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
 
 		cartridge->update(sess);
 		cartridge->setState(OpenLTFSCartridge::UNMOUNTED);

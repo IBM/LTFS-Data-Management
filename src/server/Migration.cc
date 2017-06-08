@@ -65,7 +65,7 @@ void Migration::addJob(std::string fileName)
 					}
 					bool tapeFound = false;
 					for ( std::string pool : pools ) {
-						std::lock_guard<std::mutex> lock(inventory->mtx);
+						std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
 						std::list<std::shared_ptr<OpenLTFSCartridge>> carts
 							= inventory->getPool(pool)->getCartridges();
 						for ( std::shared_ptr<OpenLTFSCartridge> cart : carts ) {
@@ -473,11 +473,11 @@ Migration::req_return_t Migration::migrationStep(int reqNumber, int numRepl, int
 				mig_info.toState = toState;
 
 				if ( toState == FsObj::PREMIGRATED ) {
-					if ( Scheduler::suspend_map[tapeId] == true ) {
-						retval.suspended = true;
-						Scheduler::suspend_map[tapeId] = false;
-						break;
-					}
+					// if ( Scheduler::suspend_map[tapeId] == true ) {
+					// 	retval.suspended = true;
+					// 	Scheduler::suspend_map[tapeId] = false;
+					// 	break;
+					// }
 					TRACE(Trace::much, secs);
 					TRACE(Trace::much, nsecs);
 					drive->wqp->enqueue(reqNumber, tapeId, secs, nsecs, mig_info);
@@ -551,10 +551,7 @@ void Migration::execRequest(int reqNumber, int targetState, int numRepl,
 	if ( needsTape ) {
 		retval = migrationStep(reqNumber, numRepl, replNum, tapeId,  FsObj::RESIDENT, FsObj::PREMIGRATED);
 
-		{
-			std::lock_guard<std::mutex> lock(inventory->mtx);
-			inventory->update(inventory->getCartridge(tapeId));
-		}
+		inventory->update(inventory->getCartridge(tapeId));
 
 		tapePath << Const::LTFS_PATH << "/" << tapeId;
 
@@ -588,7 +585,7 @@ void Migration::execRequest(int reqNumber, int targetState, int numRepl,
 			}
 		}
 
-		std::lock_guard<std::mutex> lock(inventory->mtx);
+		std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
 		inventory->getCartridge(tapeId)->setState(OpenLTFSCartridge::MOUNTED);
 		bool found = false;
 		for ( std::shared_ptr<OpenLTFSDrive> d : inventory->getDrives() ) {

@@ -5,7 +5,6 @@ std::condition_variable Scheduler::cond;
 std::mutex Scheduler::updmtx;
 std::condition_variable Scheduler::updcond;
 std::map<int, std::atomic<bool>> Scheduler::updReq;
-std::map<std::string, std::atomic<bool>> Scheduler::suspend_map;
 
 WorkQueue<Migration::mig_info_t> *Scheduler::wqs;
 
@@ -284,7 +283,7 @@ void Scheduler::run(long key)
 
 			/* needs to be changed/moved
 			{
-				std::lock_guard<std::mutex> lock(inventory->mtx);
+				std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
 				OpenLTFSCartridge::state_t state = inventory->getCartridge(tapeId)->getState();
 				if ( state == OpenLTFSCartridge::INUSE ) {
 					if ( op == DataBase::SELRECALL ||
@@ -312,7 +311,7 @@ void Scheduler::run(long key)
 			}
 			tapeId = std::string(tape_id);
 
-			std::lock_guard<std::mutex> lock(inventory->mtx);
+			std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
 
 			if (op == DataBase::MIGRATION)
 				minFileSize = smallestMigJob(reqNum, replNum);

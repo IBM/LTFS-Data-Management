@@ -154,7 +154,7 @@ void MessageParser::migrationMessage(long key, LTFSDmCommServer *command, long l
 	std::stringstream poolss(migreq.pools());
 
 	{
-		std::lock_guard<std::mutex> lock(inventory->mtx);
+		std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
 		while ( std::getline(poolss	, pool, ',') ) {
 			std::shared_ptr<OpenLTFSPool> poolp = inventory->getPool(pool);
 			if (poolp == nullptr ) {
@@ -539,7 +539,7 @@ void MessageParser::infoDrivesMessage(long key, LTFSDmCommServer *command)
 	}
 
 	{
-		std::lock_guard<std::mutex> lock(inventory->mtx);
+		std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
 		for (std::shared_ptr<OpenLTFSDrive> d : inventory->getDrives()) {
 			LTFSDmProtocol::LTFSDmInfoDrivesResp *infodrivesresp = command->mutable_infodrivesresp();
 
@@ -589,7 +589,7 @@ void MessageParser::infoTapesMessage(long key, LTFSDmCommServer *command)
 	}
 
 	{
-		std::lock_guard<std::mutex> lock(inventory->mtx);
+		std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
 		for (std::shared_ptr<OpenLTFSCartridge> c : inventory->getCartridges()) {
 			LTFSDmProtocol::LTFSDmInfoTapesResp *infotapesresp = command->mutable_infotapesresp();
 
@@ -658,7 +658,7 @@ void MessageParser::poolCreateMessage(long key, LTFSDmCommServer *command)
 	poolName = poolcreate.poolname();
 
 	{
-		std::lock_guard<std::mutex> lock(inventory->mtx);
+		std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
 		try {
 			inventory->poolCreate(poolName);
 			inventory->writePools();
@@ -698,7 +698,7 @@ void MessageParser::poolDeleteMessage(long key, LTFSDmCommServer *command)
 	poolName = pooldelete.poolname();
 
 	{
-		std::lock_guard<std::mutex> lock(inventory->mtx);
+		std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
 		try {
 			inventory->poolDelete(poolName);
 			inventory->writePools();
@@ -745,7 +745,7 @@ void MessageParser::poolAddMessage(long key, LTFSDmCommServer *command)
 		response = Error::LTFSDM_OK;
 
 		{
-			std::lock_guard<std::mutex> lock(inventory->mtx);
+			std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
 			try {
 				inventory->poolAdd(poolName, tapeid);
 				inventory->writePools();
@@ -794,7 +794,7 @@ void MessageParser::poolRemoveMessage(long key, LTFSDmCommServer *command)
 		response = Error::LTFSDM_OK;
 
 		{
-			std::lock_guard<std::mutex> lock(inventory->mtx);
+			std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
 			try {
 				inventory->poolRemove(poolName, tapeid);
 				inventory->writePools();
@@ -833,7 +833,7 @@ void MessageParser::infoPoolsMessage(long key, LTFSDmCommServer *command)
 	}
 
 	{
-		std::lock_guard<std::mutex> lock(inventory->mtx);
+		std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
 		for (std::shared_ptr<OpenLTFSPool> pool : inventory->getPools()) {
 			int numCartridges = 0;
 			unsigned long total = 0;
@@ -896,7 +896,6 @@ void MessageParser::retrieveMessage(long key, LTFSDmCommServer *command)
 	}
 
 	try {
-		std::lock_guard<std::mutex> lck(inventory->mtx);
 		inventory->inventorize();
 	}
 	catch(int err) {

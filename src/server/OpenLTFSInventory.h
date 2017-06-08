@@ -9,12 +9,12 @@ public:
 	WorkQueue<std::string, long, long, Migration::mig_info_t> *wqp;
 	OpenLTFSDrive(ltfsadmin::Drive drive) : ltfsadmin::Drive(drive), busy(false), umountReqNum(Const::UNSET) {}
 	void update(std::shared_ptr<LTFSAdminSession> sess);
-	bool isBusy() { return busy; }
-	void setBusy() { busy = true; }
-	void setFree() { busy = false; }
-	void setUnmountReqNum(int reqnum) { umountReqNum = reqnum; }
-	int getUnmountReqNum() { return umountReqNum; }
-	void unsetUnmountReqNum() { umountReqNum = Const::UNSET; }
+	bool isBusy();
+	void setBusy();
+	void setFree();
+	void setUnmountReqNum(int reqnum);
+	int getUnmountReqNum();
+	void unsetUnmountReqNum();
 };
 
 class OpenLTFSCartridge : public ltfsadmin::Cartridge {
@@ -32,12 +32,12 @@ public:
 	} state;
 	OpenLTFSCartridge(ltfsadmin::Cartridge cartridge) : ltfsadmin::Cartridge(cartridge), inProgress(0), pool(""), state(OpenLTFSCartridge::UNKNOWN) {}
 	void update(std::shared_ptr<LTFSAdminSession> sess);
-	void setInProgress(unsigned long size) { inProgress = size; }
-	unsigned long getInProgress() { return inProgress; }
-	void setPool(std::string _pool) { pool = _pool; }
-	std::string getPool() { return pool; }
-	void setState(state_t _state) { state = _state; }
-	state_t getState() { return state; }
+	void setInProgress(unsigned long size);
+	unsigned long getInProgress();
+	void setPool(std::string _pool);
+	std::string getPool();
+	void setState(state_t _state);
+	state_t getState();
 };
 
 class OpenLTFSPool {
@@ -62,7 +62,7 @@ public:
 	OpenLTFSInventory();
 	~OpenLTFSInventory();
 
-	std::mutex mtx;
+	static std::recursive_mutex mtx;
 
 	void writePools();
 	void inventorize();
