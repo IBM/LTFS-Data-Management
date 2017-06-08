@@ -56,3 +56,28 @@ void OpenLTFSDrive::unsetUnmountReqNum()
 
 	umountReqNum = Const::UNSET;
 }
+
+void OpenLTFSDrive::setToUnblock(DataBase::operation op)
+
+{
+	std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+
+	if ( op < toUnBlock )
+		toUnBlock = op;
+}
+
+DataBase::operation OpenLTFSDrive::getToUnblock()
+
+{
+	std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+
+	return toUnBlock;
+}
+
+void OpenLTFSDrive::clearToUnblock()
+
+{
+	std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+
+	toUnBlock = DataBase::NOOP;
+}

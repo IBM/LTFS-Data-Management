@@ -10,7 +10,8 @@ public:
 	enum operation {
 		TRARECALL,
 		SELRECALL,
-		MIGRATION
+		MIGRATION,
+		NOOP
 	};
 	enum req_state {
 		REQ_NEW,

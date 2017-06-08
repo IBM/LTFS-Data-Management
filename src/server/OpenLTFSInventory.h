@@ -5,6 +5,7 @@ class OpenLTFSDrive : public ltfsadmin::Drive {
 private:
 	bool busy;
 	int umountReqNum;
+	DataBase::operation toUnBlock;
 public:
 	WorkQueue<std::string, long, long, Migration::mig_info_t> *wqp;
 	OpenLTFSDrive(ltfsadmin::Drive drive) : ltfsadmin::Drive(drive), busy(false), umountReqNum(Const::UNSET) {}
@@ -15,6 +16,9 @@ public:
 	void setUnmountReqNum(int reqnum);
 	int getUnmountReqNum();
 	void unsetUnmountReqNum();
+	void setToUnblock(DataBase::operation op);
+	DataBase::operation getToUnblock();
+	void clearToUnblock();
 };
 
 class OpenLTFSCartridge : public ltfsadmin::Cartridge {
@@ -46,7 +50,7 @@ private:
 	std::list<std::shared_ptr<OpenLTFSCartridge>> cartridges;
 public:
 	OpenLTFSPool(std::string _poolName);
-	std::string getPoolName() { return poolName; }
+	std::string getPoolName();
 	void add(std::shared_ptr<OpenLTFSCartridge> cartridge);
 	void remove(std::shared_ptr<OpenLTFSCartridge> cartridge);
 	std::list<std::shared_ptr<OpenLTFSCartridge>> getCartridges();
