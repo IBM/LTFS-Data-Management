@@ -407,7 +407,7 @@ Migration::req_return_t Migration::migrationStep(int reqNumber, int numRepl, int
 			 << " AND FITS(I_NUM, FILE_SIZE, "
 			 << (unsigned long) &freeSpace
 			 << "," << (unsigned long) &num_found
-			 << "," << (unsigned long) &total << ")";
+			 << "," << (unsigned long) &total << ")=1";
 	}
 	else {
 		ssql << "UPDATE JOB_QUEUE SET FILE_STATE=" <<  state
@@ -551,8 +551,6 @@ void Migration::execRequest(int reqNumber, int targetState, int numRepl,
 	if ( needsTape ) {
 		retval = migrationStep(reqNumber, numRepl, replNum, tapeId,  FsObj::RESIDENT, FsObj::PREMIGRATED);
 
-		inventory->update(inventory->getCartridge(tapeId));
-
 		tapePath << Const::LTFS_PATH << "/" << tapeId;
 
 		if ( setxattr(tapePath.str().c_str(), Const::LTFS_SYNC_ATTR.c_str(),
@@ -584,6 +582,8 @@ void Migration::execRequest(int reqNumber, int targetState, int numRepl,
 				failed = true;
 			}
 		}
+
+		inventory->update(inventory->getCartridge(tapeId));
 
 		std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
 		inventory->getCartridge(tapeId)->setState(OpenLTFSCartridge::MOUNTED);
