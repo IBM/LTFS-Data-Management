@@ -6,7 +6,7 @@ std::mutex Scheduler::updmtx;
 std::condition_variable Scheduler::updcond;
 std::map<int, std::atomic<bool>> Scheduler::updReq;
 
-WorkQueue<Migration::mig_info_t> *Scheduler::wqs;
+WorkQueue<Migration::mig_info_t, std::shared_ptr<std::list<unsigned long>>> *Scheduler::wqs;
 
 std::string Scheduler::getTapeName(std::string fileName, std::string tapeId)
 
@@ -129,7 +129,22 @@ bool Scheduler::tapeResAvail()
 
 	assert(tapeId.compare("") != 0 );
 
-	if ( inventory->getCartridge(tapeId)->getState() == OpenLTFSCartridge::MOUNTED ) {
+	if ( inventory->getCartridge(tapeId)->getState() == OpenLTFSCartridge::MOVING )
+		return false;
+
+	if ( inventory->getCartridge(tapeId)->getState() == OpenLTFSCartridge::INUSE ) {
+		found = false;
+		for ( std::shared_ptr<OpenLTFSDrive> drive : inventory->getDrives() ) {
+			if ( drive->get_slot() == inventory->getCartridge(tapeId)->get_slot() ) {
+				drive->setToUnblock(op);
+				found = true;
+				break;
+			}
+		}
+		assert(found == true );
+		return false;
+	}
+	else if ( inventory->getCartridge(tapeId)->getState() == OpenLTFSCartridge::MOUNTED ) {
 		found = false;
 		for ( std::shared_ptr<OpenLTFSDrive> drive : inventory->getDrives() ) {
 			if ( drive->get_slot() == inventory->getCartridge(tapeId)->get_slot() ) {
@@ -145,6 +160,7 @@ bool Scheduler::tapeResAvail()
 		return true;
 	}
 
+	// looking for a free drive
 	for ( std::shared_ptr<OpenLTFSDrive> drive : inventory->getDrives() ) {
 		if ( drive->isBusy() == true )
 			continue;
@@ -168,10 +184,7 @@ bool Scheduler::tapeResAvail()
 		}
 	}
 
-	for ( std::shared_ptr<OpenLTFSDrive> drive : inventory->getDrives() )
-		if ( drive->getUnmountReqNum() == reqNum )
-			return false;
-
+	// looking for a tape to unmount
 	for ( std::shared_ptr<OpenLTFSDrive> drive : inventory->getDrives() ) {
 		if ( drive->isBusy() == true )
 			continue;
@@ -182,10 +195,23 @@ bool Scheduler::tapeResAvail()
 				drive->setBusy();
 				drive->setUnmountReqNum(reqNum);
 				card->setState(OpenLTFSCartridge::MOVING);
+				inventory->getCartridge(tapeId)->unsetRequested();
 				subs.enqueue(std::string("unm:") + card->GetObjectID(), unmount,
 										 drive->GetObjectID(), card->GetObjectID());
 				return false;
 			}
+		}
+	}
+
+	if ( inventory->getCartridge(tapeId)->isRequested() )
+		return false;
+
+	// suspend an operation
+	for ( std::shared_ptr<OpenLTFSDrive> drive : inventory->getDrives() ) {
+		if ( op < drive->getToUnblock() ) {
+			drive->setToUnblock(op);
+			inventory->getCartridge(tapeId)->setRequested();
+			break;
 		}
 	}
 

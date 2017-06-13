@@ -7,8 +7,9 @@ private:
 	int umountReqNum;
 	DataBase::operation toUnBlock;
 public:
-	WorkQueue<std::string, long, long, Migration::mig_info_t> *wqp;
-	OpenLTFSDrive(ltfsadmin::Drive drive) : ltfsadmin::Drive(drive), busy(false), umountReqNum(Const::UNSET) {}
+	WorkQueue<std::string, std::string, long, long, Migration::mig_info_t, std::shared_ptr<std::list<unsigned long>>> *wqp;
+	OpenLTFSDrive(ltfsadmin::Drive drive) : ltfsadmin::Drive(drive), busy(false),
+											umountReqNum(Const::UNSET), toUnBlock(DataBase::NOOP) {}
 	void update(std::shared_ptr<LTFSAdminSession> sess);
 	bool isBusy();
 	void setBusy();
@@ -25,6 +26,7 @@ class OpenLTFSCartridge : public ltfsadmin::Cartridge {
 private:
 	unsigned long inProgress;
 	std::string pool;
+	bool requested;
 public:
 	enum state_t {
 		INUSE,
@@ -34,7 +36,8 @@ public:
 		INVALID,
 		UNKNOWN
 	} state;
-	OpenLTFSCartridge(ltfsadmin::Cartridge cartridge) : ltfsadmin::Cartridge(cartridge), inProgress(0), pool(""), state(OpenLTFSCartridge::UNKNOWN) {}
+	OpenLTFSCartridge(ltfsadmin::Cartridge cartridge) : ltfsadmin::Cartridge(cartridge), inProgress(0),
+		pool(""), requested(false), state(OpenLTFSCartridge::UNKNOWN) {}
 	void update(std::shared_ptr<LTFSAdminSession> sess);
 	void setInProgress(unsigned long size);
 	unsigned long getInProgress();
@@ -42,6 +45,9 @@ public:
 	std::string getPool();
 	void setState(state_t _state);
 	state_t getState();
+	bool isRequested();
+	void setRequested();
+	void unsetRequested();
 };
 
 class OpenLTFSPool {

@@ -422,12 +422,14 @@ void FsObj::remAttribute()
 
 	if ( fremovexattr(fh->fd, Const::OPEN_LTFS_EA_MIGINFO_EXT.c_str()) == -1 ) {
 		TRACE(Trace::error, errno);
-		throw(errno);
+		if ( errno != ENODATA )
+			throw(errno);
 	}
 
 	if ( fremovexattr(fh->fd, Const::OPEN_LTFS_EA_MIGINFO_INT.c_str()) == -1 ) {
 		TRACE(Trace::error, errno);
-		throw(errno);
+		if ( errno != ENODATA )
+			throw(errno);
 	}
 }
 

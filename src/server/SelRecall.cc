@@ -220,11 +220,14 @@ unsigned long SelRecall::recall(std::string fileName, std::string tapeId,
 	return statbuf.st_size;
 }
 
-void SelRecall::recallStep(int reqNumber, std::string tapeId, FsObj::file_state toState, bool needsTape)
+bool SelRecall::recallStep(int reqNumber, std::string tapeId, FsObj::file_state toState, bool needsTape)
 
 {
 	sqlite3_stmt *stmt;
 	std::stringstream ssql;
+	std::shared_ptr<OpenLTFSDrive> drive = nullptr;
+	std::list<unsigned long> inumList;
+	bool suspended = false;
 	int rc, rc2;
 	time_t start;
 
@@ -234,6 +237,16 @@ void SelRecall::recallStep(int reqNumber, std::string tapeId, FsObj::file_state 
 		std::lock_guard<std::mutex> lock(Scheduler::updmtx);
 		Scheduler::updReq[reqNumber] = true;
 		Scheduler::updcond.notify_all();
+	}
+
+	if ( needsTape ) {
+		for ( std::shared_ptr<OpenLTFSDrive> d : inventory->getDrives() ) {
+			if ( d->get_slot() == inventory->getCartridge(tapeId)->get_slot() ) {
+				drive = d;
+				break;
+			}
+		}
+		assert(drive != nullptr);
 	}
 
 	ssql << "UPDATE JOB_QUEUE SET FILE_STATE=" <<  FsObj::RECALLING_MIG
@@ -260,7 +273,7 @@ void SelRecall::recallStep(int reqNumber, std::string tapeId, FsObj::file_state 
 	ssql.str("");
 	ssql.clear();
 
-	ssql << "SELECT FILE_NAME, FILE_STATE FROM JOB_QUEUE WHERE REQ_NUM=" << reqNumber
+	ssql << "SELECT FILE_NAME, FILE_STATE, I_NUM FROM JOB_QUEUE WHERE REQ_NUM=" << reqNumber
 		 << " AND TAPE_ID='" << tapeId << "'"
 		 << " AND (FILE_STATE=" << FsObj::RECALLING_MIG << " OR FILE_STATE=" << FsObj::RECALLING_PREMIG << ")"
 		 << " ORDER BY START_BLOCK";
@@ -288,6 +301,7 @@ void SelRecall::recallStep(int reqNumber, std::string tapeId, FsObj::file_state 
 				fileName = std::string(cstr);
 
 			FsObj::file_state state = (FsObj::file_state) sqlite3_column_int(stmt, 1);
+			unsigned long inum = static_cast<unsigned long>(sqlite3_column_int64(stmt, 2));
 
 			if ( state ==  FsObj::RECALLING_MIG )
 				state = FsObj::MIGRATED;
@@ -297,12 +311,19 @@ void SelRecall::recallStep(int reqNumber, std::string tapeId, FsObj::file_state 
 			if ( state == toState )
 				continue;
 
+			if ( needsTape && drive->getToUnblock() == DataBase::TRARECALL ) {
+				suspended = true;
+				rc = SQLITE_DONE;
+				break;
+			}
+
 			try {
 				if ( (state == FsObj::MIGRATED) && (needsTape == false) ) {
 					MSG(LTFSDMS0047E, fileName);
 					throw(Error::LTFSDM_GENERAL_ERROR);
 				}
 				recall(fileName, tapeId, state, toState);
+				inumList.push_back(inum);
 				mrStatus.updateSuccess(reqNumber, state, toState);
 			}
 			catch (int error) {
@@ -342,12 +363,56 @@ void SelRecall::recallStep(int reqNumber, std::string tapeId, FsObj::file_state 
 	ssql << "UPDATE JOB_QUEUE SET FILE_STATE = " <<  toState
 		 << " WHERE REQ_NUM=" << reqNumber
 		 << " AND TAPE_ID='" << tapeId << "'"
-		 << " AND (FILE_STATE=" << FsObj::RECALLING_MIG << " OR FILE_STATE=" << FsObj::RECALLING_PREMIG << ")";
+		 << " AND (FILE_STATE=" << FsObj::RECALLING_MIG << " OR FILE_STATE=" << FsObj::RECALLING_PREMIG << ")"
+		 << " AND I_NUM IN (";
+
+	bool first = true;
+	for ( unsigned long inum : inumList ) {
+		if ( first ) {
+			ssql << inum;
+			first = false;
+		}
+		else {
+			ssql << ", " << inum;
+		}
+	}
+	ssql << ")";
+
+	TRACE(Trace::always, ssql.str());
 
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 	rc = sqlite3_statement::step(stmt);
 	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 
+	ssql.str("");
+	ssql.clear();
+
+	ssql << "UPDATE JOB_QUEUE SET FILE_STATE = " << FsObj::MIGRATED
+		 << " WHERE REQ_NUM=" << reqNumber
+		 << " AND TAPE_ID='" << tapeId << "'"
+		 << " AND FILE_STATE=" << FsObj::RECALLING_MIG;
+
+	TRACE(Trace::always, ssql.str());
+
+	sqlite3_statement::prepare(ssql.str(), &stmt);
+	rc = sqlite3_statement::step(stmt);
+	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+
+	ssql.str("");
+	ssql.clear();
+
+	ssql << "UPDATE JOB_QUEUE SET FILE_STATE = " << FsObj::PREMIGRATED
+		 << " WHERE REQ_NUM=" << reqNumber
+		 << " AND TAPE_ID='" << tapeId << "'"
+		 << " AND FILE_STATE=" << FsObj::RECALLING_PREMIG;
+
+	TRACE(Trace::always, ssql.str());
+
+	sqlite3_statement::prepare(ssql.str(), &stmt);
+	rc = sqlite3_statement::step(stmt);
+	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+
+	return suspended;
 }
 
 void SelRecall::execRequest(int reqNumber, int tgtState, std::string tapeId, bool needsTape)
@@ -355,18 +420,19 @@ void SelRecall::execRequest(int reqNumber, int tgtState, std::string tapeId, boo
 {
 	std::stringstream ssql;
 	sqlite3_stmt *stmt;
+	bool suspended = false;
 	int rc;
 
 	mrStatus.add(reqNumber);
 
 	if ( tgtState == LTFSDmProtocol::LTFSDmMigRequest::PREMIGRATED )
-		recallStep(reqNumber, tapeId, FsObj::PREMIGRATED, needsTape);
+		suspended = recallStep(reqNumber, tapeId, FsObj::PREMIGRATED, needsTape);
 	else
-		recallStep(reqNumber, tapeId, FsObj::RESIDENT, needsTape);
+		suspended = recallStep(reqNumber, tapeId, FsObj::RESIDENT, needsTape);
 
 	std::unique_lock<std::mutex> lock(Scheduler::mtx);
 
-	{
+	if ( needsTape ) {
 		std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
 		inventory->getCartridge(tapeId)->setState(OpenLTFSCartridge::MOUNTED);
 		bool found = false;
@@ -374,6 +440,7 @@ void SelRecall::execRequest(int reqNumber, int tgtState, std::string tapeId, boo
 			if ( d->get_slot() == inventory->getCartridge(tapeId)->get_slot() ) {
 				TRACE(Trace::always, std::string("SET FREE: ") + d->GetObjectID());
 				d->setFree();
+				d->clearToUnblock();
 				found = true;
 				break;
 			}
@@ -385,7 +452,7 @@ void SelRecall::execRequest(int reqNumber, int tgtState, std::string tapeId, boo
 
 	ssql.str("");
 	ssql.clear();
-	ssql << "UPDATE REQUEST_QUEUE SET STATE=" << DataBase::REQ_COMPLETED
+	ssql << "UPDATE REQUEST_QUEUE SET STATE=" << (suspended ? DataBase::REQ_NEW : DataBase::REQ_COMPLETED)
 		 << " WHERE REQ_NUM=" << reqNumber << " AND TAPE_ID='" << tapeId << "';";
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 	rc = sqlite3_statement::step(stmt);

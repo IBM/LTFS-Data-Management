@@ -20,13 +20,16 @@ public:
 		int reqNumber;
 		int numRepl;
 		int replNum;
+		unsigned long inum;
 		std::string poolName;
 		FsObj::file_state fromState;
 		FsObj::file_state toState;
 	};
+	static std::mutex inummtx;
 
 private:
-	static req_return_t migrationStep(int reqNumber, int numRepl, int replNum, std::string tapeId, FsObj::file_state fromState, FsObj::file_state toState);
+	static req_return_t migrationStep(int reqNumber, int numRepl, int replNum, std::string tapeId,
+									  FsObj::file_state fromState, FsObj::file_state toState);
 public:
 	Migration(unsigned long _pid, long _reqNumber, std::set<std::string> _pools,
 		  int _numReplica, LTFSDmProtocol::LTFSDmMigRequest::State _targetState) :
@@ -34,8 +37,9 @@ public:
 	    targetState(_targetState), jobnum(0) {}
 	void addJob(std::string fileName);
 	void addRequest();
-	static unsigned long preMigrate(std::string tapeId, long secs, long nsecs, mig_info_t miginfo);
-	static void stub(mig_info_t mig_info);
+	static unsigned long preMigrate(std::string tapeId, std::string driveId, long secs, long nsecs,
+									mig_info_t miginfo, std::shared_ptr<std::list<unsigned long>> inumList);
+	static void stub(mig_info_t mig_info, std::shared_ptr<std::list<unsigned long>> inumList);
 	static void execRequest(int reqNumber, int targetState, int numRepl, int replNum,
 							std::string pool, std::string tapeId, bool needsTape);
 };

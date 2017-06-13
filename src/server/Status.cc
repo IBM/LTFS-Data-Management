@@ -11,7 +11,9 @@ void Status::add(int reqNumber)
 
 	std::lock_guard<std::mutex> lock(Status::mtx);
 
-	assert( allStates.count(reqNumber) == 0 );
+	//assert( allStates.count(reqNumber) == 0 );
+	if ( allStates.count(reqNumber) != 0 )
+		return;
 
 	ssql << "SELECT FILE_STATE, COUNT(*) FROM JOB_QUEUE WHERE REQ_NUM="
 		 << reqNumber << " GROUP BY FILE_STATE";

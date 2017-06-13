@@ -184,7 +184,7 @@ void Server::run(Connector *connector, sigset_t set)
 
 	terminate = false;
 
-	Scheduler::wqs = new WorkQueue<Migration::mig_info_t>
+	Scheduler::wqs = new WorkQueue<Migration::mig_info_t, std::shared_ptr<std::list<unsigned long>>>
 		(&Migration::stub, Const::NUM_STUBBING_THREADS, "stub-wq");
 
 	subs.enqueue("Scheduler", &Scheduler::run, &sched, key);

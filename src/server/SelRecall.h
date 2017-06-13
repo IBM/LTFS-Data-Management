@@ -9,7 +9,7 @@ private:
 	LTFSDmProtocol::LTFSDmSelRecRequest::State targetState;
 	static unsigned long recall(std::string fileName, std::string tapeId,
 								FsObj::file_state state, FsObj::file_state toState);
-	static void recallStep(int reqNumber, std::string tapeId, FsObj::file_state toState, bool needsTape);
+	static bool recallStep(int reqNumber, std::string tapeId, FsObj::file_state toState, bool needsTape);
 public:
 	SelRecall(unsigned long _pid, long _reqNumber,
 			  LTFSDmProtocol::LTFSDmSelRecRequest::State _targetState) :

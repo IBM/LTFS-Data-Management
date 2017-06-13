@@ -55,3 +55,27 @@ OpenLTFSCartridge::state_t OpenLTFSCartridge::getState()
 
 	return state;
 }
+
+bool OpenLTFSCartridge::isRequested()
+
+{
+ 	std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+
+	return requested;
+}
+
+void OpenLTFSCartridge::setRequested()
+
+{
+ 	std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+
+	requested = true;
+}
+
+void OpenLTFSCartridge::unsetRequested()
+
+{
+ 	std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+
+	requested = false;
+}

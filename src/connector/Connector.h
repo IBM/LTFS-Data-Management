@@ -63,6 +63,9 @@ public:
 				return messages[LTFSDMX0026I];
 			case STUBBING:
 				return messages[LTFSDMX0027I];
+			case RECALLING_MIG:
+			case RECALLING_PREMIG:
+				return messages[LTFSDMX0028I];
 			default:
 				return "";
 		}
