@@ -25,18 +25,15 @@ void DataBase::fits(sqlite3_context *ctx, int argc, sqlite3_value **argv)
 {
 	assert(argc == 5);
 
-	//unsigned long inode = sqlite3_value_int64(argv[0]);
 	unsigned long size = sqlite3_value_int64(argv[1]);
 	unsigned long *free = (unsigned long *) sqlite3_value_int64(argv[2]);
 	unsigned long *num_found = (unsigned long *) sqlite3_value_int64(argv[3]);
 	unsigned long *total = (unsigned long *) sqlite3_value_int64(argv[4]);
 
 	if ( *free  >= size ) {
-		std::cout << "BEFORE free: " << *free << ", size: " << size << std::endl;
 		*free -= size;
 		(*total)++;
 		(*num_found)++;
-		std::cout << "AFTER  free: " << *free << ", size: " << size << std::endl;
 		sqlite3_result_int(ctx, 1);
 	}
 	else {
