@@ -45,6 +45,7 @@ bool Scheduler::poolResAvail(unsigned long minFileSize)
 
 {
 	bool found;
+	bool unmountedExists = false;
 
 	assert(pool.compare("") != 0 );
 
@@ -67,7 +68,12 @@ bool Scheduler::poolResAvail(unsigned long minFileSize)
 			if ( found == true )
 				return true;
 		}
+		else if ( card->getState() == OpenLTFSCartridge::UNMOUNTED )
+			unmountedExists = true;
 	}
+
+	if ( unmountedExists == false )
+		return false;
 
 	for ( std::shared_ptr<OpenLTFSDrive> drive : inventory->getDrives() ) {
 		if ( drive->isBusy() == true )
