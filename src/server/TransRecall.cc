@@ -217,6 +217,9 @@ unsigned long recall(Connector::rec_info_t recinfo, std::string tapeId,
 	try {
 		FsObj target(recinfo);
 
+		TRACE(Trace::much, recinfo.ino);
+		TRACE(Trace::much, recinfo.filename);
+
 		target.lock();
 
 		curstate = target.getMigState();

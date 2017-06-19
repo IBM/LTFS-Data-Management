@@ -70,6 +70,9 @@ void FuseFS::setMigInfo(const char *path, FuseFS::mig_info::state_num state)
 	FuseFS::mig_info miginfo_new;
 	FuseFS::mig_info miginfo;
 
+	TRACE(Trace::much, path);
+	TRACE(Trace::much, state);
+
 	miginfo_new = genMigInfo(path, state);
 
 	memset(&miginfo, 0, sizeof(miginfo));
@@ -94,6 +97,8 @@ void FuseFS::setMigInfo(const char *path, FuseFS::mig_info::state_num state)
 int FuseFS::remMigInfo(const char *path)
 
 {
+	TRACE(Trace::much, path);
+
 	if ( removexattr(path, Const::OPEN_LTFS_EA_MIGINFO_INT.c_str()) == -1 )
 		return errno;
 

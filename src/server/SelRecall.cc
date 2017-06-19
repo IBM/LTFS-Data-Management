@@ -161,6 +161,8 @@ unsigned long SelRecall::recall(std::string fileName, std::string tapeId,
 	try {
 		FsObj target(fileName);
 
+		TRACE(Trace::much, fileName);
+
 		target.lock();
 
 		curstate = target.getMigState();

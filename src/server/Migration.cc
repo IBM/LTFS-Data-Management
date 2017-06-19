@@ -1,6 +1,6 @@
 #include "ServerIncludes.h"
 
-std::mutex Migration::inummtx;
+std::mutex Migration::pmigmtx;
 
 void Migration::addJob(std::string fileName)
 
@@ -205,7 +205,8 @@ std::mutex writemtx;
 
 
 unsigned long Migration::preMigrate(std::string tapeId, std::string driveId, long secs, long nsecs,
-									Migration::mig_info_t mig_info, std::shared_ptr<std::list<unsigned long>> inumList)
+									Migration::mig_info_t mig_info,
+									std::shared_ptr<std::list<unsigned long>> inumList, std::shared_ptr<bool> suspended)
 
 {
 	struct stat statbuf, statbuf_changed;
@@ -219,6 +220,8 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId, lon
 
 	try {
 		FsObj source(mig_info.fileName);
+
+		TRACE(Trace::much, mig_info.fileName);
 
 		tapeName = Scheduler::getTapeName(mig_info.fileName, tapeId);
 
@@ -240,19 +243,24 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId, lon
 			throw(Error::LTFSDM_GENERAL_ERROR);
 		}
 		if ( statbuf.st_mtim.tv_sec != secs || statbuf.st_mtim.tv_nsec != nsecs ) {
+			// TODO: handling of time stamps
 			TRACE(Trace::error, statbuf.st_mtim.tv_sec);
 			TRACE(Trace::error, secs);
 			TRACE(Trace::error, statbuf.st_mtim.tv_nsec);
 			TRACE(Trace::error, nsecs);
 			MSG(LTFSDMS0041W, mig_info.fileName);
-			throw(Error::LTFSDM_GENERAL_ERROR);
+			secs = statbuf.st_mtim.tv_sec;
+			nsecs = statbuf.st_mtim.tv_nsec ;
 		}
 
 		{
 			std::lock_guard<std::mutex> writelock(writemtx);
 
 			if ( inventory->getDrive(driveId)->getToUnblock() != DataBase::NOOP ) {
+				TRACE(Trace::much, mig_info.fileName);
 				source.remAttribute();
+				std::lock_guard<std::mutex> lock(Migration::pmigmtx);
+				*suspended = true;
 				throw(Error::LTFSDM_OK);
 			}
 
@@ -311,7 +319,7 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId, lon
 			source.finishPremigration();
 		source.unlock();
 
-		std::lock_guard<std::mutex> lock(Migration::inummtx);
+		std::lock_guard<std::mutex> lock(Migration::pmigmtx);
 		inumList->push_back(mig_info.inum);
 	}
 	catch ( int error ) {
@@ -347,15 +355,18 @@ void Migration::stub(Migration::mig_info_t mig_info, std::shared_ptr<std::list<u
 		FsObj source(mig_info.fileName);
 		FsObj::mig_attr_t attr;
 
+		TRACE(Trace::much, mig_info. fileName);
+
 		source.lock();
 		attr = source.getAttribute();
 		if ( mig_info.numRepl == 0 || attr.copies == mig_info.numRepl ) {
 			source.prepareStubbing();
 			source.stub();
+			TRACE(Trace::much, mig_info. fileName);
 		}
 		source.unlock();
 
-		std::lock_guard<std::mutex> lock(Migration::inummtx);
+		std::lock_guard<std::mutex> lock(Migration::pmigmtx);
 		inumList->push_back(mig_info.inum);
 	}
 	catch ( int error ) {
@@ -390,6 +401,7 @@ Migration::req_return_t Migration::migrationStep(int reqNumber, int numRepl, int
 	time_t steptime;
 	std::shared_ptr<std::list<unsigned long>> inumList =
 		std::make_shared<std::list<unsigned long>>();
+	std::shared_ptr<bool> suspended = std::make_shared<bool>(false);
 	unsigned long freeSpace = 0;
 	int num_found = 0;
 	int total = 0;
@@ -501,7 +513,7 @@ Migration::req_return_t Migration::migrationStep(int reqNumber, int numRepl, int
 					}
 					TRACE(Trace::much, secs);
 					TRACE(Trace::much, nsecs);
-					drive->wqp->enqueue(reqNumber, tapeId, drive->GetObjectID(), secs, nsecs, mig_info, inumList);
+					drive->wqp->enqueue(reqNumber, tapeId, drive->GetObjectID(), secs, nsecs, mig_info, inumList, suspended);
 				}
 				else {
 					Scheduler::wqs->enqueue(reqNumber, mig_info, inumList);
@@ -534,6 +546,9 @@ Migration::req_return_t Migration::migrationStep(int reqNumber, int numRepl, int
 	else {
 		Scheduler::wqs->waitCompletion(reqNumber);
 	}
+
+	if ( *suspended == true )
+		retval.suspended = true;
 
 	ssql.str("");
 	ssql.clear();
@@ -673,9 +688,4 @@ void Migration::execRequest(int reqNumber, int targetState, int numRepl,
 	Scheduler::updReq[reqNumber] = true;
 
 	Scheduler::updcond.notify_all();
-
-	if ( retval.suspended || retval.remaining ) {
-		std::unique_lock<std::mutex> lock(Scheduler::mtx);
-		Scheduler::cond.notify_one();
-	}
 }
