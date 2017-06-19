@@ -20,6 +20,8 @@ numfiles = 40000
 size = 32768
 numprocs = 1000
 iterations = 20000000
+tape1 = "D01301L5"
+tape2 = "D01302L5"
 
 def crfiles():
     if os.path.isfile(source) == 0:
@@ -109,16 +111,16 @@ def prepare():
     if os.system("ltfsdm stop") != 0:
         print("unable to stop OpenLTFS, perhaps already stopped")
 
-    if os.system("ltfsadmintool -t D01301L5,D01302L5 -f -- --force") != 0:
+    if os.system("ltfsadmintool -t " + tape1 + "," + tape2 + " -f -- --force") != 0:
         print("unable to format tapes")
         exit(-1)
 
-    if os.system("ltfsadmintool -t D01301L5 -m homeslot") != 0:
-        print("unable to move D01301L5 to homeslot")
+    if os.system("ltfsadmintool -t " + tape1 + " -m homeslot") != 0:
+        print("unable to move " + tape1 + " to homeslot")
         exit(-1)
 
-    if os.system("ltfsadmintool -t D01302L5 -m homeslot") != 0:
-        print("unable to move D01302L5 to homeslot")
+    if os.system("ltfsadmintool -t " + tape2 + " -m homeslot") != 0:
+        print("unable to move " + tape2 + " to homeslot")
         exit(-1)
 
     if os.system("umount /mnt/ltfs") != 0:
