@@ -418,7 +418,11 @@ void FsObj::addAttribute(mig_attr_t value)
 void FsObj::remAttribute()
 
 {
+	FuseFS::mig_info miginfo;
+
 	FuseHandle *fh = (FuseHandle *) handle;
+
+	miginfo = FuseFS::getMigInfo(fh->sourcePath.c_str());
 
 	if ( fremovexattr(fh->fd, Const::OPEN_LTFS_EA_MIGINFO_EXT.c_str()) == -1 ) {
 		TRACE(Trace::error, errno);
@@ -431,6 +435,10 @@ void FsObj::remAttribute()
 		if ( errno != ENODATA )
 			throw(errno);
 	}
+
+	const timespec timestamp[2] = {miginfo.statinfo.st_atim, miginfo.statinfo.st_mtim};
+	if ( futimens(fh->fd, timestamp) == -1 )
+		MSG(LTFSDMS0072E, fh->fileName);
 }
 
 FsObj::mig_attr_t FsObj::getAttribute()

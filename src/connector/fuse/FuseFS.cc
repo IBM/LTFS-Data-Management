@@ -86,8 +86,11 @@ void FuseFS::setMigInfo(const char *path, FuseFS::mig_info::state_num state)
 		throw(EIO);
 	}
 
-	if ( miginfo.state != FuseFS::mig_info::state_num::NO_STATE )
+	if ( miginfo.state != FuseFS::mig_info::state_num::NO_STATE ) {
 		miginfo_new.statinfo.st_size = miginfo.statinfo.st_size;
+		miginfo_new.statinfo.st_atim = miginfo.statinfo.st_atim;
+		miginfo_new.statinfo.st_mtim = miginfo.statinfo.st_mtim;
+	}
 
 	if ( setxattr(path, Const::OPEN_LTFS_EA_MIGINFO_INT.c_str(), (void *) &miginfo_new, sizeof(miginfo_new), 0) == -1 )
 		throw(errno);
@@ -265,9 +268,11 @@ int FuseFS::ltfsdm_getattr(const char *path, struct stat *statbuf)
 	}
 	else {
 		miginfo = getMigInfo(FuseFS::souce_path(path).c_str());
-		if ( miginfo.state != FuseFS::mig_info::state_num::NO_STATE &&
-			 miginfo.state != FuseFS::mig_info::state_num::IN_MIGRATION )
+		if ( miginfo.state != FuseFS::mig_info::state_num::NO_STATE ) {
 			statbuf->st_size = miginfo.statinfo.st_size;
+			statbuf->st_atim = miginfo.statinfo.st_atim;
+			statbuf->st_mtim = miginfo.statinfo.st_mtim;
+		}
 		return 0;
 	}
 }

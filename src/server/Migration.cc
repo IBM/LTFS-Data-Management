@@ -243,14 +243,12 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId, lon
 			throw(Error::LTFSDM_GENERAL_ERROR);
 		}
 		if ( statbuf.st_mtim.tv_sec != secs || statbuf.st_mtim.tv_nsec != nsecs ) {
-			// TODO: handling of time stamps
 			TRACE(Trace::error, statbuf.st_mtim.tv_sec);
 			TRACE(Trace::error, secs);
 			TRACE(Trace::error, statbuf.st_mtim.tv_nsec);
 			TRACE(Trace::error, nsecs);
 			MSG(LTFSDMS0041W, mig_info.fileName);
-			secs = statbuf.st_mtim.tv_sec;
-			nsecs = statbuf.st_mtim.tv_nsec ;
+			throw(Error::LTFSDM_GENERAL_ERROR);
 		}
 
 		{
