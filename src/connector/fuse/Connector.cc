@@ -466,6 +466,14 @@ void FsObj::finishPremigration()
 	FuseFS::setMigInfo(fh->sourcePath.c_str(), FuseFS::mig_info::state_num::PREMIGRATED);
 }
 
+void FsObj::prepareRecall()
+
+{
+	FuseHandle *fh = (FuseHandle *) handle;
+
+	FuseFS::setMigInfo(fh->sourcePath.c_str(), FuseFS::mig_info::state_num::IN_RECALL);
+}
+
 void FsObj::finishRecall(FsObj::file_state fstate)
 
 {

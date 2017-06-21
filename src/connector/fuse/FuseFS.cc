@@ -186,7 +186,33 @@ bool FuseFS::needsRecovery(FuseFS::mig_info miginfo)
 void FuseFS::recoverState(const char *path, FuseFS::mig_info::state_num state)
 
 {
-	// TODO
+	struct fuse_context *fc = fuse_get_context();
+
+	std::string fusepath = ((FuseFS::openltfs_ctx *) fc->private_data)->mountpoint + std::string(path);
+	std::string sourcepath = ((FuseFS::openltfs_ctx *) fc->private_data)->sourcedir + std::string(path);
+
+	TRACE(Trace::error, fusepath);
+	TRACE(Trace::error, state);
+
+	FsObj file(sourcepath);
+
+	switch(state) {
+		case FuseFS::mig_info::state_num::IN_MIGRATION:
+			MSG(LTFSDMS0073W, fusepath);
+			FuseFS::setMigInfo(sourcepath.c_str(), FuseFS::mig_info::state_num::NO_STATE);
+			break;
+		case FuseFS::mig_info::state_num::STUBBING:
+			MSG(LTFSDMS0074W, fusepath);
+			FuseFS::setMigInfo(sourcepath.c_str(), FuseFS::mig_info::state_num::PREMIGRATED);
+			break;
+		case FuseFS::mig_info::state_num::IN_RECALL:
+			MSG(LTFSDMS0075W, fusepath);
+			FuseFS::setMigInfo(sourcepath.c_str(), FuseFS::mig_info::state_num::MIGRATED);
+			truncate(sourcepath.c_str(), 0);
+			break;
+		default:
+			assert(0);
+	}
 }
 
 std::string FuseFS::souce_path(const char *path)
@@ -207,7 +233,7 @@ std::string FuseFS::souce_path(const char *path)
 		return std::string("");
 	}
 	if ( FuseFS::needsRecovery(miginfo) == true )
-		 FuseFS::recoverState(fullpath.c_str(), miginfo.state);
+		 FuseFS::recoverState(path, miginfo.state);
 
 	return fullpath;
 }

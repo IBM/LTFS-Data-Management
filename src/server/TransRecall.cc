@@ -243,6 +243,8 @@ unsigned long recall(Connector::rec_info_t recinfo, std::string tapeId,
 
 			statbuf = target.stat();
 
+			target.prepareRecall();
+
 			while ( offset < statbuf.st_size ) {
 				rsize = read(fd, buffer, sizeof(buffer));
 				if ( rsize == -1 ) {

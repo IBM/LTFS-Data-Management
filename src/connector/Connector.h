@@ -91,6 +91,7 @@ public:
 	mig_attr_t getAttribute();
 	void preparePremigration();
 	void finishPremigration();
+	void prepareRecall();
 	void finishRecall(file_state fstate);
 	void prepareStubbing();
 	void stub();

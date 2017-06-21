@@ -186,6 +186,8 @@ unsigned long SelRecall::recall(std::string fileName, std::string tapeId,
 
 			statbuf = target.stat();
 
+			target.prepareRecall();
+
 			while ( offset < statbuf.st_size ) {
 				rsize = read(fd, buffer, sizeof(buffer));
 				if ( rsize == -1 ) {
