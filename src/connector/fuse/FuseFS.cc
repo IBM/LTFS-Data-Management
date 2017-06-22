@@ -199,7 +199,14 @@ void FuseFS::recoverState(const char *path, FuseFS::mig_info::state_num state)
 	switch(state) {
 		case FuseFS::mig_info::state_num::IN_MIGRATION:
 			MSG(LTFSDMF0013W, fusepath);
-			FuseFS::setMigInfo(sourcepath.c_str(), FuseFS::mig_info::state_num::NO_STATE);
+			if ( removexattr(sourcepath.c_str(), Const::OPEN_LTFS_EA_MIGINFO_EXT.c_str()) == -1 ) {
+				TRACE(Trace::error, errno);
+				MSG(LTFSDMF0018W, Const::OPEN_LTFS_EA_MIGINFO_EXT);
+			}
+			if ( removexattr(sourcepath.c_str(), Const::OPEN_LTFS_EA_MIGINFO_INT.c_str()) == -1 ) {
+				TRACE(Trace::error, errno);
+				MSG(LTFSDMF0018W, Const::OPEN_LTFS_EA_MIGINFO_INT);
+			}
 			break;
 		case FuseFS::mig_info::state_num::STUBBING:
 			MSG(LTFSDMF0014W, fusepath);
