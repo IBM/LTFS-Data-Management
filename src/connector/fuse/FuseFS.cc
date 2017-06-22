@@ -198,17 +198,24 @@ void FuseFS::recoverState(const char *path, FuseFS::mig_info::state_num state)
 
 	switch(state) {
 		case FuseFS::mig_info::state_num::IN_MIGRATION:
-			MSG(LTFSDMS0073W, fusepath);
+			MSG(LTFSDMF0013W, fusepath);
 			FuseFS::setMigInfo(sourcepath.c_str(), FuseFS::mig_info::state_num::NO_STATE);
 			break;
 		case FuseFS::mig_info::state_num::STUBBING:
-			MSG(LTFSDMS0074W, fusepath);
-			FuseFS::setMigInfo(sourcepath.c_str(), FuseFS::mig_info::state_num::PREMIGRATED);
+			MSG(LTFSDMF0014W, fusepath);
+			FuseFS::setMigInfo(sourcepath.c_str(), FuseFS::mig_info::state_num::MIGRATED);
+			if ( truncate(sourcepath.c_str(), 0) == -1 ) {
+				FuseFS::setMigInfo(sourcepath.c_str(), FuseFS::mig_info::state_num::PREMIGRATED);
+				MSG(LTFSDMF0016E, fusepath);
+			}
 			break;
 		case FuseFS::mig_info::state_num::IN_RECALL:
-			MSG(LTFSDMS0075W, fusepath);
+			MSG(LTFSDMF0015W, fusepath);
 			FuseFS::setMigInfo(sourcepath.c_str(), FuseFS::mig_info::state_num::MIGRATED);
-			truncate(sourcepath.c_str(), 0);
+			if ( truncate(sourcepath.c_str(), 0) == -1 ) {
+				FuseFS::setMigInfo(sourcepath.c_str(), FuseFS::mig_info::state_num::PREMIGRATED);
+				MSG(LTFSDMF0016E, fusepath);
+			}
 			break;
 		default:
 			assert(0);

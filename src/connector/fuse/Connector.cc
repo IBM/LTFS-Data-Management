@@ -488,7 +488,7 @@ void FsObj::finishRecall(FsObj::file_state fstate)
 		const timespec timestamp[2] = {miginfo.statinfo.st_atim, miginfo.statinfo.st_mtim};
 
 		if ( futimens(fh->fd, timestamp) == -1 )
-			MSG(LTFSDMS0072E, fh->fileName);
+			MSG(LTFSDMF0017E, fh->fileName);
 
 		FuseFS::setMigInfo(fh->sourcePath.c_str(), FuseFS::mig_info::state_num::NO_STATE);
 	}
@@ -503,7 +503,6 @@ void FsObj::prepareStubbing()
 	FuseFS::setMigInfo(fh->sourcePath.c_str(), FuseFS::mig_info::state_num::STUBBING);
 }
 
-
 void FsObj::stub()
 
 {
@@ -517,16 +516,12 @@ void FsObj::stub()
 
 	if ( ftruncate(fh->fd, 0) == -1 ) {
 		TRACE(Trace::error, errno);
+		MSG(LTFSDMF0016E, fh->fileName);
+		FuseFS::setMigInfo(fh->sourcePath.c_str(), FuseFS::mig_info::state_num::PREMIGRATED);
 		throw(errno);
 	}
 
-
-	// if ( ftruncate(fh->fd, statbuf.st_size) == -1 ) {
-	// 	TRACE(Trace::error, errno);
-	// 	throw(errno);
-	// }
-
-	FuseFS::setMigInfo(fh->sourcePath.c_str(), FuseFS::mig_info::state_num::MIGRATED);
+ 	FuseFS::setMigInfo(fh->sourcePath.c_str(), FuseFS::mig_info::state_num::MIGRATED);
 }
 
 
