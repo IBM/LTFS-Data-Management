@@ -961,6 +961,12 @@ void FsObj::finishPremigration()
 	 * should happen here
 	 */
 }
+
+void FsObj::prepareRecall()
+
+{
+}
+
 void FsObj::finishRecall(FsObj::file_state fstate)
 
 {
