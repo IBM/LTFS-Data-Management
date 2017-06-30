@@ -11,8 +11,6 @@ void TransRecall::addRequest(Connector::rec_info_t recinfo, std::string tapeId, 
 	int state;
 	FsObj::mig_attr_t attr;
 
-	//sleep(10);
-
 	std::string filename;
 	if ( recinfo.filename.compare("") == 0 )
 		filename = "NULL";
@@ -164,8 +162,6 @@ void TransRecall::run(Connector *connector)
 			continue;
 
 		FsObj fso(recinfo);
-
-		//std::cout << "NEW RECALL REQUEST: " << recinfo.ino << std::endl;
 
 		// error case: managed region set but no attrs
 		try {
