@@ -16,7 +16,7 @@ namespace Const {
 	const std::string CONFIG_FILE = std::string("/etc/ltfsdm.conf");
 	const std::string TMP_CONFIG_FILE = std::string("/etc/ltfsdm.tmp.conf");
 	//const std::string DB_FILE = std::string(":memory:");
-	const int MAX_RECEIVER_THREADS = 2000;
+	const int MAX_RECEIVER_THREADS = 64;
 	const int NUM_STUBBING_THREADS = 64;
 	const int NUM_PREMIG_THREADS = 16;
 	const int MAX_TRANSPARENT_RECALL_THREADS = 8192;
