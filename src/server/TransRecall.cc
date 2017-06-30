@@ -11,6 +11,8 @@ void TransRecall::addRequest(Connector::rec_info_t recinfo, std::string tapeId, 
 	int state;
 	FsObj::mig_attr_t attr;
 
+	//sleep(10);
+
 	std::string filename;
 	if ( recinfo.filename.compare("") == 0 )
 		filename = "NULL";
@@ -163,6 +165,8 @@ void TransRecall::run(Connector *connector)
 
 		FsObj fso(recinfo);
 
+		//std::cout << "NEW RECALL REQUEST: " << recinfo.ino << std::endl;
+
 		// error case: managed region set but no attrs
 		try {
 			if ( fso.getMigState() ==  FsObj::RESIDENT ) {
@@ -291,6 +295,11 @@ void recallStep(int reqNum, std::string tapeId)
 	int rc;
 	FsObj::file_state state;
 	FsObj::file_state toState;
+	struct respinfo_t {
+		Connector::rec_info_t recinfo;
+		bool succeeded;
+	};
+	std::list<respinfo_t> resplist;
 	int numFiles = 0;
 	bool succeeded;
 
@@ -357,7 +366,7 @@ void recallStep(int reqNum, std::string tapeId)
 			succeeded = false;
 		}
 
-		Connector::respondRecallEvent(recinfo, succeeded);
+		resplist.push_back((respinfo_t) {recinfo, succeeded});
 	}
 
 	TRACE(Trace::error, numFiles);
@@ -375,6 +384,9 @@ void recallStep(int reqNum, std::string tapeId)
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 	rc = sqlite3_statement::step(stmt);
 	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+
+	for ( respinfo_t respinfo : resplist )
+		Connector::respondRecallEvent(respinfo.recinfo, respinfo.succeeded);
 }
 
 
