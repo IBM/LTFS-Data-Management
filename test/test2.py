@@ -12,17 +12,20 @@ import threading
 import subprocess
 import resource
 import fcntl
+import errno
 
 source = "/dev/shm/source"
 origdir = "/mnt/lxfs/"
 mandir = "/mnt/lxfs.managed/"
 testdir = "test2/"
-numfiles = 1000
+#numfiles = 2000
+numfiles = 40000
 size = 32768
-numprocs = 100
-iterations = 100000
-tape1 = "D01301L5"
-tape2 = "D01302L5"
+#numprocs = 2000
+numprocs = 200
+iterations = 2000000
+tape1 = "D01311L5"
+tape2 = "D01312L5"
 
 def crfiles():
     if os.path.isfile(source) == 0:
@@ -112,6 +115,11 @@ def prepare():
     if os.system("ltfsdm stop") != 0:
         print("unable to stop OpenLTFS, perhaps already stopped")
 
+    try:
+        shutil.rmtree("/var/run/ltfsdm")
+    except Exception:
+        print("unable to delete /var/run/ltfsdm")
+
     if os.system("ltfsadmintool -t " + tape1 + "," + tape2 + " -f -- --force") != 0:
         print("unable to format tapes")
         exit(-1)
@@ -140,7 +148,6 @@ def prepare():
 
     time.sleep(1)
 
-    #if os.system("ltfsdmd -d 4") != 0:
     if os.system("ltfsdm start") != 0:
         print("unable to start OpenLTFS")
 
@@ -167,12 +174,35 @@ def prepare():
         exit(-1)
 
 
+def getNumMigProcs():
+    numpr = 0
+    for content in os.listdir("/proc"):
+        fname = "/proc/" + content + "/cmdline"
+        try:
+            file = open(fname, "r")
+        except Exception: 
+            continue
+
+        try:
+            for line in file:
+                args = line.split('\x00')
+                if args[0] == "ltfsdm" and args[1] == "migrate" and args[2] == "-P":
+                    numpr = numpr + 1
+        except Exception:
+            pass
+
+        file.close()
+
+    return numpr
+
+
 def test2(count):
     filenum = numfiles-(count%numfiles)-1
     filename = mandir + testdir + "file." + str(filenum)
     copyname = filename + ".cpy"
     lockname = origdir + testdir + "file." + str(filenum) + ".cpy"
     random.seed(None)
+    nummcmds = 0
 
     if count%numprocs == 0:
         print(time.strftime("%I:%M:%S") + ": " + str(count) + " started")
@@ -184,47 +214,60 @@ def test2(count):
 
     try:
         lfd = os.open(lockname, os.O_RDWR)
-    except Exception:
-        print("unabale to open " + lockname)
-        raise -1
+    except IOError as e:
+        print("unabale to open " + lockname + "errno: " + str(e.errno))
+        raise Exception("open failed")
 
     try:
-        fcntl.flock(lfd, fcntl.LOCK_EX)
-    except Exception:
+        fcntl.lockf(lfd, fcntl.LOCK_EX)
+    except IOError as e:
+        os.close(lfd)
         print("unabale to lock " + lockname)
-        raise -1
+        raise  Exception("lock failed")
 
     if subprocess.call(["cmp",  filename,  copyname], stdout=open(os.devnull, 'wb')) != 0:
         print("compare failed for file " + filename)
-        raise -1
+        raise  Exception("cmp failed")
 
-    if random.randint(0, 10) != 0:
+    try:
+        nummcmds = getNumMigProcs()
+    except Exception as e:
+        print("error determining the number of processes: " + str(e))
+        raise  Exception("determining the number of migration processes failed: " + str(e))
+
+    if nummcmds > numprocs/10 or random.randint(0, numprocs) != 0:
         if subprocess.call(["ltfsdm", "migrate",  filename], stdout=open(os.devnull, 'wb')) != 0:
             print("migration failed for file " + filename)
-            raise -1
+            raise  Exception("stubbing failed")
     else:
         if subprocess.call(["ltfsdm", "recall",  "-r", filename], stdout=open(os.devnull, 'wb')) != 0:
             print("recall failed for file " + filename)
-            raise -1
+            raise  Exception("recall failed")
         if subprocess.call(["ltfsdm", "migrate", "-P", "pool" + str(filenum % 2 +1), filename], stdout=open(os.devnull, 'wb')) != 0:
             print("migration failed for file " + filename)
-            raise -1
+            raise  Exception("migration failed")
 
     try:
         proc = subprocess.Popen(["ltfsdm", "info", "files", filename], stdout=subprocess.PIPE)
         output = proc.communicate()[0]
     except Exception:
         print("unable to determine the migration state of file " + filename)
-        raise -1
+        raise  Exception("info files failed")
 
     res=re.search(".*\n(.?).*" + filename, output)
     if res == None:
         print("unable to determine migration state for file " + filename)
-        raise -1
+        raise  Exception("searching output failed")
 
     if res.group(1) != "m":
         print("file is not in migrated state, file " + filename)
-        raise -1
+        raise  Exception("file not migrated")
+
+    try:
+        fcntl.lockf(lfd, fcntl.LOCK_UN)
+    except Exception:
+        print("unabale to unlock " + lockname)
+        raise  Exception("unlock failed")
 
     os.close(lfd)
 
@@ -234,8 +277,8 @@ def main(argv):
     with contextlib.closing(multiprocessing.Pool(processes=numprocs)) as pool:
         try:
             list(pool.imap(test2, range(iterations)))
-        except Exception:
-            print("a test failed, stopping ...")
+        except Exception as e:
+            print("a test failed (" + str(e) +  "), stopping ...")
             pool.close()
             pool.terminate()
         else:
