@@ -111,6 +111,11 @@ def prepare():
     if os.system("ltfsdm stop") != 0:
         print("unable to stop OpenLTFS, perhaps already stopped")
 
+    try:
+        shutil.rmtree("/var/run/ltfsdm")
+    except Exception:
+        print("unable to delete /var/run/ltfsdm")
+
     if os.system("ltfsadmintool -t " + tape1 + "," + tape2 + " -f -- --force") != 0:
         print("unable to format tapes")
         exit(-1)
@@ -172,27 +177,27 @@ def test1(count):
 
     if subprocess.call(["cmp",  filename,  copyname], stdout=open(os.devnull, 'wb')) != 0:
         print("compare failed for file #" + filenum)
-        raise -1
+        raise  Exception("cmp failed")
 
     if subprocess.call(["ltfsdm", "migrate",  filename], stdout=open(os.devnull, 'wb')) != 0:
         print("migration failed for file #" + filenum)
-        raise -1
+        raise  Exception("stubbing failed")
 
     try:
         proc = subprocess.Popen(["ltfsdm", "info", "files", filename], stdout=subprocess.PIPE)
         output = proc.communicate()[0]
     except Exception:
         print("unable to determine the migration state of file #" + filenum)
-        raise -1
+        raise  Exception("info files failed")
 
     res=re.search(".*\n(.?).*" + filename, output)
     if res == None:
         print("unable to determine migration state for file #" + filenum)
-        raise -1
+        raise  Exception("searching output failed")
 
     if res.group(1) != "m":
         print("file is not in migrated state, file# " + filenum)
-        raise -1
+        raise  Exception("file not migrated")
 
     if count%numprocs == 0:
         print(time.strftime("%I:%M:%S") + ": " + str(count) + " done")
@@ -210,8 +215,8 @@ def main(argv):
     with contextlib.closing(multiprocessing.Pool(processes=numprocs)) as pool:
         try:
             list(pool.imap(test1, range(iterations)))
-        except Exception:
-            print("a test failed, stopping ...")
+        except Exception as e:
+            print("a test failed (" + str(e) +  "), stopping ...")
             pool.close()
             pool.terminate()
         else:
