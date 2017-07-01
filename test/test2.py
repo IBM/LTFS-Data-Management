@@ -18,12 +18,12 @@ source = "/dev/shm/source"
 origdir = "/mnt/lxfs/"
 mandir = "/mnt/lxfs.managed/"
 testdir = "test2/"
-#numfiles = 2000
-numfiles = 40000
+numfiles = 2000
+#numfiles = 40000
 size = 32768
-#numprocs = 2000
-numprocs = 200
-iterations = 2000000
+numprocs = 2000
+#numprocs = 200
+iterations = 200000
 tape1 = "D01311L5"
 tape2 = "D01312L5"
 
@@ -180,7 +180,7 @@ def getNumMigProcs():
         fname = "/proc/" + content + "/cmdline"
         try:
             file = open(fname, "r")
-        except Exception: 
+        except Exception:
             continue
 
         try:
@@ -196,34 +196,55 @@ def getNumMigProcs():
     return numpr
 
 
-def test2(count):
-    filenum = numfiles-(count%numfiles)-1
-    filename = mandir + testdir + "file." + str(filenum)
-    copyname = filename + ".cpy"
-    lockname = origdir + testdir + "file." + str(filenum) + ".cpy"
-    random.seed(None)
-    nummcmds = 0
-
-    if count%numprocs == 0:
-        print(time.strftime("%I:%M:%S") + ": " + str(count) + " started")
-
-    if count%1000 == 0:
-         proc = os.popen("mail -s '" + str(count) + " tests started' MAP@zurich.ibm.com", 'w')
-         proc.write("---")
-         proc.close()
-
+def test2(cycle):
     try:
-        lfd = os.open(lockname, os.O_RDWR)
+        syncfd = os.open(sys.argv[0], os.O_RDWR)
     except IOError as e:
-        print("unabale to open " + lockname + "errno: " + str(e.errno))
+        print("unabale to open " + sys.argv[0] + " errno: " + str(e.errno))
         raise Exception("open failed")
 
     try:
-        fcntl.lockf(lfd, fcntl.LOCK_EX)
+        fcntl.lockf(syncfd, fcntl.LOCK_EX)
     except IOError as e:
-        os.close(lfd)
-        print("unabale to lock " + lockname)
+        os.close(syncfd)
+        print("unabale to lock " + sys.argv[0])
         raise  Exception("lock failed")
+
+    while True:
+        count = random.randint(0, numfiles)
+        filenum = numfiles-(count%numfiles)-1
+        filename = mandir + testdir + "file." + str(filenum)
+        copyname = filename + ".cpy"
+        lockname = origdir + testdir + "file." + str(filenum) + ".cpy"
+        random.seed(None)
+        nummcmds = 0
+
+        try:
+            lfd = os.open(lockname, os.O_RDWR)
+        except IOError as e:
+            print("unabale to open " + lockname + "errno: " + str(e.errno))
+            raise Exception("open failed")
+
+        try:
+            fcntl.lockf(lfd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except IOError as e:
+            os.close(lfd)
+            if e.errno == errno.EACCES or e.errno == errno.EAGAIN:
+                continue
+            print("unabale to lock " + lockname)
+            raise  Exception("lock failed")
+
+        break
+
+    fcntl.lockf(syncfd, fcntl.LOCK_UN)
+
+    if cycle%numprocs == 0:
+        print(time.strftime("%I:%M:%S") + ": " + str(cycle) + " started")
+
+    if cycle%10000 == 0:
+         proc = os.popen("mail -s '" + str(cycle) + " tests started' MAP@zurich.ibm.com", 'w')
+         proc.write("---")
+         proc.close()
 
     if subprocess.call(["cmp",  filename,  copyname], stdout=open(os.devnull, 'wb')) != 0:
         print("compare failed for file " + filename)
