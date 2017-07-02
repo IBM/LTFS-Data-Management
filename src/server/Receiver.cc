@@ -7,7 +7,7 @@ void Receiver::run(long key, Connector *connector)
 {
 	MessageParser mproc;
 	std::unique_lock<std::mutex> lock(Server::termmtx);
-	WorkQueue<long, LTFSDmCommServer, Connector*> *wq;
+	WorkQueue<long, LTFSDmCommServer, Connector*> wq(&MessageParser::run, Const::MAX_RECEIVER_THREADS, "msg-wq");
 	LTFSDmCommServer command;
 
 	TRACE(Trace::much, __PRETTY_FUNCTION__);
@@ -22,9 +22,6 @@ void Receiver::run(long key, Connector *connector)
 		throw(Error::LTFSDM_GENERAL_ERROR);
 	}
 
-	wq = new WorkQueue<long, LTFSDmCommServer, Connector*>
-		(&MessageParser::run, Const::MAX_RECEIVER_THREADS, "msg-wq");
-
 	while (terminate == false) {
 		try {
 			command.accept();
@@ -35,7 +32,7 @@ void Receiver::run(long key, Connector *connector)
 		}
 
 		try {
-			wq->enqueue(Const::UNSET, key, command, connector);
+			wq.enqueue(Const::UNSET, key, command, connector);
 		}
 		catch(...) {
 			MSG(LTFSDMS0010E);
@@ -49,6 +46,6 @@ void Receiver::run(long key, Connector *connector)
 
 	command.closeRef();
 
-	wq->waitCompletion(Const::UNSET);
-	wq->terminate();
+	wq.waitCompletion(Const::UNSET);
+	wq.terminate();
 }
