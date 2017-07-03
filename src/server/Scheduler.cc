@@ -6,7 +6,7 @@ std::mutex Scheduler::updmtx;
 std::condition_variable Scheduler::updcond;
 std::map<int, std::atomic<bool>> Scheduler::updReq;
 
-WorkQueue<Migration::mig_info_t, std::shared_ptr<std::list<unsigned long>>> *Scheduler::wqs;
+ThreadPool<Migration::mig_info_t, std::shared_ptr<std::list<unsigned long>>> *Scheduler::wqs;
 
 std::string Scheduler::getTapeName(std::string fileName, std::string tapeId)
 

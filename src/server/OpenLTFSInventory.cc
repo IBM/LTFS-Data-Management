@@ -123,7 +123,7 @@ void OpenLTFSInventory::inventorize()
 	for ( std::shared_ptr<OpenLTFSDrive> drive : drives ) {
 		std::stringstream threadName;
 		threadName << "pmig" << i++ << "-wq";
-		drive->wqp = new WorkQueue<std::string, std::string, long, long, Migration::mig_info_t,
+		drive->wqp = new ThreadPool<std::string, std::string, long, long, Migration::mig_info_t,
 								   std::shared_ptr<std::list<unsigned long>>, std::shared_ptr<bool>>
 			(&Migration::preMigrate, Const::NUM_PREMIG_THREADS, threadName.str());
 	}

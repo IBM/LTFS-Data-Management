@@ -50,6 +50,6 @@
 #include "Migration.h"
 #include "SelRecall.h"
 #include "TransRecall.h"
-#include "WorkQueue.h"
+#include "ThreadPool.h"
 #include "OpenLTFSInventory.h"
 #include "Scheduler.h"

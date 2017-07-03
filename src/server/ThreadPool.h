@@ -1,6 +1,6 @@
 #pragma once
 
-template<typename... Args> class WorkQueue {
+template<typename... Args> class ThreadPool {
 private:
 	std::mutex enqueue_mtx; // seems to be necessary
 
@@ -67,7 +67,7 @@ public:
 		}
 	}
 
-	WorkQueue(std::function<void (Args... args)> func_, int num_thrds_, std::string name_) : func(func_), num_thrds(num_thrds_), name(name_)
+	ThreadPool(std::function<void (Args... args)> func_, int num_thrds_, std::string name_) : func(func_), num_thrds(num_thrds_), name(name_)
 	{
 		wq_data.terminate = false;
 		wq_data.started = 0;

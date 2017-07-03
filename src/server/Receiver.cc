@@ -7,7 +7,7 @@ void Receiver::run(long key, Connector *connector)
 {
 	MessageParser mproc;
 	std::unique_lock<std::mutex> lock(Server::termmtx);
-	WorkQueue<long, LTFSDmCommServer, Connector*> wq(&MessageParser::run, Const::MAX_RECEIVER_THREADS, "msg-wq");
+	ThreadPool<long, LTFSDmCommServer, Connector*> wq(&MessageParser::run, Const::MAX_RECEIVER_THREADS, "msg-wq");
 	LTFSDmCommServer command;
 
 	TRACE(Trace::much, __PRETTY_FUNCTION__);
