@@ -1,5 +1,4 @@
-#ifndef _STATUS_H
-#define _STATUS_H
+#pragma once
 
 class Status {
 private:
@@ -21,5 +20,3 @@ public:
 };
 
 extern Status mrStatus;
-
-#endif /* _STATUS_H */

@@ -1,5 +1,4 @@
-#ifndef _POOL_H
-#define _POOL_H
+#pragma once
 
 class PoolCommand : public OpenLTFSCommand
 
@@ -11,5 +10,3 @@ public:
 	void printUsage() { INFO(LTFSDMC0073I); };
     void doCommand(int argc, char **argv) {};
 };
-
-#endif /* _POOL_H */

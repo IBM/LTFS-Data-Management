@@ -1,5 +1,4 @@
-#ifndef _POOL_REMOVE_COMMAND_H
-#define _POOL_REMOVE_COMMAND_H
+#pragma once
 
 class PoolRemoveCommand : public OpenLTFSCommand
 
@@ -12,5 +11,3 @@ public:
     void printUsage();
     void doCommand(int argc, char **argv);
 };
-
-#endif /* _POOL_REMOVE_COMMAND_H */

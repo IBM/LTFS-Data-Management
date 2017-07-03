@@ -1,5 +1,4 @@
-#ifndef _MIGRATION_H
-#define _MIGRATION_H
+#pragma once
 
 class MigrationCommand : public OpenLTFSCommand
 
@@ -12,5 +11,3 @@ public:
     void printUsage();
     void doCommand(int argc, char **argv);
 };
-
-#endif /* _MIGRATION_H */

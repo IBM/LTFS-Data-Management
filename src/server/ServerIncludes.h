@@ -1,5 +1,4 @@
-#ifndef _SERVERINCLUDES_H
-#define _SERVERINCLUDES_H
+#pragma once
 
 #include <unistd.h>
 #include <unistd.h>
@@ -54,5 +53,3 @@
 #include "WorkQueue.h"
 #include "OpenLTFSInventory.h"
 #include "Scheduler.h"
-
-#endif /* _SERVERINCLUDES_H */

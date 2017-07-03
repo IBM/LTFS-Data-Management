@@ -1,5 +1,4 @@
-#ifndef _INFODRIVES_H
-#define _INFODRIVES_H
+#pragma once
 
 class InfoDrivesCommand : public OpenLTFSCommand
 
@@ -12,5 +11,3 @@ public:
     void printUsage();
     void doCommand(int argc, char **argv);
 };
-
-#endif /* _INFODRIVES_H */

@@ -1,5 +1,4 @@
-#ifndef _MESSAGE_H
-#define _MESSAGE_H
+#pragma once
 
 #include <string.h>
 #include <atomic>
@@ -118,5 +117,3 @@ extern Message messageObject;
 
 #define MSG(msg, args ...) messageObject.message(msg, (char *) __FILE__, __LINE__, ##args)
 #define INFO(msg, args ...) messageObject.info(msg, (char *) __FILE__, __LINE__, ##args)
-
-#endif /* _MESSAGE_H */

@@ -1,5 +1,4 @@
-#ifndef _SELRECALL_H
-#define _SELRECALL_H
+#pragma once
 
 class SelRecall : public FileOperation {
 private:
@@ -18,5 +17,3 @@ public:
 	void addRequest();
 	static void execRequest(int reqNum, int tgtState, std::string tapeId, bool needsTape);
 };
-
-#endif /* _SELRECALL_H */

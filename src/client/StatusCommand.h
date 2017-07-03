@@ -1,5 +1,4 @@
-#ifndef _STATUS_H
-#define _STATUS_H
+#pragma once
 
 class StatusCommand : public OpenLTFSCommand
 
@@ -14,5 +13,3 @@ public:
     void printUsage();
     void doCommand(int argc, char **argv);
 };
-
-#endif /* _STATUS_H */

@@ -1,5 +1,4 @@
-#ifndef _CONST_H
-#define _CONST_H
+#pragma once
 
 namespace Const {
 	const int UNSET = -1;
@@ -47,5 +46,3 @@ namespace Const {
 	const std::string OPEN_LTFS_EA_MIGINFO_EXT = std::string("trusted.openltfs.miginfo.ext");
 	const std::string OPEN_LTFS_EA_FSINFO = std::string("trusted.openltfs.fsinfo");
 }
-
-#endif /* _CONST_H */

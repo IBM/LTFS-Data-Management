@@ -1,5 +1,4 @@
-#ifndef _HELP_H
-#define _HELP_H
+#pragma once
 
 class HelpCommand : public OpenLTFSCommand
 
@@ -12,5 +11,3 @@ public:
     void printUsage();
     void doCommand(int argc, char **argv);
 };
-
-#endif /* _HELP_H */

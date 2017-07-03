@@ -1,5 +1,4 @@
-#ifndef _FUSEFS_H
-#define _FUSEFS_H
+#pragma once
 
 struct fuid_t {
 	unsigned long long fsid;
@@ -142,6 +141,3 @@ public:
 struct conn_info_t {
 	FuseFS::serialize trecall_reply;
 };
-
-
-#endif /* _FUSEFS_H */

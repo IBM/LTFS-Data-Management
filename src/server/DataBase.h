@@ -1,5 +1,4 @@
-#ifndef _DATABASE_H
-#define _DATABASE_H
+#pragma once
 
 class DataBase {
 private:
@@ -39,5 +38,3 @@ namespace sqlite3_statement {
 	int step(sqlite3_stmt *stmt);
 	void checkRcAndFinalize(sqlite3_stmt *stmt, int rc, int expected);
 }
-
-#endif /* _DATABASE_H */

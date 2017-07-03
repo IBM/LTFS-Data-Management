@@ -1,5 +1,4 @@
-#ifndef _TRACE_H
-#define _TRACE_H
+#pragma once
 
 #include <time.h>
 #include <unistd.h>
@@ -83,5 +82,3 @@ public:
 extern Trace traceObject;
 
 #define TRACE(tracelevel, var) traceObject.trace(__FILE__, __LINE__, tracelevel, #var, var)
-
-#endif /*_TRACE_H */

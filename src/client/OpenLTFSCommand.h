@@ -1,5 +1,4 @@
-#ifndef _OPERATION_H
-#define _OPERATION_H
+#pragma once
 
 class OpenLTFSCommand
 {
@@ -53,5 +52,3 @@ public:
 	void sendObjects(std::stringstream *parmList);
 	void isValidRegularFile();
 };
-
-#endif /* _OPERATION_H */

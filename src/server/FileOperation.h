@@ -1,5 +1,4 @@
-#ifndef _FILEOPERATION_H
-#define _FILEOPERATION_H
+#pragma once
 
 class FileOperation {
 public:
@@ -7,6 +6,3 @@ public:
 	virtual void start() {}
 	bool queryResult(long reqNumber, long *resident, long *premigrated, long *migrated, long *failed);
 };
-
-
-#endif /* _FILEOPERATION_H */

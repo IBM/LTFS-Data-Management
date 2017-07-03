@@ -1,5 +1,4 @@
-#ifndef _SCHEDULER_H
-#define _SCHEDULER_H
+#pragma once
 
 class Scheduler
 
@@ -44,5 +43,3 @@ public:
 	~Scheduler() {};
 	void run(long key);
 };
-
-#endif /* _SCHEDULER_H */

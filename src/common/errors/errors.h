@@ -1,5 +1,4 @@
-#ifndef _ERRORS_H
-#define _ERRORS_H
+#pragma once
 
 namespace Error {
 	const int LTFSDM_GENERAL_ERROR               = -1;
@@ -23,5 +22,3 @@ namespace Error {
 	const int LTFSDM_TAPE_STATE_ERR              =  1052;
 	const int LTFSDM_INACCESSIBLE                =  1054;
 };
-
-#endif /* _ERRORS_H */

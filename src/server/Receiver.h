@@ -1,5 +1,4 @@
-#ifndef _RECEIVER_H
-#define _RECEIVER_H
+#pragma once
 
 extern std::atomic<long> globalReqNumber;
 
@@ -11,5 +10,3 @@ public:
 	~Receiver() {};
 	void run(long key, Connector *connector);
 };
-
-#endif /* _RECEIVER_H */

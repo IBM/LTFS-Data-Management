@@ -1,5 +1,4 @@
-#ifndef _POOL_CREATE_COMMAND_H
-#define _POOL_CREATE_COMMAND_H
+#pragma once
 
 class PoolCreateCommand : public OpenLTFSCommand
 
@@ -12,5 +11,3 @@ public:
     void printUsage();
     void doCommand(int argc, char **argv);
 };
-
-#endif /* _POOL_CREATE_COMMAND_H */

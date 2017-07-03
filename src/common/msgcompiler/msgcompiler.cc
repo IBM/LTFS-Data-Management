@@ -45,10 +45,6 @@ int main(int argc, char **argv)
 		std::cout << "unable to open outout file " << argv[2] << "." << std::endl;
 	}
 
-	std::string upperName = std::string(basename(argv[2]));
-	std::transform(upperName.begin(), upperName.end(), upperName.begin(), toupper);
-	std::replace(upperName.begin(), upperName.end(), '.', '_');
-
 	while (std::getline(infile, line))
 	{
 		// remove leading white spaces and tabs
@@ -81,8 +77,7 @@ int main(int argc, char **argv)
 	infile.close();
 
 	// create the header file
-	outfile << "#ifndef _" << upperName << std::endl;
-	outfile << "#define _" << upperName << std::endl;
+	outfile << "#pragma once" << std::endl;
 	outfile << std::endl;
 	outfile << "typedef std::string message_t[];" << std::endl;
 	outfile << "typedef std::string msgname_t[];" << std::endl;
@@ -118,8 +113,6 @@ int main(int argc, char **argv)
 	}
 	outfile << "};" << std::endl;
 	outfile << std::endl;
-
-	outfile << "#endif /* _" << upperName << " */" << std::endl;
 
 	outfile.close();
 

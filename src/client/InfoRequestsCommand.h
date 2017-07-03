@@ -1,5 +1,4 @@
-#ifndef _INFOREQUESTS_H
-#define _INFOREQUESTS_H
+#pragma once
 
 class InfoRequestsCommand : public OpenLTFSCommand
 
@@ -12,5 +11,3 @@ public:
     void printUsage();
     void doCommand(int argc, char **argv);
 };
-
-#endif /* _INFOREQUESTS_H */

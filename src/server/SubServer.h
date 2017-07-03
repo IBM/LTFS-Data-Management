@@ -1,5 +1,4 @@
-#ifndef _SUBSERVER_H
-#define _SUBSERVER_H
+#pragma once
 
 class SubServer {
 private:
@@ -38,5 +37,3 @@ public:
 		thrdprev = thrd2;
 	}
 };
-
-#endif /*_SUBSERVER_H */

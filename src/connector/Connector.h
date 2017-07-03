@@ -1,5 +1,4 @@
-#ifndef _CONNECTOR_H
-#define _CONNECTOR_H
+#pragma once
 
 class Connector {
 private:
@@ -97,5 +96,3 @@ public:
 	void stub();
 	file_state getMigState();
 };
-
-#endif /* _CONNECTOR_H */

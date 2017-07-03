@@ -1,5 +1,4 @@
-#ifndef _UTIL_H
-#define _UTIL_H
+#pragma once
 
 #define KB(x)   ((size_t) (x) << 10)
 #define MB(x)   ((size_t) (x) << 20)
@@ -11,5 +10,3 @@ namespace LTFSDM {
 	std::vector<std::string> getTapeIds();
 	std::set<std::string> getFs();
 }
-
-#endif /*_UTIL_H */

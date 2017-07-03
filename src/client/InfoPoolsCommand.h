@@ -1,5 +1,4 @@
-#ifndef _INFOPOOLS_H
-#define _INFOPOOLS_H
+#pragma once
 
 class InfoPoolsCommand : public OpenLTFSCommand
 
@@ -12,5 +11,3 @@ public:
     void printUsage();
     void doCommand(int argc, char **argv);
 };
-
-#endif /* _INFOPOOLS_H */

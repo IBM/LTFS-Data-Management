@@ -1,5 +1,4 @@
-#ifndef _RECALL_H
-#define _RECALL_H
+#pragma once
 
 class RecallCommand : public OpenLTFSCommand
 
@@ -12,5 +11,3 @@ public:
     void printUsage();
     void doCommand(int argc, char **argv);
 };
-
-#endif /* _RECALL_H */

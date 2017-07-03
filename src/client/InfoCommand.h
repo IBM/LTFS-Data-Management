@@ -1,5 +1,4 @@
-#ifndef _INFO_H
-#define _INFO_H
+#pragma once
 
 class InfoCommand : public OpenLTFSCommand
 
@@ -11,5 +10,3 @@ public:
 	void printUsage() { INFO(LTFSDMC0020I); };
     void doCommand(int argc, char **argv) {};
 };
-
-#endif /* _INFO_H */

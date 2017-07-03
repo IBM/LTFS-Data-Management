@@ -1,5 +1,4 @@
-#ifndef _STOP_H
-#define _STOP_H
+#pragma once
 
 class StopCommand : public OpenLTFSCommand
 
@@ -12,5 +11,3 @@ public:
     void printUsage();
     void doCommand(int argc, char **argv);
 };
-
-#endif /* _STOP_H */

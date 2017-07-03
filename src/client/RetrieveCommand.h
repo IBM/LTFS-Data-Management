@@ -1,5 +1,4 @@
-#ifndef _RETRIEVE_H
-#define _RETRIEVE_H
+#pragma once
 
 class RetrieveCommand : public OpenLTFSCommand
 
@@ -14,5 +13,3 @@ public:
     void printUsage();
     void doCommand(int argc, char **argv);
 };
-
-#endif /* _RETRIEVE_H */

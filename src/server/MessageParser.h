@@ -1,5 +1,4 @@
-#ifndef _MESSAGEPARSER_H
-#define _MESSAGEPARSER_H
+#pragma once
 
 class MessageParser
 
@@ -31,5 +30,3 @@ public:
 	~MessageParser() {};
 	static void run(long key, LTFSDmCommServer command, Connector *connector);
 };
-
-#endif /* _MESSAGEPARSER_H */

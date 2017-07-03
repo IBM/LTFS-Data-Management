@@ -1,5 +1,4 @@
-#ifndef _ADD_COMMAND_H
-#define _ADD_COMMAND_H
+#pragma once
 
 class AddCommand : public OpenLTFSCommand
 
@@ -12,5 +11,3 @@ public:
     void printUsage();
     void doCommand(int argc, char **argv);
 };
-
-#endif /* _ADD_COMMAND_H */

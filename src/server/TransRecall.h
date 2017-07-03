@@ -1,5 +1,4 @@
-#ifndef _TRANSRECALL_H
-#define _TRANSRECALL_H
+#pragma once
 
 class TransRecall
 
@@ -11,6 +10,3 @@ public:
 	void run(Connector *connector);
 	static void execRequest(int reqNum, std::string tapeId);
 };
-
-
-#endif /* _TRANSRECALL_H */

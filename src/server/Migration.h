@@ -1,5 +1,4 @@
-#ifndef _MIGRATION_H
-#define _MIGRATION_H
+#pragma once
 
 class Migration : public FileOperation {
 private:
@@ -44,5 +43,3 @@ public:
 	static void execRequest(int reqNumber, int targetState, int numRepl, int replNum,
 							std::string pool, std::string tapeId, bool needsTape);
 };
-
-#endif /* _MIGRATION_H */

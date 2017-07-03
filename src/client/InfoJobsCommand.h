@@ -1,5 +1,4 @@
-#ifndef _INFOJOBS_H
-#define _INFOJOBS_H
+#pragma once
 
 class InfoJobsCommand : public OpenLTFSCommand
 
@@ -12,5 +11,3 @@ public:
     void printUsage();
     void doCommand(int argc, char **argv);
 };
-
-#endif /* _INFOJOBS_H */

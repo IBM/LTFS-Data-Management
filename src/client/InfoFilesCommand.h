@@ -1,5 +1,4 @@
-#ifndef _INFOFILES_H
-#define _INFOFILES_H
+#pragma once
 
 class InfoFilesCommand : public OpenLTFSCommand
 
@@ -12,5 +11,3 @@ public:
     void printUsage();
     void doCommand(int argc, char **argv);
 };
-
-#endif /* _INFOFILES_H */

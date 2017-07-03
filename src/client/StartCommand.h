@@ -1,5 +1,4 @@
-#ifndef _START_H
-#define _START_H
+#pragma once
 
 class StartCommand : public OpenLTFSCommand
 
@@ -15,5 +14,3 @@ public:
     void printUsage();
     void doCommand(int argc, char **argv);
 };
-
-#endif /* _START_H */

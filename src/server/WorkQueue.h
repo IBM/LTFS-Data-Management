@@ -1,5 +1,4 @@
-#ifndef _WORKQUEUE_H
-#define _WORKQUEUE_H
+#pragma once
 
 template<typename... Args> class WorkQueue {
 private:
@@ -129,5 +128,3 @@ public:
 		num_thrds = 0;
 	}
 };
-
-#endif /* _WORKQUEUE_H */

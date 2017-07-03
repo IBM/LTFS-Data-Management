@@ -1,5 +1,4 @@
-#ifndef _INFOTAPES_H
-#define _INFOTAPES_H
+#pragma once
 
 class InfoTapesCommand : public OpenLTFSCommand
 
@@ -12,5 +11,3 @@ public:
     void printUsage();
     void doCommand(int argc, char **argv);
 };
-
-#endif /* _INFOTAPES_H */

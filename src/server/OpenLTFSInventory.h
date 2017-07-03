@@ -1,5 +1,4 @@
-#ifndef _INVENTORY_H
-#define _INVENTORY_H
+#pragma once
 
 class OpenLTFSDrive : public ltfsadmin::Drive {
 private:
@@ -100,5 +99,3 @@ public:
 };
 
 extern OpenLTFSInventory *inventory;
-
-#endif /* _INVENTORY_H */

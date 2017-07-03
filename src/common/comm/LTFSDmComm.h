@@ -1,5 +1,4 @@
-#ifndef _COMM_H
-#define _COMM_H
+#pragma once
 
 class LTFSDmComm : public LTFSDmProtocol::Command {
 public:
@@ -36,6 +35,3 @@ public:
 	void send() { return LTFSDmComm::send(socAccFd); }
 	void recv() { return LTFSDmComm::recv(socAccFd); }
 };
-
-
-#endif /* _COMM_H */
