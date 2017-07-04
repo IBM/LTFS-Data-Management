@@ -189,6 +189,9 @@ unsigned long SelRecall::recall(std::string fileName, std::string tapeId,
 			target.prepareRecall();
 
 			while ( offset < statbuf.st_size ) {
+				if ( Server::forcedTerminate )
+					throw(Error::LTFSDM_OK);
+
 				rsize = read(fd, buffer, sizeof(buffer));
 				if ( rsize == -1 ) {
 					TRACE(Trace::error, errno);
@@ -287,7 +290,7 @@ bool SelRecall::recallStep(int reqNumber, std::string tapeId, FsObj::file_state 
 	start = time(NULL);
 
 	while ( (rc = sqlite3_statement::step(stmt) ) ) {
-		if ( terminate == true ) {
+		if ( Server::terminate == true ) {
 			rc = SQLITE_DONE;
 			break;
 		}

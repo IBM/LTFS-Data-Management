@@ -296,7 +296,7 @@ void Scheduler::run(long key)
 
 	while (true) {
 		cond.wait(lock);
-		if(terminate == true) {
+		if(Server::terminate == true) {
 			lock.unlock();
 			break;
 		}

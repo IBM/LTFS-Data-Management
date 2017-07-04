@@ -1,6 +1,3 @@
-extern std::atomic<bool> terminate;
-extern std::atomic<bool> forcedTerminate;
-
 class Server {
 private:
 	SubServer subServer;
@@ -11,6 +8,9 @@ private:
 public:
 	static std::mutex termmtx;
 	static std::condition_variable termcond;
+	static std::atomic<bool> terminate;
+	static std::atomic<bool> forcedTerminate;
+	static std::atomic<bool> finishTerminate;
 
 	Server() {};
 	void initialize(bool dbUseMemory);

@@ -263,6 +263,8 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId, lon
 			}
 
 			while ( offset < statbuf.st_size ) {
+				if ( Server::forcedTerminate )
+					throw(Error::LTFSDM_OK);
 
 				rsize = source.read(offset, statbuf.st_size - offset > Const::READ_BUFFER_SIZE ?
 									Const::READ_BUFFER_SIZE : statbuf.st_size - offset , buffer);
@@ -473,7 +475,7 @@ Migration::req_return_t Migration::migrationStep(int reqNumber, int numRepl, int
 	start = time(NULL);
 
 	while ( (rc = sqlite3_statement::step(stmt) ) ) {
-		if ( terminate == true ) {
+		if ( Server::terminate == true ) {
 			rc = SQLITE_DONE;
 			break;
 		}

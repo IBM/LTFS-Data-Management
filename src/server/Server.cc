@@ -1,7 +1,8 @@
 #include "ServerIncludes.h"
 
-std::atomic<bool> terminate;
-std::atomic<bool> forcedTerminate;
+std::atomic<bool> Server::terminate;
+std::atomic<bool> Server::forcedTerminate;
+std::atomic<bool> Server::finishTerminate;
 std::mutex Server::termmtx;
 std::condition_variable Server::termcond;
 
@@ -39,6 +40,7 @@ void Server::signalHandler(sigset_t set, long key)
 			LTFSDmProtocol::LTFSDmStopRequest *stopreq = commCommand.mutable_stoprequest();
 			stopreq->set_key(key);
 			stopreq->set_reqnumber(requestNumber);
+			stopreq->set_forced(false);
 
 			try {
 				commCommand.send();
@@ -68,7 +70,7 @@ void Server::signalHandler(sigset_t set, long key)
 			}
 		} while (true);
 
-		if ( sig == SIGUSR1 && forcedTerminate )
+		if ( sig == SIGUSR1 && Server::finishTerminate )
 		 	return;
 	}
 }
@@ -194,8 +196,9 @@ void Server::run(Connector *connector, sigset_t set)
 	Receiver recv;
 	TransRecall trec;
 
-	terminate = false;
-	forcedTerminate = false;
+	Server::terminate = false;
+	Server::forcedTerminate = false;
+	Server::finishTerminate = false;
 
 	Scheduler::wqs = new ThreadPool<Migration::mig_info_t, std::shared_ptr<std::list<unsigned long>>>
 		(&Migration::stub, Const::NUM_STUBBING_THREADS, "stub-wq");

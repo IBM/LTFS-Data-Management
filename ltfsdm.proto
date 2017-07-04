@@ -62,6 +62,7 @@ message LTFSDmSelRecRequestResp {
 message LTFSDmStopRequest {
 	required uint64 key = 1;
 	required int64 reqNumber = 2;
+	required bool forced = 3;
 }
 
 message LTFSDmStopResp {

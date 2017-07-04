@@ -12,6 +12,8 @@ public:
         unsigned long long ino;
 		std::string filename;
 	};
+	static std::atomic<bool> connectorTerminate;
+
 	Connector(bool cleanup);
 	~Connector();
 	struct timespec getStartTime() { return starttime; }

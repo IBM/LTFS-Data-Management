@@ -34,11 +34,12 @@
 #include "src/connector/Connector.h"
 #include "FuseFS.h"
 
+std::atomic<bool> Connector::connectorTerminate(false);
+
 namespace FuseConnector {
 	std::mutex mtx;
 	std::vector<FuseFS*> managedFss;
 	std::unique_lock<std::mutex> *trecall_lock;
-	std::mutex respond_mutex;
 };
 
 Connector::Connector(bool cleanup)
@@ -84,9 +85,8 @@ Connector::rec_info_t Connector::getEvents()
 void Connector::respondRecallEvent(rec_info_t recinfo, bool success)
 
 {
-	//std::lock_guard<std::mutex> lock_connector(FuseConnector::respond_mutex);
-
 	conn_info_t *conn_info = recinfo.conn_info;
+	conn_info->trecall_reply.success = success;
 
 	std::unique_lock<std::mutex> lock(conn_info->trecall_reply.mtx);
 	conn_info->trecall_reply.cond.notify_one();
@@ -99,6 +99,8 @@ void Connector::terminate()
 
 	FuseFS::recinfo_share = (Connector::rec_info_t) {0, 0, 0, 0, 0, ""};
 	FuseFS::trecall_submit.cond.notify_one();
+
+	Connector::connectorTerminate = true;
 }
 
 struct FuseHandle {

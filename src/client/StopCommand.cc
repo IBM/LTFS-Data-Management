@@ -24,7 +24,9 @@ void StopCommand::doCommand(int argc, char **argv)
 	int lockfd;
 	bool finished = false;
 
-	if ( argc > 1 ) {
+	processOptions(argc, argv);
+
+	if ( argc > 2 ) {
 		printUsage();
 		throw Error::LTFSDM_GENERAL_ERROR;
 	}
@@ -43,6 +45,7 @@ void StopCommand::doCommand(int argc, char **argv)
 		LTFSDmProtocol::LTFSDmStopRequest *stopreq = commCommand.mutable_stoprequest();
 		stopreq->set_key(key);
 		stopreq->set_reqnumber(requestNumber);
+		stopreq->set_forced(forced);
 
 		try {
 			commCommand.send();

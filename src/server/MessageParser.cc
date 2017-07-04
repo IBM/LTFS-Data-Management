@@ -10,6 +10,9 @@ void MessageParser::getObjects(LTFSDmCommServer *command, long localReqNumber,
 	TRACE(Trace::much, __PRETTY_FUNCTION__);
 
 	while (cont) {
+		if ( Server::forcedTerminate )
+			return;
+
  		try {
 			command->recv();
 		}
@@ -30,7 +33,7 @@ void MessageParser::getObjects(LTFSDmCommServer *command, long localReqNumber,
 		DB.beginTransaction();
 
 		for (int j = 0; j < sendobjects.filenames_size(); j++) {
-			if ( terminate == true ) {
+			if ( Server::terminate == true ) {
 				command->closeAcc();
 				return;
 			}
@@ -152,7 +155,7 @@ void MessageParser::migrationMessage(long key, LTFSDmCommServer *command, long l
 	requestNumber = migreq.reqnumber();
 	pid = migreq.pid();
 
-	if ( terminate == false ) {
+	if ( Server::terminate == false ) {
 		std::stringstream poolss(migreq.pools());
 
 		{
@@ -224,7 +227,7 @@ void  MessageParser::selRecallMessage(long key, LTFSDmCommServer *command, long 
 	requestNumber = recreq.reqnumber();
 	pid = recreq.pid();
 
-	if ( terminate == false )
+	if ( Server::terminate == false )
 		srec = new SelRecall( pid, requestNumber, recreq.state());
 	else
 		error = Error::LTFSDM_TERMINATING;
@@ -305,7 +308,10 @@ void MessageParser::stopMessage(long key, LTFSDmCommServer *command, long localR
 
 	MSG(LTFSDMS0009I);
 
-	terminate = true;
+	Server::terminate = true;
+
+	if ( stopreq.forced() )
+		Server::forcedTerminate = true;
 
 	do {
 		std::stringstream ssql;
@@ -354,7 +360,7 @@ void MessageParser::stopMessage(long key, LTFSDmCommServer *command, long localR
 	Scheduler::cond.notify_one();
 	lock.unlock();
 
-	forcedTerminate = true;
+	Server::finishTerminate = true;
 	kill(getpid(), SIGUSR1);
 }
 
@@ -1000,7 +1006,7 @@ void MessageParser::run(long key, LTFSDmCommServer command, Connector *connector
 				firstTime = false;
 			}
 			if ( command.has_stoprequest() ) {
-				if ( forcedTerminate != true ) {
+				if ( Server::finishTerminate != true ) {
 					stopMessage(key, &command, localReqNumber);
 				}
 			}

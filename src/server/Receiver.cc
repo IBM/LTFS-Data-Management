@@ -22,7 +22,7 @@ void Receiver::run(long key, Connector *connector)
 		throw(Error::LTFSDM_GENERAL_ERROR);
 	}
 
-	while (forcedTerminate == false) {
+	while (Server::finishTerminate == false) {
 		try {
 			command.accept();
 		}
@@ -39,7 +39,7 @@ void Receiver::run(long key, Connector *connector)
 			continue;
 		}
 
-		if ( forcedTerminate == false )
+		if ( Server::finishTerminate == false )
 			Server::termcond.wait_for(lock, std::chrono::seconds(30));
 	}
 

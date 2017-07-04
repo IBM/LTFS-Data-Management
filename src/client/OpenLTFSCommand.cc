@@ -69,6 +69,9 @@ void OpenLTFSCommand::processOptions(int argc, char **argv)
 			case 't':
 				tapeList.push_back(std::string(optarg));
 				break;
+			case 'x':
+				forced = true;
+				break;
 			case ':':
 				INFO(LTFSDMC0014E);
 				printUsage();

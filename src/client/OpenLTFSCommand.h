@@ -16,6 +16,7 @@ protected:
 		startTime(time(NULL)),
 		poolNames(""),
 		tapeList({}),
+		forced(false),
 	    key(Const::UNSET) {};
 	bool waitForCompletion;
 	bool preMigrate;
@@ -30,6 +31,7 @@ protected:
 	time_t startTime;
 	std::string poolNames;
 	std::list<std::string> tapeList;
+	bool forced;
 	long key;
 	LTFSDmCommClient commCommand;
 

@@ -26,6 +26,7 @@
 
 std::atomic<dm_sessid_t> dmapiSession;
 std::atomic<dm_token_t> dmapiToken;
+std::atomic<bool> Connector::connectorTerminate(false);
 
 struct conn_info_t {
 	conn_info_t(dm_token_t _token) : token(_token) {}
@@ -563,6 +564,8 @@ void Connector::terminate()
 		TRACE(Trace::error, errno);
 		MSG(LTFSDMD0007E);
 	}
+
+	Connector::connectorTerminate = true;
 }
 
 FsObj::FsObj(std::string fileName)

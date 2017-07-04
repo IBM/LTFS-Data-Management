@@ -150,12 +150,21 @@ void TransRecall::run(Connector *connector)
 		}
 	}
 
-	while (terminate == false) {
+	while (Connector::connectorTerminate == false) {
 		try {
 			recinfo = connector->getEvents();
 		}
 		catch (int error ) {
 			MSG(LTFSDMS0036W, error);
+		}
+
+		// is sent for termination
+		if ( recinfo.conn_info == NULL )
+			continue;
+
+		if ( Server::terminate == true ) {
+			connector->respondRecallEvent(recinfo, false);
+			continue;
 		}
 
 		if ( recinfo.ino == 0 )
@@ -246,6 +255,9 @@ unsigned long recall(Connector::rec_info_t recinfo, std::string tapeId,
 			target.prepareRecall();
 
 			while ( offset < statbuf.st_size ) {
+				if ( Server::forcedTerminate )
+					throw(Error::LTFSDM_OK);
+
 				rsize = read(fd, buffer, sizeof(buffer));
 				if ( rsize == -1 ) {
 					TRACE(Trace::error, errno);

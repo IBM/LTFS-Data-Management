@@ -124,6 +124,7 @@ public:
 		std::mutex mtx;
 		std::condition_variable cond;
 		std::condition_variable wait_cond;
+		bool success;
 	} trecall_submit;
 	static Connector::rec_info_t recinfo_share;
 	static std::atomic<fuid_t> trecall_fuid;
