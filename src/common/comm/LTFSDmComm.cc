@@ -13,6 +13,8 @@
 #include "ltfsdm.pb.h"
 #include "LTFSDmComm.h"
 
+std::atomic<bool> exitClient(false);
+
 void LTFSDmCommClient::connect()
 
 {
@@ -90,7 +92,6 @@ void LTFSDmComm::send(int fd)
 	buffer = (char *) malloc(MessageSize + sizeof(long));
 	memset(buffer, 0, MessageSize + sizeof(long));
 	memcpy(buffer, &MessageSize, sizeof(long));
-
 	if ( this->SerializeToArray(buffer + sizeof(long), MessageSize) == false ) {
 		TRACE(Trace::error, buffer);
 		throw(Error::LTFSDM_COMM_ERROR);
@@ -99,9 +100,13 @@ void LTFSDmComm::send(int fd)
 	TRACE(Trace::much, strlen(buffer));
 	TRACE(Trace::much, MessageSize);
 
+	if ( exitClient ) {
+		buffer[0] = 0;
+	}
+
 	rsize = write(fd, buffer, MessageSize + sizeof(long));
 
-	if ( rsize != MessageSize + sizeof(long) ) {
+	if ( rsize != 0 && rsize != MessageSize + sizeof(long) ) {
 		free(buffer);
 		TRACE(Trace::error, rsize);
 		TRACE(Trace::error, MessageSize);
@@ -122,7 +127,7 @@ ssize_t readx(int fd, char *buffer, size_t size)
     while (bread < size)
     {
         rsize = read(fd, buffer + bread, size - bread);
-        if (rsize < -1 ) {
+        if (rsize == -1 ) {
 			TRACE(Trace::error, errno);
             return -1;
 		}
@@ -159,6 +164,10 @@ void LTFSDmComm::recv(int fd)
 		TRACE(Trace::error, rsize);
 		TRACE(Trace::error, MessageSize);
 		free(buffer);
+		throw(Error::LTFSDM_COMM_ERROR);
+	}
+
+	if ( rsize == 0 ) {
 		throw(Error::LTFSDM_COMM_ERROR);
 	}
 

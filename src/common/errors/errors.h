@@ -16,6 +16,7 @@ namespace Error {
 	const int LTFSDM_WRONG_POOLNUM               =  1011;
 	const int LTFSDM_NOT_ALL_POOLS_EXIST         =  1012;
 	const int LTFSDM_DRIVE_BUSY                  =  1013;
+	const int LTFSDM_TERMINATING                 =  1014;
 
 	const int LTFSDM_ALREADY_FORMATTED           =  1050;
 	const int LTFSDM_WRITE_PROTECTED             =  1051;

@@ -1,5 +1,7 @@
 #pragma once
 
+extern std::atomic<bool> exitClient;
+
 class LTFSDmComm : public LTFSDmProtocol::Command {
 public:
 	LTFSDmComm() {}

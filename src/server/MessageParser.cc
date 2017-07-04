@@ -10,7 +10,7 @@ void MessageParser::getObjects(LTFSDmCommServer *command, long localReqNumber,
 	TRACE(Trace::much, __PRETTY_FUNCTION__);
 
 	while (cont) {
-		try {
+ 		try {
 			command->recv();
 		}
 		catch(...) {
@@ -138,7 +138,8 @@ void MessageParser::migrationMessage(long key, LTFSDmCommServer *command, long l
 	long keySent = migreq.key();
 	std::set<std::string> pools;
 	std::string pool;
-	int error = 0;
+	int error = Error::LTFSDM_OK;
+	Migration *mig = nullptr;
 
 	TRACE(Trace::error, __PRETTY_FUNCTION__);
 	TRACE(Trace::little, keySent);
@@ -151,26 +152,31 @@ void MessageParser::migrationMessage(long key, LTFSDmCommServer *command, long l
 	requestNumber = migreq.reqnumber();
 	pid = migreq.pid();
 
-	std::stringstream poolss(migreq.pools());
+	if ( terminate == false ) {
+		std::stringstream poolss(migreq.pools());
 
-	{
-		std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
-		while ( std::getline(poolss	, pool, ',') ) {
-			std::shared_ptr<OpenLTFSPool> poolp = inventory->getPool(pool);
-			if (poolp == nullptr ) {
-				error = Error::LTFSDM_NOT_ALL_POOLS_EXIST;
-				break;
+		{
+			std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+			while ( std::getline(poolss	, pool, ',') ) {
+				std::shared_ptr<OpenLTFSPool> poolp = inventory->getPool(pool);
+				if (poolp == nullptr ) {
+					error = Error::LTFSDM_NOT_ALL_POOLS_EXIST;
+					break;
+				}
+				if ( pools.count(pool) == 0 )
+					pools.insert(pool);
 			}
-			if ( pools.count(pool) == 0 )
-				pools.insert(pool);
 		}
-	}
 
-	if ( !error && (pools.size() > 3) ) {
-		error = Error::LTFSDM_WRONG_POOLNUM;
-	}
+		if ( !error && (pools.size() > 3) ) {
+			error = Error::LTFSDM_WRONG_POOLNUM;
+		}
 
-	Migration mig( pid, requestNumber, pools, pools.size(), migreq.state());
+		mig = new Migration( pid, requestNumber, pools, pools.size(), migreq.state());
+	}
+	else {
+		error = Error::LTFSDM_TERMINATING;
+	}
 
 	LTFSDmProtocol::LTFSDmMigRequestResp *migreqresp = command->mutable_migrequestresp();
 
@@ -188,10 +194,13 @@ void MessageParser::migrationMessage(long key, LTFSDmCommServer *command, long l
 	}
 
 	if ( !error ) {
-		getObjects(command, localReqNumber, pid, requestNumber, dynamic_cast<FileOperation*> (&mig));
-		mig.addRequest();
-		reqStatusMessage(key, command, dynamic_cast<FileOperation*> (&mig));
+		getObjects(command, localReqNumber, pid, requestNumber, dynamic_cast<FileOperation*> (mig));
+		mig->addRequest();
+		reqStatusMessage(key, command, dynamic_cast<FileOperation*> (mig));
 	}
+
+	if ( mig != nullptr )
+		delete(mig);
 }
 
 void  MessageParser::selRecallMessage(long key, LTFSDmCommServer *command, long localReqNumber)
@@ -201,6 +210,8 @@ void  MessageParser::selRecallMessage(long key, LTFSDmCommServer *command, long 
 	long requestNumber;
 	const LTFSDmProtocol::LTFSDmSelRecRequest recreq = command->selrecrequest();
 	long keySent = recreq.key();
+	int error = Error::LTFSDM_OK;
+	SelRecall *srec = nullptr;
 
 	TRACE(Trace::error, __PRETTY_FUNCTION__);
 	TRACE(Trace::little, keySent);
@@ -213,11 +224,14 @@ void  MessageParser::selRecallMessage(long key, LTFSDmCommServer *command, long 
 	requestNumber = recreq.reqnumber();
 	pid = recreq.pid();
 
-	SelRecall srec( pid, requestNumber, recreq.state());
+	if ( terminate == false )
+		srec = new SelRecall( pid, requestNumber, recreq.state());
+	else
+		error = Error::LTFSDM_TERMINATING;
 
 	LTFSDmProtocol::LTFSDmSelRecRequestResp *recreqresp = command->mutable_selrecrequestresp();
 
-	recreqresp->set_success(true);
+	recreqresp->set_error(error);
 	recreqresp->set_reqnumber(requestNumber);
 	recreqresp->set_pid(pid);
 
@@ -230,11 +244,14 @@ void  MessageParser::selRecallMessage(long key, LTFSDmCommServer *command, long 
 		return;
 	}
 
-	getObjects(command, localReqNumber, pid, requestNumber, dynamic_cast<FileOperation*> (&srec));
+	if ( !error ) {
+		getObjects(command, localReqNumber, pid, requestNumber, dynamic_cast<FileOperation*> (srec));
+		srec->addRequest();
+		reqStatusMessage(key, command, dynamic_cast<FileOperation*> (srec));
+	}
 
-	srec.addRequest();
-
-	reqStatusMessage(key, command, dynamic_cast<FileOperation*> (&srec));
+	if ( srec != nullptr )
+		delete(srec);
 }
 
 void MessageParser::requestNumber(long key, LTFSDmCommServer *command, long *localReqNumber)
@@ -274,8 +291,9 @@ void MessageParser::stopMessage(long key, LTFSDmCommServer *command, long localR
 {
    	const LTFSDmProtocol::LTFSDmStopRequest stopreq = command->stoprequest();
 	long keySent = stopreq.key();
-
-	std::unique_lock<std::mutex> lock(Scheduler::mtx);
+	sqlite3_stmt *stmt;
+	int numreqs;
+	int rc;
 
 	TRACE(Trace::error, __PRETTY_FUNCTION__);
 	TRACE(Trace::little, keySent);
@@ -287,20 +305,57 @@ void MessageParser::stopMessage(long key, LTFSDmCommServer *command, long localR
 
 	MSG(LTFSDMS0009I);
 
-	LTFSDmProtocol::LTFSDmStopResp *stopresp = command->mutable_stopresp();
+	terminate = true;
 
-	stopresp->set_success(true);
+	do {
+		std::stringstream ssql;
 
-	try {
-		command->send();
+		numreqs = 0;
+		ssql << "SELECT STATE FROM REQUEST_QUEUE";
+
+		sqlite3_statement::prepare(ssql.str(), &stmt);
+
+		while ( (rc = sqlite3_statement::step(stmt)) == SQLITE_ROW ) {
+			if ( sqlite3_column_int(stmt, 0) != DataBase::REQ_COMPLETED ) {
+				numreqs++;
+			}
+		}
+
+		sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+
+		LTFSDmProtocol::LTFSDmStopResp *stopresp = command->mutable_stopresp();
+
+		stopresp->set_success(numreqs == 0);
+
+		try {
+			command->send();
+		}
+		catch(...) {
+			MSG(LTFSDMS0007E);
+			return;
+		}
+
+		if ( numreqs > 0 ) {
+			try {
+				command->recv();
+			}
+			catch(...) {
+				TRACE(Trace::error, errno);
+				MSG(LTFSDMS0006E);
+				return;
+			}
+		}
 	}
-	catch(...) {
-		MSG(LTFSDMS0007E);
-	}
+	while ( numreqs > 0 );
+
 	command->closeRef();
 
-	lock.unlock();
+	std::unique_lock<std::mutex> lock(Scheduler::mtx);
 	Scheduler::cond.notify_one();
+	lock.unlock();
+
+	forcedTerminate = true;
+	kill(getpid(), SIGUSR1);
 }
 
 void MessageParser::statusMessage(long key, LTFSDmCommServer *command, long localReqNumber)
@@ -928,8 +983,8 @@ void MessageParser::run(long key, LTFSDmCommServer command, Connector *connector
 		catch(...) {
 			TRACE(Trace::error, errno);
 			MSG(LTFSDMS0006E);
-			lock.unlock();
 			Server::termcond.notify_one();
+			lock.unlock();
 			return;
 		}
 
@@ -938,21 +993,18 @@ void MessageParser::run(long key, LTFSDmCommServer command, Connector *connector
 		if ( command.has_reqnum() ) {
 			requestNumber(key, &command, &localReqNumber);
 		}
-		else if ( command.has_stoprequest() ) {
-			stopMessage(key, &command, localReqNumber);
-			terminate = true;
-			lock.unlock();
-			Server::termcond.notify_one();
-			kill(getpid(), SIGUSR1);
-			break;
-		}
 		else {
 			if ( firstTime ) {
-				lock.unlock();
 				Server::termcond.notify_one();
+				lock.unlock();
 				firstTime = false;
 			}
-			if ( command.has_migrequest() ) {
+			if ( command.has_stoprequest() ) {
+				if ( forcedTerminate != true ) {
+					stopMessage(key, &command, localReqNumber);
+				}
+			}
+			else if ( command.has_migrequest() ) {
 				migrationMessage(key, &command, localReqNumber);
 			}
 			else if ( command.has_selrecrequest() ) {

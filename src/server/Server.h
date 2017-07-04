@@ -1,4 +1,5 @@
 extern std::atomic<bool> terminate;
+extern std::atomic<bool> forcedTerminate;
 
 class Server {
 private:

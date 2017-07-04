@@ -1,6 +1,6 @@
 RELPATH = ../..
 
-LDFLAGS += -lprotobuf -lconnector -latomic
+LDFLAGS += -lprotobuf -lconnector -latomic -lpthread
 
 ARC_SRC_FILES := OpenLTFSCommand.cc
 ARC_SRC_FILES += StartCommand.cc

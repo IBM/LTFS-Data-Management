@@ -5,6 +5,7 @@
 #include <set>
 #include <vector>
 #include <list>
+#include <thread>
 
 #include "src/common/util/util.h"
 #include "src/common/messages/Message.h"
@@ -37,12 +38,39 @@
 #include "InfoPoolsCommand.h"
 #include "RetrieveCommand.h"
 
+
+void signalHandler(sigset_t set)
+
+{
+	int sig;
+
+    while ( true ) {
+        if ( sigwait(&set, &sig))
+            continue;
+
+		exitClient = true;
+		break;
+	}
+}
+
+
 int main(int argc, char *argv[])
 
 {
 	OpenLTFSCommand *openLTFSCommand = NULL;
 	std::string command;
 	int rc = Error::LTFSDM_OK ;
+	sigset_t set;
+
+	sigemptyset(&set);
+	sigaddset(&set, SIGQUIT);
+	sigaddset(&set, SIGINT);
+	sigaddset(&set, SIGTERM);
+	sigaddset(&set, SIGPIPE);
+	pthread_sigmask(SIG_BLOCK, &set, NULL);
+
+	std::thread sigHandler(signalHandler, set);
+	sigHandler.detach();
 
 	try {
 		LTFSDM::init();

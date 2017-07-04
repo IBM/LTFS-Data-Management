@@ -59,23 +59,28 @@ void RecallCommand::talkToBackend(std::stringstream *parmList)
 
 	const LTFSDmProtocol::LTFSDmSelRecRequestResp recreqresp = commCommand.selrecrequestresp();
 
-	if( recreqresp.success() == true ) {
-		if ( getpid() != recreqresp.pid() ) {
-			MSG(LTFSDMC0036E);
-			TRACE(Trace::error, getpid());
-			TRACE(Trace::error, recreqresp.pid());
+	switch ( recreqresp.error() ) {
+		case Error::LTFSDM_OK:
+			if ( getpid() != recreqresp.pid() ) {
+				MSG(LTFSDMC0036E);
+				TRACE(Trace::error, getpid());
+				TRACE(Trace::error, recreqresp.pid());
+				throw(Error::LTFSDM_GENERAL_ERROR);
+			}
+			if ( requestNumber !=  recreqresp.reqnumber() ) {
+				MSG(LTFSDMC0037E);
+				TRACE(Trace::error, requestNumber);
+				TRACE(Trace::error, recreqresp.reqnumber());
+				throw(Error::LTFSDM_GENERAL_ERROR);
+			}
+			break;
+		case Error::LTFSDM_TERMINATING:
+			MSG(LTFSDMC0101I);
 			throw(Error::LTFSDM_GENERAL_ERROR);
-		}
-		if ( requestNumber !=  recreqresp.reqnumber() ) {
-			MSG(LTFSDMC0037E);
-			TRACE(Trace::error, requestNumber);
-			TRACE(Trace::error, recreqresp.reqnumber());
+			break;
+		default:
+			MSG(LTFSDMC0029E);
 			throw(Error::LTFSDM_GENERAL_ERROR);
-		}
-	}
-	else {
-		MSG(LTFSDMC0029E);
-		throw(Error::LTFSDM_GENERAL_ERROR);
 	}
 
 	sendObjects(parmList);

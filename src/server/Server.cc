@@ -1,6 +1,7 @@
 #include "ServerIncludes.h"
 
 std::atomic<bool> terminate;
+std::atomic<bool> forcedTerminate;
 std::mutex Server::termmtx;
 std::condition_variable Server::termcond;
 
@@ -19,46 +20,57 @@ void Server::signalHandler(sigset_t set, long key)
             continue;
         }
 
-		if ( sig == SIGUSR1 )
-			return;
-
 		MSG(LTFSDMS0049I, sig);
 
-		break;
-	}
+		LTFSDmCommClient commCommand;
 
-	LTFSDmCommClient commCommand;
+		try {
+			commCommand.connect();
+		}
+		catch(int error) {
+			TRACE(Trace::error, error);
+			return;
+		}
 
-	try {
-		commCommand.connect();
-	}
-	catch(int error) {
-		TRACE(Trace::error, error);
-		return;
-	}
+		TRACE(Trace::little, requestNumber);
+		bool finished = false;
 
-	TRACE(Trace::little, requestNumber);
-	LTFSDmProtocol::LTFSDmStopRequest *stopreq = commCommand.mutable_stoprequest();
-	stopreq->set_key(key);
-	stopreq->set_reqnumber(requestNumber);
+		do {
+			LTFSDmProtocol::LTFSDmStopRequest *stopreq = commCommand.mutable_stoprequest();
+			stopreq->set_key(key);
+			stopreq->set_reqnumber(requestNumber);
 
-	try {
-		commCommand.send();
-	}
-	catch(int error) {
-		TRACE(Trace::error, error);
-		return;
-	}
+			try {
+				commCommand.send();
+			}
+			catch(int error) {
+				TRACE(Trace::error, error);
+				return;
+			}
 
-	try {
-		commCommand.recv();
-	}
-	catch(int error) {
-		TRACE(Trace::error, error);
-		return;
-	}
+			try {
+				commCommand.recv();
+			}
+			catch(int error) {
+				TRACE(Trace::error, error);
+				return;
+			}
 
-	return;
+			const LTFSDmProtocol::LTFSDmStopResp stopresp = commCommand.stopresp();
+
+			finished = stopresp.success();
+
+			if( !finished ) {
+				sleep(1);
+			}
+			else {
+				break;
+			}
+		} while (true);
+
+		if ( sig == SIGUSR1 && forcedTerminate )
+		 	return;
+	}
 }
 
 void Server::lockServer()
@@ -183,6 +195,7 @@ void Server::run(Connector *connector, sigset_t set)
 	TransRecall trec;
 
 	terminate = false;
+	forcedTerminate = false;
 
 	Scheduler::wqs = new ThreadPool<Migration::mig_info_t, std::shared_ptr<std::list<unsigned long>>>
 		(&Migration::stub, Const::NUM_STUBBING_THREADS, "stub-wq");

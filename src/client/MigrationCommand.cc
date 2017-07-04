@@ -85,6 +85,10 @@ void MigrationCommand::talkToBackend(std::stringstream *parmList)
 			MSG(LTFSDMS0064E);
 			throw(Error::LTFSDM_GENERAL_ERROR);
 			break;
+		case Error::LTFSDM_TERMINATING:
+			MSG(LTFSDMC0101I);
+			throw(Error::LTFSDM_GENERAL_ERROR);
+			break;
 		default:
 			MSG(LTFSDMC0029E);
 			throw(Error::LTFSDM_GENERAL_ERROR);

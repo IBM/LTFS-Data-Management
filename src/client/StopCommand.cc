@@ -22,6 +22,7 @@ void StopCommand::printUsage()
 void StopCommand::doCommand(int argc, char **argv)
 {
 	int lockfd;
+	bool finished = false;
 
 	if ( argc > 1 ) {
 		printUsage();
@@ -38,32 +39,39 @@ void StopCommand::doCommand(int argc, char **argv)
 
 	TRACE(Trace::error, requestNumber);
 
-	LTFSDmProtocol::LTFSDmStopRequest *stopreq = commCommand.mutable_stoprequest();
-	stopreq->set_key(key);
-	stopreq->set_reqnumber(requestNumber);
+	do {
+		LTFSDmProtocol::LTFSDmStopRequest *stopreq = commCommand.mutable_stoprequest();
+		stopreq->set_key(key);
+		stopreq->set_reqnumber(requestNumber);
 
-	try {
-		commCommand.send();
-	}
-	catch(...) {
-		MSG(LTFSDMC0027E);
-		throw Error::LTFSDM_GENERAL_ERROR;
-	}
+		try {
+			commCommand.send();
+		}
+		catch(...) {
+			MSG(LTFSDMC0027E);
+			throw Error::LTFSDM_GENERAL_ERROR;
+		}
 
-	try {
-		commCommand.recv();
-	}
-	catch(...) {
-		MSG(LTFSDMC0028E);
-		throw(Error::LTFSDM_GENERAL_ERROR);
-	}
+		try {
+			commCommand.recv();
+		}
+		catch(...) {
+			MSG(LTFSDMC0028E);
+			throw(Error::LTFSDM_GENERAL_ERROR);
+		}
 
-	const LTFSDmProtocol::LTFSDmStopResp stopresp = commCommand.stopresp();
+		const LTFSDmProtocol::LTFSDmStopResp stopresp = commCommand.stopresp();
 
-	if( stopresp.success() != true ) {
-		MSG(LTFSDMC0029E);
-		throw(Error::LTFSDM_GENERAL_ERROR);
-	}
+		finished = stopresp.success();
+
+		if( !finished ) {
+			MSG(LTFSDMC0101I);
+			sleep(1);
+		}
+		else {
+			break;
+		}
+	} while (true);
 
 	if ( (lockfd = open(Const::SERVER_LOCK_FILE.c_str(), O_RDWR | O_CREAT, 0600)) == -1 ) {
 		MSG(LTFSDMC0033E);
@@ -73,6 +81,8 @@ void StopCommand::doCommand(int argc, char **argv)
 	}
 
 	while ( flock(lockfd, LOCK_EX | LOCK_NB) == -1 ) {
+		if ( exitClient )
+			break;
 		INFO(LTFSDMC0034I);
 		sleep(1);
 	}
