@@ -1006,9 +1006,7 @@ void MessageParser::run(long key, LTFSDmCommServer command, Connector *connector
 				firstTime = false;
 			}
 			if ( command.has_stoprequest() ) {
-				if ( Server::finishTerminate != true ) {
-					stopMessage(key, &command, localReqNumber);
-				}
+				stopMessage(key, &command, localReqNumber);
 			}
 			else if ( command.has_migrequest() ) {
 				migrationMessage(key, &command, localReqNumber);

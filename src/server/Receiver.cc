@@ -45,10 +45,10 @@ void Receiver::run(long key, Connector *connector)
 
 	lock.unlock();
 
-	connector->terminate();
+	wq.waitCompletion(Const::UNSET);
+	wq.terminate();
 
 	command.closeRef();
 
-	wq.waitCompletion(Const::UNSET);
-	wq.terminate();
+	connector->terminate();
 }
