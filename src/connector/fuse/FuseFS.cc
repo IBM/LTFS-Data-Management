@@ -1120,7 +1120,10 @@ FuseFS::~FuseFS()
 	MSG(LTFSDMF0007I);
 	fuse_exit(openltfs);
 	fuse_unmount(mountpt.c_str(), openltfsch);
-	fusefs->join();
+	if ( Connector::forcedTerminate )
+		fusefs->detach();
+	else
+		fusefs->join();
 	delete(fusefs);
 	free(ctx);
 }

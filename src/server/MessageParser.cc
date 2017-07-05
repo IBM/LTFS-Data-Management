@@ -310,9 +310,10 @@ void MessageParser::stopMessage(long key, LTFSDmCommServer *command, long localR
 
 	Server::terminate = true;
 
-	if ( stopreq.forced() )
+	if ( stopreq.forced() ) {
 		Server::forcedTerminate = true;
-
+		Connector::forcedTerminate = true;
+	}
 	do {
 		std::stringstream ssql;
 

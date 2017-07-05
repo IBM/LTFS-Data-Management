@@ -35,6 +35,7 @@
 #include "FuseFS.h"
 
 std::atomic<bool> Connector::connectorTerminate(false);
+std::atomic<bool> Connector::forcedTerminate(false);
 
 namespace FuseConnector {
 	std::mutex mtx;

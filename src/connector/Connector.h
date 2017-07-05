@@ -13,6 +13,7 @@ public:
 		std::string filename;
 	};
 	static std::atomic<bool> connectorTerminate;
+	static std::atomic<bool> forcedTerminate;
 
 	Connector(bool cleanup);
 	~Connector();
