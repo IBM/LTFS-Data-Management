@@ -4,7 +4,6 @@ class OpenLTFSCommand
 {
 protected:
     OpenLTFSCommand(std::string command_, std::string optionStr_) :
-        waitForCompletion(false),
 		preMigrate(false),
 		recToResident(false),
 		requestNumber(Const::UNSET),
@@ -18,7 +17,6 @@ protected:
 		tapeList({}),
 		forced(false),
 	    key(Const::UNSET) {};
-	bool waitForCompletion;
 	bool preMigrate;
 	bool recToResident;
 	long requestNumber;

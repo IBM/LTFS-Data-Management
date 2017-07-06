@@ -37,9 +37,6 @@ void OpenLTFSCommand::processOptions(int argc, char **argv)
 			case 'h':
 				printUsage();
 				throw(Error::LTFSDM_OK);
-			case 'w':
-				waitForCompletion = true;
-				break;
 			case 'p':
 				preMigrate = true;
 				break;
@@ -87,7 +84,6 @@ void OpenLTFSCommand::processOptions(int argc, char **argv)
 void OpenLTFSCommand::traceParms()
 
 {
-	TRACE(Trace::little, waitForCompletion);
 	TRACE(Trace::little, preMigrate);
 	TRACE(Trace::little, recToResident);
 	TRACE(Trace::little, requestNumber);
