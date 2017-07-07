@@ -134,6 +134,7 @@ OpenLTFSInventory::OpenLTFSInventory()
 {
 	std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
 	std::shared_ptr<ltfsadmin::LTFSNode> nodeInfo;
+	struct stat statbuf;
 
 	try {
 		sess = LEControl::Connect("127.0.0.1", 7600);
@@ -164,6 +165,12 @@ OpenLTFSInventory::OpenLTFSInventory()
 		throw(Error::LTFSDM_GENERAL_ERROR);
 	}
 
+	TRACE(Trace::always, mountPoint);
+
+	if ( stat(mountPoint.c_str(), &statbuf) == -1 ) {
+		MSG(LTFSDMS0072E);
+		throw(Error::LTFSDM_GENERAL_ERROR);
+	}
 
 	if ( nodeInfo == nullptr ) {
 		MSG(LTFSDMS0072E);
