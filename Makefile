@@ -5,6 +5,8 @@ include components.mk
 # for executing code
 export PATH := $(PATH):$(CURDIR)/bin
 
+export ROOTDIR := $(CURDIR)
+
 export CONNECTOR := fuse
 fuse: CONNECTOR = fuse
 fuse: build

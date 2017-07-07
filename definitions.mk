@@ -2,9 +2,6 @@
 
 .PHONY: clean build libdir link
 
-# to be used below
-PROJECT := OpenLTFS
-
 # for linking - no standard C required
 CC = g++
 
@@ -20,7 +17,7 @@ LIBDIR := $(RELPATH)/lib
 LDFLAGS += -L$(BINDIR)
 
 # client, common, or server
-TARGETCOMP := $(shell perl -e "print '$(CURDIR)' =~ /.*$(PROJECT)\/src\/([^\/]+)/")
+TARGETCOMP := $(shell perl -e "print '$(CURDIR)' =~ /.*$(subst /,\/,$(ROOTDIR))\/src\/([^\/]+)/")
 
 # to not set ARCHIVES (e.g. link w/o) set 'ARCHIVES :=' before
 ARCHIVES ?= $(RELPATH)/lib/$(TARGETCOMP).a $(RELPATH)/lib/common.a
