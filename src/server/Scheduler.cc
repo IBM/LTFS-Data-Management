@@ -14,7 +14,7 @@ std::string Scheduler::getTapeName(std::string fileName, std::string tapeId)
 	FsObj diskFile(fileName);
 	std::stringstream tapeName;
 
-	tapeName << Const::LTFS_PATH
+	tapeName << inventory->getMountPoint()
 			 << "/" << tapeId << "/"
 			 << Const::LTFS_NAME << "."
 			 << diskFile.getFsId() << "."
@@ -31,7 +31,7 @@ std::string Scheduler::getTapeName(unsigned long long fsid, unsigned int igen,
 {
 	std::stringstream tapeName;
 
-	tapeName << Const::LTFS_PATH
+	tapeName << inventory->getMountPoint()
 			 << "/" << tapeId << "/"
 			 << Const::LTFS_NAME << "."
 			 << fsid << "."

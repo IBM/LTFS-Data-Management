@@ -615,7 +615,7 @@ void Migration::execRequest(int reqNumber, int targetState, int numRepl,
 	if ( needsTape ) {
 		retval = migrationStep(reqNumber, numRepl, replNum, tapeId,  FsObj::RESIDENT, FsObj::PREMIGRATED);
 
-		tapePath << Const::LTFS_PATH << "/" << tapeId;
+		tapePath << inventory->getMountPoint() << "/" << tapeId;
 
 		if ( setxattr(tapePath.str().c_str(), Const::LTFS_SYNC_ATTR.c_str(),
 					  Const::LTFS_SYNC_VAL.c_str(), Const::LTFS_SYNC_VAL.length(), 0) == -1 ) {

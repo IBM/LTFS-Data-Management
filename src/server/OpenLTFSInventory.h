@@ -68,6 +68,7 @@ private:
 	std::list<std::shared_ptr<OpenLTFSCartridge>> cartridges;
 	std::list<std::shared_ptr<OpenLTFSPool>> pools;
 	std::shared_ptr<ltfsadmin::LTFSAdminSession> sess;
+	std::shared_ptr<ltfsadmin::LTFSNode> nodeInfo;
 public:
 	OpenLTFSInventory();
 	~OpenLTFSInventory();
@@ -96,6 +97,8 @@ public:
 	void unmount(std::string driveid, std::string cartridgeid);
 	void format(std::string cartridgeid);
 	void check(std::string cartridgeid);
+
+	std::string getMountPoint();
 };
 
 extern OpenLTFSInventory *inventory;

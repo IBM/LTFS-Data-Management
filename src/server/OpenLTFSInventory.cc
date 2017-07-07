@@ -141,6 +141,23 @@ OpenLTFSInventory::OpenLTFSInventory()
 		throw(Error::LTFSDM_GENERAL_ERROR);
 	}
 
+	if ( sess == nullptr ) {
+		MSG(LTFSDMS0072E);
+		throw(Error::LTFSDM_GENERAL_ERROR);
+	}
+
+	try {
+		nodeInfo = LEControl::InventoryNode(sess);
+	}
+	catch ( int error ) {
+		throw(Error::LTFSDM_GENERAL_ERROR);
+	}
+
+	if ( nodeInfo == nullptr ) {
+		MSG(LTFSDMS0072E);
+		throw(Error::LTFSDM_GENERAL_ERROR);
+	}
+
 	try {
 		inventorize();
 		writePools();
@@ -385,4 +402,10 @@ OpenLTFSInventory::~OpenLTFSInventory()
 
 {
 	LEControl::Disconnect(sess);
+}
+
+std::string OpenLTFSInventory::getMountPoint()
+
+{
+	return nodeInfo->get_mount_point();
 }
