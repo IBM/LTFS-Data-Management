@@ -68,7 +68,7 @@ private:
 	std::list<std::shared_ptr<OpenLTFSCartridge>> cartridges;
 	std::list<std::shared_ptr<OpenLTFSPool>> pools;
 	std::shared_ptr<ltfsadmin::LTFSAdminSession> sess;
-	std::shared_ptr<ltfsadmin::LTFSNode> nodeInfo;
+	std::string mountPoint;
 public:
 	OpenLTFSInventory();
 	~OpenLTFSInventory();

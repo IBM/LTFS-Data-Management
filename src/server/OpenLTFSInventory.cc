@@ -133,11 +133,13 @@ OpenLTFSInventory::OpenLTFSInventory()
 
 {
 	std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+	std::shared_ptr<ltfsadmin::LTFSNode> nodeInfo;
 
 	try {
 		sess = LEControl::Connect("127.0.0.1", 7600);
 	}
 	catch ( int error ) {
+		MSG(LTFSDMS0072E);
 		throw(Error::LTFSDM_GENERAL_ERROR);
 	}
 
@@ -150,8 +152,18 @@ OpenLTFSInventory::OpenLTFSInventory()
 		nodeInfo = LEControl::InventoryNode(sess);
 	}
 	catch ( int error ) {
+		MSG(LTFSDMS0072E);
 		throw(Error::LTFSDM_GENERAL_ERROR);
 	}
+
+	try {
+		mountPoint = nodeInfo->get_mount_point();
+	}
+	catch ( int error ) {
+		MSG(LTFSDMS0072E);
+		throw(Error::LTFSDM_GENERAL_ERROR);
+	}
+
 
 	if ( nodeInfo == nullptr ) {
 		MSG(LTFSDMS0072E);
@@ -407,5 +419,5 @@ OpenLTFSInventory::~OpenLTFSInventory()
 std::string OpenLTFSInventory::getMountPoint()
 
 {
-	return nodeInfo->get_mount_point();
+	return mountPoint;
 }
