@@ -1,6 +1,6 @@
 #include "ServerIncludes.h"
 
-void TransRecall::addRequest(Connector::rec_info_t recinfo, std::string tapeId, long reqNum, bool newReq)
+void TransRecall::addRequest(Connector::rec_info_t recinfo, std::string tapeId, long reqNum)
 
 {
 	int rc;
@@ -64,10 +64,29 @@ void TransRecall::addRequest(Connector::rec_info_t recinfo, std::string tapeId, 
 
 	std::unique_lock<std::mutex> lock(Scheduler::mtx);
 
-	if ( newReq == true ) {
+	bool reqExists = false;
+	ssql.str("");
+	ssql.clear();
+
+	ssql << "SELECT STATE FROM REQUEST_QUEUE WHERE REQ_NUM=" << reqNum;
+	sqlite3_statement::prepare(ssql.str(), &stmt);
+	while ( (rc = sqlite3_statement::step(stmt)) == SQLITE_ROW )
+		reqExists = true;
+	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+
+	if ( reqExists == true ) {
 		ssql.str("");
 		ssql.clear();
-
+		ssql << "UPDATE REQUEST_QUEUE SET STATE=" << DataBase::REQ_NEW
+			 << " WHERE REQ_NUM=" << reqNum << " AND TAPE_ID='" << tapeId << "';";
+		sqlite3_statement::prepare(ssql.str(), &stmt);
+		rc = sqlite3_statement::step(stmt);
+		sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+		Scheduler::cond.notify_one();
+	}
+	else {
+		ssql.str("");
+		ssql.clear();
 		ssql << "INSERT INTO REQUEST_QUEUE (OPERATION, REQ_NUM, "
 			 << "TAPE_ID, TIME_ADDED, STATE) "
 			 << "VALUES (" << DataBase::TRARECALL << ", "                          // OPERATION
@@ -82,30 +101,6 @@ void TransRecall::addRequest(Connector::rec_info_t recinfo, std::string tapeId, 
 
 		Scheduler::cond.notify_one();
 	}
-	else {
-		bool reqCompleted = true;
-		ssql.str("");
-		ssql.clear();
-
-		ssql << "SELECT STATE FROM REQUEST_QUEUE WHERE REQ_NUM=" << reqNum;
-		sqlite3_statement::prepare(ssql.str(), &stmt);
-		while ( (rc = sqlite3_statement::step(stmt)) == SQLITE_ROW ) {
-			if ( sqlite3_column_int(stmt, 0) != DataBase::REQ_COMPLETED ) {
-				reqCompleted = false;
-			}
-		}
-		sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
-		if ( reqCompleted == true ) {
-			ssql.str("");
-			ssql.clear();
-			ssql << "UPDATE REQUEST_QUEUE SET STATE=" << DataBase::REQ_NEW
-				 << " WHERE REQ_NUM=" << reqNum << " AND TAPE_ID='" << tapeId << "';";
-			sqlite3_statement::prepare(ssql.str(), &stmt);
-			rc = sqlite3_statement::step(stmt);
-			sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
-			Scheduler::cond.notify_one();
-		}
-	}
 }
 
 void TransRecall::run(Connector *connector)
@@ -114,7 +109,6 @@ void TransRecall::run(Connector *connector)
 	SubServer subs(Const::MAX_TRANSPARENT_RECALL_THREADS);
 	Connector::rec_info_t recinfo;
 	std::map<std::string, long> reqmap;
-	bool newReq;
 	std::set<std::string> fsList;
 	std::set<std::string>::iterator it;
 
@@ -195,15 +189,10 @@ void TransRecall::run(Connector *connector)
 		std::stringstream thrdinfo;
 		thrdinfo << "TrRec(" << recinfo.ino << ")";
 
-		if ( reqmap.count(tapeId) == 0 ) {
+		if ( reqmap.count(tapeId) == 0 )
 			reqmap[tapeId] = ++globalReqNumber;
-			newReq = true;
-		}
-		else {
-			newReq = false;
-		}
 
-		subs.enqueue(thrdinfo.str(), TransRecall::addRequest, recinfo, tapeId, reqmap[tapeId], newReq);
+		subs.enqueue(thrdinfo.str(), TransRecall::addRequest, recinfo, tapeId, reqmap[tapeId]);
 	}
 
 	subs.waitAllRemaining();
@@ -410,17 +399,6 @@ void TransRecall::execRequest(int reqNum, std::string tapeId)
 
 	std::unique_lock<std::mutex> lock(Scheduler::mtx);
 
-	inventory->getCartridge(tapeId)->setState(OpenLTFSCartridge::MOUNTED);
-
-	ssql.str("");
-	ssql.clear();
-	ssql << "SELECT FILE_STATE, COUNT(*) FROM JOB_QUEUE WHERE REQ_NUM="
-		 << reqNum << " AND TAPE_ID='" << tapeId << "';";
-	sqlite3_statement::prepare(ssql.str(), &stmt);
-	while ( (rc = sqlite3_statement::step(stmt)) == SQLITE_ROW )
-				remaining = sqlite3_column_int(stmt, 1);
-	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
-
 	{
 		std::lock_guard<std::recursive_mutex> inventorylock(OpenLTFSInventory::mtx);
 		inventory->getCartridge(tapeId)->setState(OpenLTFSCartridge::MOUNTED);
@@ -438,9 +416,22 @@ void TransRecall::execRequest(int reqNum, std::string tapeId)
 
 	ssql.str("");
 	ssql.clear();
-	ssql << "UPDATE REQUEST_QUEUE SET STATE=" << (remaining ? DataBase::REQ_NEW : DataBase::REQ_COMPLETED )
-		 << ", TIME_ADDED=" << time(NULL)
-		 << " WHERE REQ_NUM=" << reqNum << " AND TAPE_ID='" << tapeId << "';";
+	ssql << "SELECT COUNT(*) FROM JOB_QUEUE WHERE REQ_NUM="
+		 << reqNum << " AND TAPE_ID='" << tapeId << "';";
+	sqlite3_statement::prepare(ssql.str(), &stmt);
+	while ( (rc = sqlite3_statement::step(stmt)) == SQLITE_ROW )
+				remaining = sqlite3_column_int(stmt, 0);
+	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+
+	ssql.str("");
+	ssql.clear();
+	if ( remaining )
+		ssql << "UPDATE REQUEST_QUEUE SET STATE=" << DataBase::REQ_NEW
+			 << ", TIME_ADDED=" << time(NULL)
+			 << " WHERE REQ_NUM=" << reqNum << " AND TAPE_ID='" << tapeId << "';";
+	else
+		ssql << "DELETE FROM REQUEST_QUEUE"
+			 << " WHERE REQ_NUM=" << reqNum << " AND TAPE_ID='" << tapeId << "';";
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 	rc = sqlite3_statement::step(stmt);
 	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
