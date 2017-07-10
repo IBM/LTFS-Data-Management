@@ -286,7 +286,7 @@ unsigned long Scheduler::smallestMigJob(int reqNum, int replNum)
 void Scheduler::run(long key)
 
 {
-	TRACE(Trace::much, __PRETTY_FUNCTION__);
+	TRACE(Trace::little, __PRETTY_FUNCTION__);
 
 	sqlite3_stmt *stmt;
 	std::stringstream ssql;
@@ -312,20 +312,6 @@ void Scheduler::run(long key)
 
 		while ( (rc = sqlite3_statement::step(stmt)) == SQLITE_ROW ) {
 			op = static_cast<DataBase::operation>(sqlite3_column_int(stmt, 0));
-
-			/* needs to be changed/moved
-			{
-				std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
-				OpenLTFSCartridge::state_t state = inventory->getCartridge(tapeId)->getState();
-				if ( state == OpenLTFSCartridge::INUSE ) {
-					if ( op == DataBase::SELRECALL ||
-						 op == DataBase::TRARECALL) {
-						suspend_map[tapeId] = true;
-					}
-					continue;
-				}
-			}
-			*/
 
 			reqNum = sqlite3_column_int(stmt, 1);
 			tgtState = sqlite3_column_int(stmt, 2);

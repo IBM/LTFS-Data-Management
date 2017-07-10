@@ -29,10 +29,10 @@ public:
 		}
 
 		std::thread *thrd1 = new std::thread(f, args ...);
-		TRACE(Trace::much, thrd1->get_id());
+		TRACE(Trace::always, thrd1->get_id());
 		pthread_setname_np(thrd1->native_handle(), label.c_str());
 		std::thread *thrd2 = new std::thread(&SubServer::waitThread, this, thrd1, thrdprev);
-		TRACE(Trace::much, thrd2->get_id());
+		TRACE(Trace::always, thrd2->get_id());
 		pthread_setname_np(thrd2->native_handle(), (std::string("w:") + label).c_str());
 		thrdprev = thrd2;
 	}

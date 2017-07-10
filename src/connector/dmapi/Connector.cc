@@ -106,8 +106,8 @@ void dmapiSessionCleanup(dm_sessid_t *oldSid)
 			throw(Error::LTFSDM_GENERAL_ERROR);
         }
 		else if (Const::DMAPI_SESSION_NAME.compare(buffer) == 0) {
-			TRACE(Trace::error, i);
-			TRACE(Trace::error, (unsigned long) sidbufp[i]);
+			TRACE(Trace::little, i);
+			TRACE(Trace::little, (unsigned long) sidbufp[i]);
 
 			tokbufp =  (dm_token_t *) malloc(sizeof(dm_token_t) * num_tokens);
 			if ( !tokbufp ) {
@@ -135,8 +135,8 @@ void dmapiSessionCleanup(dm_sessid_t *oldSid)
 
 			for (j = 0; j<rtoklenp; j++)
 			{
-				TRACE(Trace::error, j);
-				TRACE(Trace::error, (unsigned long) tokbufp[j]);
+				TRACE(Trace::little, j);
+				TRACE(Trace::little, (unsigned long) tokbufp[j]);
 				if ( dm_respond_event(sidbufp[i], tokbufp[j], DM_RESP_ABORT, EINTR, 0, NULL) == 1 )
 					TRACE(Trace::error, errno);
 				else

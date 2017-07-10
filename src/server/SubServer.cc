@@ -11,7 +11,7 @@ void SubServer::waitThread(std::thread *thrd, std::thread *thrdprev)
 		idprev = thrdprev->get_id();
 
 	thrd->join();
-	TRACE(Trace::much, id);
+	TRACE(Trace::always, id);
 	delete(thrd);
 	countb = --count;
 
@@ -25,7 +25,7 @@ void SubServer::waitThread(std::thread *thrd, std::thread *thrdprev)
 
 	if ( thrdprev != nullptr) {
 		thrdprev->join();
-		TRACE(Trace::much, idprev);
+		TRACE(Trace::always, idprev);
 		delete(thrdprev);
 	}
 }

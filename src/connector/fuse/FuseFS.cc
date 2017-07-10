@@ -691,7 +691,7 @@ int FuseFS::ltfsdm_read(const char *path, char *buffer, size_t size, off_t offse
 		return (-1*errno);
 	}
 	else {
-		TRACE(Trace::error, fuse_get_context()->pid);
+		TRACE(Trace::medium, fuse_get_context()->pid);
 		return rsize;
 	}
 }

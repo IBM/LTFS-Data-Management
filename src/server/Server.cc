@@ -33,7 +33,7 @@ void Server::signalHandler(sigset_t set, long key)
 			return;
 		}
 
-		TRACE(Trace::little, requestNumber);
+		TRACE(Trace::always, requestNumber);
 		bool finished = false;
 
 		do {
@@ -172,8 +172,8 @@ void Server::daemonize()
 		throw(Error::LTFSDM_GENERAL_ERROR);
 	}
 
-	TRACE(Trace::little, "Server started");
-	TRACE(Trace::little, getpid());
+	TRACE(Trace::always, "Server started");
+	TRACE(Trace::always, getpid());
 
 	messageObject.setLogType(Message::LOGFILE);
 

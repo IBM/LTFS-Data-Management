@@ -56,7 +56,7 @@ int main(int argc, char **argv)
 
 	traceObject.setTrclevel(tl);
 
-	TRACE(Trace::little, getpid());
+	TRACE(Trace::always, getpid());
 
 	try {
 		ltfsdmd.initialize(dbUseMemory);

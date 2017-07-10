@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
 		goto cleanup;
 	}
 
-	traceObject.setTrclevel(Trace::much);
+	traceObject.setTrclevel(Trace::error);
 
 	if ( argc < 2 ) {
 		openLTFSCommand = dynamic_cast<OpenLTFSCommand*>(new HelpCommand());

@@ -366,7 +366,7 @@ void recallStep(int reqNum, std::string tapeId)
 		resplist.push_back((respinfo_t) {recinfo, succeeded});
 	}
 
-	TRACE(Trace::error, numFiles);
+	TRACE(Trace::always, numFiles);
 
 	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 
@@ -405,7 +405,7 @@ void TransRecall::execRequest(int reqNum, std::string tapeId)
 		bool found = false;
 		for ( std::shared_ptr<OpenLTFSDrive> d : inventory->getDrives() ) {
 			if ( d->get_slot() == inventory->getCartridge(tapeId)->get_slot() ) {
-				TRACE(Trace::always, std::string("SET FREE: ") + d->GetObjectID());
+				TRACE(Trace::little, std::string("SET FREE: ") + d->GetObjectID());
 				d->setFree();
 				found = true;
 				break;

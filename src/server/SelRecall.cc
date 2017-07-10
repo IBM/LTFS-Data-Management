@@ -385,7 +385,7 @@ bool SelRecall::recallStep(int reqNumber, std::string tapeId, FsObj::file_state 
 	}
 	ssql << ")";
 
-	TRACE(Trace::always, ssql.str());
+	TRACE(Trace::medium, ssql.str());
 
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 	rc = sqlite3_statement::step(stmt);
@@ -399,7 +399,7 @@ bool SelRecall::recallStep(int reqNumber, std::string tapeId, FsObj::file_state 
 		 << " AND TAPE_ID='" << tapeId << "'"
 		 << " AND FILE_STATE=" << FsObj::RECALLING_MIG;
 
-	TRACE(Trace::always, ssql.str());
+	TRACE(Trace::medium, ssql.str());
 
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 	rc = sqlite3_statement::step(stmt);
@@ -413,7 +413,7 @@ bool SelRecall::recallStep(int reqNumber, std::string tapeId, FsObj::file_state 
 		 << " AND TAPE_ID='" << tapeId << "'"
 		 << " AND FILE_STATE=" << FsObj::RECALLING_PREMIG;
 
-	TRACE(Trace::always, ssql.str());
+	TRACE(Trace::medium, ssql.str());
 
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 	rc = sqlite3_statement::step(stmt);
@@ -445,7 +445,7 @@ void SelRecall::execRequest(int reqNumber, int tgtState, std::string tapeId, boo
 		bool found = false;
 		for ( std::shared_ptr<OpenLTFSDrive> d : inventory->getDrives() ) {
 			if ( d->get_slot() == inventory->getCartridge(tapeId)->get_slot() ) {
-				TRACE(Trace::always, std::string("SET FREE: ") + d->GetObjectID());
+				TRACE(Trace::little, std::string("SET FREE: ") + d->GetObjectID());
 				d->setFree();
 				d->clearToUnblock();
 				found = true;
