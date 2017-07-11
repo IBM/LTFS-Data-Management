@@ -181,7 +181,7 @@ void Migration::addRequest()
 			  << ");";
 
 		sqlite3_statement::prepare(ssql.str(), &stmt);
-		TRACE(Trace::always, std::string(ssql.str()));
+		TRACE(Trace::little, std::string(ssql.str()));
 
 		rc = sqlite3_statement::step(stmt);
 

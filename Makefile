@@ -7,6 +7,8 @@ export PATH := $(PATH):$(CURDIR)/bin
 
 export ROOTDIR := $(CURDIR)
 
+export BUILD_HASH := 0x$(shell git rev-parse --short HEAD)
+
 export CONNECTOR := fuse
 fuse: CONNECTOR = fuse
 fuse: build

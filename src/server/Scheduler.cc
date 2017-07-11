@@ -113,7 +113,7 @@ bool Scheduler::poolResAvail(unsigned long minFileSize)
 		for ( std::shared_ptr<OpenLTFSCartridge> card : inventory->getCartridges() ) {
 			if ( (drive->get_slot() == card->get_slot()) &&
 				 (card->getState() == OpenLTFSCartridge::MOUNTED)) {
-				TRACE(Trace::always, std::string("SET BUSY: ") + drive->GetObjectID());
+				TRACE(Trace::little, std::string("SET BUSY: ") + drive->GetObjectID());
 				drive->setBusy();
 				drive->setUnmountReqNum(reqNum);
 				card->setState(OpenLTFSCartridge::MOVING);

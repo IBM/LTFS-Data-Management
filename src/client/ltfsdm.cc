@@ -37,7 +37,7 @@
 #include "PoolRemoveCommand.h"
 #include "InfoPoolsCommand.h"
 #include "RetrieveCommand.h"
-
+#include "VersionCommand.h"
 
 void signalHandler(sigset_t set)
 
@@ -117,6 +117,9 @@ int main(int argc, char *argv[])
 	}
 	else if ( RetrieveCommand().compare(command) ) {
 		openLTFSCommand =dynamic_cast<OpenLTFSCommand*>(new RetrieveCommand());
+	}
+	else if ( VersionCommand().compare(command) ) {
+		openLTFSCommand =dynamic_cast<OpenLTFSCommand*>(new VersionCommand());
 	}
 	else if ( InfoCommand().compare(command) ) {
 		if ( argc < 3 ) {

@@ -10,6 +10,7 @@ int main(int argc, char **argv)
 	sigset_t set;
 	bool dbUseMemory = false;
 	Trace::traceLevel tl = Trace::error;
+	boost::format formatter("%x");
 
 	Connector *connector = NULL;
 
@@ -56,6 +57,7 @@ int main(int argc, char **argv)
 
 	traceObject.setTrclevel(tl);
 
+	TRACE(Trace::always, formatter % BUILD_HASH);
 	TRACE(Trace::always, getpid());
 
 	try {

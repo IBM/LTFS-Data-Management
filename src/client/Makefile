@@ -22,6 +22,7 @@ ARC_SRC_FILES += PoolDeleteCommand.cc
 ARC_SRC_FILES += PoolAddCommand.cc
 ARC_SRC_FILES += PoolRemoveCommand.cc
 ARC_SRC_FILES += InfoPoolsCommand.cc
+ARC_SRC_FILES += VersionCommand.cc
 CLEANUP_FILES := ltfsdm
 BINARY := ltfsdm
 POSTTARGET :=
