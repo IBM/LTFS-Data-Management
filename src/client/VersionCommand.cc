@@ -45,5 +45,5 @@ void VersionCommand::doCommand(int argc, char **argv)
 		throw(Error::LTFSDM_GENERAL_ERROR);
 	}
 
-	INFO(LTFSDMC0103I, BUILD_HASH);
+	INFO(LTFSDMX0029I, COMMIT_COUNT, BUILD_HASH);
 }
