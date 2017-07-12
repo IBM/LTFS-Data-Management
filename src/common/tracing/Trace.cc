@@ -26,6 +26,9 @@ void Trace::setTrclevel(traceLevel level)
 	traceLevel oldLevel;
 
 	switch (level) {
+		case Trace::none:
+			trclevel = level;
+			break;
 		case Trace::error:
 		case Trace::normal:
         case Trace::full:

@@ -23,6 +23,7 @@ private:
 	std::ofstream tracefile;
 public:
 	enum traceLevel {
+		none,
 		always,
 		error,
 		normal,
@@ -48,7 +49,7 @@ public:
 		struct tm tmval;;
 		char curctime[26];
 
-		if ( tl <= getTrclevel()) {
+		if ( getTrclevel() > none && tl <= getTrclevel()) {
 			gettimeofday(&curtime, NULL);
 			localtime_r(&(curtime.tv_sec), &tmval);
 			strftime(curctime, sizeof(curctime) - 1, "%Y-%m-%dT%H:%M:%S", &tmval);
