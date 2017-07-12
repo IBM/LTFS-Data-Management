@@ -10,7 +10,7 @@ void Receiver::run(long key, Connector *connector)
 	ThreadPool<long, LTFSDmCommServer, Connector*> wq(&MessageParser::run, Const::MAX_RECEIVER_THREADS, "msg-wq");
 	LTFSDmCommServer command;
 
-	TRACE(Trace::much, __PRETTY_FUNCTION__);
+	TRACE(Trace::full, __PRETTY_FUNCTION__);
 
 	globalReqNumber = 0;
 

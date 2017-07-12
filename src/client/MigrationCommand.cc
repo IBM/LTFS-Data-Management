@@ -118,8 +118,8 @@ void MigrationCommand::doCommand(int argc, char **argv)
 		throw(Error::LTFSDM_GENERAL_ERROR);
 	}
 
-	TRACE(Trace::little, argc);
-	TRACE(Trace::little, optind);
+	TRACE(Trace::normal, argc);
+	TRACE(Trace::normal, optind);
 	traceParms();
 
 	if ( !fileList.compare("") ) {

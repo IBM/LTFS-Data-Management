@@ -106,8 +106,8 @@ void dmapiSessionCleanup(dm_sessid_t *oldSid)
 			throw(Error::LTFSDM_GENERAL_ERROR);
         }
 		else if (Const::DMAPI_SESSION_NAME.compare(buffer) == 0) {
-			TRACE(Trace::little, i);
-			TRACE(Trace::little, (unsigned long) sidbufp[i]);
+			TRACE(Trace::normal, i);
+			TRACE(Trace::normal, (unsigned long) sidbufp[i]);
 
 			tokbufp =  (dm_token_t *) malloc(sizeof(dm_token_t) * num_tokens);
 			if ( !tokbufp ) {
@@ -131,12 +131,12 @@ void dmapiSessionCleanup(dm_sessid_t *oldSid)
 				}
 			}
 
-			TRACE(Trace::little, rtoklenp);
+			TRACE(Trace::normal, rtoklenp);
 
 			for (j = 0; j<rtoklenp; j++)
 			{
-				TRACE(Trace::little, j);
-				TRACE(Trace::little, (unsigned long) tokbufp[j]);
+				TRACE(Trace::normal, j);
+				TRACE(Trace::normal, (unsigned long) tokbufp[j]);
 				if ( dm_respond_event(sidbufp[i], tokbufp[j], DM_RESP_ABORT, EINTR, 0, NULL) == 1 )
 					TRACE(Trace::error, errno);
 				else
@@ -403,7 +403,7 @@ Connector::rec_info_t Connector::getEvents()
     eventMsgP = (dm_eventmsg_t *) eventBuf;
     token = eventMsgP->ev_token;
 
-	TRACE(Trace::little, eventMsgP->ev_type);
+	TRACE(Trace::normal, eventMsgP->ev_type);
 
 	switch (eventMsgP->ev_type)
 	{
@@ -431,8 +431,8 @@ Connector::rec_info_t Connector::getEvents()
 			memcpy(sgName, name2P, name2Len);
 			sgName[name2Len] = '\0';
 
-			TRACE(Trace::little, nameBuf);
-			TRACE(Trace::little, sgName);
+			TRACE(Trace::normal, nameBuf);
+			TRACE(Trace::normal, sgName);
 
 			MSG(LTFSDMD0009I, nameBuf);
 			MSG(LTFSDMD0010I, nameBuf);
@@ -476,7 +476,7 @@ Connector::rec_info_t Connector::getEvents()
 
 			if ( retries == 4 )
 				MSG(LTFSDMD0011E, nameBuf);
-			TRACE(Trace::little, retries);
+			TRACE(Trace::normal, retries);
 
 			break;  /* end of case DM_EVENT_MOUNT */
 		case DM_EVENT_READ:
@@ -552,7 +552,7 @@ void Connector::respondRecallEvent(rec_info_t recinfo, bool success)
 		}
 	}
 
-	TRACE(Trace::little, recinfo.ino);
+	TRACE(Trace::normal, recinfo.ino);
 }
 
 void Connector::terminate()
@@ -789,12 +789,12 @@ void FsObj::lock()
 
 		fuidMap[fuid] = 1;
 		sstream << "new(" << fuidMap[fuid] << "): " << fuid.fsid << ", " << fuid.igen << ", " << fuid.ino;
-		TRACE(Trace::much, sstream.str());
+		TRACE(Trace::full, sstream.str());
 	}
 	else {
 		fuidMap[fuid]++;
 		sstream << "inc(" << fuidMap[fuid] << "): " << fuid.fsid << ", " << fuid.igen << ", " << fuid.ino;
-		TRACE(Trace::much, sstream.str());
+		TRACE(Trace::full, sstream.str());
 	}
 
 	isLocked = true;
@@ -833,12 +833,12 @@ void FsObj::unlock()
 
 		fuidMap.erase(fuid);
 		sstream << "rem(" << fuidMap.count(fuid) << "): " << fuid.fsid << ", " << fuid.igen << ", " << fuid.ino;
-		TRACE(Trace::much, sstream.str());
+		TRACE(Trace::full, sstream.str());
 	}
 	else {
 		fuidMap[fuid]--;
 		sstream << "dec(" << fuidMap[fuid] << "): " << fuid.fsid << ", " << fuid.igen << ", " << fuid.ino;
-		TRACE(Trace::much, sstream.str());
+		TRACE(Trace::full, sstream.str());
 	}
 
 	isLocked = false;
@@ -852,9 +852,9 @@ long FsObj::read(long offset, unsigned long size, char *buffer)
 	rsize = dm_read_invis(dmapiSession, handle, handleLength,
 						  dmapiToken, offset, size, buffer);
 
-	TRACE(Trace::much, offset);
-	TRACE(Trace::much, size);
-	TRACE(Trace::much, rsize);
+	TRACE(Trace::full, offset);
+	TRACE(Trace::full, size);
+	TRACE(Trace::full, rsize);
 
 	return rsize;
 }
@@ -866,9 +866,9 @@ long FsObj::write(long offset, unsigned long size, char *buffer)
 
 	wsize = dm_write_invis(dmapiSession, handle, handleLength, dmapiToken,
 						   DM_WRITE_SYNC, offset, size, buffer);
-	TRACE(Trace::much, offset);
-	TRACE(Trace::much, size);
-	TRACE(Trace::much, wsize);
+	TRACE(Trace::full, offset);
+	TRACE(Trace::full, size);
+	TRACE(Trace::full, wsize);
 
 	return wsize;
 }
@@ -1073,7 +1073,7 @@ FsObj::file_state FsObj::getMigState()
     for (i = 0; i < nelem; i++ ) {
 		infos << "region nr: " << i << ", offset: " << regbuf[i].rg_offset
 			  << ", size: " << regbuf[i].rg_size << ", flag: " << regbuf[i].rg_size;
-		TRACE(Trace::much, infos.str());
+		TRACE(Trace::full, infos.str());
 	}
 
 	if ( nelem > 1 ) {

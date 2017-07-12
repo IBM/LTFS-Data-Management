@@ -39,7 +39,7 @@ void StopCommand::doCommand(int argc, char **argv)
 		throw(Error::LTFSDM_GENERAL_ERROR);
 	}
 
-	TRACE(Trace::little, requestNumber);
+	TRACE(Trace::normal, requestNumber);
 
 	do {
 		LTFSDmProtocol::LTFSDmStopRequest *stopreq = commCommand.mutable_stoprequest();

@@ -84,14 +84,14 @@ void OpenLTFSCommand::processOptions(int argc, char **argv)
 void OpenLTFSCommand::traceParms()
 
 {
-	TRACE(Trace::little, preMigrate);
-	TRACE(Trace::little, recToResident);
-	TRACE(Trace::little, requestNumber);
-	TRACE(Trace::little, poolNames);
-	TRACE(Trace::little, fileList);
-	TRACE(Trace::little, command);
-	TRACE(Trace::little, optionStr);
-	TRACE(Trace::little, key);
+	TRACE(Trace::normal, preMigrate);
+	TRACE(Trace::normal, recToResident);
+	TRACE(Trace::normal, requestNumber);
+	TRACE(Trace::normal, poolNames);
+	TRACE(Trace::normal, fileList);
+	TRACE(Trace::normal, command);
+	TRACE(Trace::normal, optionStr);
+	TRACE(Trace::normal, key);
 }
 
 void OpenLTFSCommand::getRequestNumber()
@@ -120,7 +120,7 @@ void OpenLTFSCommand::getRequestNumber()
 
 	if( reqnumresp.success() == true ) {
 		requestNumber = reqnumresp.reqnumber();
-		TRACE(Trace::little, requestNumber);
+		TRACE(Trace::normal, requestNumber);
 	}
 	else {
 		MSG(LTFSDMC0029E);
@@ -159,7 +159,7 @@ void OpenLTFSCommand::connect()
 	if ( requestNumber == Const::UNSET )
 		getRequestNumber();
 
-	TRACE(Trace::little, requestNumber);
+	TRACE(Trace::normal, requestNumber);
 }
 
 
@@ -214,14 +214,14 @@ void OpenLTFSCommand::sendObjects(std::stringstream *parmList)
 			else  {
 				MSG(LTFSDMC0043E, line.c_str());
 			}
-			TRACE(Trace::much, line);
+			TRACE(Trace::full, line);
 		}
 
 		if ( i < Const::MAX_OBJECTS_SEND ) {
 			cont = false;
 			filenames = sendobjects->add_filenames();
 			filenames->set_filename(""); //end
-			TRACE(Trace::much, "END");
+			TRACE(Trace::full, "END");
 		}
 
 		try {

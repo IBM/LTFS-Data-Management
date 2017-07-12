@@ -113,7 +113,7 @@ bool Scheduler::poolResAvail(unsigned long minFileSize)
 		for ( std::shared_ptr<OpenLTFSCartridge> card : inventory->getCartridges() ) {
 			if ( (drive->get_slot() == card->get_slot()) &&
 				 (card->getState() == OpenLTFSCartridge::MOUNTED)) {
-				TRACE(Trace::little, drive->GetObjectID());
+				TRACE(Trace::normal, drive->GetObjectID());
 				drive->setBusy();
 				drive->setUnmountReqNum(reqNum);
 				card->setState(OpenLTFSCartridge::MOVING);
@@ -286,7 +286,7 @@ unsigned long Scheduler::smallestMigJob(int reqNum, int replNum)
 void Scheduler::run(long key)
 
 {
-	TRACE(Trace::little, __PRETTY_FUNCTION__);
+	TRACE(Trace::normal, __PRETTY_FUNCTION__);
 
 	sqlite3_stmt *stmt;
 	std::stringstream ssql;

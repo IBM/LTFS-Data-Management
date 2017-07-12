@@ -61,7 +61,7 @@ void TransRecall::addRequest(Connector::rec_info_t recinfo, std::string tapeId, 
 			MSG(LTFSDMS0032E, recinfo.ino);
 	}
 
-	TRACE(Trace::little, ssql.str());
+	TRACE(Trace::normal, ssql.str());
 
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 	rc = sqlite3_statement::step(stmt);
@@ -91,7 +91,7 @@ void TransRecall::addRequest(Connector::rec_info_t recinfo, std::string tapeId, 
 		ssql.clear();
 		ssql << "UPDATE REQUEST_QUEUE SET STATE=" << DataBase::REQ_NEW
 			 << " WHERE REQ_NUM=" << reqNum << " AND TAPE_ID='" << tapeId << "';";
-		TRACE(Trace::little, ssql.str());
+		TRACE(Trace::normal, ssql.str());
 		sqlite3_statement::prepare(ssql.str(), &stmt);
 		rc = sqlite3_statement::step(stmt);
 		sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
@@ -107,7 +107,7 @@ void TransRecall::addRequest(Connector::rec_info_t recinfo, std::string tapeId, 
 			 << "'" << attr.tapeId[0] << "', "                                     // TAPE_ID
 			 << time(NULL) << ", "                                                 // TIME_ADDED
 			 << DataBase::REQ_NEW << ");";                                         // STATE
-		TRACE(Trace::little, ssql.str());
+		TRACE(Trace::normal, ssql.str());
 		sqlite3_statement::prepare(ssql.str(), &stmt);
 		rc = sqlite3_statement::step(stmt);
 		sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
@@ -327,7 +327,7 @@ void recallStep(int reqNum, std::string tapeId)
 		 << " AND FILE_STATE=" << FsObj::MIGRATED
 		 << " AND TAPE_ID='" << tapeId << "'";
 
-	TRACE(Trace::little, ssql.str());
+	TRACE(Trace::normal, ssql.str());
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 	rc = sqlite3_statement::step(stmt);
 	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
@@ -340,7 +340,7 @@ void recallStep(int reqNum, std::string tapeId)
 		 << " AND FILE_STATE=" << FsObj::PREMIGRATED
 		 << " AND TAPE_ID='" << tapeId << "'";
 
-	TRACE(Trace::little, ssql.str());
+	TRACE(Trace::normal, ssql.str());
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 	rc = sqlite3_statement::step(stmt);
 	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
@@ -353,7 +353,7 @@ void recallStep(int reqNum, std::string tapeId)
 		 << " AND (FILE_STATE=" << FsObj::RECALLING_MIG << " OR FILE_STATE=" << FsObj::RECALLING_PREMIG << ")"
 		 << " AND TAPE_ID='" << tapeId
 		 << "' ORDER BY START_BLOCK";
-	TRACE(Trace::little, ssql.str());
+	TRACE(Trace::normal, ssql.str());
 
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 
@@ -408,7 +408,7 @@ void recallStep(int reqNum, std::string tapeId)
 		 << "WHERE REQ_NUM=" << reqNum
 		 << " AND (FILE_STATE=" << FsObj::RECALLING_MIG << " OR FILE_STATE=" << FsObj::RECALLING_PREMIG << ")"
 		 << " AND TAPE_ID='" << tapeId << "'";
- 	TRACE(Trace::little, ssql.str());
+ 	TRACE(Trace::normal, ssql.str());
 
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 	rc = sqlite3_statement::step(stmt);
@@ -437,7 +437,7 @@ void TransRecall::execRequest(int reqNum, std::string tapeId)
 		bool found = false;
 		for ( std::shared_ptr<OpenLTFSDrive> d : inventory->getDrives() ) {
 			if ( d->get_slot() == inventory->getCartridge(tapeId)->get_slot() ) {
-				TRACE(Trace::little, d->GetObjectID());
+				TRACE(Trace::normal, d->GetObjectID());
 				d->setFree();
 				found = true;
 				break;
@@ -450,7 +450,7 @@ void TransRecall::execRequest(int reqNum, std::string tapeId)
 	ssql.clear();
 	ssql << "SELECT COUNT(*) FROM JOB_QUEUE WHERE REQ_NUM="
 		 << reqNum << " AND TAPE_ID='" << tapeId << "';";
- 	TRACE(Trace::little, ssql.str());
+ 	TRACE(Trace::normal, ssql.str());
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 	while ( (rc = sqlite3_statement::step(stmt)) == SQLITE_ROW )
 				remaining = sqlite3_column_int(stmt, 0);
@@ -465,7 +465,7 @@ void TransRecall::execRequest(int reqNum, std::string tapeId)
 	else
 		ssql << "DELETE FROM REQUEST_QUEUE"
 			 << " WHERE REQ_NUM=" << reqNum << " AND TAPE_ID='" << tapeId << "';";
- 	TRACE(Trace::little, ssql.str());
+ 	TRACE(Trace::normal, ssql.str());
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 	rc = sqlite3_statement::step(stmt);
 	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);

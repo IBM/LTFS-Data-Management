@@ -70,7 +70,7 @@ void SelRecall::addJob(std::string fileName)
 		MSG(LTFSDMS0017E, fileName.c_str());
 	}
 
-	TRACE(Trace::little, ssql.str());
+	TRACE(Trace::normal, ssql.str());
 
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 
@@ -129,7 +129,7 @@ void SelRecall::addRequest()
 		else
 			ssql2 << DataBase::REQ_INPROGRESS << ");";                              // STATE
 
-		TRACE(Trace::little, ssql2.str());
+		TRACE(Trace::normal, ssql2.str());
 
 		sqlite3_statement::prepare(ssql2.str(), &stmt2);
 
@@ -249,7 +249,7 @@ bool SelRecall::recallStep(int reqNumber, std::string tapeId, FsObj::file_state 
 	int rc, rc2;
 	time_t start;
 
-	TRACE(Trace::much, reqNumber);
+	TRACE(Trace::full, reqNumber);
 
 	{
 		std::lock_guard<std::mutex> lock(Scheduler::updmtx);
@@ -272,7 +272,7 @@ bool SelRecall::recallStep(int reqNumber, std::string tapeId, FsObj::file_state 
 		 << " AND FILE_STATE=" << FsObj::MIGRATED
 		 << " AND TAPE_ID='" << tapeId << "'";
 
-	TRACE(Trace::little, ssql.str());
+	TRACE(Trace::normal, ssql.str());
 
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 	rc2 = sqlite3_statement::step(stmt);
@@ -286,7 +286,7 @@ bool SelRecall::recallStep(int reqNumber, std::string tapeId, FsObj::file_state 
 		 << " AND FILE_STATE=" << FsObj::PREMIGRATED
 		 << " AND TAPE_ID='" << tapeId << "'";
 
-	TRACE(Trace::little, ssql.str());
+	TRACE(Trace::normal, ssql.str());
 
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 	rc2 = sqlite3_statement::step(stmt);
@@ -300,7 +300,7 @@ bool SelRecall::recallStep(int reqNumber, std::string tapeId, FsObj::file_state 
 		 << " AND (FILE_STATE=" << FsObj::RECALLING_MIG << " OR FILE_STATE=" << FsObj::RECALLING_PREMIG << ")"
 		 << " ORDER BY START_BLOCK";
 
-	TRACE(Trace::little, ssql.str());
+	TRACE(Trace::normal, ssql.str());
 
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 
@@ -406,7 +406,7 @@ bool SelRecall::recallStep(int reqNumber, std::string tapeId, FsObj::file_state 
 	}
 	ssql << ")";
 
-	TRACE(Trace::little, ssql.str());
+	TRACE(Trace::normal, ssql.str());
 
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 	rc = sqlite3_statement::step(stmt);
@@ -420,7 +420,7 @@ bool SelRecall::recallStep(int reqNumber, std::string tapeId, FsObj::file_state 
 		 << " AND TAPE_ID='" << tapeId << "'"
 		 << " AND FILE_STATE=" << FsObj::RECALLING_MIG;
 
-	TRACE(Trace::little, ssql.str());
+	TRACE(Trace::normal, ssql.str());
 
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 	rc = sqlite3_statement::step(stmt);
@@ -434,7 +434,7 @@ bool SelRecall::recallStep(int reqNumber, std::string tapeId, FsObj::file_state 
 		 << " AND TAPE_ID='" << tapeId << "'"
 		 << " AND FILE_STATE=" << FsObj::RECALLING_PREMIG;
 
-	TRACE(Trace::little, ssql.str());
+	TRACE(Trace::normal, ssql.str());
 
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 	rc = sqlite3_statement::step(stmt);
@@ -485,7 +485,7 @@ void SelRecall::execRequest(int reqNumber, int tgtState, std::string tapeId, boo
 	ssql.clear();
 	ssql << "UPDATE REQUEST_QUEUE SET STATE=" << (suspended ? DataBase::REQ_NEW : DataBase::REQ_COMPLETED)
 		 << " WHERE REQ_NUM=" << reqNumber << " AND TAPE_ID='" << tapeId << "';";
-	TRACE(Trace::little, ssql.str());
+	TRACE(Trace::normal, ssql.str());
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 	rc = sqlite3_statement::step(stmt);
 	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);

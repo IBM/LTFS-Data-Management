@@ -116,10 +116,10 @@ void Migration::addJob(std::string fileName)
 	if ( pools.size() == 0 )
 		pools.insert("");
 
-	TRACE(Trace::little, ssql.str());
+	TRACE(Trace::normal, ssql.str());
 
 	for ( std::string pool : pools ) {
-		TRACE(Trace::much, ssql.str());
+		TRACE(Trace::full, ssql.str());
 		sqlite3_statement::prepare(ssql.str(), &stmt);
 		if ( (rc = sqlite3_bind_int(stmt, 1, replNum)) != SQLITE_OK ) {
 			TRACE(Trace::error, rc);
@@ -156,7 +156,7 @@ void Migration::addRequest()
 	SubServer subs;
 
 	for ( std::string pool : pools )
-		TRACE(Trace::little, pool);
+		TRACE(Trace::normal, pool);
 
 	{
 		std::lock_guard<std::mutex> updlock(Scheduler::updmtx);
@@ -186,7 +186,7 @@ void Migration::addRequest()
 			  << ");";
 
 		sqlite3_statement::prepare(ssql.str(), &stmt);
-		TRACE(Trace::little, ssql.str());
+		TRACE(Trace::normal, ssql.str());
 
 		rc = sqlite3_statement::step(stmt);
 
@@ -264,7 +264,7 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId, lon
 			std::lock_guard<std::mutex> writelock(writemtx);
 
 			if ( inventory->getDrive(driveId)->getToUnblock() != DataBase::NOOP ) {
-				TRACE(Trace::much, mig_info.fileName);
+				TRACE(Trace::full, mig_info.fileName);
 				source.remAttribute();
 				std::lock_guard<std::mutex> lock(Migration::pmigmtx);
 				*suspended = true;
@@ -371,7 +371,7 @@ void Migration::stub(Migration::mig_info_t mig_info, std::shared_ptr<std::list<u
 		if ( mig_info.numRepl == 0 || attr.copies == mig_info.numRepl ) {
 			source.prepareStubbing();
 			source.stub();
-			TRACE(Trace::much, mig_info. fileName);
+			TRACE(Trace::full, mig_info. fileName);
 		}
 		source.unlock();
 
@@ -457,7 +457,7 @@ Migration::req_return_t Migration::migrationStep(int reqNumber, int numRepl, int
 			 << " AND REPL_NUM=" << replNum;
 	}
 
-	TRACE(Trace::little, ssql.str());
+	TRACE(Trace::normal, ssql.str());
 
 	steptime = time(NULL);
 
@@ -481,7 +481,7 @@ Migration::req_return_t Migration::migrationStep(int reqNumber, int numRepl, int
 		 << " AND FILE_STATE=" << state
 		 << " AND TAPE_ID='" << tapeId << "'";
 
-	TRACE(Trace::little, ssql.str());
+	TRACE(Trace::normal, ssql.str());
 
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 
@@ -527,8 +527,8 @@ Migration::req_return_t Migration::migrationStep(int reqNumber, int numRepl, int
 						rc = SQLITE_DONE;
 						break;
 					}
-					TRACE(Trace::much, secs);
-					TRACE(Trace::much, nsecs);
+					TRACE(Trace::full, secs);
+					TRACE(Trace::full, nsecs);
 					drive->wqp->enqueue(reqNumber, tapeId, drive->GetObjectID(), secs, nsecs, mig_info, inumList, suspended);
 				}
 				else {
@@ -587,7 +587,7 @@ Migration::req_return_t Migration::migrationStep(int reqNumber, int numRepl, int
 	}
 	ssql << ")";
 
-	TRACE(Trace::little, ssql.str());
+	TRACE(Trace::normal, ssql.str());
 
 	steptime = time(NULL);
 
@@ -619,7 +619,7 @@ void Migration::execRequest(int reqNumber, int targetState, int numRepl,
 							int replNum, std::string pool, std::string tapeId, bool needsTape)
 
 {
-	TRACE(Trace::much, __PRETTY_FUNCTION__);
+	TRACE(Trace::full, __PRETTY_FUNCTION__);
 
 	sqlite3_stmt *stmt;
 	std::stringstream ssql;
@@ -703,7 +703,7 @@ void Migration::execRequest(int reqNumber, int targetState, int numRepl,
 	ssql << " WHERE REQ_NUM=" << reqNumber
 		 << " AND REPL_NUM=" << replNum << ";";
 
-	TRACE(Trace::little, ssql.str());
+	TRACE(Trace::normal, ssql.str());
 
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 	rc = sqlite3_statement::step(stmt);

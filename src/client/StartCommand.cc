@@ -37,7 +37,7 @@ void StartCommand::determineServerPath()
 {
 	char exepath[PATH_MAX];
 
-	TRACE(Trace::little, Const::SERVER_COMMAND);
+	TRACE(Trace::normal, Const::SERVER_COMMAND);
 
 #ifdef __linux__
 	char *exelnk = (char*) "/proc/self/exe";
@@ -59,7 +59,7 @@ void StartCommand::determineServerPath()
 
 	serverPath << dirname(exepath) << "/" << Const::SERVER_COMMAND;
 
-	TRACE(Trace::little, serverPath.str());
+	TRACE(Trace::normal, serverPath.str());
 }
 
 void StartCommand::startServer()

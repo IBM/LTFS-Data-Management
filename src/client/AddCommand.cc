@@ -62,7 +62,7 @@ void AddCommand::doCommand(int argc, char **argv)
 		throw(Error::LTFSDM_GENERAL_ERROR);
 	}
 
-	TRACE(Trace::little, requestNumber);
+	TRACE(Trace::normal, requestNumber);
 
 	LTFSDmProtocol::LTFSDmAddRequest *addreq = commCommand.mutable_addrequest();
 	addreq->set_key(key);

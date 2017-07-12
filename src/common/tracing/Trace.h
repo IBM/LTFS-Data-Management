@@ -25,8 +25,8 @@ public:
 	enum traceLevel {
 		always,
 		error,
-		little,
-		much
+		normal,
+		full
 	};
 private:
 	std::atomic<Trace::traceLevel> trclevel;

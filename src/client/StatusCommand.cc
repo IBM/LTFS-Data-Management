@@ -36,7 +36,7 @@ void StatusCommand::doCommand(int argc, char **argv)
 		return;
 	}
 
-	TRACE(Trace::little, requestNumber);
+	TRACE(Trace::normal, requestNumber);
 
 	LTFSDmProtocol::LTFSDmStatusRequest *statusreq = commCommand.mutable_statusrequest();
 	statusreq->set_key(key);

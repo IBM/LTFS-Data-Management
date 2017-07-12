@@ -51,8 +51,8 @@ void InfoFilesCommand::doCommand(int argc, char **argv)
 
 	checkOptions(argc, argv);
 
-	TRACE(Trace::little, argc);
-	TRACE(Trace::little, optind);
+	TRACE(Trace::normal, argc);
+	TRACE(Trace::normal, optind);
 	traceParms();
 
 	if ( !fileList.compare("") ) {

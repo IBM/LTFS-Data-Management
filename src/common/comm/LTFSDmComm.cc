@@ -97,8 +97,8 @@ void LTFSDmComm::send(int fd)
 		throw(Error::LTFSDM_COMM_ERROR);
 	}
 
-	TRACE(Trace::much, strlen(buffer));
-	TRACE(Trace::much, MessageSize);
+	TRACE(Trace::full, strlen(buffer));
+	TRACE(Trace::full, MessageSize);
 
 	if ( exitClient ) {
 		buffer[0] = 0;
@@ -153,7 +153,7 @@ void LTFSDmComm::recv(int fd)
 		throw(Error::LTFSDM_COMM_ERROR);
 	}
 
-	TRACE(Trace::much, MessageSize);
+	TRACE(Trace::full, MessageSize);
 
 	buffer = (char *) malloc(MessageSize);
 	memset(buffer, 0, MessageSize);

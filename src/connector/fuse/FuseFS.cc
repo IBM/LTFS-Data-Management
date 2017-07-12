@@ -70,8 +70,8 @@ void FuseFS::setMigInfo(const char *path, FuseFS::mig_info::state_num state)
 	FuseFS::mig_info miginfo_new;
 	FuseFS::mig_info miginfo;
 
-	TRACE(Trace::much, path);
-	TRACE(Trace::much, state);
+	TRACE(Trace::full, path);
+	TRACE(Trace::full, state);
 
 	miginfo_new = genMigInfo(path, state);
 
@@ -100,7 +100,7 @@ void FuseFS::setMigInfo(const char *path, FuseFS::mig_info::state_num state)
 int FuseFS::remMigInfo(const char *path)
 
 {
-	TRACE(Trace::much, path);
+	TRACE(Trace::full, path);
 
 	if ( removexattr(path, Const::OPEN_LTFS_EA_MIGINFO_INT.c_str()) == -1 )
 		return errno;
@@ -559,7 +559,7 @@ int FuseFS::ltfsdm_truncate(const char *path, off_t size)
 	if ( (size > 0) &&
 		 ((migInfo.state == FuseFS::mig_info::state_num::MIGRATED) ||
 		  (migInfo.state == FuseFS::mig_info::state_num::IN_RECALL)) ) {
-		TRACE(Trace::much, path);
+		TRACE(Trace::full, path);
 		if ( recall_file(&linfo, true) == -1 ) {
 			close(linfo.fd);
 			return (-1*EIO);
@@ -643,7 +643,7 @@ int FuseFS::ltfsdm_ftruncate(const char *path, off_t size, struct fuse_file_info
 	if ( (size > 0) &&
 		 ((migInfo.state == FuseFS::mig_info::state_num::MIGRATED) ||
 		  (migInfo.state == FuseFS::mig_info::state_num::IN_RECALL)) ) {
-		TRACE(Trace::much, linfo->fd);
+		TRACE(Trace::full, linfo->fd);
 		if ( recall_file(linfo, true) == -1 ) {
 			return (-1*EIO);
 		}
@@ -689,7 +689,7 @@ int FuseFS::ltfsdm_read(const char *path, char *buffer, size_t size, off_t offse
 
 	if ( migInfo.state == FuseFS::mig_info::state_num::MIGRATED ||
 		 migInfo.state == FuseFS::mig_info::state_num::IN_RECALL ) {
-		TRACE(Trace::much, linfo->fd);
+		TRACE(Trace::full, linfo->fd);
 		if ( recall_file(linfo, false) == -1 )
 			return (-1*EIO);
 	}
@@ -699,7 +699,7 @@ int FuseFS::ltfsdm_read(const char *path, char *buffer, size_t size, off_t offse
 		return (-1*errno);
 	}
 	else {
-		TRACE(Trace::little, fuse_get_context()->pid);
+		TRACE(Trace::normal, fuse_get_context()->pid);
 		return rsize;
 	}
 }
@@ -732,7 +732,7 @@ int FuseFS::ltfsdm_read_buf(const char *path, struct fuse_bufvec **bufferp,
 
 	if ( migInfo.state == FuseFS::mig_info::state_num::MIGRATED ||
 		 migInfo.state == FuseFS::mig_info::state_num::IN_RECALL ) {
-		TRACE(Trace::much, linfo->fd);
+		TRACE(Trace::full, linfo->fd);
 		if ( recall_file(linfo, false) == -1 ) {
 			*bufferp = NULL;
 			return (-1*EIO);
@@ -777,7 +777,7 @@ int FuseFS::ltfsdm_write(const char *path, const char *buf, size_t size,
 
 	if ( migInfo.state == FuseFS::mig_info::state_num::MIGRATED ||
 		 migInfo.state == FuseFS::mig_info::state_num::IN_RECALL ) {
-		TRACE(Trace::much, linfo->fd);
+		TRACE(Trace::full, linfo->fd);
 		if ( recall_file(linfo, true) == -1 ) {
 			return (-1*EIO);
 		}
@@ -830,7 +830,7 @@ int FuseFS::ltfsdm_write_buf(const char *path, struct fuse_bufvec *buf,
 
 	if ( migInfo.state == FuseFS::mig_info::state_num::MIGRATED ||
 		 migInfo.state == FuseFS::mig_info::state_num::IN_RECALL ) {
-		TRACE(Trace::much, linfo->fd);
+		TRACE(Trace::full, linfo->fd);
 		if ( recall_file(linfo, true) == -1 ) {
 			return (-1*EIO);
 		}
@@ -1084,7 +1084,7 @@ FuseFS::FuseFS(std::string sourcedir, std::string mountpt, std::string fsName, s
 	options << "-ouse_ino,fsname=OpenLTFS:" << fsName << ",nopath,default_permissions,allow_other,max_background=" << Const::MAX_FUSE_BACKGROUND;
 
 	fuse_opt_add_arg(&fargs, options.str().c_str());
-	if ( getppid() != 1 && traceObject.getTrclevel() == Trace::much )
+	if ( getppid() != 1 && traceObject.getTrclevel() == Trace::full )
 		fuse_opt_add_arg(&fargs, "-d");
 	fuse_opt_parse(&fargs, NULL, NULL, NULL);
 

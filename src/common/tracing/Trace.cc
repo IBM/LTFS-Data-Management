@@ -27,8 +27,8 @@ void Trace::setTrclevel(traceLevel level)
 
 	switch (level) {
 		case Trace::error:
-		case Trace::little:
-        case Trace::much:
+		case Trace::normal:
+        case Trace::full:
 			oldLevel = trclevel;
 			TRACE(Trace::error, oldLevel);
 			TRACE(Trace::error, level);

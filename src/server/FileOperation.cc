@@ -30,8 +30,8 @@ bool FileOperation::queryResult(long reqNumber, long *resident,
 		sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 
 		if ( done == false ) {
-			TRACE(Trace::much, reqNumber);
-			TRACE(Trace::much, (bool) Scheduler::updReq[reqNumber]);
+			TRACE(Trace::full, reqNumber);
+			TRACE(Trace::full, (bool) Scheduler::updReq[reqNumber]);
 			Scheduler::updcond.wait(lock, [reqNumber]{return Scheduler::updReq[reqNumber] == true;});
 			Scheduler::updReq[reqNumber] = false;
 		}

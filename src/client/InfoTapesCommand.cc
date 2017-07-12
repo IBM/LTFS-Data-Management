@@ -23,9 +23,9 @@ void InfoTapesCommand::doCommand(int argc, char **argv)
 {
 	processOptions(argc, argv);
 
-	TRACE(Trace::little, *argv);
-	TRACE(Trace::little, argc);
-	TRACE(Trace::little, optind);
+	TRACE(Trace::normal, *argv);
+	TRACE(Trace::normal, argc);
+	TRACE(Trace::normal, optind);
 
 	if( argc != optind ) {
 		printUsage();
