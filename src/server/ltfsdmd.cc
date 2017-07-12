@@ -11,8 +11,6 @@ int main(int argc, char **argv)
 	bool dbUseMemory = false;
 	Trace::traceLevel tl = Trace::error;
 
-	MSG(LTFSDMX0029I, COMMIT_COUNT, BUILD_HASH);
-
 	Connector *connector = NULL;
 
 	opterr = 0;
@@ -65,6 +63,8 @@ int main(int argc, char **argv)
 
 		if ( detach )
 			ltfsdmd.daemonize();
+
+		MSG(LTFSDMX0029I, COMMIT_COUNT, BUILD_HASH);
 
 		inventory = new OpenLTFSInventory();
 		connector = new Connector(true);

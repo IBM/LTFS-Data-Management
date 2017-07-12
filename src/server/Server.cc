@@ -172,7 +172,6 @@ void Server::daemonize()
 		throw(Error::LTFSDM_GENERAL_ERROR);
 	}
 
-	TRACE(Trace::always, "Server started");
 	TRACE(Trace::always, getpid());
 
 	messageObject.setLogType(Message::LOGFILE);
