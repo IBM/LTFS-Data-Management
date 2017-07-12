@@ -89,6 +89,9 @@ void Connector::respondRecallEvent(rec_info_t recinfo, bool success)
 	conn_info_t *conn_info = recinfo.conn_info;
 	conn_info->trecall_reply.success = success;
 
+	TRACE(Trace::always, recinfo.filename);
+	TRACE(Trace::always, success);
+
 	std::unique_lock<std::mutex> lock(conn_info->trecall_reply.mtx);
 	conn_info->trecall_reply.cond.notify_one();
 }

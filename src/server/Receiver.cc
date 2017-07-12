@@ -43,6 +43,8 @@ void Receiver::run(long key, Connector *connector)
 			Server::termcond.wait_for(lock, std::chrono::seconds(30));
 	}
 
+	TRACE(Trace::always, (bool) Server::finishTerminate);
+
 	lock.unlock();
 
 	wq.waitCompletion(Const::UNSET);

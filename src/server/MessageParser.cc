@@ -77,6 +77,8 @@ void MessageParser::getObjects(LTFSDmCommServer *command, long localReqNumber,
 void MessageParser::reqStatusMessage(long key, LTFSDmCommServer *command, FileOperation *fopt)
 
 {
+	TRACE(Trace::always, __PRETTY_FUNCTION__);
+
 	long resident = 0;
 	long premigrated = 0;
 	long migrated = 0;
@@ -135,6 +137,8 @@ void MessageParser::reqStatusMessage(long key, LTFSDmCommServer *command, FileOp
 void MessageParser::migrationMessage(long key, LTFSDmCommServer *command, long localReqNumber)
 
 {
+	TRACE(Trace::always, __PRETTY_FUNCTION__);
+
 	unsigned long pid;
 	long requestNumber;
 	const LTFSDmProtocol::LTFSDmMigRequest migreq = command->migrequest();
@@ -144,7 +148,6 @@ void MessageParser::migrationMessage(long key, LTFSDmCommServer *command, long l
 	int error = Error::LTFSDM_OK;
 	Migration *mig = nullptr;
 
-	TRACE(Trace::little, __PRETTY_FUNCTION__);
 	TRACE(Trace::little, keySent);
 
 	if ( key != keySent ) {
@@ -209,6 +212,7 @@ void MessageParser::migrationMessage(long key, LTFSDmCommServer *command, long l
 void  MessageParser::selRecallMessage(long key, LTFSDmCommServer *command, long localReqNumber)
 
 {
+	TRACE(Trace::always, __PRETTY_FUNCTION__);
 	unsigned long pid;
 	long requestNumber;
 	const LTFSDmProtocol::LTFSDmSelRecRequest recreq = command->selrecrequest();
@@ -216,7 +220,6 @@ void  MessageParser::selRecallMessage(long key, LTFSDmCommServer *command, long 
 	int error = Error::LTFSDM_OK;
 	SelRecall *srec = nullptr;
 
-	TRACE(Trace::little, __PRETTY_FUNCTION__);
 	TRACE(Trace::little, keySent);
 
 	if ( key != keySent ) {
@@ -260,10 +263,11 @@ void  MessageParser::selRecallMessage(long key, LTFSDmCommServer *command, long 
 void MessageParser::requestNumber(long key, LTFSDmCommServer *command, long *localReqNumber)
 
 {
+	TRACE(Trace::always, __PRETTY_FUNCTION__);
+
    	const LTFSDmProtocol::LTFSDmReqNumber reqnum = command->reqnum();
 	long keySent = reqnum.key();
 
-	TRACE(Trace::much, __PRETTY_FUNCTION__);
 	TRACE(Trace::little, keySent);
 
 	if ( key != keySent ) {
@@ -292,13 +296,13 @@ void MessageParser::requestNumber(long key, LTFSDmCommServer *command, long *loc
 void MessageParser::stopMessage(long key, LTFSDmCommServer *command, long localReqNumber)
 
 {
+	TRACE(Trace::always, __PRETTY_FUNCTION__);
    	const LTFSDmProtocol::LTFSDmStopRequest stopreq = command->stoprequest();
 	long keySent = stopreq.key();
 	sqlite3_stmt *stmt;
 	int numreqs;
 	int rc;
 
-	TRACE(Trace::little, __PRETTY_FUNCTION__);
 	TRACE(Trace::little, keySent);
 
 	if ( key != keySent ) {
@@ -328,6 +332,8 @@ void MessageParser::stopMessage(long key, LTFSDmCommServer *command, long localR
 			}
 		}
 
+		TRACE(Trace::always, numreqs);
+
 		sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 
 		LTFSDmProtocol::LTFSDmStopResp *stopresp = command->mutable_stopresp();
@@ -355,6 +361,8 @@ void MessageParser::stopMessage(long key, LTFSDmCommServer *command, long localR
 	}
 	while ( numreqs > 0 );
 
+	TRACE(Trace::always, numreqs);
+
 	command->closeRef();
 
 	std::unique_lock<std::mutex> lock(Scheduler::mtx);
@@ -362,17 +370,18 @@ void MessageParser::stopMessage(long key, LTFSDmCommServer *command, long localR
 	lock.unlock();
 
 	Server::finishTerminate = true;
+	TRACE(Trace::always, (bool) Server::finishTerminate);
 	kill(getpid(), SIGUSR1);
 }
 
 void MessageParser::statusMessage(long key, LTFSDmCommServer *command, long localReqNumber)
 
 {
+	TRACE(Trace::always, __PRETTY_FUNCTION__);
    	const LTFSDmProtocol::LTFSDmStatusRequest statusreq = command->statusrequest();
 	long keySent = statusreq.key();
 
 	TRACE(Trace::little, keySent);
-	TRACE(Trace::little, __PRETTY_FUNCTION__);
 
 	if ( key != keySent ) {
 		MSG(LTFSDMS0008E, keySent);
@@ -396,6 +405,7 @@ void MessageParser::statusMessage(long key, LTFSDmCommServer *command, long loca
 void MessageParser::addMessage(long key, LTFSDmCommServer *command, long localReqNumber, Connector *connector)
 
 {
+	TRACE(Trace::always, __PRETTY_FUNCTION__);
    	const LTFSDmProtocol::LTFSDmAddRequest addreq = command->addrequest();
 	long keySent = addreq.key();
 	std::string managedFs = addreq.managedfs();
@@ -403,7 +413,6 @@ void MessageParser::addMessage(long key, LTFSDmCommServer *command, long localRe
 	std::string fsName = addreq.fsname();
 	LTFSDmProtocol::LTFSDmAddResp_AddResp response =  LTFSDmProtocol::LTFSDmAddResp::SUCCESS;
 
-	TRACE(Trace::little, __PRETTY_FUNCTION__);
 	TRACE(Trace::little, keySent);
 
 	if ( key != keySent ) {
@@ -452,6 +461,7 @@ void MessageParser::addMessage(long key, LTFSDmCommServer *command, long localRe
 void MessageParser::infoRequestsMessage(long key, LTFSDmCommServer *command, long localReqNumber)
 
 {
+	TRACE(Trace::always, __PRETTY_FUNCTION__);
 	const LTFSDmProtocol::LTFSDmInfoRequestsRequest inforeqs = command->inforequestsrequest();
 	long keySent = inforeqs.key();
 	int requestNumber = inforeqs.reqnumber();
@@ -459,7 +469,7 @@ void MessageParser::infoRequestsMessage(long key, LTFSDmCommServer *command, lon
 	std::stringstream ssql;
 	int rc;
 
-	TRACE(Trace::little, __PRETTY_FUNCTION__);
+	TRACE(Trace::little, keySent);
 
 	if ( key != keySent ) {
 		MSG(LTFSDMS0008E, keySent);
@@ -517,6 +527,7 @@ void MessageParser::infoRequestsMessage(long key, LTFSDmCommServer *command, lon
 void MessageParser::infoJobsMessage(long key, LTFSDmCommServer *command, long localReqNumber)
 
 {
+	TRACE(Trace::always, __PRETTY_FUNCTION__);
 	const LTFSDmProtocol::LTFSDmInfoJobsRequest infojobs = command->infojobsrequest();
 	long keySent = infojobs.key();
 	int requestNumber = infojobs.reqnumber();
@@ -524,7 +535,7 @@ void MessageParser::infoJobsMessage(long key, LTFSDmCommServer *command, long lo
 	std::stringstream ssql;
 	int rc;
 
-	TRACE(Trace::little, __PRETTY_FUNCTION__);
+	TRACE(Trace::little, keySent);
 
 	if ( key != keySent ) {
 		MSG(LTFSDMS0008E, keySent);
@@ -590,10 +601,11 @@ void MessageParser::infoJobsMessage(long key, LTFSDmCommServer *command, long lo
 void MessageParser::infoDrivesMessage(long key, LTFSDmCommServer *command)
 
 {
+	TRACE(Trace::always, __PRETTY_FUNCTION__);
 	const LTFSDmProtocol::LTFSDmInfoDrivesRequest infodrives = command->infodrivesrequest();
 	long keySent = infodrives.key();
 
-	TRACE(Trace::little, __PRETTY_FUNCTION__);
+	TRACE(Trace::little, keySent);
 
 	if ( key != keySent ) {
 		MSG(LTFSDMS0008E, keySent);
@@ -639,11 +651,12 @@ void MessageParser::infoDrivesMessage(long key, LTFSDmCommServer *command)
 void MessageParser::infoTapesMessage(long key, LTFSDmCommServer *command)
 
 {
+	TRACE(Trace::always, __PRETTY_FUNCTION__);
 	const LTFSDmProtocol::LTFSDmInfoTapesRequest infotapes = command->infotapesrequest();
 	long keySent = infotapes.key();
 	std::string state;
 
-	TRACE(Trace::little, __PRETTY_FUNCTION__);
+	TRACE(Trace::little, keySent);
 
 	if ( key != keySent ) {
 		MSG(LTFSDMS0008E, keySent);
@@ -705,12 +718,13 @@ void MessageParser::infoTapesMessage(long key, LTFSDmCommServer *command)
 void MessageParser::poolCreateMessage(long key, LTFSDmCommServer *command)
 
 {
+	TRACE(Trace::always, __PRETTY_FUNCTION__);
 	const LTFSDmProtocol::LTFSDmPoolCreateRequest poolcreate = command->poolcreaterequest();
 	long keySent = poolcreate.key();
 	std::string poolName;
 	int response = Error::LTFSDM_OK;
 
-	TRACE(Trace::little, __PRETTY_FUNCTION__);
+	TRACE(Trace::little, keySent);
 
 	if ( key != keySent ) {
 		MSG(LTFSDMS0008E, keySent);
@@ -745,12 +759,13 @@ void MessageParser::poolCreateMessage(long key, LTFSDmCommServer *command)
 void MessageParser::poolDeleteMessage(long key, LTFSDmCommServer *command)
 
 {
+	TRACE(Trace::always, __PRETTY_FUNCTION__);
 	const LTFSDmProtocol::LTFSDmPoolDeleteRequest pooldelete = command->pooldeleterequest();
 	long keySent = pooldelete.key();
 	std::string poolName;
 	int response = Error::LTFSDM_OK;
 
-	TRACE(Trace::little, __PRETTY_FUNCTION__);
+	TRACE(Trace::little, keySent);
 
 	if ( key != keySent ) {
 		MSG(LTFSDMS0008E, keySent);
@@ -785,13 +800,14 @@ void MessageParser::poolDeleteMessage(long key, LTFSDmCommServer *command)
 void MessageParser::poolAddMessage(long key, LTFSDmCommServer *command)
 
 {
+	TRACE(Trace::always, __PRETTY_FUNCTION__);
 	const LTFSDmProtocol::LTFSDmPoolAddRequest pooladd = command->pooladdrequest();
 	long keySent = pooladd.key();
 	std::string poolName;
 	std::list<std::string> tapeids;
 	int response;
 
-	TRACE(Trace::little, __PRETTY_FUNCTION__);
+	TRACE(Trace::little, keySent);
 
 	if ( key != keySent ) {
 		MSG(LTFSDMS0008E, keySent);
@@ -834,13 +850,14 @@ void MessageParser::poolAddMessage(long key, LTFSDmCommServer *command)
 void MessageParser::poolRemoveMessage(long key, LTFSDmCommServer *command)
 
 {
+	TRACE(Trace::always, __PRETTY_FUNCTION__);
 	const LTFSDmProtocol::LTFSDmPoolRemoveRequest poolremove = command->poolremoverequest();
 	long keySent = poolremove.key();
 	std::string poolName;
 	std::list<std::string> tapeids;
 	int response;
 
-	TRACE(Trace::little, __PRETTY_FUNCTION__);
+	TRACE(Trace::little, keySent);
 
 	if ( key != keySent ) {
 		MSG(LTFSDMS0008E, keySent);
@@ -883,11 +900,12 @@ void MessageParser::poolRemoveMessage(long key, LTFSDmCommServer *command)
 void MessageParser::infoPoolsMessage(long key, LTFSDmCommServer *command)
 
 {
+	TRACE(Trace::always, __PRETTY_FUNCTION__);
 	const LTFSDmProtocol::LTFSDmInfoPoolsRequest infopools = command->infopoolsrequest();
 	long keySent = infopools.key();
 	std::string state;
 
-	TRACE(Trace::little, __PRETTY_FUNCTION__);
+	TRACE(Trace::little, keySent);
 
 	if ( key != keySent ) {
 		MSG(LTFSDMS0008E, keySent);
@@ -945,12 +963,12 @@ void MessageParser::infoPoolsMessage(long key, LTFSDmCommServer *command)
 void MessageParser::retrieveMessage(long key, LTFSDmCommServer *command)
 
 {
+	TRACE(Trace::always, __PRETTY_FUNCTION__);
    	const LTFSDmProtocol::LTFSDmRetrieveRequest retrievereq = command->retrieverequest();
 	long keySent = retrievereq.key();
 	int error = Error::LTFSDM_OK;
 
 	TRACE(Trace::little, keySent);
-	TRACE(Trace::little, __PRETTY_FUNCTION__);
 
 	if ( key != keySent ) {
 		MSG(LTFSDMS0008E, keySent);
@@ -979,6 +997,8 @@ void MessageParser::retrieveMessage(long key, LTFSDmCommServer *command)
 void MessageParser::run(long key, LTFSDmCommServer command, Connector *connector)
 
 {
+	TRACE(Trace::always, __PRETTY_FUNCTION__);
+
 	std::unique_lock<std::mutex> lock(Server::termmtx);
 	bool firstTime = true;
 	long localReqNumber = Const::UNSET;

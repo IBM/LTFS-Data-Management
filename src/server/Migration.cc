@@ -116,6 +116,8 @@ void Migration::addJob(std::string fileName)
 	if ( pools.size() == 0 )
 		pools.insert("");
 
+	TRACE(Trace::little, ssql.str());
+
 	for ( std::string pool : pools ) {
 		TRACE(Trace::much, ssql.str());
 		sqlite3_statement::prepare(ssql.str(), &stmt);
@@ -132,6 +134,9 @@ void Migration::addJob(std::string fileName)
 		replNum++;
 		rc = sqlite3_step(stmt);
 		sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+		TRACE(Trace::always, fileName);
+		TRACE(Trace::always, replNum);
+		TRACE(Trace::always, pool);
 	}
 
 	jobnum++;
@@ -181,11 +186,15 @@ void Migration::addRequest()
 			  << ");";
 
 		sqlite3_statement::prepare(ssql.str(), &stmt);
-		TRACE(Trace::little, std::string(ssql.str()));
+		TRACE(Trace::little, ssql.str());
 
 		rc = sqlite3_statement::step(stmt);
 
 		sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+
+		TRACE(Trace::always, needsTape);
+		TRACE(Trace::always, reqNumber);
+		TRACE(Trace::always, pool);
 
 		if ( needsTape ) {
 			Scheduler::cond.notify_one();
@@ -221,7 +230,7 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId, lon
 	try {
 		FsObj source(mig_info.fileName);
 
-		TRACE(Trace::much, mig_info.fileName);
+		TRACE(Trace::always, mig_info.fileName);
 
 		tapeName = Scheduler::getTapeName(mig_info.fileName, tapeId);
 
@@ -355,7 +364,7 @@ void Migration::stub(Migration::mig_info_t mig_info, std::shared_ptr<std::list<u
 		FsObj source(mig_info.fileName);
 		FsObj::mig_attr_t attr;
 
-		TRACE(Trace::much, mig_info. fileName);
+		TRACE(Trace::always, mig_info. fileName);
 
 		source.lock();
 		attr = source.getAttribute();
@@ -408,7 +417,7 @@ Migration::req_return_t Migration::migrationStep(int reqNumber, int numRepl, int
 	FsObj::file_state state;
 	std::shared_ptr<OpenLTFSDrive> drive = nullptr;
 
-	TRACE(Trace::much, reqNumber);
+	TRACE(Trace::always, reqNumber);
 
 	{
 		std::lock_guard<std::mutex> lock(Scheduler::updmtx);
@@ -448,6 +457,8 @@ Migration::req_return_t Migration::migrationStep(int reqNumber, int numRepl, int
 			 << " AND REPL_NUM=" << replNum;
 	}
 
+	TRACE(Trace::little, ssql.str());
+
 	steptime = time(NULL);
 
 	sqlite3_statement::prepare(ssql.str(), &stmt);
@@ -469,6 +480,8 @@ Migration::req_return_t Migration::migrationStep(int reqNumber, int numRepl, int
 		 << " REQ_NUM=" << reqNumber
 		 << " AND FILE_STATE=" << state
 		 << " AND TAPE_ID='" << tapeId << "'";
+
+	TRACE(Trace::little, ssql.str());
 
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 
@@ -504,6 +517,9 @@ Migration::req_return_t Migration::migrationStep(int reqNumber, int numRepl, int
 				mig_info.replNum = replNum;
 				mig_info.fromState = fromState;
 				mig_info.toState = toState;
+
+				TRACE(Trace::always, fileName);
+				TRACE(Trace::always, reqNumber);
 
 				if ( toState == FsObj::PREMIGRATED ) {
 					if ( drive->getToUnblock() != DataBase::NOOP ) {
@@ -571,6 +587,8 @@ Migration::req_return_t Migration::migrationStep(int reqNumber, int numRepl, int
 	}
 	ssql << ")";
 
+	TRACE(Trace::little, ssql.str());
+
 	steptime = time(NULL);
 
 	sqlite3_statement::prepare(ssql.str(), &stmt);
@@ -611,6 +629,9 @@ void Migration::execRequest(int reqNumber, int targetState, int numRepl,
 	bool failed = false;
 
 	mrStatus.add(reqNumber);
+
+	TRACE(Trace::always, reqNumber);
+	TRACE(Trace::always, needsTape);
 
 	if ( needsTape ) {
 		retval = migrationStep(reqNumber, numRepl, replNum, tapeId,  FsObj::RESIDENT, FsObj::PREMIGRATED);
@@ -654,7 +675,7 @@ void Migration::execRequest(int reqNumber, int targetState, int numRepl,
 		bool found = false;
 		for ( std::shared_ptr<OpenLTFSDrive> d : inventory->getDrives() ) {
 			if ( d->get_slot() == inventory->getCartridge(tapeId)->get_slot() ) {
-				TRACE(Trace::always, std::string("SET FREE: ") + d->GetObjectID());
+				TRACE(Trace::always, d->GetObjectID());
 				d->setFree();
 				d->clearToUnblock();
 				found = true;
@@ -681,6 +702,8 @@ void Migration::execRequest(int reqNumber, int targetState, int numRepl,
 
 	ssql << " WHERE REQ_NUM=" << reqNumber
 		 << " AND REPL_NUM=" << replNum << ";";
+
+	TRACE(Trace::little, ssql.str());
 
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 	rc = sqlite3_statement::step(stmt);

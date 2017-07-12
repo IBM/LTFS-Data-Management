@@ -273,6 +273,10 @@ int FuseFS::recall_file(FuseFS::ltfsdm_file_info *linfo, bool toresident)
 		return (-1*errno);
 	}
 
+	TRACE(Trace::always, linfo->sourcepath);
+	TRACE(Trace::always, statbuf.st_ino);
+	TRACE(Trace::always, toresident);
+
 	std::unique_lock<std::mutex> lock(FuseFS::trecall_submit.mtx);
 	FuseFS::trecall_submit.wait_cond.wait(lock, [](){ return no_rec_event != false; });
 	no_rec_event = false;
@@ -291,6 +295,10 @@ int FuseFS::recall_file(FuseFS::ltfsdm_file_info *linfo, bool toresident)
 	conn_info->trecall_reply.cond.wait(*lock_reply);
 
 	success = conn_info->trecall_reply.success;
+
+	TRACE(Trace::always, linfo->sourcepath);
+	TRACE(Trace::always, statbuf.st_ino);
+	TRACE(Trace::always, success);
 
 	delete(lock_reply);
    	delete(conn_info);
@@ -691,7 +699,7 @@ int FuseFS::ltfsdm_read(const char *path, char *buffer, size_t size, off_t offse
 		return (-1*errno);
 	}
 	else {
-		TRACE(Trace::medium, fuse_get_context()->pid);
+		TRACE(Trace::little, fuse_get_context()->pid);
 		return rsize;
 	}
 }
@@ -1120,10 +1128,14 @@ FuseFS::~FuseFS()
 	MSG(LTFSDMF0007I);
 	fuse_exit(openltfs);
 	fuse_unmount(mountpt.c_str(), openltfsch);
+	TRACE(Trace::always, mountpt);
+	TRACE(Trace::always, (bool) Connector::forcedTerminate);
 	if ( Connector::forcedTerminate )
 		fusefs->detach();
 	else
 		fusefs->join();
+	TRACE(Trace::always, mountpt);
+	TRACE(Trace::always, (bool) Connector::forcedTerminate);
 	delete(fusefs);
 	free(ctx);
 }

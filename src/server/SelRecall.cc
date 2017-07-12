@@ -70,11 +70,16 @@ void SelRecall::addJob(std::string fileName)
 		MSG(LTFSDMS0017E, fileName.c_str());
 	}
 
+	TRACE(Trace::little, ssql.str());
+
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 
 	rc = sqlite3_statement::step(stmt);
 
 	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+
+	TRACE(Trace::always, fileName);
+	TRACE(Trace::always, attr.tapeId[0]);
 
 	return;
 }
@@ -124,11 +129,17 @@ void SelRecall::addRequest()
 		else
 			ssql2 << DataBase::REQ_INPROGRESS << ");";                              // STATE
 
+		TRACE(Trace::little, ssql2.str());
+
 		sqlite3_statement::prepare(ssql2.str(), &stmt2);
 
 		rc = sqlite3_statement::step(stmt2);
 
 		sqlite3_statement::checkRcAndFinalize(stmt2, rc, SQLITE_DONE);
+
+		TRACE(Trace::always, needsTape.count(tapeId));
+		TRACE(Trace::always, reqNumber);
+		TRACE(Trace::always, tapeId);
 
 		if ( needsTape.count(tapeId) > 0 ) {
 			Scheduler::cond.notify_one();
@@ -161,7 +172,7 @@ unsigned long SelRecall::recall(std::string fileName, std::string tapeId,
 	try {
 		FsObj target(fileName);
 
-		TRACE(Trace::much, fileName);
+		TRACE(Trace::always, fileName);
 
 		target.lock();
 
@@ -261,6 +272,8 @@ bool SelRecall::recallStep(int reqNumber, std::string tapeId, FsObj::file_state 
 		 << " AND FILE_STATE=" << FsObj::MIGRATED
 		 << " AND TAPE_ID='" << tapeId << "'";
 
+	TRACE(Trace::little, ssql.str());
+
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 	rc2 = sqlite3_statement::step(stmt);
 	sqlite3_statement::checkRcAndFinalize(stmt, rc2, SQLITE_DONE);
@@ -273,6 +286,8 @@ bool SelRecall::recallStep(int reqNumber, std::string tapeId, FsObj::file_state 
 		 << " AND FILE_STATE=" << FsObj::PREMIGRATED
 		 << " AND TAPE_ID='" << tapeId << "'";
 
+	TRACE(Trace::little, ssql.str());
+
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 	rc2 = sqlite3_statement::step(stmt);
 	sqlite3_statement::checkRcAndFinalize(stmt, rc2, SQLITE_DONE);
@@ -284,6 +299,8 @@ bool SelRecall::recallStep(int reqNumber, std::string tapeId, FsObj::file_state 
 		 << " AND TAPE_ID='" << tapeId << "'"
 		 << " AND (FILE_STATE=" << FsObj::RECALLING_MIG << " OR FILE_STATE=" << FsObj::RECALLING_PREMIG << ")"
 		 << " ORDER BY START_BLOCK";
+
+	TRACE(Trace::little, ssql.str());
 
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 
@@ -314,6 +331,10 @@ bool SelRecall::recallStep(int reqNumber, std::string tapeId, FsObj::file_state 
 				state = FsObj::MIGRATED;
 			else
 				state = FsObj::PREMIGRATED;
+
+			TRACE(Trace::always, fileName);
+			TRACE(Trace::always, state);
+			TRACE(Trace::always, toState);
 
 			if ( state == toState )
 				continue;
@@ -385,7 +406,7 @@ bool SelRecall::recallStep(int reqNumber, std::string tapeId, FsObj::file_state 
 	}
 	ssql << ")";
 
-	TRACE(Trace::medium, ssql.str());
+	TRACE(Trace::little, ssql.str());
 
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 	rc = sqlite3_statement::step(stmt);
@@ -399,7 +420,7 @@ bool SelRecall::recallStep(int reqNumber, std::string tapeId, FsObj::file_state 
 		 << " AND TAPE_ID='" << tapeId << "'"
 		 << " AND FILE_STATE=" << FsObj::RECALLING_MIG;
 
-	TRACE(Trace::medium, ssql.str());
+	TRACE(Trace::little, ssql.str());
 
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 	rc = sqlite3_statement::step(stmt);
@@ -413,7 +434,7 @@ bool SelRecall::recallStep(int reqNumber, std::string tapeId, FsObj::file_state 
 		 << " AND TAPE_ID='" << tapeId << "'"
 		 << " AND FILE_STATE=" << FsObj::RECALLING_PREMIG;
 
-	TRACE(Trace::medium, ssql.str());
+	TRACE(Trace::little, ssql.str());
 
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 	rc = sqlite3_statement::step(stmt);
@@ -439,13 +460,16 @@ void SelRecall::execRequest(int reqNumber, int tgtState, std::string tapeId, boo
 
 	std::unique_lock<std::mutex> lock(Scheduler::mtx);
 
+	TRACE(Trace::always, reqNumber);
+	TRACE(Trace::always, needsTape);
+
 	if ( needsTape ) {
 		std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
 		inventory->getCartridge(tapeId)->setState(OpenLTFSCartridge::MOUNTED);
 		bool found = false;
 		for ( std::shared_ptr<OpenLTFSDrive> d : inventory->getDrives() ) {
 			if ( d->get_slot() == inventory->getCartridge(tapeId)->get_slot() ) {
-				TRACE(Trace::little, std::string("SET FREE: ") + d->GetObjectID());
+				TRACE(Trace::always, d->GetObjectID());
 				d->setFree();
 				d->clearToUnblock();
 				found = true;
@@ -461,6 +485,7 @@ void SelRecall::execRequest(int reqNumber, int tgtState, std::string tapeId, boo
 	ssql.clear();
 	ssql << "UPDATE REQUEST_QUEUE SET STATE=" << (suspended ? DataBase::REQ_NEW : DataBase::REQ_COMPLETED)
 		 << " WHERE REQ_NUM=" << reqNumber << " AND TAPE_ID='" << tapeId << "';";
+	TRACE(Trace::little, ssql.str());
 	sqlite3_statement::prepare(ssql.str(), &stmt);
 	rc = sqlite3_statement::step(stmt);
 	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);

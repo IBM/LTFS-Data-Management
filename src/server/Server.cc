@@ -210,6 +210,10 @@ void Server::run(Connector *connector, sigset_t set)
 
 	subs.waitAllRemaining();
 
+	TRACE(Trace::always, (bool) Server::terminate);
+	TRACE(Trace::always, (bool) Server::forcedTerminate);
+	TRACE(Trace::always, (bool) Server::finishTerminate);
+
 	for ( std::shared_ptr<OpenLTFSDrive> drive : inventory->getDrives() )
 		drive->wqp->terminate();
 

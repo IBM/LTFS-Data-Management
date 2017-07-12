@@ -26,7 +26,6 @@ public:
 		always,
 		error,
 		little,
-		medium,
 		much
 	};
 private:
