@@ -28,8 +28,8 @@ void Server::signalHandler(sigset_t set, long key)
 		try {
 			commCommand.connect();
 		}
-		catch(int error) {
-			TRACE(Trace::error, error);
+		catch(const std::exception& e) {
+			TRACE(Trace::error, e.what());
 			return;
 		}
 
@@ -45,16 +45,16 @@ void Server::signalHandler(sigset_t set, long key)
 			try {
 				commCommand.send();
 			}
-			catch(int error) {
-				TRACE(Trace::error, error);
+			catch(const std::exception& e) {
+				TRACE(Trace::error, e.what());
 				return;
 			}
 
 			try {
 				commCommand.recv();
 			}
-			catch(int error) {
-				TRACE(Trace::error, error);
+			catch(const std::exception& e) {
+				TRACE(Trace::error, e.what());
 				return;
 			}
 
@@ -84,19 +84,19 @@ void Server::lockServer()
 		MSG(LTFSDMS0001E);
 		TRACE(Trace::error, Const::SERVER_LOCK_FILE);
 		TRACE(Trace::error, errno);
-		throw(Error::LTFSDM_GENERAL_ERROR);
+		throw(EXCEPTION(Const::UNSET, errno));
 	}
 
 	if ( flock(lockfd, LOCK_EX | LOCK_NB) == -1 ) {
 		TRACE(Trace::error, errno);
 		if ( errno == EWOULDBLOCK ) {
 			MSG(LTFSDMS0002I);
-			throw(Error::LTFSDM_GENERAL_ERROR);
+			throw(EXCEPTION(Const::UNSET, errno));
 		}
 		else {
 			MSG(LTFSDMS0001E);
 			TRACE(Trace::error, errno);
-			throw(Error::LTFSDM_GENERAL_ERROR);
+			throw(EXCEPTION(Const::UNSET, errno));
 		}
 	}
 }
@@ -111,9 +111,10 @@ void Server::writeKey()
 	try {
 		keyFile.open(Const::KEY_FILE, std::fstream::out | std::fstream::trunc);
 	}
-	catch(...) {
+	catch(const std::exception& e) {
+		TRACE(Trace::error, e.what());
 		MSG(LTFSDMS0003E);
-		throw(Error::LTFSDM_GENERAL_ERROR);
+		throw(EXCEPTION(Const::UNSET));
 	}
 
 	srandom(time(NULL));
@@ -129,12 +130,12 @@ void Server::initialize(bool dbUseMemory)
 {
 	if ( setrlimit(RLIMIT_NOFILE, &Const::NOFILE_LIMIT) == -1 ) {
 		MSG(LTFSDMS0046E);
-		throw(errno);
+		throw(EXCEPTION(errno, errno));
 	}
 
 	if ( setrlimit(RLIMIT_NPROC, &Const::NPROC_LIMIT) == -1 ) {
 		MSG(LTFSDMS0046E);
-		throw(errno);
+		throw(EXCEPTION(errno, errno));
 	}
 
 	lockServer();
@@ -145,9 +146,10 @@ void Server::initialize(bool dbUseMemory)
 		DB.open(dbUseMemory);
 		DB.createTables();
 	}
-	catch (int error) {
+	catch ( const std::exception& e ) {
+		TRACE(Trace::error, e.what());
 		MSG(LTFSDMS0014E);
-		throw(error);
+		throw(EXCEPTION(Const::UNSET));
 	}
 }
 
@@ -163,13 +165,13 @@ void Server::daemonize()
 	}
 
 	if (pid > 0) {
-		throw(Error::LTFSDM_OK);
+		throw(EXCEPTION(Error::LTFSDM_OK));
 	}
 
 	sid = setsid();
 	if (sid < 0) {
 		MSG(LTFSDMS0012E);
-		throw(Error::LTFSDM_GENERAL_ERROR);
+		throw(EXCEPTION(Const::UNSET, sid));
 	}
 
 	TRACE(Trace::always, getpid());
@@ -179,7 +181,7 @@ void Server::daemonize()
 	/* redirect stdout to log file */
 	if ( (dev_null = open("/dev/null", O_RDWR)) == -1 ) {
 		MSG(LTFSDMS0013E);
-		throw(Error::LTFSDM_GENERAL_ERROR);
+		throw(EXCEPTION(errno, errno));
 	}
 	dup2(dev_null, STDIN_FILENO);
 	dup2(dev_null, STDOUT_FILENO);

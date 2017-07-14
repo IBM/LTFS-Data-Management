@@ -15,6 +15,9 @@
 #include <string>
 #include <sstream>
 #include <list>
+#include <exception>
+
+#include "src/common/exception/OpenLTFSException.h"
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
 #include "src/common/errors/errors.h"
@@ -44,14 +47,14 @@ void StartCommand::determineServerPath()
 
 	if ( readlink(exelnk, exepath, PATH_MAX) == -1 ) {
 		MSG(LTFSDMC0021E);
-		throw Error::LTFSDM_GENERAL_ERROR;
+		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 #elif __APPLE__
 	uint32_t size = PATH_MAX;
 	if ( _NSGetExecutablePath(exepath, &size) != 0 ) {
 		MSG(LTFSDMC0021E);
 		TRACE(Trace::error, errno);
-		throw Error::LTFSDM_GENERAL_ERROR;
+		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 #else
 #error "unsupported platform"
@@ -77,7 +80,7 @@ void StartCommand::startServer()
 		MSG(LTFSDMC0021E);
 		TRACE(Trace::error, serverPath.str());
 		TRACE(Trace::error, errno);
-		throw Error::LTFSDM_GENERAL_ERROR;
+		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
 	MSG(LTFSDMC0099I);
@@ -87,7 +90,7 @@ void StartCommand::startServer()
 	if( !ltfsdmd ) {
 		MSG(LTFSDMC0022E);
 		TRACE(Trace::error, errno);
-		throw Error::LTFSDM_GENERAL_ERROR;
+		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
     while( fgets(line, sizeof(line), ltfsdmd) ) {
@@ -102,7 +105,7 @@ void StartCommand::startServer()
 		TRACE(Trace::error, ret);
 		TRACE(Trace::error, WIFEXITED(ret));
 		TRACE(Trace::error, WEXITSTATUS(ret));
-		throw Error::LTFSDM_GENERAL_ERROR;
+		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
 	sleep(1);
@@ -114,7 +117,7 @@ void StartCommand::startServer()
 			success = true;
 			break;
 		}
-		catch (int error) {
+		catch (const std::exception& e) {
 			retry++;
 			sleep(1);
 		}
@@ -132,17 +135,17 @@ void StartCommand::startServer()
 	try {
 		commCommand.send();
 	}
-	catch(...) {
+	catch(const std::exception& e) {
 		MSG(LTFSDMC0027E);
-		throw Error::LTFSDM_GENERAL_ERROR;
+		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
 	try {
 		commCommand.recv();
 	}
-	catch(...) {
+	catch(const std::exception& e) {
 		MSG(LTFSDMC0098E);
-		throw(Error::LTFSDM_GENERAL_ERROR);
+		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
 	const LTFSDmProtocol::LTFSDmStatusResp statusresp = commCommand.statusresp();
@@ -153,7 +156,7 @@ void StartCommand::startServer()
 	}
 	else {
 		MSG(LTFSDMC0098E);
-		throw(Error::LTFSDM_GENERAL_ERROR);
+		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
 }
@@ -163,7 +166,7 @@ void StartCommand::doCommand(int argc, char **argv)
 {
 	if ( argc > 1 ) {
 		printUsage();
-		throw Error::LTFSDM_GENERAL_ERROR;
+		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
 	determineServerPath();

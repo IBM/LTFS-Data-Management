@@ -17,16 +17,18 @@ void Receiver::run(long key, Connector *connector)
 	try {
 		command.listen();
 	}
-	catch(...) {
+	catch(const std::exception& e) {
+		TRACE(Trace::error, e.what());
 		MSG(LTFSDMS0004E);
-		throw(Error::LTFSDM_GENERAL_ERROR);
+		throw(EXCEPTION(Const::UNSET));
 	}
 
 	while (Server::finishTerminate == false) {
 		try {
 			command.accept();
 		}
-		catch(...) {
+		catch(const std::exception& e) {
+			TRACE(Trace::error, e.what());
 			MSG(LTFSDMS0005E);
 			break;
 		}
@@ -34,7 +36,8 @@ void Receiver::run(long key, Connector *connector)
 		try {
 			wq.enqueue(Const::UNSET, key, command, connector);
 		}
-		catch(...) {
+		catch(const std::exception& e) {
+			TRACE(Trace::error, e.what());
 			MSG(LTFSDMS0010E);
 			continue;
 		}

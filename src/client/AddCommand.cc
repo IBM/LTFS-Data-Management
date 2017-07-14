@@ -6,7 +6,10 @@
 #include <set>
 #include <vector>
 #include <list>
+#include <sstream>
+#include <exception>
 
+#include "src/common/exception/OpenLTFSException.h"
 #include "src/common/util/util.h"
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
@@ -30,7 +33,7 @@ void AddCommand::doCommand(int argc, char **argv)
 
 	if ( argc == 1 ) {
 		printUsage();
-		throw Error::LTFSDM_GENERAL_ERROR;
+		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
 	processOptions(argc, argv);
@@ -39,27 +42,27 @@ void AddCommand::doCommand(int argc, char **argv)
 
 	if ( pathName == NULL ) {
 		MSG(LTFSDMC0053E);
-		throw Error::LTFSDM_GENERAL_ERROR;
+		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
 	managedFs = std::string(pathName);
 
 	if ( LTFSDM::getFs().count(managedFs) == 0 ) {
 		MSG(LTFSDMC0053E);
-		throw Error::LTFSDM_GENERAL_ERROR;
+		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
 	if ( argc != optind + 1 ) {
 		printUsage();
-		throw Error::LTFSDM_GENERAL_ERROR;
+		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
 	try {
 		connect();
 	}
-	catch(...) {
+	catch(const std::exception& e) {
 		MSG(LTFSDMC0026E);
-		throw(Error::LTFSDM_GENERAL_ERROR);
+		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
 	TRACE(Trace::normal, requestNumber);
@@ -74,24 +77,24 @@ void AddCommand::doCommand(int argc, char **argv)
 	try {
 		commCommand.send();
 	}
-	catch(...) {
+	catch(const std::exception& e) {
 		MSG(LTFSDMC0027E);
-		throw Error::LTFSDM_GENERAL_ERROR;
+		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
 	try {
 		commCommand.recv();
 	}
-	catch(...) {
+	catch(const std::exception& e) {
 		MSG(LTFSDMC0028E);
-		throw(Error::LTFSDM_GENERAL_ERROR);
+		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
 	const LTFSDmProtocol::LTFSDmAddResp addresp = commCommand.addresp();
 
 	if( addresp.response() == LTFSDmProtocol::LTFSDmAddResp::FAILED ) {
 		MSG(LTFSDMC0055E, managedFs);
-		throw(Error::LTFSDM_GENERAL_ERROR);
+		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 	else if ( addresp.response() == LTFSDmProtocol::LTFSDmAddResp::ALREADY_ADDED ) {
 		MSG(LTFSDMC0054I, managedFs);

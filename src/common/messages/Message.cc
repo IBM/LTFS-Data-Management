@@ -26,7 +26,7 @@ void Message::init()
 	try {
 		messagefile.open(Const::LOG_FILE, std::fstream::out | std::fstream::app);
 	}
-	catch(...) {
+	catch(const std::exception& e) {
 		std::cerr << messages[LTFSDMX0003E];
 		exit((int) Error::LTFSDM_GENERAL_ERROR);
 	}
@@ -49,7 +49,7 @@ void Message::writeLog(std::string msgstr)
 		messagefile.flush();
 		mtx.unlock();
 	}
-	catch(...) {
+	catch(const std::exception& e) {
 		mtx.unlock();
 		std::cerr << messages[LTFSDMX0004E];
 		exit((int) Error::LTFSDM_GENERAL_ERROR);

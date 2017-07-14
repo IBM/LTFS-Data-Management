@@ -6,7 +6,10 @@
 #include <set>
 #include <vector>
 #include <list>
+#include <sstream>
+#include <exception>
 
+#include "src/common/exception/OpenLTFSException.h"
 #include "src/common/util/util.h"
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
@@ -27,22 +30,22 @@ void PoolAddCommand::doCommand(int argc, char **argv)
 {
 	if ( argc <= 2 ) {
 		printUsage();
-		throw Error::LTFSDM_GENERAL_ERROR;
+		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
 	processOptions(argc, argv);
 
 	if ( argc != optind ) {
 		printUsage();
-		throw Error::LTFSDM_GENERAL_ERROR;
+		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
 	try {
 		connect();
 	}
-	catch(...) {
+	catch(const std::exception& e) {
 		MSG(LTFSDMC0026E);
-		throw(Error::LTFSDM_GENERAL_ERROR);
+		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
 	LTFSDmProtocol::LTFSDmPoolAddRequest *pooladdreq = commCommand.mutable_pooladdrequest();
@@ -55,9 +58,9 @@ void PoolAddCommand::doCommand(int argc, char **argv)
 	try {
 		commCommand.send();
 	}
-	catch(...) {
+	catch(const std::exception& e) {
 		MSG(LTFSDMC0027E);
-		throw Error::LTFSDM_GENERAL_ERROR;
+		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
 	for ( unsigned int i = 0; i < tapeList.size(); i++ ) {
@@ -65,9 +68,9 @@ void PoolAddCommand::doCommand(int argc, char **argv)
 		try {
 			commCommand.recv();
 		}
-		catch(...) {
+		catch(const std::exception& e) {
 			MSG(LTFSDMC0028E);
-			throw(Error::LTFSDM_GENERAL_ERROR);
+			throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 		}
 
 		const LTFSDmProtocol::LTFSDmPoolResp poolresp = commCommand.poolresp();

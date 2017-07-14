@@ -8,7 +8,10 @@
 #include <set>
 #include <vector>
 #include <list>
+#include <sstream>
+#include <exception>
 
+#include "src/common/exception/OpenLTFSException.h"
 #include "src/common/util/util.h"
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
@@ -42,7 +45,7 @@ void InfoFsCommand::doCommand(int argc, char **argv)
 
 	if ( argc > 1 ) {
 		printUsage();
-		throw(Error::LTFSDM_GENERAL_ERROR);
+		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
 	fsList = LTFSDM::getFs();
@@ -54,12 +57,14 @@ void InfoFsCommand::doCommand(int argc, char **argv)
 				INFO(LTFSDMC0057I, *it);
 			}
 		}
-		catch ( int error ) {
-			switch ( error ) {
+		catch ( const OpenLTFSException& e ) {
+			switch ( e.getError() ) {
 				case Error::LTFSDM_FS_CHECK_ERROR:
 					MSG(LTFSDMC0058E, *it);
 					break;
 			}
+		}
+		catch ( const std::exception& e ) {
 		}
 	}
 

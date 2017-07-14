@@ -49,7 +49,8 @@ void SelRecall::addJob(std::string fileName)
 		tapeName = Scheduler::getTapeName(fileName, attr.tapeId[0]);
 		ssql << Scheduler::getStartBlock(tapeName) << ");";      // START_BLOCK
 	}
-	catch ( int error ) {
+	catch ( const std::exception& e ) {
+		TRACE(Trace::error, e.what());
 		ssql.str("");
 		ssql.clear();
 		ssql << "INSERT INTO JOB_QUEUE (OPERATION, FILE_NAME, REQ_NUM, TARGET_STATE, FILE_SIZE, FS_ID, I_GEN, "
@@ -192,7 +193,7 @@ unsigned long SelRecall::recall(std::string fileName, std::string tapeId,
 			if ( fd == -1 ) {
 				TRACE(Trace::error, errno);
 				MSG(LTFSDMS0021E, tapeName.c_str());
-				throw(Error::LTFSDM_GENERAL_ERROR);
+				throw(EXCEPTION(Const::UNSET, tapeName, errno));
 			}
 
 			statbuf = target.stat();
@@ -201,13 +202,13 @@ unsigned long SelRecall::recall(std::string fileName, std::string tapeId,
 
 			while ( offset < statbuf.st_size ) {
 				if ( Server::forcedTerminate )
-					throw(Error::LTFSDM_OK);
+					throw(EXCEPTION(Error::LTFSDM_OK));
 
 				rsize = read(fd, buffer, sizeof(buffer));
 				if ( rsize == -1 ) {
 					TRACE(Trace::error, errno);
 					MSG(LTFSDMS0023E,  tapeName.c_str());
-					throw(errno);
+					throw(EXCEPTION(Const::UNSET, fileName, errno));
 				}
 				wsize = target.write(offset, (unsigned long) rsize, buffer);
 				if ( wsize != rsize ) {
@@ -216,7 +217,7 @@ unsigned long SelRecall::recall(std::string fileName, std::string tapeId,
 					TRACE(Trace::error, rsize);
 					MSG(LTFSDMS0027E, fileName.c_str());
 					close(fd);
-					throw(Error::LTFSDM_GENERAL_ERROR);
+					throw(EXCEPTION(Const::UNSET, fileName, wsize, rsize));
 				}
 				offset += rsize;
 			}
@@ -229,10 +230,11 @@ unsigned long SelRecall::recall(std::string fileName, std::string tapeId,
 			target.remAttribute();
 		target.unlock();
 	}
-	catch ( int error ) {
+	catch ( const std::exception& e ) {
 		if ( fd != -1 )
 			close(fd);
-		throw(error);
+		TRACE(Trace::error, e.what());
+		throw(EXCEPTION(Const::UNSET));
 	}
 
 	return statbuf.st_size;
@@ -348,13 +350,14 @@ bool SelRecall::recallStep(int reqNumber, std::string tapeId, FsObj::file_state 
 			try {
 				if ( (state == FsObj::MIGRATED) && (needsTape == false) ) {
 					MSG(LTFSDMS0047E, fileName);
-					throw(Error::LTFSDM_GENERAL_ERROR);
+					throw(EXCEPTION(Const::UNSET, fileName));
 				}
 				recall(fileName, tapeId, state, toState);
 				inumList.push_back(inum);
 				mrStatus.updateSuccess(reqNumber, state, toState);
 			}
-			catch (int error) {
+			catch (const std::exception& e) {
+				TRACE(Trace::error, e.what());
 				mrStatus.updateFailed(reqNumber, state);
 				ssql.str("");
 				ssql.clear();

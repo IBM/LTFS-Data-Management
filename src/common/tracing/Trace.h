@@ -70,7 +70,7 @@ public:
 				tracefile.flush();
 				mtx.unlock();
 			}
-			catch(...) {
+			catch(const std::exception& e) {
 				mtx.unlock();
 				MSG(LTFSDMX0002E);
 				exit((int) Error::LTFSDM_GENERAL_ERROR);

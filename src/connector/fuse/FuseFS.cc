@@ -27,7 +27,9 @@
 #include <condition_variable>
 #include <thread>
 #include <mutex>
+#include <exception>
 
+#include "src/common/exception/OpenLTFSException.h"
 #include "src/common/util/util.h"
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
@@ -52,7 +54,7 @@ FuseFS::mig_info FuseFS::genMigInfo(const char *path, FuseFS::mig_info::state_nu
 
 	if ( stat(path, &miginfo.statinfo) ) {
 		TRACE(Trace::error, errno);
-		throw(errno);
+		throw(EXCEPTION(errno, errno, path));
 	}
 
 	miginfo.state = state;
@@ -79,11 +81,11 @@ void FuseFS::setMigInfo(const char *path, FuseFS::mig_info::state_num state)
 
 	if ( (size = getxattr(path, Const::OPEN_LTFS_EA_MIGINFO_INT.c_str(), (void *) &miginfo, sizeof(miginfo))) == -1 ) {
 		if ( errno != ENODATA ) {
-			throw(errno);
+			throw(EXCEPTION(errno, errno, path));
 		}
 	}
 	else if ( size != sizeof(miginfo) ) {
-		throw(EIO);
+		throw(EXCEPTION(EIO, size, sizeof(miginfo), path));
 	}
 
 	if ( miginfo.state != FuseFS::mig_info::state_num::NO_STATE ) {
@@ -93,7 +95,7 @@ void FuseFS::setMigInfo(const char *path, FuseFS::mig_info::state_num state)
 	}
 
 	if ( setxattr(path, Const::OPEN_LTFS_EA_MIGINFO_INT.c_str(), (void *) &miginfo_new, sizeof(miginfo_new), 0) == -1 )
-		throw(errno);
+		throw(EXCEPTION(errno, errno, path));
 }
 
 
@@ -126,7 +128,7 @@ FuseFS::mig_info FuseFS::getMigInfo(const char *path)
 		return miginfo;
 	}
 	else if ( size != sizeof(miginfo) ) {
-		throw(EIO);
+		throw(EXCEPTION(EIO, size, sizeof(miginfo), path));
 	}
 
 	return miginfo;
@@ -143,7 +145,7 @@ FuseFS::mig_info FuseFS::getMigInfoAt(int dirfd, const char *path)
 	memset(&miginfo, 0, sizeof(miginfo));
 
 	if ( (fd = openat(dirfd, path, O_RDONLY)) == -1 )
-		throw(errno);
+		throw(EXCEPTION(errno, errno, dirfd));
 
 	if ( (size = fgetxattr(fd, Const::OPEN_LTFS_EA_MIGINFO_INT.c_str(), (void *) &miginfo, sizeof(miginfo))) == -1 ) {
 		// TODO
@@ -155,7 +157,7 @@ FuseFS::mig_info FuseFS::getMigInfoAt(int dirfd, const char *path)
 	close(fd);
 
 	if ( size != sizeof(miginfo) )
-		throw(EIO);
+		throw(EXCEPTION(EIO, size, sizeof(miginfo), fd));
 
 	return miginfo;
 }
@@ -241,8 +243,12 @@ std::string FuseFS::souce_path(const char *path)
 	try {
 		miginfo = getMigInfo(fullpath.c_str());
 	}
-	catch (int error) {
-		TRACE(Trace::error, error);
+	catch ( const OpenLTFSException& e ) {
+		TRACE(Trace::error, e.getError());
+		MSG(LTFSDMF0011E, fullpath);
+		return std::string("");
+	}
+	catch ( const std::exception& e ) {
 		MSG(LTFSDMF0011E, fullpath);
 		return std::string("");
 	}
@@ -1090,7 +1096,7 @@ FuseFS::FuseFS(std::string sourcedir, std::string mountpt, std::string fsName, s
 
 	if ( fuse_parse_cmdline(&fargs, NULL, NULL, NULL) != 0 ) {
 		MSG(LTFSDMF0004E, errno);
-		throw(Error::LTFSDM_FS_ADD_ERROR);
+		throw(EXCEPTION(Error::LTFSDM_FS_ADD_ERROR, errno, options.str()));
 	}
 
 	MSG(LTFSDMF0002I, mountpt.c_str());
@@ -1099,7 +1105,7 @@ FuseFS::FuseFS(std::string sourcedir, std::string mountpt, std::string fsName, s
 
 	if ( openltfsch == NULL ) {
 		MSG(LTFSDMF0005E, mountpt.c_str());
-		throw(Error::LTFSDM_FS_ADD_ERROR);
+		throw(EXCEPTION(Error::LTFSDM_FS_ADD_ERROR, errno, mountpt));
 	}
 
 
@@ -1111,7 +1117,7 @@ FuseFS::FuseFS(std::string sourcedir, std::string mountpt, std::string fsName, s
 
 	if ( openltfs == NULL ) {
 		MSG(LTFSDMF0006E);
-		throw(Error::LTFSDM_FS_ADD_ERROR);
+		throw(EXCEPTION(Error::LTFSDM_FS_ADD_ERROR));
 	}
 
 	fusefs = new std::thread(fuse_loop_mt, openltfs);

@@ -6,7 +6,9 @@
 #include <vector>
 #include <list>
 #include <thread>
+#include <exception>
 
+#include "src/common/exception/OpenLTFSException.h"
 #include "src/common/util/util.h"
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
@@ -75,7 +77,7 @@ int main(int argc, char *argv[])
 	try {
 		LTFSDM::init();
 	}
-	catch(...) {
+	catch(const std::exception& e) {
 		rc = Error::LTFSDM_GENERAL_ERROR;
 		goto cleanup;
 	}
@@ -210,9 +212,10 @@ int main(int argc, char *argv[])
 	try {
 		openLTFSCommand->doCommand(argc, argv);
 	}
-	catch(int err) {
-		rc = err;
-		goto cleanup;
+	catch(const OpenLTFSException& e) {
+		rc = e.getError();
+	}
+	catch(const std::exception& e) {
 	}
 
 cleanup:

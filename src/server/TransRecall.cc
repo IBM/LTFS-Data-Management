@@ -54,7 +54,8 @@ void TransRecall::addRequest(Connector::rec_info_t recinfo, std::string tapeId, 
 		ssql << Scheduler::getStartBlock(tapeName) << ", "       // START_BLOCK
 			 << (std::intptr_t) recinfo.conn_info << ");";       // CONN_INFO
 	}
-	catch ( int error ) {
+	catch ( const std::exception& e ) {
+		TRACE(Trace::error, e.what());
 		if ( filename.compare("NULL") != 0 )
 			MSG(LTFSDMS0073E, filename);
 		else
@@ -128,7 +129,8 @@ void TransRecall::run(Connector *connector)
 	try {
 		connector->initTransRecalls();
 	}
-	catch ( int error ) {
+	catch ( const std::exception& e ) {
+		TRACE(Trace::error, e.what());
 		MSG(LTFSDMS0030E);
 		return;
 	}
@@ -143,8 +145,9 @@ void TransRecall::run(Connector *connector)
 				fileSystem.manageFs(true, connector->getStartTime());
 			}
 		}
-		catch ( int error ) {
-			switch ( error ) {
+		catch ( const OpenLTFSException& e ) {
+			TRACE(Trace::error, e.what());
+			switch ( e.getError() ) {
 				case Error::LTFSDM_FS_CHECK_ERROR:
 					MSG(LTFSDMS0044E, *it);
 					break;
@@ -155,14 +158,17 @@ void TransRecall::run(Connector *connector)
 					MSG(LTFSDMS0045E, *it);
 			}
 		}
+		catch( const std::exception& e ) {
+			TRACE(Trace::error, e.what());
+		}
 	}
 
 	while (Connector::connectorTerminate == false) {
 		try {
 			recinfo = connector->getEvents();
 		}
-		catch (int error ) {
-			MSG(LTFSDMS0036W, error);
+		catch ( const std::exception& e ) {
+			MSG(LTFSDMS0036W, e.what());
 		}
 
 		// is sent for termination
@@ -193,14 +199,21 @@ void TransRecall::run(Connector *connector)
 				continue;
 			}
 		}
-		catch ( int error ) {
-			if ( error == Error::LTFSDM_ATTR_FORMAT )
+		catch ( const OpenLTFSException& e ) {
+			TRACE(Trace::error, e.what());
+			if ( e.getError() == Error::LTFSDM_ATTR_FORMAT )
 				MSG(LTFSDMS0037W, recinfo.ino);
 			else
-				MSG(LTFSDMS0038W, recinfo.ino, error);
+				MSG(LTFSDMS0038W, recinfo.ino, e.getError());
 			connector->respondRecallEvent(recinfo, false);
 			continue;
 		}
+		catch ( const std::exception& e ) {
+			TRACE(Trace::error, e.what());
+			connector->respondRecallEvent(recinfo, false);
+			continue;
+		}
+
 
 		std::string tapeId = fso.getAttribute().tapeId[0];
 
@@ -258,7 +271,7 @@ unsigned long recall(Connector::rec_info_t recinfo, std::string tapeId,
 			if ( fd == -1 ) {
 				TRACE(Trace::error, errno);
 				MSG(LTFSDMS0021E, tapeName.c_str());
-				throw(Error::LTFSDM_GENERAL_ERROR);
+				throw(EXCEPTION(Const::UNSET, tapeName, errno));
 			}
 
 			statbuf = target.stat();
@@ -267,13 +280,13 @@ unsigned long recall(Connector::rec_info_t recinfo, std::string tapeId,
 
 			while ( offset < statbuf.st_size ) {
 				if ( Server::forcedTerminate )
-					throw(Error::LTFSDM_OK);
+					throw(EXCEPTION(Const::UNSET, tapeName));
 
 				rsize = read(fd, buffer, sizeof(buffer));
 				if ( rsize == -1 ) {
 					TRACE(Trace::error, errno);
 					MSG(LTFSDMS0023E, tapeName.c_str());
-					throw(errno);
+					throw(EXCEPTION(Const::UNSET, tapeName, errno));
 				}
 				wsize = target.write(offset, (unsigned long) rsize, buffer);
 				if ( wsize != rsize ) {
@@ -282,7 +295,7 @@ unsigned long recall(Connector::rec_info_t recinfo, std::string tapeId,
 					TRACE(Trace::error, rsize);
 					MSG(LTFSDMS0033E, recinfo.ino);
 					close(fd);
-					throw(Error::LTFSDM_GENERAL_ERROR);
+					throw(EXCEPTION(Const::UNSET, recinfo.ino, wsize, rsize));
 				}
 				offset += rsize;
 			}
@@ -295,10 +308,11 @@ unsigned long recall(Connector::rec_info_t recinfo, std::string tapeId,
 			target.remAttribute();
 		target.unlock();
 	}
-	catch ( int error ) {
+	catch ( const std::exception& e ) {
+		TRACE(Trace::error, e.what());
 		if ( fd != -1 )
 			close(fd);
-		throw(error);
+		throw(EXCEPTION(Const::UNSET));
 	}
 
 	return statbuf.st_size;
@@ -389,7 +403,8 @@ void recallStep(int reqNum, std::string tapeId)
 			recall(recinfo, tapeId, state, toState);
 			succeeded = true;
 		}
-		catch(int error) {
+		catch(const std::exception& e) {
+			TRACE(Trace::error, e.what());
 			succeeded = false;
 		}
 
