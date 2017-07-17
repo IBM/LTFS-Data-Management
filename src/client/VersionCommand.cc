@@ -8,7 +8,10 @@
 #include <set>
 #include <vector>
 #include <list>
+#include <sstream>
+#include <exception>
 
+#include "src/common/exception/OpenLTFSException.h"
 #include "src/common/util/util.h"
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
@@ -42,7 +45,7 @@ void VersionCommand::doCommand(int argc, char **argv)
 
 	if ( argc > 1 ) {
 		printUsage();
-		throw(Error::LTFSDM_GENERAL_ERROR);
+		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
 	INFO(LTFSDMX0029I, COMMIT_COUNT, BUILD_HASH);

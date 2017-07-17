@@ -48,8 +48,8 @@ void Status::add(int reqNumber)
 	try {
 		sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 	}
-	catch ( int error ) {
-		TRACE(Trace::error, error);
+	catch ( const std::exception& e ) {
+		TRACE(Trace::error, e.what());
 		state = singleState();
 	}
 

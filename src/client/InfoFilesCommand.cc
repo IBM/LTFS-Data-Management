@@ -6,7 +6,10 @@
 
 #include <string>
 #include <list>
+#include <sstream>
+#include <exception>
 
+#include "src/common/exception/OpenLTFSException.h"
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
 #include "src/common/errors/errors.h"
@@ -43,7 +46,7 @@ void InfoFilesCommand::doCommand(int argc, char **argv)
 
 	if ( argc == 1 ) {
 		INFO(LTFSDMC0018E);
-		throw(Error::LTFSDM_GENERAL_ERROR);
+		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 
 	}
 
@@ -106,7 +109,7 @@ void InfoFilesCommand::doCommand(int argc, char **argv)
 				INFO(LTFSDMC0049I, migstate, statbuf.st_size, statbuf.st_blocks, tapeIds.str(), file_name);
 			}
 		}
-		catch ( int error ) {
+		catch ( const std::exception& e ) {
 			if ( stat(file_name, &statbuf) == -1 )
 				continue;
 			INFO(LTFSDMC0049I, '-', statbuf.st_size, statbuf.st_blocks, '-', file_name);

@@ -34,6 +34,7 @@
 #include "src/common/const/Const.h"
 #include "src/common/comm/ltfsdm.pb.h"
 #include "src/common/comm/LTFSDmComm.h"
+#include "src/common/exception/OpenLTFSException.h"
 
 #include "src/connector/Connector.h"
 

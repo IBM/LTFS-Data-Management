@@ -16,8 +16,8 @@ void MessageParser::getObjects(LTFSDmCommServer *command, long localReqNumber,
  		try {
 			command->recv();
 		}
-		catch(...) {
-			TRACE(Trace::error, errno);
+		catch(const std::exception& e) {
+			TRACE(Trace::error, e.what());
 			MSG(LTFSDMS0006E);
 			return;
 		}
@@ -42,12 +42,16 @@ void MessageParser::getObjects(LTFSDmCommServer *command, long localReqNumber,
 				try {
 					fopt->addJob(filename.filename());
 				}
-				catch(int error) {
-					if ( error == SQLITE_CONSTRAINT_PRIMARYKEY ||
-						 error == SQLITE_CONSTRAINT_UNIQUE)
+				catch(const OpenLTFSException& e) {
+					TRACE(Trace::error, e.what());
+					if ( e.getError() == SQLITE_CONSTRAINT_PRIMARYKEY ||
+						 e.getError() == SQLITE_CONSTRAINT_UNIQUE)
 						MSG(LTFSDMS0019E, filename.filename().c_str());
 					else
-						MSG(LTFSDMS0015E, filename.filename().c_str(), sqlite3_errstr(error));
+						MSG(LTFSDMS0015E, filename.filename().c_str(), sqlite3_errstr(e.getError()));
+				}
+				catch ( const std::exception& e) {
+					TRACE(Trace::error, e.what());
 				}
 			}
 			else {
@@ -66,8 +70,8 @@ void MessageParser::getObjects(LTFSDmCommServer *command, long localReqNumber,
 		try {
 			command->send();
 		}
-		catch(...) {
-			TRACE(Trace::error, errno);
+		catch(const std::exception& e) {
+			TRACE(Trace::error, e.what());
 			MSG(LTFSDMS0007E);
 			return;
 		}
@@ -93,8 +97,8 @@ void MessageParser::reqStatusMessage(long key, LTFSDmCommServer *command, FileOp
 		try {
 			command->recv();
 		}
-		catch(...) {
-			TRACE(Trace::error, errno);
+		catch(const std::exception& e) {
+			TRACE(Trace::error, e.what());
 			MSG(LTFSDMS0006E);
 			return;
 		}
@@ -126,8 +130,8 @@ void MessageParser::reqStatusMessage(long key, LTFSDmCommServer *command, FileOp
 		try {
 			command->send();
 		}
-		catch(...) {
-			TRACE(Trace::error, errno);
+		catch(const std::exception& e) {
+			TRACE(Trace::error, e.what());
 			MSG(LTFSDMS0007E);
 			return;
 		}
@@ -193,8 +197,8 @@ void MessageParser::migrationMessage(long key, LTFSDmCommServer *command, long l
 	try {
 		command->send();
 	}
-	catch(...) {
-		TRACE(Trace::error, errno);
+	catch(const std::exception& e) {
+		TRACE(Trace::error, e.what());
 		MSG(LTFSDMS0007E);
 		return;
 	}
@@ -244,8 +248,8 @@ void  MessageParser::selRecallMessage(long key, LTFSDmCommServer *command, long 
 	try {
 		command->send();
 	}
-	catch(...) {
-		TRACE(Trace::error, errno);
+	catch(const std::exception& e) {
+		TRACE(Trace::error, e.what());
 		MSG(LTFSDMS0007E);
 		return;
 	}
@@ -286,7 +290,8 @@ void MessageParser::requestNumber(long key, LTFSDmCommServer *command, long *loc
 	try {
 		command->send();
 	}
-	catch(...) {
+	catch(const std::exception& e) {
+		TRACE(Trace::error, e.what());
 		MSG(LTFSDMS0007E);
 	}
 
@@ -343,7 +348,8 @@ void MessageParser::stopMessage(long key, LTFSDmCommServer *command, long localR
 		try {
 			command->send();
 		}
-		catch(...) {
+		catch(const std::exception& e) {
+			TRACE(Trace::error, e.what());
 			MSG(LTFSDMS0007E);
 			return;
 		}
@@ -352,8 +358,8 @@ void MessageParser::stopMessage(long key, LTFSDmCommServer *command, long localR
 			try {
 				command->recv();
 			}
-			catch(...) {
-				TRACE(Trace::error, errno);
+			catch(const std::exception& e) {
+				TRACE(Trace::error, e.what());
 				MSG(LTFSDMS0006E);
 				return;
 			}
@@ -397,7 +403,8 @@ void MessageParser::statusMessage(long key, LTFSDmCommServer *command, long loca
 	try {
 		command->send();
 	}
-	catch(...) {
+	catch(const std::exception& e) {
+		TRACE(Trace::error, e.what());
 		MSG(LTFSDMS0007E);
 	}
 }
@@ -432,9 +439,10 @@ void MessageParser::addMessage(long key, LTFSDmCommServer *command, long localRe
 			fileSystem.manageFs(true, connector->getStartTime(), mountPoint, fsName);
 		}
 	}
-	catch ( int error ) {
+	catch ( const OpenLTFSException& e ) {
 		response = LTFSDmProtocol::LTFSDmAddResp::FAILED;
-		switch ( error ) {
+		TRACE(Trace::error, e.what());
+		switch ( e.getError() ) {
 			case Error::LTFSDM_FS_CHECK_ERROR:
 				MSG(LTFSDMS0044E, managedFs);
 				break;
@@ -445,6 +453,9 @@ void MessageParser::addMessage(long key, LTFSDmCommServer *command, long localRe
 				MSG(LTFSDMS0045E, managedFs);
 		}
 	}
+	catch ( const std::exception& e ) {
+		TRACE(Trace::error, e.what());
+	}
 
 	LTFSDmProtocol::LTFSDmAddResp *addresp = command->mutable_addresp();
 
@@ -453,7 +464,7 @@ void MessageParser::addMessage(long key, LTFSDmCommServer *command, long localRe
 	try {
 		command->send();
 	}
-	catch(...) {
+	catch(const std::exception& e) {
 		MSG(LTFSDMS0007E);
 	}
 }
@@ -502,7 +513,8 @@ void MessageParser::infoRequestsMessage(long key, LTFSDmCommServer *command, lon
 		try {
 			command->send();
 		}
-		catch(...) {
+		catch(const std::exception& e) {
+			TRACE(Trace::error, e.what());
 			MSG(LTFSDMS0007E);
 		}
 	}
@@ -519,7 +531,8 @@ void MessageParser::infoRequestsMessage(long key, LTFSDmCommServer *command, lon
 	try {
 		command->send();
 	}
-	catch(...) {
+	catch(const std::exception& e) {
+		TRACE(Trace::error, e.what());
 		MSG(LTFSDMS0007E);
 	}
 }
@@ -574,7 +587,8 @@ void MessageParser::infoJobsMessage(long key, LTFSDmCommServer *command, long lo
 		try {
 			command->send();
 		}
-		catch(...) {
+		catch(const std::exception& e) {
+			TRACE(Trace::error, e.what());
 			MSG(LTFSDMS0007E);
 		}
 	}
@@ -593,7 +607,8 @@ void MessageParser::infoJobsMessage(long key, LTFSDmCommServer *command, long lo
 	try {
 		command->send();
 	}
-	catch(...) {
+	catch(const std::exception& e) {
+		TRACE(Trace::error, e.what());
 		MSG(LTFSDMS0007E);
 	}
 }
@@ -626,7 +641,8 @@ void MessageParser::infoDrivesMessage(long key, LTFSDmCommServer *command)
 			try {
 				command->send();
 			}
-			catch(...) {
+			catch(const std::exception& e) {
+				TRACE(Trace::error, e.what());
 				MSG(LTFSDMS0007E);
 			}
 		}
@@ -643,7 +659,8 @@ void MessageParser::infoDrivesMessage(long key, LTFSDmCommServer *command)
 	try {
 		command->send();
 	}
-	catch(...) {
+	catch(const std::exception& e) {
+		TRACE(Trace::error, e.what());
 		MSG(LTFSDMS0007E);
 	}
 }
@@ -690,7 +707,8 @@ void MessageParser::infoTapesMessage(long key, LTFSDmCommServer *command)
 			try {
 				command->send();
 			}
-			catch(...) {
+			catch(const std::exception& e) {
+				TRACE(Trace::error, e.what());
 				MSG(LTFSDMS0007E);
 			}
 		}
@@ -710,7 +728,8 @@ void MessageParser::infoTapesMessage(long key, LTFSDmCommServer *command)
 	try {
 		command->send();
 	}
-	catch(...) {
+	catch(const std::exception& e) {
+		TRACE(Trace::error, e.what());
 		MSG(LTFSDMS0007E);
 	}
 }
@@ -739,8 +758,11 @@ void MessageParser::poolCreateMessage(long key, LTFSDmCommServer *command)
 			inventory->poolCreate(poolName);
 			inventory->writePools();
 		}
-		catch ( int error ) {
-			response = error;
+		catch ( const OpenLTFSException& e ) {
+			response = e.getError();
+		}
+		catch ( const std::exception& e ) {
+			response = Const::UNSET;
 		}
 	}
 
@@ -751,7 +773,8 @@ void MessageParser::poolCreateMessage(long key, LTFSDmCommServer *command)
 	try {
 		command->send();
 	}
-	catch(...) {
+	catch(const std::exception& e) {
+		TRACE(Trace::error, e.what());
 		MSG(LTFSDMS0007E);
 	}
 }
@@ -780,8 +803,11 @@ void MessageParser::poolDeleteMessage(long key, LTFSDmCommServer *command)
 			inventory->poolDelete(poolName);
 			inventory->writePools();
 		}
-		catch ( int error ) {
-			response = error;
+		catch ( const OpenLTFSException& e ) {
+			response = e.getError();
+		}
+		catch ( const std::exception& e ) {
+			response = Const::UNSET;
 		}
 	}
 
@@ -792,7 +818,8 @@ void MessageParser::poolDeleteMessage(long key, LTFSDmCommServer *command)
 	try {
 		command->send();
 	}
-	catch(...) {
+	catch(const std::exception& e) {
+		TRACE(Trace::error, e.what());
 		MSG(LTFSDMS0007E);
 	}
 }
@@ -828,8 +855,11 @@ void MessageParser::poolAddMessage(long key, LTFSDmCommServer *command)
 				inventory->poolAdd(poolName, tapeid);
 				inventory->writePools();
 			}
-			catch ( int error ) {
-				response = error;
+			catch ( const OpenLTFSException& e ) {
+				response = e.getError();
+			}
+			catch ( const std::exception& e ) {
+				response = Const::UNSET;
 			}
 		}
 
@@ -841,7 +871,8 @@ void MessageParser::poolAddMessage(long key, LTFSDmCommServer *command)
 		try {
 			command->send();
 		}
-		catch(...) {
+		catch(const std::exception& e) {
+			TRACE(Trace::error, e.what());
 			MSG(LTFSDMS0007E);
 		}
 	}
@@ -878,8 +909,11 @@ void MessageParser::poolRemoveMessage(long key, LTFSDmCommServer *command)
 				inventory->poolRemove(poolName, tapeid);
 				inventory->writePools();
 			}
-			catch ( int error ) {
-				response = error;
+			catch ( const OpenLTFSException& e ) {
+				response = e.getError();
+			}
+			catch ( const std::exception& e ) {
+				response = Const::UNSET;
 			}
 		}
 
@@ -891,7 +925,8 @@ void MessageParser::poolRemoveMessage(long key, LTFSDmCommServer *command)
 		try {
 			command->send();
 		}
-		catch(...) {
+		catch(const std::exception& e) {
+			TRACE(Trace::error, e.what());
 			MSG(LTFSDMS0007E);
 		}
 	}
@@ -938,7 +973,8 @@ void MessageParser::infoPoolsMessage(long key, LTFSDmCommServer *command)
 			try {
 				command->send();
 			}
-			catch(...) {
+			catch(const std::exception& e) {
+				TRACE(Trace::error, e.what());
 				MSG(LTFSDMS0007E);
 			}
 		}
@@ -955,7 +991,8 @@ void MessageParser::infoPoolsMessage(long key, LTFSDmCommServer *command)
 	try {
 		command->send();
 	}
-	catch(...) {
+	catch(const std::exception& e) {
+		TRACE(Trace::error, e.what());
 		MSG(LTFSDMS0007E);
 	}
 }
@@ -978,8 +1015,11 @@ void MessageParser::retrieveMessage(long key, LTFSDmCommServer *command)
 	try {
 		inventory->inventorize();
 	}
-	catch(int err) {
-		error = err;
+	catch ( const OpenLTFSException& e ) {
+		error = e.getError();
+	}
+	catch ( const std::exception& e ) {
+		error = Const::UNSET;
 	}
 
 	LTFSDmProtocol::LTFSDmRetrieveResp *retrieveresp = command->mutable_retrieveresp();
@@ -989,7 +1029,8 @@ void MessageParser::retrieveMessage(long key, LTFSDmCommServer *command)
 	try {
 		command->send();
 	}
-	catch(...) {
+	catch(const std::exception& e) {
+		TRACE(Trace::error, e.what());
 		MSG(LTFSDMS0007E);
 	}
 }
@@ -1007,8 +1048,8 @@ void MessageParser::run(long key, LTFSDmCommServer command, Connector *connector
 		try {
 			command.recv();
 		}
-		catch(...) {
-			TRACE(Trace::error, errno);
+		catch(const std::exception& e) {
+			TRACE(Trace::error, e.what());
 			MSG(LTFSDMS0006E);
 			Server::termcond.notify_one();
 			lock.unlock();

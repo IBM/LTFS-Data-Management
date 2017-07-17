@@ -89,7 +89,8 @@ void Migration::addJob(std::string fileName)
 		}
 		ssql << state << ");";   // FILE_STATE
 	}
-	catch ( int error ) {
+	catch ( const std::exception& e ) {
+		TRACE(Trace::error, e.what());
 		ssql.str("");
 		ssql.clear();
 		ssql << "INSERT INTO JOB_QUEUE (OPERATION, FILE_NAME, REQ_NUM, TARGET_STATE, REPL_NUM, TAPE_POOL, "
@@ -226,6 +227,7 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId, lon
 	int fd = -1;
 	long offset = 0;
 	FsObj::mig_attr_t attr;
+	bool failed = false;
 
 	try {
 		FsObj source(mig_info.fileName);
@@ -239,7 +241,7 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId, lon
 		if ( fd == -1 ) {
 			TRACE(Trace::error, errno);
 			MSG(LTFSDMS0021E, tapeName.c_str());
-			throw(Error::LTFSDM_GENERAL_ERROR);
+			throw(EXCEPTION(Const::UNSET, tapeName, errno));
 		}
 
 		source.lock();
@@ -249,7 +251,7 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId, lon
 		if ( stat(mig_info.fileName.c_str(), &statbuf) == -1 ) {
 			TRACE(Trace::error, errno);
 			MSG(LTFSDMS0040E, mig_info.fileName);
-			throw(Error::LTFSDM_GENERAL_ERROR);
+			throw(EXCEPTION(Const::UNSET, mig_info.fileName, errno));
 		}
 		if ( statbuf.st_mtim.tv_sec != secs || statbuf.st_mtim.tv_nsec != nsecs ) {
 			TRACE(Trace::error, statbuf.st_mtim.tv_sec);
@@ -257,7 +259,7 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId, lon
 			TRACE(Trace::error, statbuf.st_mtim.tv_nsec);
 			TRACE(Trace::error, nsecs);
 			MSG(LTFSDMS0041W, mig_info.fileName);
-			throw(Error::LTFSDM_GENERAL_ERROR);
+			throw(EXCEPTION(Const::UNSET, mig_info.fileName));
 		}
 
 		{
@@ -268,19 +270,19 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId, lon
 				source.remAttribute();
 				std::lock_guard<std::mutex> lock(Migration::pmigmtx);
 				*suspended = true;
-				throw(Error::LTFSDM_OK);
+				throw(EXCEPTION(Error::LTFSDM_OK));
 			}
 
 			while ( offset < statbuf.st_size ) {
 				if ( Server::forcedTerminate )
-					throw(Error::LTFSDM_OK);
+					throw(EXCEPTION(Error::LTFSDM_OK));
 
 				rsize = source.read(offset, statbuf.st_size - offset > Const::READ_BUFFER_SIZE ?
 									Const::READ_BUFFER_SIZE : statbuf.st_size - offset , buffer);
 				if ( rsize == -1 ) {
 					TRACE(Trace::error, errno);
 					MSG(LTFSDMS0023E, mig_info.fileName);
-					throw(errno);
+					throw(EXCEPTION(errno, errno, mig_info.fileName));
 				}
 
 				wsize = write(fd, buffer, rsize);
@@ -290,14 +292,14 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId, lon
 					TRACE(Trace::error, wsize);
 					TRACE(Trace::error, rsize);
 					MSG(LTFSDMS0022E, tapeName.c_str());
-					throw(Error::LTFSDM_GENERAL_ERROR);
+					throw(EXCEPTION(Const::UNSET, mig_info.fileName, wsize, rsize));
 				}
 
 				offset += rsize;
 				if ( stat(mig_info.fileName.c_str(), &statbuf_changed) == -1 ) {
 					TRACE(Trace::error, errno);
 					MSG(LTFSDMS0040E, mig_info.fileName);
-					throw(Error::LTFSDM_GENERAL_ERROR);
+					throw(EXCEPTION(Const::UNSET, mig_info.fileName, errno));
 				}
 
 				if ( statbuf_changed.st_mtim.tv_sec != secs || statbuf_changed.st_mtim.tv_nsec != nsecs ) {
@@ -306,7 +308,7 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId, lon
 					TRACE(Trace::error, statbuf_changed.st_mtim.tv_nsec);
 					TRACE(Trace::error, nsecs);
 					MSG(LTFSDMS0041W, mig_info.fileName);
-					throw(Error::LTFSDM_GENERAL_ERROR);
+					throw(EXCEPTION(Const::UNSET, mig_info.fileName));
 				}
 			}
 		}
@@ -314,7 +316,7 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId, lon
 		if ( fsetxattr(fd, Const::LTFS_ATTR.c_str(), mig_info.fileName.c_str(), mig_info.fileName.length(), 0) == -1 ) {
 			TRACE(Trace::error, errno);
 			MSG(LTFSDMS0025E, Const::LTFS_ATTR, tapeName);
-			throw(errno);
+			throw(EXCEPTION(Const::UNSET, mig_info.fileName, errno));
 		}
 
 		mrStatus.updateSuccess(mig_info.reqNumber, mig_info.fromState, mig_info.toState);
@@ -331,24 +333,32 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId, lon
 		std::lock_guard<std::mutex> lock(Migration::pmigmtx);
 		inumList->push_back(mig_info.inum);
 	}
-	catch ( int error ) {
+	catch ( const OpenLTFSException& e ) {
+		TRACE(Trace::error, e.what());
+		if ( e.getError() != Error::LTFSDM_OK )
+			failed = true;
+	}
+	catch ( const std::exception& e ) {
+		TRACE(Trace::error, e.what());
+		failed = true;
+	}
+
+	if ( failed == true ) {
 		sqlite3_stmt *stmt;
 		std::stringstream ssql;
 		int rc;
 
-		if ( error != Error::LTFSDM_OK ) {
-			TRACE(Trace::error, mig_info.fileName);
-			MSG(LTFSDMS0050E, mig_info.fileName);
+		TRACE(Trace::error, mig_info.fileName);
+		MSG(LTFSDMS0050E, mig_info.fileName);
 
-			mrStatus.updateFailed(mig_info.reqNumber, mig_info.fromState);
-			ssql << "UPDATE JOB_QUEUE SET FILE_STATE=" <<  FsObj::FAILED
-				 << " WHERE REQ_NUM=" << mig_info.reqNumber
-				 << " AND FILE_NAME='" << mig_info.fileName << "'"
-				 << " AND REPL_NUM=" << mig_info.replNum;
-			sqlite3_statement::prepare(ssql.str(), &stmt);
-			rc = sqlite3_statement::step(stmt);
-			sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
-		}
+		mrStatus.updateFailed(mig_info.reqNumber, mig_info.fromState);
+		ssql << "UPDATE JOB_QUEUE SET FILE_STATE=" <<  FsObj::FAILED
+			 << " WHERE REQ_NUM=" << mig_info.reqNumber
+			 << " AND FILE_NAME='" << mig_info.fileName << "'"
+			 << " AND REPL_NUM=" << mig_info.replNum;
+		sqlite3_statement::prepare(ssql.str(), &stmt);
+		rc = sqlite3_statement::step(stmt);
+		sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 	}
 
 	if ( fd != -1 )
@@ -378,7 +388,8 @@ void Migration::stub(Migration::mig_info_t mig_info, std::shared_ptr<std::list<u
 		std::lock_guard<std::mutex> lock(Migration::pmigmtx);
 		inumList->push_back(mig_info.inum);
 	}
-	catch ( int error ) {
+	catch ( const std::exception& e ) {
+		TRACE(Trace::error, e.what());
 		sqlite3_stmt *stmt;
 		std::stringstream ssql;
 		int rc;
@@ -535,8 +546,8 @@ Migration::req_return_t Migration::migrationStep(int reqNumber, int numRepl, int
 					Scheduler::wqs->enqueue(reqNumber, mig_info, inumList);
 				}
 			}
-			catch (int error) {
-				TRACE(Trace::error, error);
+			catch ( const std::exception& e ) {
+				TRACE(Trace::error, e.what());
 				continue;
 			}
 

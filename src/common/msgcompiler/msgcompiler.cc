@@ -34,14 +34,14 @@ int main(int argc, char **argv)
 	try {
 		infile.open(argv[1]);
 	}
-	catch(...) {
+	catch(const std::exception& e) {
 		std::cout << "unable to open input file " << argv[1] << "." << std::endl;
 	}
 
 	try {
 		outfile.open(argv[2]);
 	}
-	catch(...) {
+	catch(const std::exception& e) {
 		std::cout << "unable to open outout file " << argv[2] << "." << std::endl;
 	}
 

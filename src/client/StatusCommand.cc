@@ -2,6 +2,10 @@
 
 #include <string>
 #include <list>
+#include <sstream>
+#include <exception>
+
+#include "src/common/exception/OpenLTFSException.h"
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
 #include "src/common/errors/errors.h"
@@ -25,13 +29,13 @@ void StatusCommand::doCommand(int argc, char **argv)
 
 	if ( argc > 1 ) {
 		printUsage();
-		throw Error::LTFSDM_GENERAL_ERROR;
+		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
 	try {
 		connect();
 	}
-	catch (...) {
+	catch (const std::exception& e) {
 		MSG(LTFSDMC0026E);
 		return;
 	}
@@ -45,17 +49,17 @@ void StatusCommand::doCommand(int argc, char **argv)
 	try {
 		commCommand.send();
 	}
-	catch(...) {
+	catch(const std::exception& e) {
 		MSG(LTFSDMC0027E);
-		throw Error::LTFSDM_GENERAL_ERROR;
+		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
 	try {
 		commCommand.recv();
 	}
-	catch(...) {
+	catch(const std::exception& e) {
 		MSG(LTFSDMC0028E);
-		throw(Error::LTFSDM_GENERAL_ERROR);
+		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
 	const LTFSDmProtocol::LTFSDmStatusResp statusresp = commCommand.statusresp();
@@ -66,6 +70,6 @@ void StatusCommand::doCommand(int argc, char **argv)
 	}
 	else {
 		MSG(LTFSDMC0029E);
-		throw(Error::LTFSDM_GENERAL_ERROR);
+		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 }

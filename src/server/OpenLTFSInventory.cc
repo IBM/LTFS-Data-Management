@@ -41,7 +41,7 @@ void OpenLTFSInventory::inventorize()
 
 	for ( std::shared_ptr<OpenLTFSDrive> d : drives )
 		if ( d->isBusy() == true )
-			throw(Error::LTFSDM_DRIVE_BUSY);
+			throw(EXCEPTION(Error::LTFSDM_DRIVE_BUSY));
 
 	for ( std::shared_ptr<OpenLTFSDrive> d : drives )
 		d->wqp->terminate();
@@ -55,7 +55,7 @@ void OpenLTFSInventory::inventorize()
 	if ( rc == -1 || drvs.size() == 0 ) {
 		MSG(LTFSDMS0051E);
 		LEControl::Disconnect(sess);
-		throw(Error::LTFSDM_GENERAL_ERROR);
+		throw(EXCEPTION(Const::UNSET));
 	}
 
 	for (std::shared_ptr<Drive> i : drvs) {
@@ -69,7 +69,7 @@ void OpenLTFSInventory::inventorize()
 	if ( rc == -1 || crts.size() == 0 ) {
 		MSG(LTFSDMS0053E);
 		LEControl::Disconnect(sess);
-		throw(Error::LTFSDM_GENERAL_ERROR);
+		throw(EXCEPTION(Const::UNSET));
 	}
 
 	for(std::shared_ptr<Cartridge> c : crts) {
@@ -104,9 +104,10 @@ void OpenLTFSInventory::inventorize()
 			for ( std::string tapeid : tapeids )
 				poolAdd(poolName, tapeid);
 		}
-		catch(int error) {
+		catch(const std::exception& e) {
+			TRACE(Trace::error, e.what());
 			MSG(LTFSDMS0061E, poolName);
-			throw(Error::LTFSDM_GENERAL_ERROR);
+			throw(EXCEPTION(Const::UNSET));
 		}
 	}
 
@@ -139,51 +140,55 @@ OpenLTFSInventory::OpenLTFSInventory()
 	try {
 		sess = LEControl::Connect("127.0.0.1", 7600);
 	}
-	catch ( int error ) {
+	catch ( const std::exception& e ) {
+		TRACE(Trace::error, e.what());
 		MSG(LTFSDMS0072E);
-		throw(Error::LTFSDM_GENERAL_ERROR);
+		throw(EXCEPTION(Const::UNSET));
 	}
 
 	if ( sess == nullptr ) {
 		MSG(LTFSDMS0072E);
-		throw(Error::LTFSDM_GENERAL_ERROR);
+		throw(EXCEPTION(Const::UNSET));
 	}
 
 	try {
 		nodeInfo = LEControl::InventoryNode(sess);
 	}
-	catch ( int error ) {
+	catch ( const std::exception& e ) {
+		TRACE(Trace::error, e.what());
 		MSG(LTFSDMS0072E);
-		throw(Error::LTFSDM_GENERAL_ERROR);
+		throw(EXCEPTION(Const::UNSET));
 	}
 
 	try {
 		mountPoint = nodeInfo->get_mount_point();
 	}
-	catch ( int error ) {
+	catch ( const std::exception& e ) {
+		TRACE(Trace::error, e.what());
 		MSG(LTFSDMS0072E);
-		throw(Error::LTFSDM_GENERAL_ERROR);
+		throw(EXCEPTION(Const::UNSET));
 	}
 
 	TRACE(Trace::always, mountPoint);
 
 	if ( stat(mountPoint.c_str(), &statbuf) == -1 ) {
 		MSG(LTFSDMS0072E);
-		throw(Error::LTFSDM_GENERAL_ERROR);
+		throw(EXCEPTION(Const::UNSET, errno));
 	}
 
 	if ( nodeInfo == nullptr ) {
 		MSG(LTFSDMS0072E);
-		throw(Error::LTFSDM_GENERAL_ERROR);
+		throw(EXCEPTION(Const::UNSET));
 	}
 
 	try {
 		inventorize();
 		writePools();
 	}
-	catch ( int error ) {
+	catch ( const std::exception& e ) {
+		TRACE(Trace::error, e.what());
 		LEControl::Disconnect(sess);
-		throw(Error::LTFSDM_GENERAL_ERROR);
+		throw(EXCEPTION(Const::UNSET));
 	}
 }
 
@@ -272,7 +277,7 @@ void OpenLTFSInventory::poolCreate(std::string poolname)
 	for ( std::shared_ptr<OpenLTFSPool> pool : pools ) {
 		if ( pool->getPoolName().compare(poolname) == 0 ) {
 			MSG(LTFSDMX0023E, poolname);
-			throw(Error::LTFSDM_POOL_EXISTS);
+			throw(EXCEPTION(Error::LTFSDM_POOL_EXISTS));
 		}
 	}
 
@@ -288,7 +293,7 @@ void OpenLTFSInventory::poolDelete(std::string poolname)
 		if ( pool->getPoolName().compare(poolname) == 0 ) {
 			if ( pool->getCartridges().size() > 0 ) {
 				MSG(LTFSDMX0024E, poolname);
-				throw(Error::LTFSDM_POOL_NOT_EMPTY);
+				throw(EXCEPTION(Error::LTFSDM_POOL_NOT_EMPTY));
 			}
 			pools.remove(pool);
 			return;
@@ -296,7 +301,7 @@ void OpenLTFSInventory::poolDelete(std::string poolname)
 	}
 
 	MSG(LTFSDMX0025E, poolname);
-	throw(Error::LTFSDM_POOL_NOT_EXISTS);
+	throw(EXCEPTION(Error::LTFSDM_POOL_NOT_EXISTS));
 }
 
 void OpenLTFSInventory::poolAdd(std::string poolname, std::string cartridgeid)
@@ -310,14 +315,14 @@ void OpenLTFSInventory::poolAdd(std::string poolname, std::string cartridgeid)
 		if ( pool->getPoolName().compare(poolname) == 0 ) {
 			cartridge = getCartridge(cartridgeid);
 			if ( cartridge == nullptr )
-				throw(Error::LTFSDM_TAPE_NOT_EXISTS);
+				throw(EXCEPTION(Error::LTFSDM_TAPE_NOT_EXISTS));
 			pool->add(cartridge);
 			return;
 		}
 	}
 
 	MSG(LTFSDMX0025E, poolname);
-	throw(Error::LTFSDM_POOL_NOT_EXISTS);
+	throw(EXCEPTION(Error::LTFSDM_POOL_NOT_EXISTS));
 }
 
 void OpenLTFSInventory::poolRemove(std::string poolname, std::string cartridgeid)
@@ -331,14 +336,14 @@ void OpenLTFSInventory::poolRemove(std::string poolname, std::string cartridgeid
 		if ( pool->getPoolName().compare(poolname) == 0 ) {
 			cartridge = getCartridge(cartridgeid);
 			if ( cartridge == nullptr )
-				throw(Error::LTFSDM_TAPE_NOT_EXISTS);
+				throw(EXCEPTION(Error::LTFSDM_TAPE_NOT_EXISTS));
 			pool->remove(cartridge);
 			return;
 		}
 	}
 
 	MSG(LTFSDMX0024E, poolname);
-	throw(Error::LTFSDM_POOL_NOT_EXISTS);
+	throw(EXCEPTION(Error::LTFSDM_POOL_NOT_EXISTS));
 }
 
 
@@ -363,7 +368,7 @@ void OpenLTFSInventory::mount(std::string driveid, std::string cartridgeid)
 
 		cartridge->update(sess);
 		cartridge->setState(OpenLTFSCartridge::MOUNTED);
-		TRACE(Trace::always, std::string("SET FREE: ") + drive->GetObjectID());
+		TRACE(Trace::always, drive->GetObjectID());
 		drive->setFree();
 		drive->unsetUnmountReqNum();
 	}
@@ -396,7 +401,7 @@ void OpenLTFSInventory::unmount(std::string driveid, std::string cartridgeid)
 
 		cartridge->update(sess);
 		cartridge->setState(OpenLTFSCartridge::UNMOUNTED);
-		TRACE(Trace::always, std::string("SET FREE: ") + drive->GetObjectID());
+		TRACE(Trace::always, drive->GetObjectID());
 		drive->setFree();
 		drive->unsetUnmountReqNum();
 	}

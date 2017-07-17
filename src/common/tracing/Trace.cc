@@ -57,7 +57,7 @@ void Trace::init()
 	try {
 		tracefile.open(Const::TRACE_FILE, std::fstream::out | std::fstream::app);
 	}
-	catch(...) {
+	catch(const std::exception& e) {
 		MSG(LTFSDMX0001E);
 		exit((int) Error::LTFSDM_GENERAL_ERROR);
 	}
@@ -80,7 +80,7 @@ void Trace::rotate()
 	try {
 		tracefile.open(Const::TRACE_FILE, std::fstream::out | std::fstream::app);
 	}
-	catch(...) {
+	catch(const std::exception& e) {
 		MSG(LTFSDMX0001E);
 		exit((int) Error::LTFSDM_GENERAL_ERROR);
 	}

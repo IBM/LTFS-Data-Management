@@ -55,7 +55,7 @@ private:
 			recurse(&fmter, args ...);
 			writeOut(fmter.str());
 		}
-		catch(...) {
+		catch(const std::exception& e) {
 			std::cerr << messages[LTFSDMX0005E] << " (" << msgname[msg] << ":"
 					  << filename << ":" << linenr << ")" << std::endl;
 		}
@@ -72,7 +72,7 @@ private:
 			recurse(&fmter, args ...);
 			writeLog(fmter.str());
 		}
-		catch(...) {
+		catch(const std::exception& e) {
 			std::cerr << messages[LTFSDMX0005E] << " (" << msgname[msg] << ":"
 					  << filename << ":" << linenr << ")" << std::endl;
 		}
@@ -105,7 +105,7 @@ public:
 			recurse(&fmter, args ...);
 			writeOut(fmter.str());
 		}
-		catch(...) {
+		catch(const std::exception& e) {
 			std::cerr << messages[LTFSDMX0005E] << " ("
 					  << filename << ":" << linenr << ")" << std::endl;
 			exit((int) Error::LTFSDM_GENERAL_ERROR);

@@ -27,7 +27,8 @@ int main(int argc, char **argv)
 				try {
 					tl = (Trace::traceLevel) std::stoi(optarg);
 				}
-				catch(...) {
+				catch(const std::exception& e) {
+					TRACE(Trace::error, e.what());
 					tl = Trace::error;
 				}
 				break;
@@ -49,7 +50,8 @@ int main(int argc, char **argv)
 	try {
 		LTFSDM::init();
 	}
-	catch(...) {
+	catch(const std::exception& e) {
+		TRACE(Trace::error, e.what());
 		err = Error::LTFSDM_GENERAL_ERROR;
 		goto end;
 	}
@@ -70,9 +72,15 @@ int main(int argc, char **argv)
 		connector = new Connector(true);
 		ltfsdmd.run(connector, set);
 	}
-	catch ( int initerr ) {
-		err = initerr;
-		goto end;
+	catch ( const OpenLTFSException& e ) {
+		if ( e.getError() != Error::LTFSDM_OK ) {
+			TRACE(Trace::error, e.what());
+			err = Const::UNSET;
+		}
+	}
+	catch ( const std::exception& e ) {
+		TRACE(Trace::error, e.what());
+		err = Const::UNSET;
 	}
 
 end:

@@ -3,7 +3,10 @@
 #include <unistd.h>
 #include <string>
 #include <list>
+#include <sstream>
+#include <exception>
 
+#include "src/common/exception/OpenLTFSException.h"
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
 #include "src/common/errors/errors.h"
@@ -31,11 +34,11 @@ void InfoRequestsCommand::doCommand(int argc, char **argv)
 
 	if( argc != optind ) {
 		printUsage();
-		throw(Error::LTFSDM_GENERAL_ERROR);
+		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 	else if ( requestNumber < Const::UNSET ) {
 		printUsage();
-		throw(Error::LTFSDM_GENERAL_ERROR);
+		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
 	reqOfInterest = requestNumber;
@@ -43,7 +46,7 @@ void InfoRequestsCommand::doCommand(int argc, char **argv)
 	try {
 		connect();
 	}
-	catch (...) {
+	catch (const std::exception& e) {
 		MSG(LTFSDMC0026E);
 		return;
 	}
@@ -56,9 +59,9 @@ void InfoRequestsCommand::doCommand(int argc, char **argv)
 	try {
 		commCommand.send();
 	}
-	catch(...) {
+	catch(const std::exception& e) {
 		MSG(LTFSDMC0027E);
-		throw Error::LTFSDM_GENERAL_ERROR;
+		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
 	INFO(LTFSDMC0060I);
@@ -68,9 +71,9 @@ void InfoRequestsCommand::doCommand(int argc, char **argv)
 		try {
 			commCommand.recv();
 		}
-		catch(...) {
+		catch(const std::exception& e) {
 			MSG(LTFSDMC0028E);
-			throw(Error::LTFSDM_GENERAL_ERROR);
+			throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 		}
 
 		const LTFSDmProtocol::LTFSDmInfoRequestsResp inforeqsresp = commCommand.inforequestsresp();

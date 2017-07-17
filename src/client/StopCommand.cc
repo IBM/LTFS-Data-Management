@@ -4,6 +4,10 @@
 
 #include <string>
 #include <list>
+#include <sstream>
+#include <exception>
+
+#include "src/common/exception/OpenLTFSException.h"
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
 #include "src/common/errors/errors.h"
@@ -28,15 +32,15 @@ void StopCommand::doCommand(int argc, char **argv)
 
 	if ( argc > 2 ) {
 		printUsage();
-		throw Error::LTFSDM_GENERAL_ERROR;
+		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
 	try {
 		connect();
 	}
-	catch(...) {
+	catch(const std::exception& e) {
 		MSG(LTFSDMC0026E);
-		throw(Error::LTFSDM_GENERAL_ERROR);
+		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
 	TRACE(Trace::normal, requestNumber);
@@ -50,17 +54,17 @@ void StopCommand::doCommand(int argc, char **argv)
 		try {
 			commCommand.send();
 		}
-		catch(...) {
+		catch(const std::exception& e) {
 			MSG(LTFSDMC0027E);
-			throw Error::LTFSDM_GENERAL_ERROR;
+			throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 		}
 
 		try {
 			commCommand.recv();
 		}
-		catch(...) {
+		catch(const std::exception& e) {
 			MSG(LTFSDMC0028E);
-			throw(Error::LTFSDM_GENERAL_ERROR);
+			throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 		}
 
 		const LTFSDmProtocol::LTFSDmStopResp stopresp = commCommand.stopresp();
@@ -80,7 +84,7 @@ void StopCommand::doCommand(int argc, char **argv)
 		MSG(LTFSDMC0033E);
 		TRACE(Trace::error, Const::SERVER_LOCK_FILE);
 		TRACE(Trace::error, errno);
-		throw(Error::LTFSDM_GENERAL_ERROR);
+		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
 	while ( flock(lockfd, LOCK_EX | LOCK_NB) == -1 ) {
