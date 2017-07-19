@@ -4,48 +4,51 @@ class OpenLTFSException: public std::exception
 
 {
 private:
-	const char *filename;
-	int line;
+	std::stringstream info;
+	std::string infostr;
 	int error;
-	std::stringstream traceInfo;
 
 	void addInfo() {}
 
 	template<typename T>
 	void addInfo(T s)
 	{
-		traceInfo << "(" << s << ")";
+		info << "(" << s << ")";
 	}
 
 	template<typename T, typename ... Args>
 	void addInfo(T s, Args ... args )
 	{
-		traceInfo << "(" << s << ")";
+		info << "(" << s << ")";
 		addInfo(args ...);
 	}
 
 public:
-    OpenLTFSException( const OpenLTFSException& e ) : filename(e.filename), line(e.line) {}
+	OpenLTFSException( const OpenLTFSException& e ) : error(e.error)
+	{
+		info << e.info.str();
+	}
 
-    OpenLTFSException(const char *filename_, int line_, int error_) : filename(filename_), line(line_), error(error_) {}
+    OpenLTFSException(const char *filename, int line, int error_) : error(error_)
+	{
+		info << filename << ":" << line;
+		infostr = info.str();
+	}
 
 	template<typename ... Args>
-	OpenLTFSException(const char *filename_, int line_, int error_, Args ... args) : filename(filename_), line(line_), error(error_)
+	OpenLTFSException(const char *filename, int line, int error_, Args ... args) : error(error_)
 	{
+		info << filename << ":" << line;
 		addInfo(args ...);
+		infostr = info.str();
 	}
 
 	const int getError() const { return error; }
 
-	virtual const char* what() const throw()
+	const char* what() const throw()
 	{
 		try {
-			std::stringstream info;
-			if (traceInfo.str().size() > 0)
-				info << filename << ":" << line << traceInfo.str();
-			else
-				info << filename << ":" << line;
-			return info.str().c_str();
+			return  infostr.c_str();
 		}
 		catch( const std::exception& e ) {
 			return "error providing exception information";

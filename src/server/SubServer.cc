@@ -1,18 +1,23 @@
 #include "ServerIncludes.h"
 
-void SubServer::waitThread(std::thread *thrd, std::thread *thrdprev)
+void SubServer::waitThread(std::string label, std::shared_future<void> task, std::shared_future<void> prev_waiter)
 
 {
 	int countb;
-	std::thread::id id = thrd->get_id();
-	std::thread::id idprev;
 
-	if ( thrdprev != nullptr )
-		idprev = thrdprev->get_id();
+	TRACE(Trace::always, label);
 
-	thrd->join();
-	TRACE(Trace::always, id);
-	delete(thrd);
+	try {
+		task.get();
+	}
+	catch ( const std::exception& e ) {
+		MSG(LTFSDMS0074E, e.what());
+		TRACE(Trace::always, e.what());
+		Server::forcedTerminate = true;
+		Connector::forcedTerminate = true;
+		kill(getpid(), SIGUSR1);
+	}
+
 	countb = --count;
 
 	if ( countb < maxThreads ) {
@@ -23,18 +28,25 @@ void SubServer::waitThread(std::thread *thrd, std::thread *thrdprev)
 		econd.notify_one();
 	}
 
-	if ( thrdprev != nullptr) {
-		thrdprev->join();
-		TRACE(Trace::always, idprev);
-		delete(thrdprev);
+	if ( prev_waiter.valid() == true) {
+		prev_waiter.get();
 	}
 }
 
 void SubServer::waitAllRemaining()
 {
-	if ( thrdprev ) {
-		thrdprev->join();
-		delete(thrdprev);
+	if ( prev_waiter.valid() == true ) {
+
+		try {
+			prev_waiter.get();
+		}
+		catch ( const std::exception& e ) {
+			MSG(LTFSDMS0074E, e.what());
+			TRACE(Trace::always, e.what());
+			Server::forcedTerminate = true;
+			Connector::forcedTerminate = true;
+			kill(getpid(), SIGUSR1);
+		}
 
 		std::unique_lock<std::mutex> lock(emtx);
 		econd.wait(lock, [this]{return count == 0;});

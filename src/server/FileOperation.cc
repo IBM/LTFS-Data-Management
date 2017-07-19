@@ -29,10 +29,13 @@ bool FileOperation::queryResult(long reqNumber, long *resident,
 		}
 		sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 
+		if ( Server::finishTerminate == true )
+			done = true;
+
 		if ( done == false ) {
 			TRACE(Trace::full, reqNumber);
 			TRACE(Trace::full, (bool) Scheduler::updReq[reqNumber]);
-			Scheduler::updcond.wait(lock, [reqNumber]{return Scheduler::updReq[reqNumber] == true;});
+			Scheduler::updcond.wait(lock, [reqNumber]{return ((Server::finishTerminate == true) || (Scheduler::updReq[reqNumber] == true));});
 			Scheduler::updReq[reqNumber] = false;
 		}
 	} while(!done && time(NULL) - starttime < 10);

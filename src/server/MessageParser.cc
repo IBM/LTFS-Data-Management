@@ -332,7 +332,7 @@ void MessageParser::stopMessage(long key, LTFSDmCommServer *command, long localR
 		sqlite3_statement::prepare(ssql.str(), &stmt);
 
 		while ( (rc = sqlite3_statement::step(stmt)) == SQLITE_ROW ) {
-			if ( sqlite3_column_int(stmt, 0) != DataBase::REQ_COMPLETED ) {
+			if ( sqlite3_column_int(stmt, 0) == DataBase::REQ_INPROGRESS ) {
 				numreqs++;
 			}
 		}
@@ -375,8 +375,6 @@ void MessageParser::stopMessage(long key, LTFSDmCommServer *command, long localR
 	Scheduler::cond.notify_one();
 	lock.unlock();
 
-	Server::finishTerminate = true;
-	TRACE(Trace::always, (bool) Server::finishTerminate);
 	kill(getpid(), SIGUSR1);
 }
 

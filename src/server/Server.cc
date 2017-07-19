@@ -23,6 +23,11 @@ void Server::signalHandler(sigset_t set, long key)
 
 		MSG(LTFSDMS0049I, sig);
 
+		Server::finishTerminate = true;
+		TRACE(Trace::always, (bool) Server::finishTerminate);
+		std::lock_guard<std::mutex> updlock(Scheduler::updmtx);
+		Scheduler::updcond.notify_all();
+
 		LTFSDmCommClient commCommand;
 
 		try {
