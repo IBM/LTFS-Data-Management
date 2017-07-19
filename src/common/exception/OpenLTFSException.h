@@ -4,51 +4,54 @@ class OpenLTFSException: public std::exception
 
 {
 private:
-	std::stringstream info;
-	std::string infostr;
-	int error;
-
-	void addInfo() {}
+	static void addInfo(std::stringstream& info) {}
 
 	template<typename T>
-	void addInfo(T s)
+	static void addInfo(std::stringstream& info, T s)
 	{
 		info << "(" << s << ")";
 	}
 
 	template<typename T, typename ... Args>
-	void addInfo(T s, Args ... args )
+	static void addInfo(std::stringstream& info, T s, Args ... args )
 	{
 		info << "(" << s << ")";
-		addInfo(args ...);
+		addInfo(info, args ...);
 	}
+
+	struct exception_info_t {
+		int error;
+		std::string infostr;
+	};
+
+	exception_info_t exception_info;
 
 public:
-	OpenLTFSException( const OpenLTFSException& e ) : error(e.error)
-	{
-		info << e.info.str();
-	}
+	OpenLTFSException( const OpenLTFSException& e ) : exception_info(e.exception_info) {}
 
-    OpenLTFSException(const char *filename, int line, int error_) : error(error_)
-	{
-		info << filename << ":" << line;
-		infostr = info.str();
-	}
+    OpenLTFSException(exception_info_t exception_info_) : exception_info(exception_info_) {}
 
 	template<typename ... Args>
-	OpenLTFSException(const char *filename, int line, int error_, Args ... args) : error(error_)
+	static exception_info_t processArgs(const char *filename, int line, int error, Args ... args)
 	{
+		std::stringstream info;
+		exception_info_t exception_info;
+
+		exception_info.error = error;
 		info << filename << ":" << line;
-		addInfo(args ...);
-		infostr = info.str();
+		addInfo(info, args ...);
+		exception_info.infostr = info.str();
+
+		return exception_info;
 	}
 
-	const int getError() const { return error; }
+
+	const int getError() const { return exception_info.error; }
 
 	const char* what() const throw()
 	{
 		try {
-			return  infostr.c_str();
+			return  exception_info.infostr.c_str();
 		}
 		catch( const std::exception& e ) {
 			return "error providing exception information";
@@ -56,4 +59,4 @@ public:
 	}
 };
 
-#define EXCEPTION(args ...) OpenLTFSException(__FILE__, __LINE__, ##args)
+#define EXCEPTION(args ...) OpenLTFSException(OpenLTFSException::processArgs(__FILE__, __LINE__, ##args))
