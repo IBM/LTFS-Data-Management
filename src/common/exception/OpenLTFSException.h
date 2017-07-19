@@ -29,7 +29,7 @@ private:
 public:
 	OpenLTFSException( const OpenLTFSException& e ) : exception_info(e.exception_info) {}
 
-    OpenLTFSException(exception_info_t exception_info_) : exception_info(exception_info_) {}
+	OpenLTFSException(exception_info_t exception_info_) : exception_info(exception_info_) {}
 
 	template<typename ... Args>
 	static exception_info_t processArgs(const char *filename, int line, int error, Args ... args)
@@ -48,15 +48,7 @@ public:
 
 	const int getError() const { return exception_info.error; }
 
-	const char* what() const throw()
-	{
-		try {
-			return  exception_info.infostr.c_str();
-		}
-		catch( const std::exception& e ) {
-			return "error providing exception information";
-		}
-	}
+	const char* what() const noexcept { return exception_info.infostr.c_str(); }
 };
 
 #define EXCEPTION(args ...) OpenLTFSException(OpenLTFSException::processArgs(__FILE__, __LINE__, ##args))
