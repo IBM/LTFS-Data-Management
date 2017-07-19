@@ -425,6 +425,9 @@ void OpenLTFSInventory::check(std::string cartridgeid)
 OpenLTFSInventory::~OpenLTFSInventory()
 
 {
+	for ( std::shared_ptr<OpenLTFSDrive> drive : drives )
+		delete(drive->wqp);
+
 	LEControl::Disconnect(sess);
 }
 
