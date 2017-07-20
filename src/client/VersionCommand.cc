@@ -17,6 +17,7 @@
 #include "src/common/tracing/Trace.h"
 #include "src/common/errors/errors.h"
 
+#include "src/common/Version.h"
 #include "src/common/comm/ltfsdm.pb.h"
 #include "src/common/comm/LTFSDmComm.h"
 
@@ -48,5 +49,5 @@ void VersionCommand::doCommand(int argc, char **argv)
 		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
-	INFO(LTFSDMX0029I, COMMIT_COUNT, BUILD_HASH);
+	INFO(LTFSDMX0029I, OPENLTFS_VERSION);
 }

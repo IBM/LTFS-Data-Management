@@ -66,7 +66,7 @@ int main(int argc, char **argv)
 		if ( detach )
 			ltfsdmd.daemonize();
 
-		MSG(LTFSDMX0029I, COMMIT_COUNT, BUILD_HASH);
+		MSG(LTFSDMX0029I, OPENLTFS_VERSION);
 
 		inventory = new OpenLTFSInventory();
 		connector = new Connector(true);
