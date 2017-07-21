@@ -34,6 +34,8 @@ $(CLEANDIRS):
 
 
 prepare:
-	ln -sf ../../.hooks/pre-commit .git/hooks
-	ln -sf ../../.hooks/post-commit .git/hooks
-	ln -sf ../../.hooks/pre-push .git/hooks
+	@if [ -d ".git/hooks" ]; then \
+		ln -sf ../../.hooks/pre-commit .git/hooks; \
+		ln -sf ../../.hooks/post-commit .git/hooks; \
+		ln -sf ../../.hooks/pre-push .git/hooks; \
+	fi
