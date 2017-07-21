@@ -204,10 +204,13 @@ failed:
 Connector::~Connector()
 
 {
-	if ( dm_respond_event(dmapiSession, dmapiToken, DM_RESP_ABORT, EINTR, 0, NULL) == 1 )
-		TRACE(Trace::error, errno);
+	try {
+		if ( dm_respond_event(dmapiSession, dmapiToken, DM_RESP_ABORT, EINTR, 0, NULL) == 1 )
+			TRACE(Trace::error, errno);
 
-	dm_destroy_session(dmapiSession);
+		dm_destroy_session(dmapiSession);
+	}
+	catch ( ... ) {}
 }
 
 void recoverDisposition()

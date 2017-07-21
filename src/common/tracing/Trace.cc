@@ -16,8 +16,11 @@ Trace traceObject;
 Trace::~Trace()
 
 {
-	if ( tracefile.is_open() )
-		tracefile.close();
+	try {
+		if ( tracefile.is_open() )
+			tracefile.close();
+	}
+	catch ( ... ) {}
 }
 
 void Trace::setTrclevel(traceLevel level)

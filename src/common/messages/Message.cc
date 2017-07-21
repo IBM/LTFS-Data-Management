@@ -14,8 +14,11 @@ Message messageObject;
 Message::~Message()
 
 {
-	if (messagefile.is_open())
-		messagefile.close();
+	try {
+		if (messagefile.is_open())
+			messagefile.close();
+	}
+	catch( ... ) {}
 }
 
 void Message::init()

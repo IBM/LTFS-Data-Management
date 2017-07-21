@@ -425,10 +425,13 @@ void OpenLTFSInventory::check(std::string cartridgeid)
 OpenLTFSInventory::~OpenLTFSInventory()
 
 {
-	for ( std::shared_ptr<OpenLTFSDrive> drive : drives )
-		delete(drive->wqp);
+	try {
+		for ( std::shared_ptr<OpenLTFSDrive> drive : drives )
+			delete(drive->wqp);
 
-	LEControl::Disconnect(sess);
+		LEControl::Disconnect(sess);
+	}
+	catch ( ... ) {}
 }
 
 std::string OpenLTFSInventory::getMountPoint()

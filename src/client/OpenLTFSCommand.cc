@@ -21,11 +21,14 @@
 OpenLTFSCommand::~OpenLTFSCommand()
 
 {
-	std::ifstream filelist;
+	try {
+		std::ifstream filelist;
 
-	if ( fileListStrm.is_open() ) {
-		fileListStrm.close();
+		if ( fileListStrm.is_open() ) {
+			fileListStrm.close();
+		}
 	}
+	catch ( ... ) {}
 }
 
 void OpenLTFSCommand::processOptions(int argc, char **argv)

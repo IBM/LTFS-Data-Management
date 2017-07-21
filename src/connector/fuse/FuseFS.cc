@@ -1131,18 +1131,20 @@ FuseFS::FuseFS(std::string sourcedir, std::string mountpt, std::string fsName, s
 FuseFS::~FuseFS()
 
 {
-	MSG(LTFSDMF0007I);
-	fuse_exit(openltfs);
-	fuse_unmount(mountpt.c_str(), openltfsch);
-	//fuse_destroy(openltfs);
-	TRACE(Trace::always, mountpt);
-	TRACE(Trace::always, (bool) Connector::forcedTerminate);
-	if ( Connector::forcedTerminate )
-		fusefs->detach();
-	else
-		fusefs->join();
-	TRACE(Trace::always, mountpt);
-	TRACE(Trace::always, (bool) Connector::forcedTerminate);
-	delete(fusefs);
-	free(ctx);
+	try {
+		MSG(LTFSDMF0007I);
+		fuse_exit(openltfs);
+		fuse_unmount(mountpt.c_str(), openltfsch);
+		TRACE(Trace::always, mountpt);
+		TRACE(Trace::always, (bool) Connector::forcedTerminate);
+		if ( Connector::forcedTerminate )
+			fusefs->detach();
+		else
+			fusefs->join();
+		TRACE(Trace::always, mountpt);
+		TRACE(Trace::always, (bool) Connector::forcedTerminate);
+		delete(fusefs);
+		free(ctx);
+	}
+	catch ( ... ) {}
 }

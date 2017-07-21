@@ -54,14 +54,17 @@ Connector::Connector(bool cleanup)
 Connector::~Connector()
 
 {
-	std::string mountpt;
+	try {
+		std::string mountpt;
 
-	for(auto const& fn: FuseConnector::managedFss) {
-		mountpt = fn->getMountPoint();
-		delete(fn);
-		if ( rmdir(mountpt.c_str()) == -1 )
-			MSG(LTFSDMF0008W, mountpt.c_str());
+		for(auto const& fn: FuseConnector::managedFss) {
+			mountpt = fn->getMountPoint();
+			delete(fn);
+			if ( rmdir(mountpt.c_str()) == -1 )
+				MSG(LTFSDMF0008W, mountpt.c_str());
+		}
 	}
+	catch ( ... ) {}
 }
 
 void Connector::initTransRecalls()
@@ -163,12 +166,15 @@ FsObj::FsObj(Connector::rec_info_t recinfo)
 FsObj::~FsObj()
 
 {
-	FuseHandle *fh = (FuseHandle *) handle;
+	try {
+		FuseHandle *fh = (FuseHandle *) handle;
 
-	if ( fh->fd != -1 )
-		close(fh->fd);
+		if ( fh->fd != -1 )
+			close(fh->fd);
 
-	delete(fh);
+		delete(fh);
+	}
+	catch ( ... ) {}
 }
 
 bool FsObj::isFsManaged()
