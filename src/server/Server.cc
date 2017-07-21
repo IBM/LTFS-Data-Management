@@ -133,15 +133,15 @@ void Server::writeKey()
 void Server::initialize(bool dbUseMemory)
 
 {
-	if ( setrlimit(RLIMIT_NOFILE, &Const::NOFILE_LIMIT) == -1 ) {
-		MSG(LTFSDMS0046E);
-		throw(EXCEPTION(errno, errno));
-	}
+	// if ( setrlimit(RLIMIT_NOFILE, &Const::NOFILE_LIMIT) == -1 ) {
+	// 	MSG(LTFSDMS0046E);
+	// 	throw(EXCEPTION(errno, errno));
+	// }
 
-	if ( setrlimit(RLIMIT_NPROC, &Const::NPROC_LIMIT) == -1 ) {
-		MSG(LTFSDMS0046E);
-		throw(EXCEPTION(errno, errno));
-	}
+	// if ( setrlimit(RLIMIT_NPROC, &Const::NPROC_LIMIT) == -1 ) {
+	// 	MSG(LTFSDMS0046E);
+	// 	throw(EXCEPTION(errno, errno));
+	// }
 
 	lockServer();
 	writeKey();

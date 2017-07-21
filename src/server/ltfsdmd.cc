@@ -1,3 +1,4 @@
+#include "src/common/Version.h"
 #include "ServerIncludes.h"
 
 int main(int argc, char **argv)

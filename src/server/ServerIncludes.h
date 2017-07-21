@@ -27,7 +27,6 @@
 
 #include <sqlite3.h>
 
-#include "src/common/Version.h"
 #include "src/common/util/util.h"
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
