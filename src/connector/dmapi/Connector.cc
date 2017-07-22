@@ -30,6 +30,8 @@
 std::atomic<dm_sessid_t> dmapiSession;
 std::atomic<dm_token_t> dmapiToken;
 std::atomic<bool> Connector::connectorTerminate(false);
+std::atomic<bool> Connector::forcedTerminate(false);
+std::atomic<bool> Connector::recallEventSystemStopped(false);
 
 struct conn_info_t {
 	conn_info_t(dm_token_t _token) : token(_token) {}
@@ -376,6 +378,9 @@ void Connector::initTransRecalls()
 		throw(EXCEPTION(Const::UNSET, errno));
 	}
 }
+
+
+void Connector::endTransRecalls() {}
 
 Connector::rec_info_t Connector::getEvents()
 

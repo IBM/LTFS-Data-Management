@@ -285,6 +285,8 @@ int FuseFS::recall_file(FuseFS::ltfsdm_file_info *linfo, bool toresident)
 	TRACE(Trace::always, toresident);
 
 	std::unique_lock<std::mutex> lock(FuseFS::trecall_submit.mtx);
+	if ( Connector::recallEventSystemStopped == true )
+		return -1;
 	FuseFS::trecall_submit.wait_cond.wait(lock, [](){ return no_rec_event != false; });
 	no_rec_event = false;
 

@@ -25,9 +25,6 @@ void Server::signalHandler(sigset_t set, long key)
 
 		MSG(LTFSDMS0049I, sig);
 
-		std::lock_guard<std::mutex> updlock(Scheduler::updmtx);
-		Scheduler::updcond.notify_all();
-
 		LTFSDmCommClient commCommand;
 
 		try {
@@ -41,14 +38,12 @@ void Server::signalHandler(sigset_t set, long key)
 		TRACE(Trace::always, requestNumber);
 		bool finished = false;
 
-		Server::finishTerminate = true;
-		TRACE(Trace::always, (bool) Server::finishTerminate);
-
 		do {
 			LTFSDmProtocol::LTFSDmStopRequest *stopreq = commCommand.mutable_stoprequest();
 			stopreq->set_key(key);
 			stopreq->set_reqnumber(requestNumber);
 			stopreq->set_forced(false);
+			stopreq->set_finish(true);
 
 			try {
 				commCommand.send();

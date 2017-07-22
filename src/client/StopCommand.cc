@@ -50,6 +50,7 @@ void StopCommand::doCommand(int argc, char **argv)
 		stopreq->set_key(key);
 		stopreq->set_reqnumber(requestNumber);
 		stopreq->set_forced(forced);
+		stopreq->set_finish(false);
 
 		try {
 			commCommand.send();

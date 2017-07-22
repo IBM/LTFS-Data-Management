@@ -23,8 +23,6 @@ public:
 	void cleanup();
 	void open(bool dbUseMemory);
 	void createTables();
-	void beginTransaction();
-	void endTransaction();
 	int lastUpdates();
 	sqlite3 *getDB() { return db; }
 	static std::string opStr(operation op);

@@ -39,6 +39,7 @@
 
 std::atomic<bool> Connector::connectorTerminate(false);
 std::atomic<bool> Connector::forcedTerminate(false);
+std::atomic<bool> Connector::recallEventSystemStopped(false);
 
 namespace FuseConnector {
 	std::mutex mtx;
@@ -79,7 +80,13 @@ void Connector::initTransRecalls()
 
 {
 	FuseConnector::trecall_lock = new std::unique_lock<std::mutex>(FuseFS::trecall_submit.mtx);
+}
 
+void Connector::endTransRecalls()
+
+{
+	Connector::recallEventSystemStopped = true;
+	FuseConnector::trecall_lock->unlock();
 }
 
 Connector::rec_info_t Connector::getEvents()

@@ -12,7 +12,7 @@ private:
 	static void selRecallMessage(long key, LTFSDmCommServer *command, long localReqNumber);
 	static void infoFilesMessage(long key, LTFSDmCommServer *command, long localReqNumber);
 	static void requestNumber(long key, LTFSDmCommServer *command, long *localReqNumber);
-	static void stopMessage(long key, LTFSDmCommServer *command, long localReqNumber);
+	static void stopMessage(long key, LTFSDmCommServer *command, std::unique_lock<std::mutex> *reclock, long localReqNumber);
 	static void statusMessage(long key, LTFSDmCommServer *command, long localReqNumber);
 	static void addMessage(long key, LTFSDmCommServer *command, long localReqNumber, Connector *connector);
 	static void infoRequestsMessage(long key, LTFSDmCommServer *command, long localReqNumber);

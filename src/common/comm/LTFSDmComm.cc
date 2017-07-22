@@ -130,7 +130,10 @@ ssize_t readx(int fd, char *buffer, size_t size)
     while (bread < size)
     {
         rsize = read(fd, buffer + bread, size - bread);
-        if (rsize == -1 ) {
+		if ( rsize == 0 ) {
+			break;
+		}
+        else if (rsize == -1 ) {
 			TRACE(Trace::error, errno);
             return -1;
 		}

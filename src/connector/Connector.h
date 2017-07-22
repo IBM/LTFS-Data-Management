@@ -15,11 +15,13 @@ public:
 	};
 	static std::atomic<bool> connectorTerminate;
 	static std::atomic<bool> forcedTerminate;
+	static std::atomic<bool> recallEventSystemStopped;
 
 	Connector(bool cleanup_);
 	~Connector();
 	struct timespec getStartTime() { return starttime; }
 	void initTransRecalls();
+	void endTransRecalls();
 	rec_info_t getEvents();
 	static void respondRecallEvent(rec_info_t recinfo, bool success);
 	void terminate();

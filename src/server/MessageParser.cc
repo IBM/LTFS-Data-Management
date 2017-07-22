@@ -30,8 +30,6 @@ void MessageParser::getObjects(LTFSDmCommServer *command, long localReqNumber,
 
 		const LTFSDmProtocol::LTFSDmSendObjects sendobjects = command->sendobjects();
 
-		DB.beginTransaction();
-
 		for (int j = 0; j < sendobjects.filenames_size(); j++) {
 			if ( Server::terminate == true ) {
 				command->closeAcc();
@@ -58,8 +56,6 @@ void MessageParser::getObjects(LTFSDmCommServer *command, long localReqNumber,
 				cont = false; // END
 			}
 		}
-
-		DB.endTransaction();
 
 		LTFSDmProtocol::LTFSDmSendObjectsResp *sendobjresp = command->mutable_sendobjectsresp();
 
@@ -298,7 +294,7 @@ void MessageParser::requestNumber(long key, LTFSDmCommServer *command, long *loc
 
 }
 
-void MessageParser::stopMessage(long key, LTFSDmCommServer *command, long localReqNumber)
+void MessageParser::stopMessage(long key, LTFSDmCommServer *command, std::unique_lock<std::mutex> *reclock, long localReqNumber)
 
 {
 	TRACE(Trace::always, __PRETTY_FUNCTION__);
@@ -323,10 +319,20 @@ void MessageParser::stopMessage(long key, LTFSDmCommServer *command, long localR
 		Server::forcedTerminate = true;
 		Connector::forcedTerminate = true;
 	}
+
+	if ( stopreq.finish() ) {
+		Server::finishTerminate = true;
+		std::lock_guard<std::mutex> updlock(Scheduler::updmtx);
+		Scheduler::updcond.notify_all();
+	}
+
+	Server::termcond.notify_one();
+	reclock->unlock();
+
 	do {
 		numreqs = 0;
 
-		if ( Server::forcedTerminate == false ) {
+		if ( Server::forcedTerminate == false &&  Server::finishTerminate == false ) {
 			std::stringstream ssql;
 
 			ssql << "SELECT STATE FROM REQUEST_QUEUE";
@@ -1061,58 +1067,60 @@ void MessageParser::run(long key, LTFSDmCommServer command, Connector *connector
 			requestNumber(key, &command, &localReqNumber);
 		}
 		else {
-			if ( firstTime ) {
-				Server::termcond.notify_one();
-				lock.unlock();
-				firstTime = false;
-			}
 			if ( command.has_stoprequest() ) {
-				stopMessage(key, &command, localReqNumber);
-			}
-			else if ( command.has_migrequest() ) {
-				migrationMessage(key, &command, localReqNumber);
-			}
-			else if ( command.has_selrecrequest() ) {
-				selRecallMessage(key, &command, localReqNumber);
-			}
-			else if ( command.has_statusrequest() ) {
-				statusMessage(key, &command, localReqNumber);
-			}
-			else if ( command.has_addrequest() ) {
-				addMessage(key, &command, localReqNumber, connector);
-			}
-			else if ( command.has_inforequestsrequest() ) {
-				infoRequestsMessage(key, &command, localReqNumber);
-			}
-			else if ( command.has_infojobsrequest() ) {
-				infoJobsMessage(key, &command, localReqNumber);
-			}
-			else if ( command.has_infodrivesrequest() ) {
-				infoDrivesMessage(key, &command);
-			}
-			else if ( command.has_infotapesrequest() ) {
-				infoTapesMessage(key, &command);
-			}
-			else if ( command.has_poolcreaterequest() ) {
-				poolCreateMessage(key, &command);
-			}
-			else if ( command.has_pooldeleterequest() ) {
-				poolDeleteMessage(key, &command);
-			}
-			else if ( command.has_pooladdrequest() ) {
-				poolAddMessage(key, &command);
-			}
-			else if ( command.has_poolremoverequest() ) {
-				poolRemoveMessage(key, &command);
-			}
-			else if ( command.has_infopoolsrequest() ) {
-				infoPoolsMessage(key, &command);
-			}
-			else if ( command.has_retrieverequest() ) {
-				retrieveMessage(key, &command);
+				stopMessage(key, &command, &lock, localReqNumber);
 			}
 			else {
-				TRACE(Trace::error, "unkown command\n");
+				if ( firstTime ) {
+					Server::termcond.notify_one();
+					lock.unlock();
+					firstTime = false;
+				}
+				if ( command.has_migrequest() ) {
+					migrationMessage(key, &command, localReqNumber);
+				}
+				else if ( command.has_selrecrequest() ) {
+					selRecallMessage(key, &command, localReqNumber);
+				}
+				else if ( command.has_statusrequest() ) {
+					statusMessage(key, &command, localReqNumber);
+				}
+				else if ( command.has_addrequest() ) {
+					addMessage(key, &command, localReqNumber, connector);
+				}
+				else if ( command.has_inforequestsrequest() ) {
+					infoRequestsMessage(key, &command, localReqNumber);
+				}
+				else if ( command.has_infojobsrequest() ) {
+					infoJobsMessage(key, &command, localReqNumber);
+				}
+				else if ( command.has_infodrivesrequest() ) {
+					infoDrivesMessage(key, &command);
+				}
+				else if ( command.has_infotapesrequest() ) {
+					infoTapesMessage(key, &command);
+				}
+				else if ( command.has_poolcreaterequest() ) {
+					poolCreateMessage(key, &command);
+				}
+				else if ( command.has_pooldeleterequest() ) {
+					poolDeleteMessage(key, &command);
+				}
+				else if ( command.has_pooladdrequest() ) {
+					poolAddMessage(key, &command);
+				}
+				else if ( command.has_poolremoverequest() ) {
+					poolRemoveMessage(key, &command);
+				}
+				else if ( command.has_infopoolsrequest() ) {
+					infoPoolsMessage(key, &command);
+				}
+				else if ( command.has_retrieverequest() ) {
+					retrieveMessage(key, &command);
+				}
+				else {
+					TRACE(Trace::error, "unkown command\n");
+				}
 			}
 			break;
 		}

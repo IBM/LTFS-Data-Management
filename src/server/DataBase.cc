@@ -146,35 +146,6 @@ void DataBase::createTables()
 	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 }
 
-void DataBase::beginTransaction()
-{
-	int rc;
-
-	trans_mutex.lock();
-	rc = sqlite3_exec(db, "BEGIN TRANSACTION;", NULL, NULL, NULL);
-
-	if( rc != SQLITE_OK ) {
-		trans_mutex.unlock();
-		TRACE(Trace::error, rc);
-		throw(EXCEPTION(rc, rc));
-	}
-}
-
-void DataBase::endTransaction()
-{
-	int rc;
-
-	rc = sqlite3_exec(db, "END TRANSACTION;", NULL, NULL, NULL);
-
-	trans_mutex.unlock();
-
-	if( rc != SQLITE_OK ) {
-		TRACE(Trace::error, rc);
-		throw(EXCEPTION(rc, rc));
-	}
-}
-
-
 std::string DataBase::opStr(DataBase::operation op)
 
 {

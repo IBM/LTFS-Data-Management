@@ -117,6 +117,44 @@ void TransRecall::addRequest(Connector::rec_info_t recinfo, std::string tapeId, 
 	}
 }
 
+void TransRecall::cleanupEvents()
+
+{
+	Connector::rec_info_t recinfo;
+	std::stringstream ssql;
+	sqlite3_stmt *stmt;
+	int rc;
+
+	ssql << "SELECT FS_ID, I_GEN, I_NUM, FILE_NAME, CONN_INFO  FROM JOB_QUEUE "
+		 << "WHERE OPERATION=" << DataBase::TRARECALL;
+
+	TRACE(Trace::normal, ssql.str());
+
+	sqlite3_statement::prepare(ssql.str(), &stmt);
+
+	while ( (rc = sqlite3_statement::step(stmt) ) ) {
+		if ( rc != SQLITE_ROW )
+			break;
+
+		recinfo = (Connector::rec_info_t) {0, 0, 0, 0, 0, ""};
+		recinfo.fsid = (unsigned long long) sqlite3_column_int64(stmt, 0);
+		recinfo.igen = (unsigned int) sqlite3_column_int(stmt, 1);
+		recinfo.ino = (unsigned long long) sqlite3_column_int64(stmt, 2);
+		const char *cstr = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3));
+		if ( cstr != NULL )
+			recinfo.filename = std::string(cstr);
+		recinfo.conn_info = (struct conn_info_t *) sqlite3_column_int64(stmt, 4);
+
+		TRACE(Trace::always, recinfo.filename);
+		TRACE(Trace::always, recinfo.ino);
+
+		Connector::respondRecallEvent(recinfo, false);
+	}
+
+	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+}
+
+
 void TransRecall::run(Connector *connector)
 
 {
@@ -232,6 +270,8 @@ void TransRecall::run(Connector *connector)
 
 	MSG(LTFSDMS0083I);
 	subs.waitAllRemaining();
+	connector->endTransRecalls();
+	cleanupEvents();
 	MSG(LTFSDMS0084I);
 }
 
