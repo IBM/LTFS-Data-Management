@@ -396,5 +396,7 @@ void Scheduler::run(long key)
 		}
 		sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 	}
+	MSG(LTFSDMS0081I);
 	subs.waitAllRemaining();
+	MSG(LTFSDMS0082I);
 }

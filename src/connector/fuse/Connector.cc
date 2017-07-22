@@ -1,4 +1,5 @@
 #include <sys/types.h>
+#include <signal.h>
 #include <sys/stat.h>
 #include <sys/mount.h>
 #include <linux/fs.h>
@@ -45,7 +46,7 @@ namespace FuseConnector {
 	std::unique_lock<std::mutex> *trecall_lock;
 };
 
-Connector::Connector(bool cleanup)
+Connector::Connector(bool cleanup_) : cleanup(cleanup_)
 
 {
 	clock_gettime(CLOCK_REALTIME, &starttime);
@@ -57,14 +58,21 @@ Connector::~Connector()
 	try {
 		std::string mountpt;
 
+		if ( cleanup )
+			MSG(LTFSDMS0077I);
+
 		for(auto const& fn: FuseConnector::managedFss) {
 			mountpt = fn->getMountPoint();
 			delete(fn);
 			if ( rmdir(mountpt.c_str()) == -1 )
 				MSG(LTFSDMF0008W, mountpt.c_str());
 		}
+		if ( cleanup )
+			MSG(LTFSDMS0078I);
 	}
-	catch ( ... ) {}
+	catch ( ... ) {
+		kill(getpid(), SIGTERM);
+	}
 }
 
 void Connector::initTransRecalls()
@@ -174,7 +182,9 @@ FsObj::~FsObj()
 
 		delete(fh);
 	}
-	catch ( ... ) {}
+	catch ( ... ) {
+		kill(getpid(), SIGTERM);
+	}
 }
 
 bool FsObj::isFsManaged()

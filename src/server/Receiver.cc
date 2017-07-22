@@ -46,6 +46,8 @@ void Receiver::run(long key, Connector *connector)
 			Server::termcond.wait_for(lock, std::chrono::seconds(30));
 	}
 
+	MSG(LTFSDMS0075I);
+
 	TRACE(Trace::always, (bool) Server::finishTerminate);
 
 	lock.unlock();
@@ -56,4 +58,6 @@ void Receiver::run(long key, Connector *connector)
 	command.closeRef();
 
 	connector->terminate();
+
+	MSG(LTFSDMS0076I);
 }

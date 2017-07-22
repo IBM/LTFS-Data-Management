@@ -9,6 +9,7 @@
 #include <dirent.h>
 #include <sys/time.h>
 #include <sys/types.h>
+#include <signal.h>
 #include <sys/xattr.h>
 #include <sys/ioctl.h>
 #include <sys/resource.h>
@@ -1132,6 +1133,7 @@ FuseFS::~FuseFS()
 
 {
 	try {
+		MSG(LTFSDMS0079I, mountpt.c_str());
 		MSG(LTFSDMF0007I);
 		fuse_exit(openltfs);
 		fuse_unmount(mountpt.c_str(), openltfsch);
@@ -1145,6 +1147,9 @@ FuseFS::~FuseFS()
 		TRACE(Trace::always, (bool) Connector::forcedTerminate);
 		delete(fusefs);
 		free(ctx);
+		MSG(LTFSDMS0080I, mountpt.c_str());
 	}
-	catch ( ... ) {}
+	catch ( ... ) {
+		kill(getpid(), SIGTERM);
+	}
 }

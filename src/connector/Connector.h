@@ -3,6 +3,7 @@
 class Connector {
 private:
 	struct timespec starttime;
+	bool cleanup;
 public:
 	struct rec_info_t {
 		struct conn_info_t *conn_info;
@@ -15,7 +16,7 @@ public:
 	static std::atomic<bool> connectorTerminate;
 	static std::atomic<bool> forcedTerminate;
 
-	Connector(bool cleanup);
+	Connector(bool cleanup_);
 	~Connector();
 	struct timespec getStartTime() { return starttime; }
 	void initTransRecalls();

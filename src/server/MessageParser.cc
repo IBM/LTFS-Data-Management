@@ -324,22 +324,25 @@ void MessageParser::stopMessage(long key, LTFSDmCommServer *command, long localR
 		Connector::forcedTerminate = true;
 	}
 	do {
-		std::stringstream ssql;
-
 		numreqs = 0;
-		ssql << "SELECT STATE FROM REQUEST_QUEUE";
 
-		sqlite3_statement::prepare(ssql.str(), &stmt);
+		if ( Server::forcedTerminate == false ) {
+			std::stringstream ssql;
 
-		while ( (rc = sqlite3_statement::step(stmt)) == SQLITE_ROW ) {
-			if ( sqlite3_column_int(stmt, 0) == DataBase::REQ_INPROGRESS ) {
-				numreqs++;
+			ssql << "SELECT STATE FROM REQUEST_QUEUE";
+
+			sqlite3_statement::prepare(ssql.str(), &stmt);
+
+			while ( (rc = sqlite3_statement::step(stmt)) == SQLITE_ROW ) {
+				if ( sqlite3_column_int(stmt, 0) == DataBase::REQ_INPROGRESS ) {
+					numreqs++;
+				}
 			}
+
+			TRACE(Trace::always, numreqs);
+
+			sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 		}
-
-		TRACE(Trace::always, numreqs);
-
-		sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 
 		LTFSDmProtocol::LTFSDmStopResp *stopresp = command->mutable_stopresp();
 
@@ -368,8 +371,6 @@ void MessageParser::stopMessage(long key, LTFSDmCommServer *command, long localR
 	while ( numreqs > 0 );
 
 	TRACE(Trace::always, numreqs);
-
-	command->closeRef();
 
 	std::unique_lock<std::mutex> lock(Scheduler::mtx);
 	Scheduler::cond.notify_one();

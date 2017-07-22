@@ -431,7 +431,10 @@ OpenLTFSInventory::~OpenLTFSInventory()
 
 		LEControl::Disconnect(sess);
 	}
-	catch ( ... ) {}
+	catch ( ... ) {
+		Server::forcedTerminate = true;
+		kill(getpid(), SIGUSR1);
+	}
 }
 
 std::string OpenLTFSInventory::getMountPoint()

@@ -1,3 +1,5 @@
+#include <sys/types.h>
+#include <signal.h>
 #include <sys/resource.h>
 
 #include <iostream>
@@ -18,7 +20,9 @@ Message::~Message()
 		if (messagefile.is_open())
 			messagefile.close();
 	}
-	catch( ... ) {}
+	catch( ... ) {
+		kill(getpid(), SIGTERM);
+	}
 }
 
 void Message::init()

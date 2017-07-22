@@ -1,3 +1,5 @@
+#include <sys/types.h>
+#include <signal.h>
 #include <sys/resource.h>
 
 #include <iostream>
@@ -20,7 +22,9 @@ Trace::~Trace()
 		if ( tracefile.is_open() )
 			tracefile.close();
 	}
-	catch ( ... ) {}
+	catch ( ... ) {
+		kill(getpid(), SIGTERM);
+	}
 }
 
 void Trace::setTrclevel(traceLevel level)

@@ -230,7 +230,9 @@ void TransRecall::run(Connector *connector)
 		subs.enqueue(thrdinfo.str(), TransRecall::addRequest, recinfo, tapeId, reqmap[tapeId]);
 	}
 
+	MSG(LTFSDMS0083I);
 	subs.waitAllRemaining();
+	MSG(LTFSDMS0084I);
 }
 
 

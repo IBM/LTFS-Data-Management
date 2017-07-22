@@ -21,10 +21,10 @@ void Server::signalHandler(sigset_t set, long key)
             continue;
         }
 
+		MSG(LTFSDMS0085I);
+
 		MSG(LTFSDMS0049I, sig);
 
-		Server::finishTerminate = true;
-		TRACE(Trace::always, (bool) Server::finishTerminate);
 		std::lock_guard<std::mutex> updlock(Scheduler::updmtx);
 		Scheduler::updcond.notify_all();
 
@@ -35,11 +35,14 @@ void Server::signalHandler(sigset_t set, long key)
 		}
 		catch(const std::exception& e) {
 			TRACE(Trace::error, e.what());
-			return;
+			goto end;
 		}
 
 		TRACE(Trace::always, requestNumber);
 		bool finished = false;
+
+		Server::finishTerminate = true;
+		TRACE(Trace::always, (bool) Server::finishTerminate);
 
 		do {
 			LTFSDmProtocol::LTFSDmStopRequest *stopreq = commCommand.mutable_stoprequest();
@@ -52,7 +55,7 @@ void Server::signalHandler(sigset_t set, long key)
 			}
 			catch(const std::exception& e) {
 				TRACE(Trace::error, e.what());
-				return;
+				goto end;
 			}
 
 			try {
@@ -60,7 +63,7 @@ void Server::signalHandler(sigset_t set, long key)
 			}
 			catch(const std::exception& e) {
 				TRACE(Trace::error, e.what());
-				return;
+				goto end;
 			}
 
 			const LTFSDmProtocol::LTFSDmStopResp stopresp = commCommand.stopresp();
@@ -75,9 +78,12 @@ void Server::signalHandler(sigset_t set, long key)
 			}
 		} while (true);
 
-		if ( sig == SIGUSR1 && Server::finishTerminate )
-		 	return;
+		if ( sig == SIGUSR1 )
+		 	goto end;
 	}
+
+end:
+	MSG(LTFSDMS0086I);
 }
 
 void Server::lockServer()
@@ -210,11 +216,13 @@ void Server::run(Connector *connector, sigset_t set)
 		(&Migration::stub, Const::NUM_STUBBING_THREADS, "stub-wq");
 
 	subs.enqueue("Scheduler", &Scheduler::run, &sched, key);
-	subs.enqueue("Receiver", &Receiver::run, &recv, key, connector);
 	subs.enqueue("Signal Handler", &Server::signalHandler, set, key);
+	subs.enqueue("Receiver", &Receiver::run, &recv, key, connector);
 	subs.enqueue("RecallD", &TransRecall::run, &trec, connector);
 
 	subs.waitAllRemaining();
+
+	MSG(LTFSDMS0087I);
 
 	TRACE(Trace::always, (bool) Server::terminate);
 	TRACE(Trace::always, (bool) Server::forcedTerminate);
@@ -224,4 +232,6 @@ void Server::run(Connector *connector, sigset_t set)
 		drive->wqp->terminate();
 
 	Scheduler::wqs->terminate();
+
+	MSG(LTFSDMS0088I);
 }

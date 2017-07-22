@@ -1,4 +1,5 @@
 #include <sys/types.h>
+#include <signal.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <string.h>
@@ -161,7 +162,7 @@ void dmapiSessionCleanup(dm_sessid_t *oldSid)
 		free(tokbufp);
 }
 
-Connector::Connector(bool cleanup)
+Connector::Connector(bool cleanup_) : cleanup(cleanup_)
 
 {
 	char          *version          = NULL;
@@ -205,12 +206,18 @@ Connector::~Connector()
 
 {
 	try {
+		if ( cleanup )
+			MSG(LTFSDMS0077I);
 		if ( dm_respond_event(dmapiSession, dmapiToken, DM_RESP_ABORT, EINTR, 0, NULL) == 1 )
 			TRACE(Trace::error, errno);
 
 		dm_destroy_session(dmapiSession);
+		if ( cleanup )
+			MSG(LTFSDMS0078I);
 	}
-	catch ( ... ) {}
+	catch ( ... ) {
+		kill(getpid(), SIGTERM);
+	}
 }
 
 void recoverDisposition()
