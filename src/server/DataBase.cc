@@ -285,8 +285,6 @@ void SQLStatement::finalize()
 	}
 }
 
-
-
 void SQLStatement::doall()
 
 {
