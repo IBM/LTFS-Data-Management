@@ -42,4 +42,27 @@ public:
 	Scheduler() {}
 	~Scheduler() {};
 	void run(long key);
+
+	const std::string SELECT_REQUEST =
+		"SELECT OPERATION, REQ_NUM, TARGET_STATE, NUM_REPL,"
+		" REPL_NUM, TAPE_POOL, TAPE_ID"
+		" FROM REQUEST_QUEUE WHERE STATE=%1%"
+		" ORDER BY OPERATION,TIME_ADDED ASC";
+
+	const std::string UPDATE_MIG_REQUEST =
+		"UPDATE REQUEST_QUEUE SET STATE=%1%"
+		" WHERE REQ_NUM=%2%"
+		" AND REPL_NUM=%3%"
+		" AND TAPE_POOL='%4%'";
+
+	const std::string UPDATE_REC_REQUEST =
+		"UPDATE REQUEST_QUEUE SET STATE=%1%"
+		" WHERE REQ_NUM=%2%"
+		" AND TAPE_ID='%3%'";
+
+	const std::string SMALLEST_MIG_JOB =
+		"SELECT MIN(FILE_SIZE) FROM JOB_QUEUE WHERE"
+		" REQ_NUM=%1%"
+		" AND FILE_STATE=%2%"
+		" AND REPL_NUM=%3%";
 };

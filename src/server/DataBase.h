@@ -36,3 +36,59 @@ namespace sqlite3_statement {
 	int step(sqlite3_stmt *stmt);
 	void checkRcAndFinalize(sqlite3_stmt *stmt, int rc, int expected);
 }
+
+
+class SQLStatement {
+private:
+	sqlite3_stmt *stmt;
+	std::string stmt_str;
+	int stmt_rc;
+
+	void getColumn(int *result, int column);
+	void getColumn(long *result, int column);
+	void getColumn(std::string *result, int column);
+
+	void eval(int column) {}
+
+	template<typename T>
+	void eval(int column, T s)
+	{
+		getColumn(s, column);
+	}
+
+	template<typename T, typename ... Args>
+	void eval(int column, T s, Args ... args)
+	{
+		getColumn(s, column);
+		column++;
+		eval(column, args ...);
+	}
+
+public:
+	SQLStatement() : stmt_str(""), stmt_rc(0) {}
+	SQLStatement(boost::basic_format<char>& fmt) : stmt_str(fmt.str()) {}
+	~SQLStatement() {}
+
+	void operator<< (boost::basic_format<char>& fmt) { stmt_str = fmt.str(); }
+
+	void prepare();
+
+	template<typename ... Args>
+	bool step(Args ... args)
+	{
+		int column = 0;
+
+		stmt_rc = sqlite3_step(stmt);
+
+		if ( stmt_rc != SQLITE_ROW )
+			return false;
+
+		eval(column, args ...);
+
+		return true;
+	}
+
+	void finalize();
+
+	void doall();
+};

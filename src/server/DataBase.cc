@@ -184,6 +184,7 @@ int DataBase::lastUpdates()
 	return sqlite3_changes(db);
 }
 
+// OLD: -- begin --
 
 void sqlite3_statement::prepare(std::string sql, sqlite3_stmt **stmt)
 
@@ -223,4 +224,73 @@ void sqlite3_statement::checkRcAndFinalize(sqlite3_stmt *stmt, int rc, int expec
 		TRACE(Trace::error, rc);
 		throw(EXCEPTION(rc, rc));
 	}
+}
+
+
+// OLD: -- END --
+
+
+void SQLStatement::prepare()
+
+{
+	int rc;
+
+	rc = sqlite3_prepare_v2(DB.getDB(), stmt_str.c_str(), -1, &stmt, NULL);
+
+	if( rc != SQLITE_OK ) {
+		TRACE(Trace::error, stmt_str);
+		TRACE(Trace::error, rc);
+		throw(EXCEPTION(rc, rc));
+	}
+}
+
+void SQLStatement::getColumn(int *result, int column)
+
+{
+	*result = sqlite3_column_int(stmt, column);
+}
+
+void SQLStatement::getColumn(long *result, int column)
+
+{
+	*result = sqlite3_column_int64(stmt, column);
+}
+
+void SQLStatement::getColumn(std::string *result, int column)
+
+{
+	const char *column_ctr = reinterpret_cast<const char*>(sqlite3_column_text (stmt, column));
+	if ( column_ctr != NULL)
+		*result = std::string(column_ctr);
+	else
+		*result = "";
+}
+
+void SQLStatement::finalize()
+
+{
+	if ( stmt_rc != SQLITE_ROW &&
+		 stmt_rc != SQLITE_DONE ) {
+		TRACE(Trace::error, stmt_str);
+		TRACE(Trace::error, stmt_rc);
+		throw(EXCEPTION(stmt_rc, stmt_rc));
+	}
+
+	int rc = sqlite3_finalize(stmt);
+
+	if ( rc != SQLITE_OK ) {
+		TRACE(Trace::error, stmt_str);
+		TRACE(Trace::error, rc);
+		throw(EXCEPTION(rc, rc));
+	}
+}
+
+
+
+void SQLStatement::doall()
+
+{
+	prepare();
+	step();
+	finalize();
 }
