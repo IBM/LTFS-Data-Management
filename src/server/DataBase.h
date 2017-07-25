@@ -45,7 +45,9 @@ private:
 	int stmt_rc;
 
 	void getColumn(int *result, int column);
+	void getColumn(DataBase::operation *result, int column);
 	void getColumn(long *result, int column);
+	void getColumn(unsigned long *result, int column);
 	void getColumn(std::string *result, int column);
 
 	void eval(int column) {}

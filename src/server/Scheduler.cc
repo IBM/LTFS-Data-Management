@@ -266,7 +266,7 @@ unsigned long Scheduler::smallestMigJob(int reqNum, int replNum)
 
 	SQLStatement stmt(boost::format( Scheduler::SMALLEST_MIG_JOB ) % reqNum % FsObj::RESIDENT % replNum);
 	stmt.prepare();
-	stmt.step((long*) &min);
+	stmt.step(&min);
 	stmt.finalize();
 
 	return min;
@@ -294,7 +294,7 @@ void Scheduler::run(long key)
 		selstmt << boost::format( Scheduler::SELECT_REQUEST ) % DataBase::REQ_NEW;
 
 		selstmt.prepare();
-		while ( selstmt.step((int*) &op, &reqNum, &tgtState, &numRepl, &replNum, &pool, &tapeId) ) {
+		while ( selstmt.step(&op, &reqNum, &tgtState, &numRepl, &replNum, &pool, &tapeId) ) {
 			std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
 
 			if (op == DataBase::MIGRATION)
