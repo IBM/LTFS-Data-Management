@@ -278,6 +278,35 @@ void SQLStatement::getColumn(std::string *result, int column)
 		*result = "";
 }
 
+std::string SQLStatement::str()
+
+{
+	return stmt_str;
+}
+
+
+void SQLStatement::bind(int num, int value)
+
+{
+	int rc;
+
+	if ( (rc = sqlite3_bind_int(stmt, num, value)) != SQLITE_OK ) {
+		TRACE(Trace::error, rc);
+		EXCEPTION(rc);
+	}
+}
+
+void SQLStatement::bind(int num, std::string value)
+
+{
+	int rc;
+
+	if ( (rc = sqlite3_bind_text(stmt, num, value.c_str(), value.size(), 0)) != SQLITE_OK ) {
+		TRACE(Trace::error, rc);
+		EXCEPTION(rc);
+	}
+}
+
 void SQLStatement::finalize()
 
 {

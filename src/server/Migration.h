@@ -13,6 +13,22 @@ private:
 		bool remaining;
 		bool suspended;
 	};
+
+	FsObj::file_state checkState(std::string fileName, FsObj *fso);
+
+    static const std::string ADD_MIGRATION_JOB;
+	static const std::string ADD_MIGRATION_REQUEST;
+	static const std::string FAIL_PREMIGRATION;
+	static const std::string FAIL_STUBBING;
+	static const std::string SET_PREMIGRATING;
+	static const std::string SET_STUBBING;
+	static const std::string SELECT_MIG_JOBS;
+	static const std::string SET_MIG_SUCCESS;
+	static const std::string SET_MIG_RESET;
+	static const std::string FAIL_PREMIGRATED;
+	static const std::string UPDATE_MIG_REQUEST;
+	static const std::string UPDATE_MIG_REQUEST_RESET_TAPE;
+
 public:
 	struct mig_info_t {
 		std::string fileName;
@@ -27,6 +43,7 @@ public:
 	static std::mutex pmigmtx;
 
 private:
+	static std::string genInumString(std::shared_ptr<std::list<unsigned long>> inumList);
 	static req_return_t migrationStep(int reqNumber, int numRepl, int replNum, std::string tapeId,
 									  FsObj::file_state fromState, FsObj::file_state toState);
 public:

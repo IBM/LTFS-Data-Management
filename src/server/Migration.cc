@@ -2,139 +2,194 @@
 
 std::mutex Migration::pmigmtx;
 
+const std::string Migration::ADD_MIGRATION_JOB =
+	"INSERT INTO JOB_QUEUE (OPERATION, FILE_NAME, REQ_NUM, TARGET_STATE, REPL_NUM, TAPE_POOL, "
+	"FILE_SIZE, FS_ID, I_GEN, I_NUM, MTIME_SEC, MTIME_NSEC, LAST_UPD, TAPE_ID, FILE_STATE) "
+	"VALUES (" /* OPERATION */ "%1%, " /* FILE_NAME */ "'%2%', " /* REQ_NUM */ "%3%, "
+	/* MIGRATION_STATE */ "%4%, " /* REPL_NUM */ "?, " /* TAPE_POOL */"?, "
+	/* FILE_SIZE */ "%5%, " /* FS_ID */ "%6%, " /* I_GEN */ "%7%, " /* I_NUM */ "%8%, "
+	/* MTIME_SEC */ "%9%, " /* MTIME_NSEC */ "%10%, " /* LAST_UPD */ "%11%, "
+	/* TAPE_ID */ "'', " /* FILE_STATE */ "%12%)";
+
+const  std::string Migration::ADD_MIGRATION_REQUEST =
+	"INSERT INTO REQUEST_QUEUE (OPERATION, REQ_NUM, TARGET_STATE, "
+	"NUM_REPL, REPL_NUM, TAPE_POOL, TAPE_ID, TIME_ADDED, STATE) "
+	"VALUES (" /* OPERATION */  "%1%, " /* FILE_NAME */ "%2%, " /* TARGET_STATE */ "%3%, "
+	/* NUM_REPL */  "%4%, " /* REPL_NUM */  "%5%, " /* TAPE_POOL */ "'%6%', "
+	/* TAPE_ID */ "'', " /* TIME_ADDED */ "%7%, " /* STATE */ "%8%);";
+
+const std::string Migration::FAIL_PREMIGRATION =
+	"UPDATE JOB_QUEUE SET FILE_STATE=%1%"
+	" WHERE REQ_NUM=%2%"
+	" AND FILE_NAME='%3%'"
+	" AND REPL_NUM=%4%";
+
+const std::string Migration::FAIL_STUBBING =
+	"UPDATE JOB_QUEUE SET FILE_STATE=%1%"
+	" WHERE REQ_NUM=%2%"
+	" AND FILE_NAME='%3%'";
+
+const std::string Migration::SET_PREMIGRATING =
+	"UPDATE JOB_QUEUE SET FILE_STATE=%1%"
+	", TAPE_ID='%2%'"
+	" WHERE REQ_NUM=%3%"
+	" AND FILE_STATE=%4%"
+	" AND REPL_NUM=%5%"
+	" AND FITS(I_NUM, FILE_SIZE, %6%, %7%, %8%)=1";
+
+const std::string Migration::SET_STUBBING =
+	"UPDATE JOB_QUEUE SET FILE_STATE=%1%"
+	" WHERE REQ_NUM=%2%"
+	" AND FILE_STATE=%3%"
+	" AND TAPE_ID='%4%'"
+	" AND REPL_NUM=%5%";
+
+const std::string Migration::SELECT_MIG_JOBS =
+	"SELECT FILE_NAME, MTIME_SEC, MTIME_NSEC, I_NUM FROM JOB_QUEUE WHERE"
+	" REQ_NUM=%1%"
+	" AND FILE_STATE=%2%"
+	" AND TAPE_ID='%3%'";
+
+const std::string Migration::SET_MIG_SUCCESS =
+	"UPDATE JOB_QUEUE SET FILE_STATE=%1%"
+	" WHERE REQ_NUM=%2%"
+	" AND FILE_STATE=%3%"
+	" AND TAPE_ID='%4%'"
+	" AND I_NUM IN (%5%)";
+
+const std::string Migration::SET_MIG_RESET =
+	"UPDATE JOB_QUEUE SET FILE_STATE=%1%"
+	" WHERE REQ_NUM=%2%"
+	" AND FILE_STATE=%3%";
+
+const std::string Migration::FAIL_PREMIGRATED =
+	"UPDATE JOB_QUEUE SET FILE_STATE=%1%"
+	" WHERE REQ_NUM=%2%"
+	" AND FILE_STATE=%3%"
+	" AND TAPE_ID='%4%'"
+	" AND REPL_NUM=%5%";
+
+const std::string Migration::UPDATE_MIG_REQUEST =
+	"UPDATE REQUEST_QUEUE SET STATE=%1%"
+	" WHERE REQ_NUM=%2%"
+	" AND REPL_NUM=%3%";
+
+const std::string Migration::UPDATE_MIG_REQUEST_RESET_TAPE =
+	"UPDATE REQUEST_QUEUE SET STATE=%1%, TAPE_ID=''"
+	" WHERE REQ_NUM=%2%"
+	" AND REPL_NUM=%3%";
+
+FsObj::file_state Migration::checkState(std::string fileName, FsObj *fso)
+
+{
+	FsObj::file_state state;
+
+	state = fso->getMigState();
+
+	if ( fso->getMigState() == FsObj::RESIDENT ) {
+		if ( numReplica == 0 ) {
+			MSG(LTFSDMS0065E, fileName);
+			state = FsObj::FAILED;
+		}
+		else {
+			needsTape = true;
+		}
+	}
+	else {
+		if ( numReplica != 0 ) {
+			FsObj::mig_attr_t attr = fso->getAttribute();
+			for ( int i=0; i<3; i++ ) {
+				if ( std::string("").compare(attr.tapeId[i]) == 0 ) {
+					if ( i == 0 ) {
+						MSG(LTFSDMS0066E, fileName);
+						state = FsObj::FAILED;
+						break;
+					}
+					else {
+						break;
+					}
+				}
+				bool tapeFound = false;
+				for ( std::string pool : pools ) {
+					std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+					std::list<std::shared_ptr<OpenLTFSCartridge>> carts
+						= inventory->getPool(pool)->getCartridges();
+					for ( std::shared_ptr<OpenLTFSCartridge> cart : carts ) {
+						if ( cart->GetObjectID().compare(attr.tapeId[i]) == 0 ) {
+							tapeFound = true;
+							break;
+						}
+					}
+					if ( tapeFound )
+						break;
+				}
+				if ( !tapeFound ) {
+					MSG(LTFSDMS0067E, fileName, attr.tapeId[i]);
+					state = FsObj::FAILED;
+					break;
+				}
+			}
+		}
+	}
+
+	return state;
+}
+
+
 void Migration::addJob(std::string fileName)
 
 {
-	int rc;
 	int replNum;
 	struct stat statbuf;
-	std::stringstream ssql;
-	sqlite3_stmt *stmt;
-
-	ssql.str("");
-	ssql.clear();
-	ssql << "INSERT INTO JOB_QUEUE (OPERATION, FILE_NAME, REQ_NUM, TARGET_STATE, REPL_NUM, TAPE_POOL, "
-		 << "FILE_SIZE, FS_ID, I_GEN, I_NUM, MTIME_SEC, MTIME_NSEC, LAST_UPD, TAPE_ID, FILE_STATE) "
-		 << "VALUES (" << DataBase::MIGRATION << ", "            // OPERATION
-		 << "'" << fileName << "', "                             // FILE_NAME
-		 << reqNumber << ", "                                    // REQ_NUM
-		 << targetState << ", "                                  // MIGRATION_STATE
-		 << "?, "                                                // REPL_NUM
-		 << "?, ";                                               // TAPE_POOL
+	FsObj::file_state state;
+	SQLStatement stmt;
 
 	try {
 		FsObj fso(fileName);
 		stat(fileName.c_str(), &statbuf);
 
 		if (!S_ISREG(statbuf.st_mode)) {
-			MSG(LTFSDMS0018E, fileName.c_str());
+			MSG(LTFSDMS0018E, fileName);
 			return;
 		}
 
-		ssql << statbuf.st_size << ", "                          // FILE_SIZE
-			 << (long long) fso.getFsId() << ", "                // FS_ID
-			 << fso.getIGen() << ", "                            // I_GEN
-			 << (long long) fso.getINode() << ", "               // I_NUM
-			 << statbuf.st_mtim.tv_sec << ", "                   // MTIME_SEC
-			 << statbuf.st_mtim.tv_nsec << ", "                  // MTIME_NSEC
-			 << time(NULL) << ", "                               // LAST_UPD
-			 << "'', ";                                          // TAPE_ID
+		state = checkState(fileName, &fso);
 
-		FsObj::file_state state = fso.getMigState();
-
-		if ( fso.getMigState() == FsObj::RESIDENT ) {
-			if ( numReplica == 0 ) {
-				MSG(LTFSDMS0065E, fileName);
-				state = FsObj::FAILED;
-			}
-			else {
-				needsTape = true;
-			}
-		}
-		else {
-			if ( numReplica != 0 ) {
-				FsObj::mig_attr_t attr = fso.getAttribute();
-				for ( int i=0; i<3; i++ ) {
-					if ( std::string("").compare(attr.tapeId[i]) == 0 ) {
-						if ( i == 0 ) {
-							MSG(LTFSDMS0066E, fileName);
-							state = FsObj::FAILED;
-							break;
-						}
-						else {
-							break;
-						}
-					}
-					bool tapeFound = false;
-					for ( std::string pool : pools ) {
-						std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
-						std::list<std::shared_ptr<OpenLTFSCartridge>> carts
-							= inventory->getPool(pool)->getCartridges();
-						for ( std::shared_ptr<OpenLTFSCartridge> cart : carts ) {
-							if ( cart->GetObjectID().compare(attr.tapeId[i]) == 0 ) {
-								tapeFound = true;
-								break;
-							}
-						}
-						if ( tapeFound )
-							break;
-					}
-					if ( !tapeFound ) {
-						MSG(LTFSDMS0067E, fileName, attr.tapeId[i]);
-						state = FsObj::FAILED;
-						break;
-					}
-				}
-			}
-		}
-		ssql << state << ");";   // FILE_STATE
+		stmt << boost::format( Migration::ADD_MIGRATION_JOB )
+			% DataBase::MIGRATION % fileName % reqNumber % targetState
+			% statbuf.st_size % (long long) fso.getFsId() % fso.getIGen()
+			% (long long) fso.getINode() % statbuf.st_mtim.tv_sec
+			% statbuf.st_mtim.tv_nsec % time(NULL) % state;
 	}
 	catch ( const std::exception& e ) {
 		TRACE(Trace::error, e.what());
-		ssql.str("");
-		ssql.clear();
-		ssql << "INSERT INTO JOB_QUEUE (OPERATION, FILE_NAME, REQ_NUM, TARGET_STATE, REPL_NUM, TAPE_POOL, "
-			 << "FILE_SIZE, FS_ID, I_GEN, I_NUM, MTIME_SEC, MTIME_NSEC, LAST_UPD, FILE_STATE) "
-			 << "VALUES (" << DataBase::MIGRATION << ", "        // OPERATION
-			 << "'" << fileName << "', "                         // FILE_NAME
-			 << reqNumber << ", "                                // REQ_NUM
-			 << targetState << ", "                              // MIGRATION_STATE
-			 << "?, "                                            // REPL_NUM
-			 << "?, "                                            // TAPE_POOL
-			 << Const::UNSET  << ", "                            // FILE_SIZE
-			 << Const::UNSET  << ", "                            // FS_ID
-			 << Const::UNSET  << ", "                            // I_GEN
-			 << Const::UNSET  << ", "                            // I_NUM
-			 << Const::UNSET  << ", "                            // MTIME_SEC
-			 << Const::UNSET  << ", "                            // MTIME_NSEC
-			 << time(NULL) << ", "                               // LAST_UPD
-			 << FsObj::FAILED  << ");";                          // FILE_STATE
-		MSG(LTFSDMS0017E, fileName.c_str());
+		stmt << boost::format( Migration::ADD_MIGRATION_JOB )
+			% DataBase::MIGRATION % fileName % reqNumber % targetState
+			% Const::UNSET % Const::UNSET % Const::UNSET % Const::UNSET
+			% Const::UNSET % Const::UNSET % time(NULL) % FsObj::FAILED;
 	}
 
-	replNum = 0;
+	replNum = Const::UNSET;
 
 	if ( pools.size() == 0 )
 		pools.insert("");
 
-	TRACE(Trace::normal, ssql.str());
+	TRACE(Trace::normal, stmt.str());
 
 	for ( std::string pool : pools ) {
-		TRACE(Trace::full, ssql.str());
-		sqlite3_statement::prepare(ssql.str(), &stmt);
-		if ( (rc = sqlite3_bind_int(stmt, 1, replNum)) != SQLITE_OK ) {
-			TRACE(Trace::error, rc);
-			MSG(LTFSDMS0028E, fileName.c_str());
-			return;
+		TRACE(Trace::full, stmt.str());
+		try {
+			replNum++;
+			stmt.prepare();
+			stmt.bind(1, replNum);
+			stmt.bind(2, pool);
+			stmt.step();
+			stmt.finalize();
 		}
-		if ( (rc = sqlite3_bind_text(stmt, 2, pool.c_str(), pool.size(), 0)) != SQLITE_OK ) {
-			TRACE(Trace::error, rc);
-			MSG(LTFSDMS0028E, fileName.c_str());
-			return;
+		catch ( std::exception& e ) {
+			TRACE(Trace::error, e.what());
+			MSG(LTFSDMS0028E, fileName);
 		}
-		replNum++;
-		rc = sqlite3_step(stmt);
-		sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 		TRACE(Trace::always, fileName);
 		TRACE(Trace::always, replNum);
 		TRACE(Trace::always, pool);
@@ -148,11 +203,9 @@ void Migration::addJob(std::string fileName)
 void Migration::addRequest()
 
 {
-	int rc;
 	int replNum;
 	std::stringstream ssql;
-	sqlite3_stmt *stmt;
-	std::string tapeId;
+	SQLStatement stmt;
 	std::stringstream thrdinfo;
 	SubServer subs;
 
@@ -164,34 +217,19 @@ void Migration::addRequest()
 		Scheduler::updReq[reqNumber] = false;
 	}
 
-	replNum = 0;
+	replNum = Const::UNSET;
+
 	for (std::string pool : pools) {
+		replNum++;
 		std::unique_lock<std::mutex> lock(Scheduler::mtx);
 
-		ssql.str("");
-		ssql.clear();
+		stmt << boost::format( Migration::ADD_MIGRATION_REQUEST )
+			% DataBase::MIGRATION % reqNumber % targetState % numReplica % replNum
+			% pool % time(NULL) % ( needsTape ? DataBase::REQ_NEW : DataBase::REQ_INPROGRESS );
 
-		tapeId = "";
+		TRACE(Trace::normal, stmt.str());
 
-		ssql  << "INSERT INTO REQUEST_QUEUE (OPERATION, REQ_NUM, TARGET_STATE, "
-			  << "NUM_REPL, REPL_NUM, TAPE_POOL, TAPE_ID, TIME_ADDED, STATE) "
-			  << "VALUES (" << DataBase::MIGRATION << ", "                         // OPERATION
-			  << reqNumber << ", "                                                 // FILE_NAME
-			  << targetState << ", "                                               // TARGET_STATE
-			  << numReplica << ", "                                                // NUM_REPL
-			  << replNum << ", "                                                   // REPL_NUM
-			  << "'" << pool << "', "                                              // TAPE_POOL
-			  << "'" << tapeId << "', "                                            // TAPE_ID
-			  << time(NULL) << ", "                                                // TIME_ADDED
-			  << ( needsTape ? DataBase::REQ_NEW : DataBase::REQ_INPROGRESS )      // STATE
-			  << ");";
-
-		sqlite3_statement::prepare(ssql.str(), &stmt);
-		TRACE(Trace::normal, ssql.str());
-
-		rc = sqlite3_statement::step(stmt);
-
-		sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+		stmt.doall();
 
 		TRACE(Trace::always, needsTape);
 		TRACE(Trace::always, reqNumber);
@@ -203,9 +241,8 @@ void Migration::addRequest()
 		else {
 			thrdinfo << "Mig(" << reqNumber << "," << replNum << "," << pool << ")";
 			subs.enqueue(thrdinfo.str(), Migration::execRequest, reqNumber, targetState,
-						 numReplica, replNum, pool, tapeId, needsTape);
+						 numReplica, replNum, pool, "", needsTape);
 		}
-		replNum++;
 	}
 
 	subs.waitAllRemaining();
@@ -344,21 +381,15 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId, lon
 	}
 
 	if ( failed == true ) {
-		sqlite3_stmt *stmt;
-		std::stringstream ssql;
-		int rc;
-
 		TRACE(Trace::error, mig_info.fileName);
 		MSG(LTFSDMS0050E, mig_info.fileName);
-
 		mrStatus.updateFailed(mig_info.reqNumber, mig_info.fromState);
-		ssql << "UPDATE JOB_QUEUE SET FILE_STATE=" <<  FsObj::FAILED
-			 << " WHERE REQ_NUM=" << mig_info.reqNumber
-			 << " AND FILE_NAME='" << mig_info.fileName << "'"
-			 << " AND REPL_NUM=" << mig_info.replNum;
-		sqlite3_statement::prepare(ssql.str(), &stmt);
-		rc = sqlite3_statement::step(stmt);
-		sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+
+		SQLStatement stmt(boost::format(Migration::FAIL_PREMIGRATION)
+						  % FsObj::FAILED % mig_info.reqNumber
+						  % mig_info.fileName %  mig_info.replNum);
+
+		stmt.doall();
 	}
 
 	if ( fd != -1 )
@@ -390,34 +421,53 @@ void Migration::stub(Migration::mig_info_t mig_info, std::shared_ptr<std::list<u
 	}
 	catch ( const std::exception& e ) {
 		TRACE(Trace::error, e.what());
-		sqlite3_stmt *stmt;
-		std::stringstream ssql;
-		int rc;
+		MSG(LTFSDMS0089E, mig_info.fileName);
 
-		mrStatus.updateFailed(mig_info.reqNumber, mig_info.fromState);
-		ssql << "UPDATE JOB_QUEUE SET FILE_STATE=" <<  FsObj::FAILED
-			 << " WHERE REQ_NUM=" << mig_info.reqNumber
-			 << " AND REPL_NUM=" << mig_info.replNum;
-		TRACE(Trace::error, ssql.str());
-		sqlite3_statement::prepare(ssql.str(), &stmt);
-		rc = sqlite3_statement::step(stmt);
-		sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+		for (int i=0; i<mig_info.numRepl; i++)
+			mrStatus.updateFailed(mig_info.reqNumber, mig_info.fromState);
+
+		SQLStatement stmt(boost::format(Migration::FAIL_STUBBING)
+						  % FsObj::FAILED % mig_info.reqNumber
+						  % mig_info.fileName);
+
+		stmt.doall();
+		return;
 	}
 
-	mrStatus.updateSuccess(mig_info.reqNumber, mig_info.fromState, mig_info.toState);
+	for (int i=0; i<mig_info.numRepl; i++)
+		mrStatus.updateSuccess(mig_info.reqNumber, mig_info.fromState, mig_info.toState);
 }
+
+std::string Migration::genInumString(std::shared_ptr<std::list<unsigned long>> inumList)
+
+{
+	std::stringstream inumss;
+
+	bool first = true;
+	for ( unsigned long inum : *inumList ) {
+		if ( first ) {
+			inumss << inum;
+			first = false;
+		}
+		else {
+			inumss << ", " << inum;
+		}
+	}
+	return inumss.str();
+}
+
 
 Migration::req_return_t Migration::migrationStep(int reqNumber, int numRepl, int replNum, std::string tapeId,
 												 FsObj::file_state fromState, FsObj::file_state toState)
 
 {
-	sqlite3_stmt *stmt;
-	std::stringstream ssql;
-	int rc, rc2;
+	SQLStatement stmt;
+	std::string fileName;
 	Migration::req_return_t retval = (Migration::req_return_t) {false, false};
 	time_t start;
 	long secs;
 	long nsecs;
+	unsigned long inum;
 	time_t steptime;
 	std::shared_ptr<std::list<unsigned long>> inumList =
 		std::make_shared<std::list<unsigned long>>();
@@ -450,32 +500,19 @@ Migration::req_return_t Migration::migrationStep(int reqNumber, int numRepl, int
 
 	if ( toState == FsObj::PREMIGRATED ) {
 		freeSpace = 1024*1024*inventory->getCartridge(tapeId)->get_remaining_cap();
-		ssql << "UPDATE JOB_QUEUE SET FILE_STATE=" <<  state
-			 << ", TAPE_ID='" << tapeId << "'"
-			 << " WHERE REQ_NUM=" << reqNumber
-			 << " AND FILE_STATE=" << fromState
-			 << " AND REPL_NUM=" << replNum
-			 << " AND FITS(I_NUM, FILE_SIZE, "
-			 << (unsigned long) &freeSpace
-			 << "," << (unsigned long) &num_found
-			 << "," << (unsigned long) &total << ")=1";
+		stmt << boost::format(Migration::SET_PREMIGRATING)
+			% state % tapeId % reqNumber % fromState % replNum % (unsigned long) &freeSpace
+			% (unsigned long) &num_found % (unsigned long) &total;
 	}
 	else {
-		ssql << "UPDATE JOB_QUEUE SET FILE_STATE=" <<  state
-			 << " WHERE REQ_NUM=" << reqNumber
-			 << " AND FILE_STATE=" << fromState
-			 << " AND TAPE_ID='" << tapeId << "'"
-			 << " AND REPL_NUM=" << replNum;
+		stmt << boost::format(Migration::SET_STUBBING)
+			% state % reqNumber % fromState % tapeId % replNum;
 	}
 
-	TRACE(Trace::normal, ssql.str());
+	TRACE(Trace::normal, stmt.str());
 
 	steptime = time(NULL);
-
-	sqlite3_statement::prepare(ssql.str(), &stmt);
-	rc2 = sqlite3_statement::step(stmt);
-	sqlite3_statement::checkRcAndFinalize(stmt, rc2, SQLITE_DONE);
-
+	stmt.doall();
 	TRACE(Trace::always, time(NULL) - steptime);
 
 	TRACE(Trace::always, num_found);
@@ -484,88 +521,59 @@ Migration::req_return_t Migration::migrationStep(int reqNumber, int numRepl, int
 	if ( total > num_found )
 		retval.remaining = true;
 
-	ssql.str("");
-	ssql.clear();
+	stmt << boost::format(Migration::SELECT_MIG_JOBS)
+		% reqNumber % state % tapeId;
 
-	ssql << "SELECT FILE_NAME, MTIME_SEC, MTIME_NSEC, I_NUM FROM JOB_QUEUE WHERE"
-		 << " REQ_NUM=" << reqNumber
-		 << " AND FILE_STATE=" << state
-		 << " AND TAPE_ID='" << tapeId << "'";
+	TRACE(Trace::normal, stmt.str());
 
-	TRACE(Trace::normal, ssql.str());
-
-	sqlite3_statement::prepare(ssql.str(), &stmt);
+	stmt.prepare();
 
 	start = time(NULL);
 
-	while ( (rc = sqlite3_statement::step(stmt) ) ) {
-		if ( Server::terminate == true ) {
-			rc = SQLITE_DONE;
+	while ( stmt.step(&fileName, &secs, &nsecs, &inum) ) {
+		if ( Server::terminate == true )
 			break;
+
+		try {
+			Migration::mig_info_t mig_info =
+				{ fileName, reqNumber, numRepl, replNum, inum, "", fromState, toState };
+
+			TRACE(Trace::always, fileName);
+			TRACE(Trace::always, reqNumber);
+
+			if ( toState == FsObj::PREMIGRATED ) {
+				if ( drive->getToUnblock() != DataBase::NOOP ) {
+					retval.suspended = true;
+					break;
+				}
+				TRACE(Trace::full, secs);
+				TRACE(Trace::full, nsecs);
+				drive->wqp->enqueue(reqNumber, tapeId, drive->GetObjectID(), secs, nsecs, mig_info, inumList, suspended);
+			}
+			else {
+				Scheduler::wqs->enqueue(reqNumber, mig_info, inumList);
+			}
+		}
+		catch ( const std::exception& e ) {
+			TRACE(Trace::error, e.what());
+			continue;
 		}
 
-		if ( rc != SQLITE_ROW && rc != SQLITE_DONE )
-			break;
+		if ( time(NULL) - start < 10 )
+			continue;
 
-		if ( rc == SQLITE_ROW ) {
-			std::string fileName;
-			const char *cstr = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
-			secs = sqlite3_column_int64(stmt, 1);
-			nsecs = sqlite3_column_int64(stmt, 2);
-			unsigned long inum = static_cast<unsigned long>(sqlite3_column_int64(stmt, 3));
+		start = time(NULL);
 
-			if (!cstr)
-				continue;
-			else
-				fileName = std::string(cstr);
-
-			try {
-				Migration::mig_info_t mig_info;
-				mig_info.fileName = fileName;
-				mig_info.inum = inum;
-				mig_info.reqNumber = reqNumber;
-				mig_info.numRepl = numRepl;
-				mig_info.replNum = replNum;
-				mig_info.fromState = fromState;
-				mig_info.toState = toState;
-
-				TRACE(Trace::always, fileName);
-				TRACE(Trace::always, reqNumber);
-
-				if ( toState == FsObj::PREMIGRATED ) {
-					if ( drive->getToUnblock() != DataBase::NOOP ) {
-						retval.suspended = true;
-						rc = SQLITE_DONE;
-						break;
-					}
-					TRACE(Trace::full, secs);
-					TRACE(Trace::full, nsecs);
-					drive->wqp->enqueue(reqNumber, tapeId, drive->GetObjectID(), secs, nsecs, mig_info, inumList, suspended);
-				}
-				else {
-					Scheduler::wqs->enqueue(reqNumber, mig_info, inumList);
-				}
-			}
-			catch ( const std::exception& e ) {
-				TRACE(Trace::error, e.what());
-				continue;
-			}
-
-			if ( time(NULL) - start < 10 )
-				continue;
-
-			start = time(NULL);
-
-			std::lock_guard<std::mutex> lock(Scheduler::updmtx);
-			Scheduler::updReq[reqNumber] = true;
-			Scheduler::updcond.notify_all();
-		}
-
-		if ( rc == SQLITE_DONE )
-			break;
+		std::lock_guard<std::mutex> lock(Scheduler::updmtx);
+		Scheduler::updReq[reqNumber] = true;
+		Scheduler::updcond.notify_all();
 	}
 
-	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+	std::lock_guard<std::mutex> lock(Scheduler::updmtx);
+	Scheduler::updReq[reqNumber] = true;
+	Scheduler::updcond.notify_all();
+
+	stmt.finalize();
 
 	if ( toState == FsObj::PREMIGRATED ) {
 		drive->wqp->waitCompletion(reqNumber);
@@ -577,50 +585,20 @@ Migration::req_return_t Migration::migrationStep(int reqNumber, int numRepl, int
 	if ( *suspended == true )
 		retval.suspended = true;
 
-	ssql.str("");
-	ssql.clear();
+	stmt << boost::format(Migration::SET_MIG_SUCCESS)
+		% toState % reqNumber % state % tapeId % genInumString(inumList);
 
-	ssql << "UPDATE JOB_QUEUE SET FILE_STATE=" <<  toState
-		 << " WHERE REQ_NUM=" << reqNumber
-		 << " AND FILE_STATE=" << state
-		 << " AND TAPE_ID='" << tapeId << "'"
-		 << " AND I_NUM IN (";
-
-	bool first = true;
-	for ( unsigned long inum : *inumList ) {
-		if ( first ) {
-			ssql << inum;
-			first = false;
-		}
-		else {
-			ssql << ", " << inum;
-		}
-	}
-	ssql << ")";
-
-	TRACE(Trace::normal, ssql.str());
+	TRACE(Trace::normal, stmt.str());
 
 	steptime = time(NULL);
-
-	sqlite3_statement::prepare(ssql.str(), &stmt);
-	rc2 = sqlite3_statement::step(stmt);
-	sqlite3_statement::checkRcAndFinalize(stmt, rc2, SQLITE_DONE);
-
+	stmt.doall();
 	TRACE(Trace::always, time(NULL) - steptime);
 
-	ssql.str("");
-	ssql.clear();
-
-	ssql << "UPDATE JOB_QUEUE SET FILE_STATE=" <<  fromState
-		 << " WHERE REQ_NUM=" << reqNumber
-		 << " AND FILE_STATE=" << state;
+	stmt << boost::format(Migration::SET_MIG_RESET)
+		% fromState % reqNumber % state;
 
 	steptime = time(NULL);
-
-	sqlite3_statement::prepare(ssql.str(), &stmt);
-	rc2 = sqlite3_statement::step(stmt);
-	sqlite3_statement::checkRcAndFinalize(stmt, rc2, SQLITE_DONE);
-
+	stmt.doall();
 	TRACE(Trace::always, time(NULL) - steptime);
 
 	return retval;
@@ -632,9 +610,7 @@ void Migration::execRequest(int reqNumber, int targetState, int numRepl,
 {
 	TRACE(Trace::full, __PRETTY_FUNCTION__);
 
-	sqlite3_stmt *stmt;
-	std::stringstream ssql;
-	int rc;
+	SQLStatement stmt;
 	std::stringstream tapePath;
 	Migration::req_return_t retval = (Migration::req_return_t) {false, false};
 	bool failed = false;
@@ -655,20 +631,12 @@ void Migration::execRequest(int reqNumber, int targetState, int numRepl,
 				TRACE(Trace::error, errno);
 				MSG(LTFSDMS0024E, tapeId);
 
-				ssql.str("");
-				ssql.clear();
+				stmt << boost::format(Migration::FAIL_PREMIGRATED)
+					% FsObj::FAILED % reqNumber % FsObj::PREMIGRATED % tapeId % replNum;
 
-				ssql << "UPDATE JOB_QUEUE SET FILE_STATE = " <<  FsObj::FAILED
-					 << " WHERE REQ_NUM=" << reqNumber
-					 << " AND FILE_STATE=" << FsObj::PREMIGRATED
-					 << " AND TAPE_ID='" << tapeId << "'"
-					 << " AND REPL_NUM=" << replNum;
+				TRACE(Trace::error, stmt.str());
 
-				TRACE(Trace::error, ssql.str());
-
-				sqlite3_statement::prepare(ssql.str(), &stmt);
-				rc = sqlite3_statement::step(stmt);
-				sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+				stmt.doall();
 
 				std::unique_lock<std::mutex> lock(Scheduler::updmtx);
 				TRACE(Trace::error, reqNumber);
@@ -702,24 +670,20 @@ void Migration::execRequest(int reqNumber, int targetState, int numRepl,
 
 	std::unique_lock<std::mutex> updlock(Scheduler::updmtx);
 
-	ssql.str("");
-	ssql.clear();
 	if ( retval.suspended )
-		ssql << "UPDATE REQUEST_QUEUE SET STATE=" << DataBase::REQ_NEW;
+		stmt << boost::format(Migration::UPDATE_MIG_REQUEST)
+			% DataBase::REQ_NEW % reqNumber % replNum;
 	else if ( retval.remaining )
-		ssql << "UPDATE REQUEST_QUEUE SET STATE=" << DataBase::REQ_NEW << ", TAPE_ID=''" ;
+		stmt << boost::format(Migration::UPDATE_MIG_REQUEST_RESET_TAPE)
+			% DataBase::REQ_NEW % reqNumber % replNum;
 	else
-		ssql << "UPDATE REQUEST_QUEUE SET STATE=" << DataBase::REQ_COMPLETED;
+		stmt << boost::format(Migration::UPDATE_MIG_REQUEST)
+			% DataBase::REQ_COMPLETED % reqNumber % replNum;
 
-	ssql << " WHERE REQ_NUM=" << reqNumber
-		 << " AND REPL_NUM=" << replNum << ";";
+	TRACE(Trace::normal, stmt.str());
 
-	TRACE(Trace::normal, ssql.str());
+	stmt.doall();
 
-	sqlite3_statement::prepare(ssql.str(), &stmt);
-	rc = sqlite3_statement::step(stmt);
-	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 	Scheduler::updReq[reqNumber] = true;
-
 	Scheduler::updcond.notify_all();
 }

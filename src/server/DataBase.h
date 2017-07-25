@@ -67,14 +67,15 @@ private:
 	}
 
 public:
-	SQLStatement() : stmt_str(""), stmt_rc(0) {}
+	SQLStatement() : stmt(nullptr), stmt_str(""), stmt_rc(0) {}
 	SQLStatement(boost::basic_format<char>& fmt) : stmt_str(fmt.str()) {}
 	~SQLStatement() {}
 
 	void operator<< (boost::basic_format<char>& fmt) { stmt_str = fmt.str(); }
-
+	std::string str();
+	void bind(int num, int value);
+	void bind(int num, std::string value);
 	void prepare();
-
 	template<typename ... Args>
 	bool step(Args ... args)
 	{
@@ -89,8 +90,6 @@ public:
 
 		return true;
 	}
-
 	void finalize();
-
 	void doall();
 };
