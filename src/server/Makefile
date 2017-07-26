@@ -2,7 +2,8 @@ RELPATH = ../..
 
 LDFLAGS := -lprotobuf -lpthread -lsqlite3 -lconnector -latomic -lxml2
 
-ARC_SRC_FILES := Server.cc
+ARC_SRC_FILES := SQLStatements.cc
+ARC_SRC_FILES += Server.cc
 ARC_SRC_FILES += DataBase.cc
 ARC_SRC_FILES += SubServer.cc
 ARC_SRC_FILES += Receiver.cc
