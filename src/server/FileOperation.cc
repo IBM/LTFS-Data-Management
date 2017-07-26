@@ -1,5 +1,23 @@
 #include "ServerIncludes.h"
 
+std::string FileOperation::genInumString(std::list<unsigned long> inumList)
+
+{
+	std::stringstream inumss;
+
+	bool first = true;
+	for ( unsigned long inum : inumList ) {
+		if ( first ) {
+			inumss << inum;
+			first = false;
+		}
+		else {
+			inumss << ", " << inum;
+		}
+	}
+	return inumss.str();
+}
+
 bool FileOperation::queryResult(long reqNumber, long *resident,
 								long *premigrated, long *migrated,
 								long *failed)

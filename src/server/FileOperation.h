@@ -1,6 +1,8 @@
 #pragma once
 
 class FileOperation {
+protected:
+	static std::string genInumString(std::list<unsigned long> inumList);
 public:
 	FileOperation() {}
 	virtual ~FileOperation() = default;

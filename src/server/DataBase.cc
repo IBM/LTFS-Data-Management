@@ -251,6 +251,12 @@ void SQLStatement::getColumn(DataBase::operation *result, int column)
 	*result = static_cast<DataBase::operation>(sqlite3_column_int(stmt, column));
 }
 
+void SQLStatement::getColumn(FsObj::file_state *result, int column)
+
+{
+	*result = static_cast<FsObj::file_state>(sqlite3_column_int(stmt, column));
+}
+
 void SQLStatement::getColumn(long *result, int column)
 
 {

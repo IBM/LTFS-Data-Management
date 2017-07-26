@@ -349,25 +349,6 @@ void Migration::stub(Migration::mig_info_t mig_info, std::shared_ptr<std::list<u
 		mrStatus.updateSuccess(mig_info.reqNumber, mig_info.fromState, mig_info.toState);
 }
 
-std::string Migration::genInumString(std::shared_ptr<std::list<unsigned long>> inumList)
-
-{
-	std::stringstream inumss;
-
-	bool first = true;
-	for ( unsigned long inum : *inumList ) {
-		if ( first ) {
-			inumss << inum;
-			first = false;
-		}
-		else {
-			inumss << ", " << inum;
-		}
-	}
-	return inumss.str();
-}
-
-
 Migration::req_return_t Migration::migrationStep(int reqNumber, int numRepl, int replNum, std::string tapeId,
 												 FsObj::file_state fromState, FsObj::file_state toState)
 
@@ -419,25 +400,19 @@ Migration::req_return_t Migration::migrationStep(int reqNumber, int numRepl, int
 		stmt << boost::format(Migration::SET_STUBBING)
 			% state % reqNumber % fromState % tapeId % replNum;
 	}
-
 	TRACE(Trace::normal, stmt.str());
-
 	steptime = time(NULL);
 	stmt.doall();
-	TRACE(Trace::always, time(NULL) - steptime, num_found, total);
 
+	TRACE(Trace::always, time(NULL) - steptime, num_found, total);
 	if ( total > num_found )
 		retval.remaining = true;
 
 	stmt << boost::format(Migration::SELECT_MIG_JOBS)
 		% reqNumber % state % tapeId;
-
 	TRACE(Trace::normal, stmt.str());
-
 	stmt.prepare();
-
 	start = time(NULL);
-
 	while ( stmt.step(&fileName, &secs, &nsecs, &inum) ) {
 		if ( Server::terminate == true )
 			break;
@@ -474,11 +449,9 @@ Migration::req_return_t Migration::migrationStep(int reqNumber, int numRepl, int
 		Scheduler::updReq[reqNumber] = true;
 		Scheduler::updcond.notify_all();
 	}
-
 	std::lock_guard<std::mutex> lock(Scheduler::updmtx);
 	Scheduler::updReq[reqNumber] = true;
 	Scheduler::updcond.notify_all();
-
 	stmt.finalize();
 
 	if ( toState == FsObj::PREMIGRATED ) {
@@ -492,17 +465,15 @@ Migration::req_return_t Migration::migrationStep(int reqNumber, int numRepl, int
 		retval.suspended = true;
 
 	stmt << boost::format(Migration::SET_MIG_SUCCESS)
-		% toState % reqNumber % state % tapeId % genInumString(inumList);
-
+		% toState % reqNumber % state % tapeId % genInumString(*inumList);
 	TRACE(Trace::normal, stmt.str());
-
 	steptime = time(NULL);
 	stmt.doall();
 	TRACE(Trace::always, time(NULL) - steptime);
 
 	stmt << boost::format(Migration::SET_MIG_RESET)
 		% fromState % reqNumber % state;
-
+	TRACE(Trace::normal, stmt.str());
 	steptime = time(NULL);
 	stmt.doall();
 	TRACE(Trace::always, time(NULL) - steptime);

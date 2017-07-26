@@ -43,7 +43,6 @@ public:
 	static std::mutex pmigmtx;
 
 private:
-	static std::string genInumString(std::shared_ptr<std::list<unsigned long>> inumList);
 	static req_return_t migrationStep(int reqNumber, int numRepl, int replNum, std::string tapeId,
 									  FsObj::file_state fromState, FsObj::file_state toState);
 public:
