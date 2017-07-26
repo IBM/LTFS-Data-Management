@@ -28,9 +28,7 @@ void InfoJobsCommand::doCommand(int argc, char **argv)
 
 	processOptions(argc, argv);
 
-	TRACE(Trace::normal, *argv);
-	TRACE(Trace::normal, argc);
-	TRACE(Trace::normal, optind);
+	TRACE(Trace::normal, *argv, argc, optind);
 
 	if( argc != optind ) {
 		printUsage();

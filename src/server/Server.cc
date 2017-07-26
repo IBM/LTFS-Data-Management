@@ -88,8 +88,7 @@ void Server::lockServer()
 
 	if ( (lockfd = open(Const::SERVER_LOCK_FILE.c_str(), O_RDWR | O_CREAT, 0600)) == -1 ) {
 		MSG(LTFSDMS0001E);
-		TRACE(Trace::error, Const::SERVER_LOCK_FILE);
-		TRACE(Trace::error, errno);
+		TRACE(Trace::error, Const::SERVER_LOCK_FILE, errno);
 		throw(EXCEPTION(Const::UNSET, errno));
 	}
 
@@ -219,9 +218,7 @@ void Server::run(Connector *connector, sigset_t set)
 
 	MSG(LTFSDMS0087I);
 
-	TRACE(Trace::always, (bool) Server::terminate);
-	TRACE(Trace::always, (bool) Server::forcedTerminate);
-	TRACE(Trace::always, (bool) Server::finishTerminate);
+	TRACE(Trace::always, (bool) Server::terminate, (bool) Server::forcedTerminate, (bool) Server::finishTerminate);
 
 	for ( std::shared_ptr<OpenLTFSDrive> drive : inventory->getDrives() )
 		drive->wqp->terminate();

@@ -31,6 +31,23 @@ public:
 	};
 private:
 	std::atomic<Trace::traceLevel> trclevel;
+
+	std::string recurse() { return ""; }
+
+	template<typename T>
+	void recurse(std::string varlist, T s)
+	{
+		tracefile << varlist.substr(varlist.find_first_not_of(" "), varlist.size())
+				  << "(" << s << ")";
+	}
+
+	template<typename T, typename ... Args>
+	void recurse(std::string varlist, T s, Args ... args )
+	{
+		tracefile << varlist.substr(varlist.find_first_not_of(" "), varlist.find(','))
+				  << "(" << s << "), ";
+		recurse(varlist.substr(varlist.find(',') + 1, varlist.size()), args ...);
+	}
 public:
 	Trace() : trclevel(error) {}
 	~Trace();
@@ -41,8 +58,8 @@ public:
 	void setTrclevel(traceLevel level);
 	int getTrclevel();
 
-	template<typename T>
-	void trace(const char *filename, int linenr, traceLevel tl, const char *varname, T s)
+	template<typename ... Args>
+	void trace(const char *filename, int linenr, traceLevel tl, std::string varlist, Args ... args)
 
 	{
 		struct timeval curtime;
@@ -65,8 +82,9 @@ public:
 						  << std::setfill('0') << std::setw(6) << getpid() << ":"
 						  << std::setfill('0') << std::setw(6) << syscall(SYS_gettid) << "]:"
 						  << std::setfill('-') << std::setw(20) << basename((char *) filename)
-						  << "(" << std::setfill('0') << std::setw(4) << linenr << "):"
-						  << varname << "(" << s << ")" << std::endl;
+						  << "(" << std::setfill('0') << std::setw(4) << linenr << "): ";
+				recurse(varlist, args ...);
+				tracefile << std::endl;
 				tracefile.flush();
 				mtx.unlock();
 			}
@@ -81,4 +99,4 @@ public:
 
 extern Trace traceObject;
 
-#define TRACE(tracelevel, var) traceObject.trace(__FILE__, __LINE__, tracelevel, #var, var)
+#define TRACE(tracelevel, args ...) traceObject.trace(__FILE__, __LINE__, tracelevel, #args, args)

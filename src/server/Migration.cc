@@ -190,9 +190,7 @@ void Migration::addJob(std::string fileName)
 			TRACE(Trace::error, e.what());
 			MSG(LTFSDMS0028E, fileName);
 		}
-		TRACE(Trace::always, fileName);
-		TRACE(Trace::always, replNum);
-		TRACE(Trace::always, pool);
+		TRACE(Trace::always, fileName, replNum, pool);
 	}
 
 	jobnum++;
@@ -231,9 +229,7 @@ void Migration::addRequest()
 
 		stmt.doall();
 
-		TRACE(Trace::always, needsTape);
-		TRACE(Trace::always, reqNumber);
-		TRACE(Trace::always, pool);
+		TRACE(Trace::always, needsTape, reqNumber, pool);
 
 		if ( needsTape ) {
 			Scheduler::cond.notify_one();
@@ -291,10 +287,7 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId, lon
 			throw(EXCEPTION(Const::UNSET, mig_info.fileName, errno));
 		}
 		if ( statbuf.st_mtim.tv_sec != secs || statbuf.st_mtim.tv_nsec != nsecs ) {
-			TRACE(Trace::error, statbuf.st_mtim.tv_sec);
-			TRACE(Trace::error, secs);
-			TRACE(Trace::error, statbuf.st_mtim.tv_nsec);
-			TRACE(Trace::error, nsecs);
+			TRACE(Trace::error, statbuf.st_mtim.tv_sec, secs, statbuf.st_mtim.tv_nsec, nsecs);
 			MSG(LTFSDMS0041W, mig_info.fileName);
 			throw(EXCEPTION(Const::UNSET, mig_info.fileName));
 		}
@@ -325,9 +318,7 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId, lon
 				wsize = write(fd, buffer, rsize);
 
 				if ( wsize != rsize ) {
-					TRACE(Trace::error, errno);
-					TRACE(Trace::error, wsize);
-					TRACE(Trace::error, rsize);
+					TRACE(Trace::error, errno, wsize, rsize);
 					MSG(LTFSDMS0022E, tapeName.c_str());
 					throw(EXCEPTION(Const::UNSET, mig_info.fileName, wsize, rsize));
 				}
@@ -340,10 +331,7 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId, lon
 				}
 
 				if ( statbuf_changed.st_mtim.tv_sec != secs || statbuf_changed.st_mtim.tv_nsec != nsecs ) {
-					TRACE(Trace::error, statbuf_changed.st_mtim.tv_sec);
-					TRACE(Trace::error, secs);
-					TRACE(Trace::error, statbuf_changed.st_mtim.tv_nsec);
-					TRACE(Trace::error, nsecs);
+					TRACE(Trace::error, statbuf_changed.st_mtim.tv_sec, secs, statbuf_changed.st_mtim.tv_nsec, nsecs);
 					MSG(LTFSDMS0041W, mig_info.fileName);
 					throw(EXCEPTION(Const::UNSET, mig_info.fileName));
 				}
@@ -513,10 +501,7 @@ Migration::req_return_t Migration::migrationStep(int reqNumber, int numRepl, int
 
 	steptime = time(NULL);
 	stmt.doall();
-	TRACE(Trace::always, time(NULL) - steptime);
-
-	TRACE(Trace::always, num_found);
-	TRACE(Trace::always, total);
+	TRACE(Trace::always, time(NULL) - steptime, num_found, total);
 
 	if ( total > num_found )
 		retval.remaining = true;
@@ -538,16 +523,14 @@ Migration::req_return_t Migration::migrationStep(int reqNumber, int numRepl, int
 			Migration::mig_info_t mig_info =
 				{ fileName, reqNumber, numRepl, replNum, inum, "", fromState, toState };
 
-			TRACE(Trace::always, fileName);
-			TRACE(Trace::always, reqNumber);
+			TRACE(Trace::always, fileName, reqNumber);
 
 			if ( toState == FsObj::PREMIGRATED ) {
 				if ( drive->getToUnblock() != DataBase::NOOP ) {
 					retval.suspended = true;
 					break;
 				}
-				TRACE(Trace::full, secs);
-				TRACE(Trace::full, nsecs);
+				TRACE(Trace::full, secs, nsecs);
 				drive->wqp->enqueue(reqNumber, tapeId, drive->GetObjectID(), secs, nsecs, mig_info, inumList, suspended);
 			}
 			else {
@@ -617,8 +600,7 @@ void Migration::execRequest(int reqNumber, int targetState, int numRepl,
 
 	mrStatus.add(reqNumber);
 
-	TRACE(Trace::always, reqNumber);
-	TRACE(Trace::always, needsTape);
+	TRACE(Trace::always, reqNumber, needsTape);
 
 	if ( needsTape ) {
 		retval = migrationStep(reqNumber, numRepl, replNum, tapeId,  FsObj::RESIDENT, FsObj::PREMIGRATED);

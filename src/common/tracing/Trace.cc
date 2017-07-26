@@ -40,8 +40,7 @@ void Trace::setTrclevel(traceLevel level)
 		case Trace::normal:
         case Trace::full:
 			oldLevel = trclevel;
-			TRACE(Trace::error, oldLevel);
-			TRACE(Trace::error, level);
+			TRACE(Trace::error, oldLevel, level);
 			trclevel = level;
 			break;
 		default:

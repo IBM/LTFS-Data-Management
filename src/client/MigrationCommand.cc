@@ -68,14 +68,12 @@ void MigrationCommand::talkToBackend(std::stringstream *parmList)
 		case Error::LTFSDM_OK:
 			if ( getpid() != migreqresp.pid() ) {
 				MSG(LTFSDMC0036E);
-				TRACE(Trace::error, getpid());
-				TRACE(Trace::error, migreqresp.pid());
+				TRACE(Trace::error, getpid(), migreqresp.pid());
 				throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 			}
 			if ( requestNumber !=  migreqresp.reqnumber() ) {
 				MSG(LTFSDMC0037E);
-				TRACE(Trace::error, requestNumber);
-				TRACE(Trace::error, migreqresp.reqnumber());
+				TRACE(Trace::error, requestNumber, migreqresp.reqnumber());
 				throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 			}
 			break;
@@ -120,8 +118,7 @@ void MigrationCommand::doCommand(int argc, char **argv)
 		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
-	TRACE(Trace::normal, argc);
-	TRACE(Trace::normal, optind);
+	TRACE(Trace::normal, argc, optind);
 	traceParms();
 
 	if ( !fileList.compare("") ) {

@@ -33,8 +33,7 @@ bool FileOperation::queryResult(long reqNumber, long *resident,
 			done = true;
 
 		if ( done == false ) {
-			TRACE(Trace::full, reqNumber);
-			TRACE(Trace::full, (bool) Scheduler::updReq[reqNumber]);
+			TRACE(Trace::full, reqNumber, (bool) Scheduler::updReq[reqNumber]);
 			Scheduler::updcond.wait(lock, [reqNumber]{return ((Server::finishTerminate == true) || (Scheduler::updReq[reqNumber] == true));});
 			Scheduler::updReq[reqNumber] = false;
 		}

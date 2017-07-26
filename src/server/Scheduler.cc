@@ -246,8 +246,7 @@ long Scheduler::getStartBlock(std::string tapeName)
 	size = getxattr(tapeName.c_str(), Const::LTFS_START_BLOCK.c_str(), startBlockStr, sizeof(startBlockStr));
 
 	if ( size == -1 ) {
-		TRACE(Trace::error, tapeName.c_str());
-		TRACE(Trace::error, errno);
+		TRACE(Trace::error, tapeName.c_str(), errno);
 		return Const::UNSET;
 	}
 
@@ -305,11 +304,7 @@ void Scheduler::run(long key)
 			if ( resAvail(minFileSize) == false )
 				continue;
 
-			TRACE(Trace::always, reqNum);
-			TRACE(Trace::always, tgtState);
-			TRACE(Trace::always, numRepl);
-			TRACE(Trace::always, replNum);
-			TRACE(Trace::always, pool);
+			TRACE(Trace::always, reqNum, tgtState, numRepl, replNum, pool);
 
 			std::stringstream thrdinfo;
 

@@ -79,8 +79,7 @@ void SelRecall::addJob(std::string fileName)
 
 	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 
-	TRACE(Trace::always, fileName);
-	TRACE(Trace::always, attr.tapeId[0]);
+	TRACE(Trace::always, fileName, attr.tapeId[0]);
 
 	return;
 }
@@ -138,9 +137,7 @@ void SelRecall::addRequest()
 
 		sqlite3_statement::checkRcAndFinalize(stmt2, rc, SQLITE_DONE);
 
-		TRACE(Trace::always, needsTape.count(tapeId));
-		TRACE(Trace::always, reqNumber);
-		TRACE(Trace::always, tapeId);
+		TRACE(Trace::always, needsTape.count(tapeId), reqNumber, tapeId);
 
 		if ( needsTape.count(tapeId) > 0 ) {
 			Scheduler::cond.notify_one();
@@ -212,9 +209,7 @@ unsigned long SelRecall::recall(std::string fileName, std::string tapeId,
 				}
 				wsize = target.write(offset, (unsigned long) rsize, buffer);
 				if ( wsize != rsize ) {
-					TRACE(Trace::error, errno);
-					TRACE(Trace::error, wsize);
-					TRACE(Trace::error, rsize);
+					TRACE(Trace::error, errno, wsize, rsize);
 					MSG(LTFSDMS0027E, fileName.c_str());
 					close(fd);
 					throw(EXCEPTION(Const::UNSET, fileName, wsize, rsize));
@@ -334,9 +329,7 @@ bool SelRecall::recallStep(int reqNumber, std::string tapeId, FsObj::file_state 
 			else
 				state = FsObj::PREMIGRATED;
 
-			TRACE(Trace::always, fileName);
-			TRACE(Trace::always, state);
-			TRACE(Trace::always, toState);
+			TRACE(Trace::always, fileName, state, toState);
 
 			if ( state == toState )
 				continue;
@@ -463,8 +456,7 @@ void SelRecall::execRequest(int reqNumber, int tgtState, std::string tapeId, boo
 
 	std::unique_lock<std::mutex> lock(Scheduler::mtx);
 
-	TRACE(Trace::always, reqNumber);
-	TRACE(Trace::always, needsTape);
+	TRACE(Trace::always, reqNumber, needsTape);
 
 	if ( needsTape ) {
 		std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);

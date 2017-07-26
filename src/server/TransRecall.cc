@@ -145,8 +145,7 @@ void TransRecall::cleanupEvents()
 			recinfo.filename = std::string(cstr);
 		recinfo.conn_info = (struct conn_info_t *) sqlite3_column_int64(stmt, 4);
 
-		TRACE(Trace::always, recinfo.filename);
-		TRACE(Trace::always, recinfo.ino);
+		TRACE(Trace::always, recinfo.filename, recinfo.ino);
 
 		Connector::respondRecallEvent(recinfo, false);
 	}
@@ -261,9 +260,7 @@ void TransRecall::run(Connector *connector)
 		if ( reqmap.count(tapeId) == 0 )
 			reqmap[tapeId] = ++globalReqNumber;
 
-		TRACE(Trace::always, recinfo.ino);
-		TRACE(Trace::always, tapeId);
-		TRACE(Trace::always, reqmap[tapeId]);
+		TRACE(Trace::always, recinfo.ino, tapeId, reqmap[tapeId]);
 
 		subs.enqueue(thrdinfo.str(), TransRecall::addRequest, recinfo, tapeId, reqmap[tapeId]);
 	}
@@ -292,8 +289,7 @@ unsigned long recall(Connector::rec_info_t recinfo, std::string tapeId,
 	try {
 		FsObj target(recinfo);
 
-		TRACE(Trace::always, recinfo.ino);
-		TRACE(Trace::always, recinfo.filename);
+		TRACE(Trace::always, recinfo.ino, recinfo.filename);
 
 		target.lock();
 
@@ -332,9 +328,7 @@ unsigned long recall(Connector::rec_info_t recinfo, std::string tapeId,
 				}
 				wsize = target.write(offset, (unsigned long) rsize, buffer);
 				if ( wsize != rsize ) {
-					TRACE(Trace::error, errno);
-					TRACE(Trace::error, wsize);
-					TRACE(Trace::error, rsize);
+					TRACE(Trace::error, errno, wsize, rsize);
 					MSG(LTFSDMS0033E, recinfo.ino);
 					close(fd);
 					throw(EXCEPTION(Const::UNSET, recinfo.ino, wsize, rsize));
@@ -436,10 +430,7 @@ void recallStep(int reqNum, std::string tapeId)
 			recinfo.toresident = true;
 		recinfo.conn_info = (struct conn_info_t *) sqlite3_column_int64(stmt, 6);
 
-		TRACE(Trace::always, recinfo.filename);
-		TRACE(Trace::always, recinfo.ino);
-		TRACE(Trace::always, state);
-		TRACE(Trace::always, toState);
+		TRACE(Trace::always, recinfo.filename, recinfo.ino, state, toState);
 
 		try {
 			recall(recinfo, tapeId, state, toState);

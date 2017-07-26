@@ -90,14 +90,8 @@ void OpenLTFSCommand::processOptions(int argc, char **argv)
 void OpenLTFSCommand::traceParms()
 
 {
-	TRACE(Trace::normal, preMigrate);
-	TRACE(Trace::normal, recToResident);
-	TRACE(Trace::normal, requestNumber);
-	TRACE(Trace::normal, poolNames);
-	TRACE(Trace::normal, fileList);
-	TRACE(Trace::normal, command);
-	TRACE(Trace::normal, optionStr);
-	TRACE(Trace::normal, key);
+	TRACE(Trace::normal, preMigrate, recToResident, requestNumber, poolNames,
+		  fileList, command, optionStr, key);
 }
 
 void OpenLTFSCommand::getRequestNumber()
@@ -256,14 +250,12 @@ void OpenLTFSCommand::sendObjects(std::stringstream *parmList)
 		if( sendobjresp.success() == true ) {
 			if ( getpid() != sendobjresp.pid() ) {
 				MSG(LTFSDMC0036E);
-				TRACE(Trace::error, getpid());
-				TRACE(Trace::error, sendobjresp.pid());
+				TRACE(Trace::error, getpid(), sendobjresp.pid());
 				throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 			}
 			if ( requestNumber != sendobjresp.reqnumber() ) {
 				MSG(LTFSDMC0037E);
-				TRACE(Trace::error, requestNumber);
-				TRACE(Trace::error, sendobjresp.reqnumber());
+				TRACE(Trace::error, requestNumber, sendobjresp.reqnumber());
 				throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 			}
 		}
@@ -317,14 +309,12 @@ void OpenLTFSCommand::queryResults()
 		if( reqstatusresp.success() == true ) {
 			if ( getpid() != reqstatusresp.pid() ) {
 				MSG(LTFSDMC0036E);
-				TRACE(Trace::error, getpid());
-				TRACE(Trace::error, reqstatusresp.pid());
+				TRACE(Trace::error, getpid(), reqstatusresp.pid());
 				throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 			}
 			if ( requestNumber !=  reqstatusresp.reqnumber() ) {
 				MSG(LTFSDMC0037E);
-				TRACE(Trace::error, requestNumber);
-				TRACE(Trace::error, reqstatusresp.reqnumber());
+				TRACE(Trace::error, requestNumber, reqstatusresp.reqnumber());
 				throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 			}
 			resident =  reqstatusresp.resident();

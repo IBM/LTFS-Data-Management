@@ -53,8 +53,7 @@ void HelpCommand::doCommand(int argc, char **argv)
 		return;
 	}
 
-	TRACE(Trace::normal, argc);
-	TRACE(Trace::normal, command.c_str());
+	TRACE(Trace::normal, argc, command.c_str());
 
 	command = std::string(argv[1]);
 

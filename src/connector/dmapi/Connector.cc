@@ -111,8 +111,7 @@ void dmapiSessionCleanup(dm_sessid_t *oldSid)
 			throw(EXCEPTION(Const::UNSET, errno, *oldSid));
         }
 		else if (Const::DMAPI_SESSION_NAME.compare(buffer) == 0) {
-			TRACE(Trace::normal, i);
-			TRACE(Trace::normal, (unsigned long) sidbufp[i]);
+			TRACE(Trace::normal, i, (unsigned long) sidbufp[i]);
 
 			tokbufp =  (dm_token_t *) malloc(sizeof(dm_token_t) * num_tokens);
 			if ( !tokbufp ) {
@@ -140,8 +139,7 @@ void dmapiSessionCleanup(dm_sessid_t *oldSid)
 
 			for (j = 0; j<rtoklenp; j++)
 			{
-				TRACE(Trace::normal, j);
-				TRACE(Trace::normal, (unsigned long) tokbufp[j]);
+				TRACE(Trace::normal, j, (unsigned long) tokbufp[j]);
 				if ( dm_respond_event(sidbufp[i], tokbufp[j], DM_RESP_ABORT, EINTR, 0, NULL) == 1 )
 					TRACE(Trace::error, errno);
 				else
@@ -325,8 +323,7 @@ retry2:
 		if ((name1Len >= sizeof(nameBuf)) ||
 			(name2Len >= sizeof(sgName))) {
 			rc = -1;
-			TRACE(Trace::error, name1Len);
-			TRACE(Trace::error, name2Len);
+			TRACE(Trace::error, name1Len, name2Len);
 			goto exit;
 		}
 
@@ -438,8 +435,7 @@ Connector::rec_info_t Connector::getEvents()
 			if ((name1Len >= sizeof(nameBuf)) ||
 				(name2Len >= sizeof(sgName)))
 			{
-				TRACE(Trace::error, name1Len);
-				TRACE(Trace::error, name2Len);
+				TRACE(Trace::error, name1Len, name2Len);
 				throw(EXCEPTION(Const::UNSET, name1Len, sizeof(nameBuf), name2Len, name2Len));
 			}
 
@@ -448,8 +444,7 @@ Connector::rec_info_t Connector::getEvents()
 			memcpy(sgName, name2P, name2Len);
 			sgName[name2Len] = '\0';
 
-			TRACE(Trace::normal, nameBuf);
-			TRACE(Trace::normal, sgName);
+			TRACE(Trace::normal, nameBuf, sgName);
 
 			MSG(LTFSDMD0009I, nameBuf);
 			MSG(LTFSDMD0010I, nameBuf);
@@ -666,9 +661,7 @@ void FsObj::manageFs(bool setDispo, struct timespec starttime, std::string mount
 
 		try {
 			if ( dm_handle_to_fshandle(handle, handleLength, &fsHandle, &fsHandleLength) == -1 ) {
-				TRACE(Trace::error, handle);
-				TRACE(Trace::error, fsHandle);
-				TRACE(Trace::error, errno);
+				TRACE(Trace::error, handle, fsHandle, errno);
 				throw(EXCEPTION(Error::LTFSDM_FS_ADD_ERROR, (unsigned long) handle, errno, mountPoint));
 			}
 			if ( dm_set_disp(dmapiSession, fsHandle, fsHandleLength, DM_NO_TOKEN, &eventSet, DM_EVENT_MAX) == -1 ) {
@@ -822,10 +815,7 @@ void FsObj::unlock()
 	}
 
 	if  ( fuidMap.count(fuid) != 1 ) {
-		TRACE(Trace::error, fuidMap.count(fuid));
-		TRACE(Trace::error, fuid.fsid);
-		TRACE(Trace::error, fuid.igen);
-		TRACE(Trace::error, fuid.ino);
+		TRACE(Trace::error, fuidMap.count(fuid), fuid.fsid, fuid.igen, fuid.ino);
 	}
 
 	assert ( fuidMap.count(fuid) == 1 );
@@ -859,9 +849,7 @@ long FsObj::read(long offset, unsigned long size, char *buffer)
 	rsize = dm_read_invis(dmapiSession, handle, handleLength,
 						  dmapiToken, offset, size, buffer);
 
-	TRACE(Trace::full, offset);
-	TRACE(Trace::full, size);
-	TRACE(Trace::full, rsize);
+	TRACE(Trace::full, offset, size, rsize);
 
 	return rsize;
 }
@@ -873,9 +861,7 @@ long FsObj::write(long offset, unsigned long size, char *buffer)
 
 	wsize = dm_write_invis(dmapiSession, handle, handleLength, dmapiToken,
 						   DM_WRITE_SYNC, offset, size, buffer);
-	TRACE(Trace::full, offset);
-	TRACE(Trace::full, size);
-	TRACE(Trace::full, wsize);
+	TRACE(Trace::full, offset, size, wsize);
 
 	return wsize;
 }

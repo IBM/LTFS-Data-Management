@@ -66,14 +66,12 @@ void RecallCommand::talkToBackend(std::stringstream *parmList)
 		case Error::LTFSDM_OK:
 			if ( getpid() != recreqresp.pid() ) {
 				MSG(LTFSDMC0036E);
-				TRACE(Trace::error, getpid());
-				TRACE(Trace::error, recreqresp.pid());
+				TRACE(Trace::error, getpid(), recreqresp.pid());
 				throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 			}
 			if ( requestNumber !=  recreqresp.reqnumber() ) {
 				MSG(LTFSDMC0037E);
-				TRACE(Trace::error, requestNumber);
-				TRACE(Trace::error, recreqresp.reqnumber());
+				TRACE(Trace::error, requestNumber, recreqresp.reqnumber());
 				throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 			}
 			break;
@@ -111,8 +109,7 @@ void RecallCommand::doCommand(int argc, char **argv)
 		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
-	TRACE(Trace::normal, argc);
-	TRACE(Trace::normal, optind);
+	TRACE(Trace::normal, argc, optind);
 	traceParms();
 
 	if ( !fileList.compare("") ) {

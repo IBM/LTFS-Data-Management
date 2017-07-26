@@ -83,8 +83,7 @@ void StopCommand::doCommand(int argc, char **argv)
 
 	if ( (lockfd = open(Const::SERVER_LOCK_FILE.c_str(), O_RDWR | O_CREAT, 0600)) == -1 ) {
 		MSG(LTFSDMC0033E);
-		TRACE(Trace::error, Const::SERVER_LOCK_FILE);
-		TRACE(Trace::error, errno);
+		TRACE(Trace::error, Const::SERVER_LOCK_FILE, errno);
 		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 

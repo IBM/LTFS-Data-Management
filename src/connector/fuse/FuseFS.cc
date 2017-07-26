@@ -73,8 +73,7 @@ void FuseFS::setMigInfo(const char *path, FuseFS::mig_info::state_num state)
 	FuseFS::mig_info miginfo_new;
 	FuseFS::mig_info miginfo;
 
-	TRACE(Trace::full, path);
-	TRACE(Trace::full, state);
+	TRACE(Trace::full, path, state);
 
 	miginfo_new = genMigInfo(path, state);
 
@@ -194,8 +193,7 @@ void FuseFS::recoverState(const char *path, FuseFS::mig_info::state_num state)
 	std::string fusepath = ((FuseFS::openltfs_ctx *) fc->private_data)->mountpoint + std::string(path);
 	std::string sourcepath = ((FuseFS::openltfs_ctx *) fc->private_data)->sourcedir + std::string(path);
 
-	TRACE(Trace::error, fusepath);
-	TRACE(Trace::error, state);
+	TRACE(Trace::error, fusepath, state);
 
 	FsObj file(sourcepath);
 
@@ -269,20 +267,16 @@ int FuseFS::recall_file(FuseFS::ltfsdm_file_info *linfo, bool toresident)
 	std::unique_lock<std::mutex> *lock_reply;
 
 	if ( fstat(linfo->fd, &statbuf) == -1 ) {
-		TRACE(Trace::error, fuse_get_context()->pid);
-		TRACE(Trace::error, errno);
+		TRACE(Trace::error, fuse_get_context()->pid, errno);
 		return (-1*errno);
 	}
 
 	if ( ioctl(linfo->fd, FS_IOC_GETVERSION, &igen) ) {
-		TRACE(Trace::error, fuse_get_context()->pid);
-		TRACE(Trace::error, errno);
+		TRACE(Trace::error, fuse_get_context()->pid, errno);
 		return (-1*errno);
 	}
 
-	TRACE(Trace::always, linfo->sourcepath);
-	TRACE(Trace::always, statbuf.st_ino);
-	TRACE(Trace::always, toresident);
+	TRACE(Trace::always, linfo->sourcepath, statbuf.st_ino, toresident);
 
 	std::unique_lock<std::mutex> lock(FuseFS::trecall_submit.mtx);
 	if ( Connector::recallEventSystemStopped == true )
@@ -305,9 +299,7 @@ int FuseFS::recall_file(FuseFS::ltfsdm_file_info *linfo, bool toresident)
 
 	success = conn_info->trecall_reply.success;
 
-	TRACE(Trace::always, linfo->sourcepath);
-	TRACE(Trace::always, statbuf.st_ino);
-	TRACE(Trace::always, success);
+	TRACE(Trace::always, linfo->sourcepath, statbuf.st_ino, success);
 
 	delete(lock_reply);
    	delete(conn_info);
@@ -733,8 +725,7 @@ int FuseFS::ltfsdm_read_buf(const char *path, struct fuse_bufvec **bufferp,
 
 	if ( (attrsize = fgetxattr(linfo->fd, Const::OPEN_LTFS_EA_MIGINFO_INT.c_str(), (void *) &migInfo, sizeof(migInfo))) == -1 ) {
 		if ( errno != ENODATA ) {
-			TRACE(Trace::error, fuse_get_context()->pid);
-			TRACE(Trace::error, errno);
+			TRACE(Trace::error, fuse_get_context()->pid, errno);
 			return (-1*errno);
 		}
 	}
@@ -1139,14 +1130,12 @@ FuseFS::~FuseFS()
 		MSG(LTFSDMF0007I);
 		fuse_exit(openltfs);
 		fuse_unmount(mountpt.c_str(), openltfsch);
-		TRACE(Trace::always, mountpt);
-		TRACE(Trace::always, (bool) Connector::forcedTerminate);
+		TRACE(Trace::always, mountpt, (bool) Connector::forcedTerminate);
 		if ( Connector::forcedTerminate )
 			fusefs->detach();
 		else
 			fusefs->join();
-		TRACE(Trace::always, mountpt);
-		TRACE(Trace::always, (bool) Connector::forcedTerminate);
+		TRACE(Trace::always, mountpt, (bool) Connector::forcedTerminate);
 		delete(fusefs);
 		free(ctx);
 		MSG(LTFSDMS0080I, mountpt.c_str());

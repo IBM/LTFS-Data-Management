@@ -73,8 +73,7 @@ void DataBase::open(bool dbUseMemory)
 						 SQLITE_OPEN_SHAREDCACHE | SQLITE_OPEN_EXCLUSIVE, NULL);
 
 	if ( rc != SQLITE_OK ) {
-		TRACE(Trace::error, rc);
-		TRACE(Trace::error, uri);
+		TRACE(Trace::error, rc, uri);
 		throw(EXCEPTION(Const::UNSET, uri, rc));
 	}
 
@@ -194,8 +193,7 @@ void sqlite3_statement::prepare(std::string sql, sqlite3_stmt **stmt)
 	rc = sqlite3_prepare_v2(DB.getDB(), sql.c_str(), -1, stmt, NULL);
 
 	if( rc != SQLITE_OK ) {
-		TRACE(Trace::error, sql);
-		TRACE(Trace::error, rc);
+		TRACE(Trace::error, sql, rc);
 		throw(EXCEPTION(rc, rc));
 	}
 }
@@ -212,16 +210,14 @@ void sqlite3_statement::checkRcAndFinalize(sqlite3_stmt *stmt, int rc, int expec
 	std::string statement(sqlite3_sql(stmt));
 
 	if ( rc != expected ) {
-		TRACE(Trace::error, statement);
-		TRACE(Trace::error, rc);
+		TRACE(Trace::error, statement, rc);
 		throw(EXCEPTION(rc, rc));
 	}
 
 	rc = sqlite3_finalize(stmt);
 
 	if ( rc != SQLITE_OK ) {
-		TRACE(Trace::error, statement);
-		TRACE(Trace::error, rc);
+		TRACE(Trace::error, statement, rc);
 		throw(EXCEPTION(rc, rc));
 	}
 }
@@ -238,8 +234,7 @@ void SQLStatement::prepare()
 	rc = sqlite3_prepare_v2(DB.getDB(), stmt_str.c_str(), -1, &stmt, NULL);
 
 	if( rc != SQLITE_OK ) {
-		TRACE(Trace::error, stmt_str);
-		TRACE(Trace::error, rc);
+		TRACE(Trace::error, stmt_str, rc);
 		throw(EXCEPTION(rc, rc));
 	}
 }
@@ -312,16 +307,14 @@ void SQLStatement::finalize()
 {
 	if ( stmt_rc != SQLITE_ROW &&
 		 stmt_rc != SQLITE_DONE ) {
-		TRACE(Trace::error, stmt_str);
-		TRACE(Trace::error, stmt_rc);
+		TRACE(Trace::error, stmt_str, stmt_rc);
 		throw(EXCEPTION(stmt_rc, stmt_rc));
 	}
 
 	int rc = sqlite3_finalize(stmt);
 
 	if ( rc != SQLITE_OK ) {
-		TRACE(Trace::error, stmt_str);
-		TRACE(Trace::error, rc);
+		TRACE(Trace::error, stmt_str, rc);
 		throw(EXCEPTION(rc, rc));
 	}
 }

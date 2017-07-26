@@ -78,8 +78,7 @@ void StartCommand::startServer()
 
 	if ( stat(serverPath.str().c_str(), &statbuf ) == -1 ) {
 		MSG(LTFSDMC0021E);
-		TRACE(Trace::error, serverPath.str());
-		TRACE(Trace::error, errno);
+		TRACE(Trace::error, serverPath.str(), errno);
 		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
@@ -102,9 +101,7 @@ void StartCommand::startServer()
 
     if(  !WIFEXITED(ret) || WEXITSTATUS(ret) ) {
 		MSG(LTFSDMC0022E);
-		TRACE(Trace::error, ret);
-		TRACE(Trace::error, WIFEXITED(ret));
-		TRACE(Trace::error, WEXITSTATUS(ret));
+		TRACE(Trace::error, ret, WIFEXITED(ret), WEXITSTATUS(ret));
 		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 

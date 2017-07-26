@@ -93,8 +93,7 @@ int main(int argc, char *argv[])
 
 	command = std::string(argv[1]);
 
-	TRACE(Trace::normal, argc);
-	TRACE(Trace::normal, command.c_str());
+	TRACE(Trace::normal, argc, command.c_str());
 
  	if  ( StartCommand().compare(command) ) {
 		openLTFSCommand = dynamic_cast<OpenLTFSCommand*>(new StartCommand());
@@ -205,8 +204,7 @@ int main(int argc, char *argv[])
 	argv++;
 
 	if (argc > 1) {
-		TRACE(Trace::normal, argc);
-		TRACE(Trace::normal, argv[1]);
+		TRACE(Trace::normal, argc, argv[1]);
 	}
 
 	try {

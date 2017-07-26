@@ -100,8 +100,7 @@ void LTFSDmComm::send(int fd)
 		throw(EXCEPTION(Const::UNSET));
 	}
 
-	TRACE(Trace::full, strlen(buffer));
-	TRACE(Trace::full, MessageSize);
+	TRACE(Trace::full, strlen(buffer), MessageSize);
 
 	if ( exitClient ) {
 		buffer[0] = 0;
@@ -111,10 +110,7 @@ void LTFSDmComm::send(int fd)
 
 	if ( rsize != 0 && rsize != MessageSize + sizeof(long) ) {
 		free(buffer);
-		TRACE(Trace::error, rsize);
-		TRACE(Trace::error, MessageSize);
-		TRACE(Trace::error, errno);
-		TRACE(Trace::error, sizeof(long));
+		TRACE(Trace::error, rsize, MessageSize, errno, sizeof(long));
 		MSG(LTFSDMX0008E);
 		throw(EXCEPTION(Const::UNSET));
 	}
@@ -154,8 +150,7 @@ void LTFSDmComm::recv(int fd)
 	rsize = readx(fd, (char *) &MessageSize, sizeof(long));
 
 	if (rsize != sizeof(long)) {
-		TRACE(Trace::error, rsize);
-		TRACE(Trace::error, sizeof(long));
+		TRACE(Trace::error, rsize, sizeof(long));
 		throw(EXCEPTION(Const::UNSET));
 	}
 
@@ -167,8 +162,7 @@ void LTFSDmComm::recv(int fd)
 	rsize = readx(fd, buffer, MessageSize);
 
 	if (rsize != MessageSize) {
-		TRACE(Trace::error, rsize);
-		TRACE(Trace::error, MessageSize);
+		TRACE(Trace::error, rsize, MessageSize);
 		free(buffer);
 		throw(EXCEPTION(Const::UNSET));
 	}
