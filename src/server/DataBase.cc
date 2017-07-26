@@ -245,6 +245,12 @@ void SQLStatement::getColumn(int *result, int column)
 	*result = sqlite3_column_int(stmt, column);
 }
 
+void SQLStatement::getColumn(unsigned int *result, int column)
+
+{
+	*result = static_cast<unsigned int>(sqlite3_column_int(stmt, column));
+}
+
 void SQLStatement::getColumn(DataBase::operation *result, int column)
 
 {
@@ -267,6 +273,12 @@ void SQLStatement::getColumn(unsigned long *result, int column)
 
 {
 	*result = static_cast<unsigned long>(sqlite3_column_int64(stmt, column));
+}
+
+void SQLStatement::getColumn(unsigned long long *result, int column)
+
+{
+	*result = static_cast<unsigned long long>(sqlite3_column_int64(stmt, column));
 }
 
 void SQLStatement::getColumn(std::string *result, int column)

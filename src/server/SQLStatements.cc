@@ -159,7 +159,59 @@ const std::string SelRecall::UPDATE_REQ_REQUEST =
 	" WHERE REQ_NUM=%2%"
 	" AND TAPE_ID='%3%';";
 
-/* ======== ======== */
+/* ======== TransRecall ======== */
+
+const std::string TransRecall::ADD_RECALL_JOB =
+	"INSERT INTO JOB_QUEUE (OPERATION, FILE_NAME, REQ_NUM, TARGET_STATE, REPL_NUM, FILE_SIZE, FS_ID, I_GEN, "
+	"I_NUM, MTIME_SEC, MTIME_NSEC, LAST_UPD, FILE_STATE, TAPE_ID, START_BLOCK, CONN_INFO) "
+	"VALUES (" /* OPERATION */ "%1%, " /* FILE_NAME */ "%2%, " /* REQ_NUM */ "%3%, "
+	/* TARGET_STATE */ "%4%, " /* REPL_NUM */ "%5%, " /* FILE_SIZE */ "%6%, " /* FS_ID */ "%7%, "
+	/* I_GEN */ "%8%, " /* I_NUM */ "%9%, " /* MTIME_SEC */ "%10%, " /* MTIME_NSEC */ "%11%, "
+	/* LAST_UPD */"%12%, " /* FILE_STATE */ "%13%, " /* TAPE_ID */ "'%14%', " /* START_BLOCK */  "%15%, "
+	/* CONN_INFO */ "%16%)";
+
+const std::string TransRecall::CHECK_RECREQ_EXISTS =
+	"SELECT STATE FROM REQUEST_QUEUE WHERE REQ_NUM=%1%";
+
+const std::string TransRecall::CHANGE_REC_REQ_NEW =
+	"UPDATE REQUEST_QUEUE SET STATE=%1%"
+	"WHERE REQ_NUM=%2% AND TAPE_ID='%3%'";
+
+const std::string TransRecall::ADD_RECALL_REQUEST =
+	"INSERT INTO REQUEST_QUEUE (OPERATION, REQ_NUM, TAPE_ID, TIME_ADDED, STATE) "
+	"VALUES (" /* OPERATION */ "%1%, " /* REQ_NUMR */ "%2%, " /* TAPE_ID */ "'%3%', "
+	/* TIME_ADDED */ "%4%, " /* STATE */ "%5%)";
+
+const std::string TransRecall::REMAINING_REC_JOBS =
+	"SELECT FS_ID, I_GEN, I_NUM, FILE_NAME, CONN_INFO  FROM JOB_QUEUE "
+	"WHERE OPERATION=%1%";
+
+const std::string TransRecall::SET_RECALLING =
+	"UPDATE JOB_QUEUE SET FILE_STATE=%1%"
+	" WHERE REQ_NUM=%2%"
+	" AND FILE_STATE=%3%"
+	" AND TAPE_ID='%4%'";
+
+const std::string TransRecall::SELECT_REC_JOBS =
+	"SELECT FS_ID, I_GEN, I_NUM, FILE_NAME, FILE_STATE, TARGET_STATE, CONN_INFO  FROM JOB_QUEUE "
+	"WHERE REQ_NUM=%1%"
+	" AND (FILE_STATE=%2% OR FILE_STATE=%3%)"
+	" AND TAPE_ID='%4%' ORDER BY START_BLOCK";
+
+const std::string TransRecall::DELETE_REC_JOBS =
+	"DELETE FROM JOB_QUEUE "
+	"WHERE REQ_NUM=%1%"
+	" AND (FILE_STATE=%2% OR FILE_STATE=%3%)"
+	" AND TAPE_ID='%4%'";
+
+const std::string TransRecall::COUNT_REMAINING_JOBS =
+	"SELECT COUNT(*) FROM JOB_QUEUE WHERE REQ_NUM=%1%"
+	" AND TAPE_ID='%2%'";
+
+const std::string TransRecall::DELETE_REQUEST =
+	"DELETE FROM REQUEST_QUEUE WHERE REQ_NUM=%1%"
+	" AND TAPE_ID='%2%'";
+
 /* ======== ======== */
 /* ======== ======== */
 /* ======== ======== */
