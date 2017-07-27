@@ -45,7 +45,7 @@ void TransRecall::addRequest(Connector::rec_info_t recinfo, std::string tapeId, 
 			MSG(LTFSDMS0032E, recinfo.ino);
 	}
 
-	stmt << boost::format(TransRecall::ADD_RECALL_JOB)
+	stmt(TransRecall::ADD_RECALL_JOB)
 		% DataBase::TRARECALL % filename.c_str() % reqNum
 		% ( recinfo.toresident ? FsObj::RESIDENT : FsObj::PREMIGRATED )
 		% Const::UNSET % statbuf.st_size % (long long) recinfo.fsid
@@ -66,21 +66,21 @@ void TransRecall::addRequest(Connector::rec_info_t recinfo, std::string tapeId, 
 
 	std::unique_lock<std::mutex> lock(Scheduler::mtx);
 
-	stmt << boost::format(TransRecall::CHECK_RECREQ_EXISTS) % reqNum;
+	stmt(TransRecall::CHECK_RECREQ_EXISTS) % reqNum;
 	stmt.prepare();
 	while ( stmt.step() )
 		reqExists = true;
 	stmt.finalize();
 
 	if ( reqExists == true ) {
-		stmt << boost::format(TransRecall::CHANGE_REC_REQ_NEW)
+		stmt(TransRecall::CHANGE_REC_REQ_NEW)
 			% DataBase::REQ_NEW % reqNum % tapeId;
 		TRACE(Trace::normal, stmt.str());
 		stmt.doall();
 		Scheduler::cond.notify_one();
 	}
 	else {
-		stmt << boost::format(TransRecall::ADD_RECALL_REQUEST)
+		stmt(TransRecall::ADD_RECALL_REQUEST)
 			% DataBase::TRARECALL % reqNum % attr.tapeId[0] % time(NULL)
 			% DataBase::REQ_NEW;
 		TRACE(Trace::normal, stmt.str());
@@ -93,8 +93,8 @@ void TransRecall::cleanupEvents()
 
 {
 	Connector::rec_info_t recinfo;
-	SQLStatement stmt(boost::format(TransRecall::REMAINING_REC_JOBS)
-					  % DataBase::TRARECALL);
+	SQLStatement stmt = SQLStatement(TransRecall::REMAINING_REC_JOBS)
+		% DataBase::TRARECALL;
 	TRACE(Trace::normal, stmt.str());
 	stmt.prepare();
 	while ( stmt.step(&recinfo.fsid, &recinfo.igen, &recinfo.ino,
@@ -322,17 +322,17 @@ void TransRecall::recallStep(int reqNum, std::string tapeId)
 	int numFiles = 0;
 	bool succeeded;
 
-	stmt << boost::format(TransRecall::SET_RECALLING)
+	stmt(TransRecall::SET_RECALLING)
 		% FsObj::RECALLING_MIG % reqNum % FsObj::MIGRATED % tapeId;
 	TRACE(Trace::normal, stmt.str());
 	stmt.doall();
 
-	stmt << boost::format(TransRecall::SET_RECALLING)
+	stmt(TransRecall::SET_RECALLING)
 		% FsObj::RECALLING_PREMIG % reqNum % FsObj::PREMIGRATED % tapeId;
 	TRACE(Trace::normal, stmt.str());
 	stmt.doall();
 
-	stmt << boost::format(TransRecall::SELECT_REC_JOBS)
+	stmt(TransRecall::SELECT_REC_JOBS)
 		% reqNum % FsObj::RECALLING_MIG % FsObj::RECALLING_PREMIG % tapeId;
 	TRACE(Trace::normal, stmt.str());
 	stmt.prepare();
@@ -365,7 +365,7 @@ void TransRecall::recallStep(int reqNum, std::string tapeId)
 	stmt.finalize();
 	TRACE(Trace::always, numFiles);
 
-	stmt << boost::format(TransRecall::DELETE_REC_JOBS)
+	stmt(TransRecall::DELETE_REC_JOBS)
 		% reqNum % FsObj::RECALLING_MIG % FsObj::RECALLING_PREMIG % tapeId;
  	TRACE(Trace::normal, stmt.str());
 	stmt.doall();
@@ -400,7 +400,7 @@ void TransRecall::execRequest(int reqNum, std::string tapeId)
 		assert(found == true);
 	}
 
-	stmt << boost::format(TransRecall::COUNT_REMAINING_JOBS)
+	stmt(TransRecall::COUNT_REMAINING_JOBS)
 		% reqNum % tapeId;
  	TRACE(Trace::normal, stmt.str());
 	stmt.prepare();
@@ -408,10 +408,10 @@ void TransRecall::execRequest(int reqNum, std::string tapeId)
 	stmt.finalize();
 
 	if ( remaining )
-		stmt << boost::format(TransRecall::CHANGE_REC_REQ_NEW)
+		stmt(TransRecall::CHANGE_REC_REQ_NEW)
 			% DataBase::REQ_NEW % reqNum % tapeId;
 	else
-		stmt << boost::format(TransRecall::DELETE_REQUEST)
+		stmt(TransRecall::DELETE_REQUEST)
 			% reqNum % tapeId;
  	TRACE(Trace::normal, stmt.str());
 	stmt.doall();

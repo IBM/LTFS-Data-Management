@@ -226,15 +226,22 @@ void sqlite3_statement::checkRcAndFinalize(sqlite3_stmt *stmt, int rc, int expec
 // OLD: -- END --
 
 
+SQLStatement& SQLStatement::operator()(std::string fmtstr)
+
+{
+	fmt = boost::format(fmtstr);
+	return *this;
+}
+
 void SQLStatement::prepare()
 
 {
 	int rc;
 
-	rc = sqlite3_prepare_v2(DB.getDB(), stmt_str.c_str(), -1, &stmt, NULL);
+	rc = sqlite3_prepare_v2(DB.getDB(), fmt.str().c_str(), -1, &stmt, NULL);
 
 	if( rc != SQLITE_OK ) {
-		TRACE(Trace::error, stmt_str, rc);
+		TRACE(Trace::error, fmt.str(), rc);
 		throw(EXCEPTION(rc, rc));
 	}
 }
@@ -294,7 +301,7 @@ void SQLStatement::getColumn(std::string *result, int column)
 std::string SQLStatement::str()
 
 {
-	return stmt_str;
+	return fmt.str();
 }
 
 
@@ -325,14 +332,14 @@ void SQLStatement::finalize()
 {
 	if ( stmt_rc != SQLITE_ROW &&
 		 stmt_rc != SQLITE_DONE ) {
-		TRACE(Trace::error, stmt_str, stmt_rc);
+		TRACE(Trace::error, fmt.str(), stmt_rc);
 		throw(EXCEPTION(stmt_rc, stmt_rc));
 	}
 
 	int rc = sqlite3_finalize(stmt);
 
 	if ( rc != SQLITE_OK ) {
-		TRACE(Trace::error, stmt_str, rc);
+		TRACE(Trace::error, fmt.str(), rc);
 		throw(EXCEPTION(rc, rc));
 	}
 }

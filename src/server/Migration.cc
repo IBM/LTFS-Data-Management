@@ -78,7 +78,7 @@ void Migration::addJob(std::string fileName)
 
 		state = checkState(fileName, &fso);
 
-		stmt << boost::format( Migration::ADD_MIGRATION_JOB )
+		stmt( Migration::ADD_MIGRATION_JOB )
 			% DataBase::MIGRATION % fileName % reqNumber % targetState
 			% statbuf.st_size % (long long) fso.getFsId() % fso.getIGen()
 			% (long long) fso.getINode() % statbuf.st_mtim.tv_sec
@@ -86,7 +86,7 @@ void Migration::addJob(std::string fileName)
 	}
 	catch ( const std::exception& e ) {
 		TRACE(Trace::error, e.what());
-		stmt << boost::format( Migration::ADD_MIGRATION_JOB )
+		stmt( Migration::ADD_MIGRATION_JOB )
 			% DataBase::MIGRATION % fileName % reqNumber % targetState
 			% Const::UNSET % Const::UNSET % Const::UNSET % Const::UNSET
 			% Const::UNSET % Const::UNSET % time(NULL) % FsObj::FAILED;
@@ -144,7 +144,7 @@ void Migration::addRequest()
 		replNum++;
 		std::unique_lock<std::mutex> lock(Scheduler::mtx);
 
-		stmt << boost::format( Migration::ADD_MIGRATION_REQUEST )
+		stmt( Migration::ADD_MIGRATION_REQUEST )
 			% DataBase::MIGRATION % reqNumber % targetState % numReplica % replNum
 			% pool % time(NULL) % ( needsTape ? DataBase::REQ_NEW : DataBase::REQ_INPROGRESS );
 
@@ -296,9 +296,9 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId, lon
 		MSG(LTFSDMS0050E, mig_info.fileName);
 		mrStatus.updateFailed(mig_info.reqNumber, mig_info.fromState);
 
-		SQLStatement stmt(boost::format(Migration::FAIL_PREMIGRATION)
-						  % FsObj::FAILED % mig_info.reqNumber
-						  % mig_info.fileName %  mig_info.replNum);
+		SQLStatement stmt = SQLStatement(Migration::FAIL_PREMIGRATION)
+			% FsObj::FAILED % mig_info.reqNumber
+			% mig_info.fileName % mig_info.replNum;
 
 		stmt.doall();
 	}
@@ -337,9 +337,9 @@ void Migration::stub(Migration::mig_info_t mig_info, std::shared_ptr<std::list<u
 		for (int i=0; i<mig_info.numRepl; i++)
 			mrStatus.updateFailed(mig_info.reqNumber, mig_info.fromState);
 
-		SQLStatement stmt(boost::format(Migration::FAIL_STUBBING)
-						  % FsObj::FAILED % mig_info.reqNumber
-						  % mig_info.fileName);
+		SQLStatement stmt = SQLStatement(Migration::FAIL_STUBBING)
+			% FsObj::FAILED % mig_info.reqNumber
+			% mig_info.fileName;
 
 		stmt.doall();
 		return;
@@ -392,12 +392,12 @@ Migration::req_return_t Migration::migrationStep(int reqNumber, int numRepl, int
 
 	if ( toState == FsObj::PREMIGRATED ) {
 		freeSpace = 1024*1024*inventory->getCartridge(tapeId)->get_remaining_cap();
-		stmt << boost::format(Migration::SET_PREMIGRATING)
+		stmt(Migration::SET_PREMIGRATING)
 			% state % tapeId % reqNumber % fromState % replNum % (unsigned long) &freeSpace
 			% (unsigned long) &num_found % (unsigned long) &total;
 	}
 	else {
-		stmt << boost::format(Migration::SET_STUBBING)
+		stmt(Migration::SET_STUBBING)
 			% state % reqNumber % fromState % tapeId % replNum;
 	}
 	TRACE(Trace::normal, stmt.str());
@@ -408,7 +408,7 @@ Migration::req_return_t Migration::migrationStep(int reqNumber, int numRepl, int
 	if ( total > num_found )
 		retval.remaining = true;
 
-	stmt << boost::format(Migration::SELECT_MIG_JOBS)
+	stmt(Migration::SELECT_MIG_JOBS)
 		% reqNumber % state % tapeId;
 	TRACE(Trace::normal, stmt.str());
 	stmt.prepare();
@@ -464,14 +464,14 @@ Migration::req_return_t Migration::migrationStep(int reqNumber, int numRepl, int
 	if ( *suspended == true )
 		retval.suspended = true;
 
-	stmt << boost::format(Migration::SET_MIG_SUCCESS)
+	stmt(Migration::SET_MIG_SUCCESS)
 		% toState % reqNumber % state % tapeId % genInumString(*inumList);
 	TRACE(Trace::normal, stmt.str());
 	steptime = time(NULL);
 	stmt.doall();
 	TRACE(Trace::always, time(NULL) - steptime);
 
-	stmt << boost::format(Migration::SET_MIG_RESET)
+	stmt(Migration::SET_MIG_RESET)
 		% fromState % reqNumber % state;
 	TRACE(Trace::normal, stmt.str());
 	steptime = time(NULL);
@@ -507,7 +507,7 @@ void Migration::execRequest(int reqNumber, int targetState, int numRepl,
 				TRACE(Trace::error, errno);
 				MSG(LTFSDMS0024E, tapeId);
 
-				stmt << boost::format(Migration::FAIL_PREMIGRATED)
+				stmt(Migration::FAIL_PREMIGRATED)
 					% FsObj::FAILED % reqNumber % FsObj::PREMIGRATED % tapeId % replNum;
 
 				TRACE(Trace::error, stmt.str());
@@ -547,13 +547,13 @@ void Migration::execRequest(int reqNumber, int targetState, int numRepl,
 	std::unique_lock<std::mutex> updlock(Scheduler::updmtx);
 
 	if ( retval.suspended )
-		stmt << boost::format(Migration::UPDATE_MIG_REQUEST)
+		stmt(Migration::UPDATE_MIG_REQUEST)
 			% DataBase::REQ_NEW % reqNumber % replNum;
 	else if ( retval.remaining )
-		stmt << boost::format(Migration::UPDATE_MIG_REQUEST_RESET_TAPE)
+		stmt(Migration::UPDATE_MIG_REQUEST_RESET_TAPE)
 			% DataBase::REQ_NEW % reqNumber % replNum;
 	else
-		stmt << boost::format(Migration::UPDATE_MIG_REQUEST)
+		stmt(Migration::UPDATE_MIG_REQUEST)
 			% DataBase::REQ_COMPLETED % reqNumber % replNum;
 
 	TRACE(Trace::normal, stmt.str());

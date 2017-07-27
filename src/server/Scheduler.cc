@@ -263,7 +263,8 @@ unsigned long Scheduler::smallestMigJob(int reqNum, int replNum)
 {
 	unsigned long min;
 
-	SQLStatement stmt(boost::format( Scheduler::SMALLEST_MIG_JOB ) % reqNum % FsObj::RESIDENT % replNum);
+	SQLStatement stmt = SQLStatement(Scheduler::SMALLEST_MIG_JOB)
+		% reqNum % FsObj::RESIDENT % replNum;
 	stmt.prepare();
 	stmt.step(&min);
 	stmt.finalize();
@@ -290,7 +291,7 @@ void Scheduler::run(long key)
 			break;
 		}
 
-		selstmt << boost::format( Scheduler::SELECT_REQUEST ) % DataBase::REQ_NEW;
+		selstmt( Scheduler::SELECT_REQUEST ) % DataBase::REQ_NEW;
 
 		selstmt.prepare();
 		while ( selstmt.step(&op, &reqNum, &tgtState, &numRepl, &replNum, &pool, &tapeId) ) {
@@ -310,7 +311,7 @@ void Scheduler::run(long key)
 
 			switch ( op ) {
 				case DataBase::MIGRATION:
-					updstmt << boost::format( Scheduler::UPDATE_MIG_REQUEST )
+					updstmt( Scheduler::UPDATE_MIG_REQUEST )
 						% DataBase::REQ_INPROGRESS % reqNum % replNum % pool;
 					updstmt.doall();
 
@@ -318,7 +319,7 @@ void Scheduler::run(long key)
 					subs.enqueue(thrdinfo.str(), Migration::execRequest, reqNum, tgtState, numRepl, replNum, pool, tapeId, true /* needsTape */);
 					break;
 				case DataBase::SELRECALL:
-					updstmt << boost::format( Scheduler::UPDATE_REC_REQUEST )
+					updstmt( Scheduler::UPDATE_REC_REQUEST )
 						% DataBase::REQ_INPROGRESS % reqNum % tapeId;
 					updstmt.doall();
 
@@ -326,7 +327,7 @@ void Scheduler::run(long key)
 					subs.enqueue(thrdinfo.str(), SelRecall::execRequest, reqNum, tgtState, tapeId, true /* needsTape */);
 					break;
 				case DataBase::TRARECALL:
-					updstmt << boost::format( Scheduler::UPDATE_REC_REQUEST )
+					updstmt( Scheduler::UPDATE_REC_REQUEST )
 						% DataBase::REQ_INPROGRESS % reqNum % tapeId;
 					updstmt.doall();
 

@@ -41,7 +41,7 @@ namespace sqlite3_statement {
 class SQLStatement {
 private:
 	sqlite3_stmt *stmt;
-	std::string stmt_str;
+	boost::format fmt;
 	int stmt_rc;
 
 	void getColumn(int *result, int column);
@@ -70,15 +70,19 @@ private:
 	}
 
 public:
-	SQLStatement() : stmt(nullptr), stmt_str(""), stmt_rc(0) {}
-	SQLStatement(boost::basic_format<char>& fmt) : stmt_str(fmt.str()) {}
+	SQLStatement() : stmt(nullptr), fmt(""), stmt_rc(0) {}
+	SQLStatement(std::string fmtstr) : fmt(boost::format(fmtstr)) {}
+	SQLStatement& operator()(std::string fmtstr);
 	~SQLStatement() {}
 
-	void operator<< (boost::basic_format<char>& fmt) { stmt_str = fmt.str(); }
+    template<typename T>
+    SQLStatement& operator%(T s) {fmt % s; return *this;}
+
 	std::string str();
 	void bind(int num, int value);
 	void bind(int num, std::string value);
 	void prepare();
+
 	template<typename ... Args>
 	bool step(Args ... args)
 	{
@@ -93,6 +97,7 @@ public:
 
 		return true;
 	}
+
 	void finalize();
 	void doall();
 };
