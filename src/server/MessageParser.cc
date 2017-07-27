@@ -300,9 +300,9 @@ void MessageParser::stopMessage(long key, LTFSDmCommServer *command, std::unique
 	TRACE(Trace::always, __PRETTY_FUNCTION__);
    	const LTFSDmProtocol::LTFSDmStopRequest stopreq = command->stoprequest();
 	long keySent = stopreq.key();
-	sqlite3_stmt *stmt;
+	SQLStatement stmt;
+	int state;
 	int numreqs;
-	int rc;
 
 	TRACE(Trace::normal, keySent);
 
@@ -335,19 +335,15 @@ void MessageParser::stopMessage(long key, LTFSDmCommServer *command, std::unique
 		if ( Server::forcedTerminate == false &&  Server::finishTerminate == false ) {
 			std::stringstream ssql;
 
-			ssql << "SELECT STATE FROM REQUEST_QUEUE";
-
-			sqlite3_statement::prepare(ssql.str(), &stmt);
-
-			while ( (rc = sqlite3_statement::step(stmt)) == SQLITE_ROW ) {
-				if ( sqlite3_column_int(stmt, 0) == DataBase::REQ_INPROGRESS ) {
+			stmt(MessageParser::ALL_REQUESTS);
+			stmt.prepare();
+			while ( stmt.step(&state) ) {
+				if ( state == DataBase::REQ_INPROGRESS ) {
 					numreqs++;
 				}
 			}
-
+			stmt.finalize();
 			TRACE(Trace::always, numreqs);
-
-			sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
 		}
 
 		LTFSDmProtocol::LTFSDmStopResp *stopresp = command->mutable_stopresp();
@@ -481,9 +477,13 @@ void MessageParser::infoRequestsMessage(long key, LTFSDmCommServer *command, lon
 	const LTFSDmProtocol::LTFSDmInfoRequestsRequest inforeqs = command->inforequestsrequest();
 	long keySent = inforeqs.key();
 	int requestNumber = inforeqs.reqnumber();
-	sqlite3_stmt *stmt;
+	SQLStatement stmt;
 	std::stringstream ssql;
-	int rc;
+	DataBase::operation op;
+	int reqNum;
+	std::string tapeId;
+	DataBase::req_state tgtstate;
+	DataBase::req_state state;
 
 	TRACE(Trace::normal, keySent);
 
@@ -494,26 +494,21 @@ void MessageParser::infoRequestsMessage(long key, LTFSDmCommServer *command, lon
 
 	TRACE(Trace::normal, requestNumber);
 
-	ssql << "SELECT OPERATION, REQ_NUM, TAPE_ID, TARGET_STATE, STATE FROM REQUEST_QUEUE";
 	if ( requestNumber != Const::UNSET )
-		ssql << " WHERE REQ_NUM=" << requestNumber << ";";
+		stmt(MessageParser::INFO_ONE_REQUEST) % requestNumber;
 	else
-		ssql << ";";
+		stmt(MessageParser::INFO_ALL_REQUESTS);
 
-	sqlite3_statement::prepare(ssql.str(), &stmt);
+	stmt.prepare();
 
-	while ( (rc = sqlite3_statement::step(stmt)) == SQLITE_ROW ) {
+	while ( stmt.step(&op, &reqNum, &tapeId, &tgtstate, &state) ) {
 		LTFSDmProtocol::LTFSDmInfoRequestsResp *inforeqsresp = command->mutable_inforequestsresp();
 
-		inforeqsresp->set_operation(DataBase::opStr((DataBase::operation) sqlite3_column_int(stmt, 0)));
-		inforeqsresp->set_reqnumber(sqlite3_column_int(stmt, 1));
-		const char *tape_id = reinterpret_cast<const char*>(sqlite3_column_text (stmt, 2));
-		if (tape_id == NULL)
-			inforeqsresp->set_tapeid("");
-		else
-			inforeqsresp->set_tapeid(std::string(tape_id));
-		inforeqsresp->set_targetstate(DataBase::reqStateStr((DataBase::req_state) sqlite3_column_int(stmt, 3)));
-		inforeqsresp->set_state(DataBase::reqStateStr((DataBase::req_state) sqlite3_column_int(stmt, 4)));
+		inforeqsresp->set_operation(DataBase::opStr(op));
+		inforeqsresp->set_reqnumber(reqNum);
+		inforeqsresp->set_tapeid(tapeId);
+		inforeqsresp->set_targetstate(DataBase::reqStateStr(tgtstate));
+		inforeqsresp->set_state(DataBase::reqStateStr(state));
 
 		try {
 			command->send();
@@ -523,8 +518,7 @@ void MessageParser::infoRequestsMessage(long key, LTFSDmCommServer *command, lon
 			MSG(LTFSDMS0007E);
 		}
 	}
-
-	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+	stmt.finalize();
 
 	LTFSDmProtocol::LTFSDmInfoRequestsResp *inforeqsresp = command->mutable_inforequestsresp();
 	inforeqsresp->set_operation("");
@@ -549,9 +543,14 @@ void MessageParser::infoJobsMessage(long key, LTFSDmCommServer *command, long lo
 	const LTFSDmProtocol::LTFSDmInfoJobsRequest infojobs = command->infojobsrequest();
 	long keySent = infojobs.key();
 	int requestNumber = infojobs.reqnumber();
-	sqlite3_stmt *stmt;
-	std::stringstream ssql;
-	int rc;
+	SQLStatement stmt;
+	DataBase::operation op;
+	std::string fileName;
+	int reqNum;
+	int replNum;
+	unsigned long fileSize;
+	std::string tapeId;
+	FsObj::file_state state;
 
 	TRACE(Trace::normal, keySent);
 
@@ -562,32 +561,23 @@ void MessageParser::infoJobsMessage(long key, LTFSDmCommServer *command, long lo
 
 	TRACE(Trace::normal, requestNumber);
 
-	ssql << "SELECT OPERATION, FILE_NAME, REQ_NUM, REPL_NUM, FILE_SIZE, TAPE_ID, FILE_STATE FROM JOB_QUEUE";
 	if ( requestNumber != Const::UNSET )
-		ssql << " WHERE REQ_NUM=" << requestNumber << ";";
+		stmt(MessageParser::INFO_SEL_JOBS) % requestNumber;
 	else
-		ssql << ";";
+		stmt(MessageParser::INFO_ALL_JOBS);
 
-	sqlite3_statement::prepare(ssql.str(), &stmt);
+	stmt.prepare();
 
-	while ( (rc = sqlite3_statement::step(stmt)) == SQLITE_ROW ) {
+	while ( stmt.step(&op, &fileName, &reqNum, &replNum, &fileSize, &state) ) {
 		LTFSDmProtocol::LTFSDmInfoJobsResp *infojobsresp = command->mutable_infojobsresp();
 
-		infojobsresp->set_operation(DataBase::opStr((DataBase::operation) sqlite3_column_int(stmt, 0)));
-		const char *file_name = reinterpret_cast<const char*>(sqlite3_column_text (stmt, 1));
-		if (file_name == NULL)
-			infojobsresp->set_filename("-");
-		else
-			infojobsresp->set_filename(std::string(file_name));
-		infojobsresp->set_reqnumber(sqlite3_column_int(stmt, 2));
-		infojobsresp->set_replnumber(sqlite3_column_int(stmt, 3));
-		infojobsresp->set_filesize(sqlite3_column_int64(stmt, 4));
-		const char *tape_id = reinterpret_cast<const char*>(sqlite3_column_text (stmt, 5));
-		if (tape_id == NULL)
-			infojobsresp->set_tapeid("-");
-		else
-			infojobsresp->set_tapeid(std::string(tape_id));
-		infojobsresp->set_state(FsObj::migStateStr((FsObj::file_state) sqlite3_column_int(stmt, 6)));
+		infojobsresp->set_operation(DataBase::opStr(op));
+		infojobsresp->set_filename(fileName);
+		infojobsresp->set_reqnumber(reqNum);
+		infojobsresp->set_replnumber(replNum);
+		infojobsresp->set_filesize(fileSize);
+		infojobsresp->set_tapeid(tapeId);
+		infojobsresp->set_state(FsObj::migStateStr(state));
 
 		try {
 			command->send();
@@ -597,8 +587,7 @@ void MessageParser::infoJobsMessage(long key, LTFSDmCommServer *command, long lo
 			MSG(LTFSDMS0007E);
 		}
 	}
-
-	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+	stmt.finalize();
 
 	LTFSDmProtocol::LTFSDmInfoJobsResp *infojobsresp = command->mutable_infojobsresp();
 	infojobsresp->set_operation("");

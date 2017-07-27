@@ -5,9 +5,9 @@ Status  mrStatus;
 void Status::add(int reqNumber)
 
 {
-	std::stringstream ssql;
-	sqlite3_stmt *stmt;
-	int rc;
+	SQLStatement stmt;
+	int num;
+	FsObj::file_state migState;
 
 	std::lock_guard<std::mutex> lock(Status::mtx);
 
@@ -15,44 +15,33 @@ void Status::add(int reqNumber)
 	if ( allStates.count(reqNumber) != 0 )
 		return;
 
-	ssql << "SELECT FILE_STATE, COUNT(*) FROM JOB_QUEUE WHERE REQ_NUM="
-		 << reqNumber << " GROUP BY FILE_STATE";
-
-	sqlite3_statement::prepare(ssql.str(), &stmt);
-
 	singleState state;
 
-	while ( (rc = sqlite3_statement::step(stmt)) == SQLITE_ROW ) {
-		switch ( sqlite3_column_int(stmt, 0) ) {
+	stmt(Status::STATUS) % reqNumber;
+	stmt.prepare();
+	while ( stmt.step(&migState, &num) ) {
+		switch ( migState ) {
 			case FsObj::RESIDENT:
 			case FsObj::PREMIGRATING:
-				state.resident = sqlite3_column_int(stmt, 1);
+				state.resident = num;
 				break;
 			case FsObj::PREMIGRATED:
 			case FsObj::STUBBING:
 			case FsObj::RECALLING_PREMIG:
-				state.premigrated = sqlite3_column_int(stmt, 1);
+				state.premigrated = num;
 				break;
 			case FsObj::MIGRATED:
 			case FsObj::RECALLING_MIG:
-				state.migrated = sqlite3_column_int(stmt, 1);
+				state.migrated = num;
 				break;
 			case FsObj::FAILED:
-				state.failed = sqlite3_column_int(stmt, 1);
+				state.failed = num;
 				break;
 			default:
-				TRACE(Trace::error, sqlite3_column_int(stmt, 0));
+				TRACE(Trace::error, migState);
 		}
 	}
-
-	try {
-		sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
-	}
-	catch ( const std::exception& e ) {
-		TRACE(Trace::error, e.what());
-		state = singleState();
-	}
-
+	stmt.finalize();
 	allStates[reqNumber] = state;
 }
 

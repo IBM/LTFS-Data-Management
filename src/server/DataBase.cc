@@ -92,57 +92,13 @@ void DataBase::open(bool dbUseMemory)
 void DataBase::createTables()
 
 {
-	std::stringstream ssql;
-	sqlite3_stmt *stmt;
-	int rc;
+	SQLStatement stmt;
 
-	ssql << "CREATE TABLE JOB_QUEUE("
-		 << "OPERATION INT NOT NULL, "
-		 << "FILE_NAME CHAR(4096), "
-		 << "REQ_NUM INT NOT NULL, "
-		 << "TARGET_STATE INT NOT NULL, "
-		 << "REPL_NUM INT, "
-		 << "TAPE_POOL VARCHAR, "
-		 << "FILE_SIZE BIGINT NOT NULL, "
-		 << "FS_ID BIGINT NOT NULL, "
-		 << "I_GEN INT NOT NULL, "
-		 << "I_NUM BIGINT NOT NULL, "
-		 << "MTIME_SEC BIGINT NOT NULL, "
-		 << "MTIME_NSEC BIGINT NOT NULL, "
-		 << "LAST_UPD INT NOT NULL, "
-		 << "TAPE_ID CHAR(9), "
-		 << "FILE_STATE INT NOT NULL, "
-		 << "START_BLOCK INT, "
-		 << "CONN_INFO BIGINT, "
-		 << "CONSTRAINT JOB_QUEUE_UNIQUE_FILE_NAME UNIQUE (FILE_NAME, REPL_NUM), "
-		 << "CONSTRAINT JOB_QUEUE_UNIQUE_UID UNIQUE (FS_ID, I_GEN, I_NUM, REPL_NUM));";
+	stmt(DataBase::CREATE_JOB_QUEUE);
+	stmt.doall();
 
-	sqlite3_statement::prepare(ssql.str(), &stmt);
-
-	rc = sqlite3_statement::step(stmt);
-
-	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
-
-	ssql.str("");
-	ssql.clear();
-
-	ssql << "CREATE TABLE REQUEST_QUEUE("
-		 << "OPERATION INT NOT NULL, "
-		 << "REQ_NUM INT NOT NULL, "
-		 << "TARGET_STATE INT, "
-		 << "NUM_REPL, "
-		 << "REPL_NUM INT, "
-		 << "TAPE_POOL VARCHAR, "
-		 << "TAPE_ID CHAR(9), "
-		 << "TIME_ADDED INT NOT NULL, "
-		 << "STATE INT NOT NULL, "
-		 << "CONSTRAINT REQUEST_QUEUE_UNIQUE UNIQUE(REQ_NUM, REPL_NUM, TAPE_POOL, TAPE_ID));";
-
-	sqlite3_statement::prepare(ssql.str(), &stmt);
-
-	rc = sqlite3_statement::step(stmt);
-
-	sqlite3_statement::checkRcAndFinalize(stmt, rc, SQLITE_DONE);
+	stmt(DataBase::CREATE_REQUEST_QUEUE);
+	stmt.doall();
 }
 
 std::string DataBase::opStr(DataBase::operation op)
@@ -183,49 +139,6 @@ int DataBase::lastUpdates()
 	return sqlite3_changes(db);
 }
 
-// OLD: -- begin --
-
-void sqlite3_statement::prepare(std::string sql, sqlite3_stmt **stmt)
-
-{
-	int rc;
-
-	rc = sqlite3_prepare_v2(DB.getDB(), sql.c_str(), -1, stmt, NULL);
-
-	if( rc != SQLITE_OK ) {
-		TRACE(Trace::error, sql, rc);
-		throw(EXCEPTION(rc, rc));
-	}
-}
-
-int sqlite3_statement::step(sqlite3_stmt *stmt)
-
-{
-	return  sqlite3_step(stmt);
-}
-
-void sqlite3_statement::checkRcAndFinalize(sqlite3_stmt *stmt, int rc, int expected)
-
-{
-	std::string statement(sqlite3_sql(stmt));
-
-	if ( rc != expected ) {
-		TRACE(Trace::error, statement, rc);
-		throw(EXCEPTION(rc, rc));
-	}
-
-	rc = sqlite3_finalize(stmt);
-
-	if ( rc != SQLITE_OK ) {
-		TRACE(Trace::error, statement, rc);
-		throw(EXCEPTION(rc, rc));
-	}
-}
-
-
-// OLD: -- END --
-
-
 SQLStatement& SQLStatement::operator()(std::string fmtstr)
 
 {
@@ -262,6 +175,12 @@ void SQLStatement::getColumn(DataBase::operation *result, int column)
 
 {
 	*result = static_cast<DataBase::operation>(sqlite3_column_int(stmt, column));
+}
+
+void SQLStatement::getColumn(DataBase::req_state *result, int column)
+
+{
+	*result = static_cast<DataBase::req_state>(sqlite3_column_int(stmt, column));
 }
 
 void SQLStatement::getColumn(FsObj::file_state *result, int column)

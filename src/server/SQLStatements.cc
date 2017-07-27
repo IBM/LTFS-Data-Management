@@ -1,5 +1,42 @@
 #include "ServerIncludes.h"
 
+/* ======== DataBase ======== */
+
+const std::string DataBase::CREATE_JOB_QUEUE =
+	"CREATE TABLE JOB_QUEUE("
+	" OPERATION INT NOT NULL,"
+	" FILE_NAME CHAR(4096),"
+	" REQ_NUM INT NOT NULL,"
+	" TARGET_STATE INT NOT NULL,"
+	" REPL_NUM INT,"
+	" TAPE_POOL VARCHAR,"
+	" FILE_SIZE BIGINT NOT NULL,"
+	" FS_ID BIGINT NOT NULL,"
+	" I_GEN INT NOT NULL,"
+	" I_NUM BIGINT NOT NULL,"
+	" MTIME_SEC BIGINT NOT NULL,"
+	" MTIME_NSEC BIGINT NOT NULL,"
+	" LAST_UPD INT NOT NULL,"
+	" TAPE_ID CHAR(9),"
+	" FILE_STATE INT NOT NULL,"
+	" START_BLOCK INT,"
+	" CONN_INFO BIGINT,"
+	" CONSTRAINT JOB_QUEUE_UNIQUE_FILE_NAME UNIQUE (FILE_NAME, REPL_NUM),"
+	" CONSTRAINT JOB_QUEUE_UNIQUE_UID UNIQUE (FS_ID, I_GEN, I_NUM, REPL_NUM))";
+
+const std::string DataBase::CREATE_REQUEST_QUEUE =
+	"CREATE TABLE REQUEST_QUEUE("
+	" OPERATION INT NOT NULL,"
+	" REQ_NUM INT NOT NULL,"
+	" TARGET_STATE INT,"
+	" NUM_REPL,"
+	" REPL_NUM INT,"
+	" TAPE_POOL VARCHAR,"
+	" TAPE_ID CHAR(9),"
+	" TIME_ADDED INT NOT NULL,"
+	" STATE INT NOT NULL,"
+	" CONSTRAINT REQUEST_QUEUE_UNIQUE UNIQUE(REQ_NUM, REPL_NUM, TAPE_POOL, TAPE_ID))";
+
 /* ======== Scheduler ======== */
 
 const std::string Scheduler::SELECT_REQUEST =
@@ -212,6 +249,40 @@ const std::string TransRecall::DELETE_REQUEST =
 	"DELETE FROM REQUEST_QUEUE WHERE REQ_NUM=%1%"
 	" AND TAPE_ID='%2%'";
 
-/* ======== ======== */
-/* ======== ======== */
-/* ======== ======== */
+/* ======== FileOperation ======== */
+
+const std::string FileOperation::REQUEST_STATE =
+	"SELECT STATE FROM REQUEST_QUEUE WHERE REQ_NUM=%1%";
+
+const std::string FileOperation::DELETE_JOBS =
+	"DELETE FROM JOB_QUEUE WHERE REQ_NUM=%1%";
+
+const std::string FileOperation::DELETE_REQUESTS =
+	"DELETE FROM REQUEST_QUEUE WHERE REQ_NUM=%1%";
+
+/* ======== MessageParser ======== */
+
+const std::string MessageParser::ALL_REQUESTS =
+	"SELECT STATE FROM REQUEST_QUEUE";
+
+const std::string MessageParser::INFO_ALL_REQUESTS =
+	"SELECT OPERATION, REQ_NUM, TAPE_ID, TARGET_STATE, STATE FROM REQUEST_QUEUE";
+
+const std::string MessageParser::INFO_ONE_REQUEST =
+	"SELECT OPERATION, REQ_NUM, TAPE_ID, TARGET_STATE, STATE FROM REQUEST_QUEUE"
+	" WHERE REQ_NUM=%1%";
+
+const std::string MessageParser::INFO_ALL_JOBS =
+	"SELECT OPERATION, FILE_NAME, REQ_NUM, REPL_NUM,"
+	" FILE_SIZE, TAPE_ID, FILE_STATE FROM JOB_QUEUE";
+
+const std::string MessageParser::INFO_SEL_JOBS =
+	"SELECT OPERATION, FILE_NAME, REQ_NUM, REPL_NUM,"
+	" FILE_SIZE, TAPE_ID, FILE_STATE FROM JOB_QUEUE"
+	" WHERE REQ_NUM=%1%";
+
+/* ======== Status ======== */
+
+const std::string Status::STATUS =
+	"SELECT FILE_STATE, COUNT(*) FROM JOB_QUEUE WHERE REQ_NUM=%1%"
+	" GROUP BY FILE_STATE";

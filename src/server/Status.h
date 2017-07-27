@@ -10,6 +10,8 @@ private:
 	};
 	std::map<int, singleState> allStates;
 	std::mutex mtx;
+
+	static const std::string STATUS;
 public:
 	Status() {}
 	void add(int reqNumber);

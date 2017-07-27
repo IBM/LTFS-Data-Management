@@ -4,6 +4,12 @@ class MessageParser
 
 {
 private:
+	static const std::string ALL_REQUESTS;
+	static const std::string INFO_ALL_REQUESTS;
+	static const std::string INFO_ONE_REQUEST;
+	static const std::string INFO_ALL_JOBS;
+	static const std::string INFO_SEL_JOBS;
+
 	static void getObjects(LTFSDmCommServer *command, long localReqNumber,
 					unsigned long pid, long requestNumber, FileOperation *fopt);
 	static void reqStatusMessage(long key, LTFSDmCommServer *command, FileOperation *fopt);

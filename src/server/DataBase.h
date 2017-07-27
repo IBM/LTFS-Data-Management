@@ -5,6 +5,8 @@ private:
 	sqlite3 *db;
 	bool dbNeedsClosed;
 	static void fits(sqlite3_context *ctx, int argc, sqlite3_value **argv);
+	static const std::string CREATE_JOB_QUEUE;
+	static const std::string CREATE_REQUEST_QUEUE;
 public:
 	enum operation {
 		TRARECALL,
@@ -31,13 +33,6 @@ public:
 
 extern DataBase DB;
 
-namespace sqlite3_statement {
-	void prepare(std::string sql, sqlite3_stmt **stmt);
-	int step(sqlite3_stmt *stmt);
-	void checkRcAndFinalize(sqlite3_stmt *stmt, int rc, int expected);
-}
-
-
 class SQLStatement {
 private:
 	sqlite3_stmt *stmt;
@@ -47,6 +42,7 @@ private:
 	void getColumn(int *result, int column);
 	void getColumn(unsigned int *result, int column);
 	void getColumn(DataBase::operation *result, int column);
+	void getColumn(DataBase::req_state *result, int column);
 	void getColumn(FsObj::file_state *result, int column);
 	void getColumn(long *result, int column);
 	void getColumn(unsigned long *result, int column);
