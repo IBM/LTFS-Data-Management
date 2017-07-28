@@ -10,11 +10,9 @@ public:
 			OpenLTFSCommand("fs", "h")
 	{
 	}
-	;
 	~InfoFsCommand()
 	{
 	}
-	;
 	void printUsage();
 	void doCommand(int argc, char **argv);
 };

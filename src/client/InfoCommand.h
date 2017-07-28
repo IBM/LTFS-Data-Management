@@ -12,7 +12,6 @@ public:
 			OpenLTFSCommand("info", "")
 	{
 	}
-	;
 	void printUsage()
 	{
 		INFO(LTFSDMC0020I);
@@ -21,5 +20,4 @@ public:
 	void doCommand(int argc, char **argv)
 	{
 	}
-	;
 };

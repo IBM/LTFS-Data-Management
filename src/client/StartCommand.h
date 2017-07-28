@@ -15,11 +15,9 @@ public:
 			OpenLTFSCommand("start", "")
 	{
 	}
-	;
 	~StartCommand()
 	{
 	}
-	;
 	void printUsage();
 	void doCommand(int argc, char **argv);
 };

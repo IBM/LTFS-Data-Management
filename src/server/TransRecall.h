@@ -22,7 +22,6 @@ public:
 	~TransRecall()
 	{
 	}
-	;
 	static void addRequest(Connector::rec_info_t recinfo, std::string tapeId,
 			long reqNum);
 	void cleanupEvents();

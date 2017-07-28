@@ -12,11 +12,9 @@ public:
 			OpenLTFSCommand("tapes", ":+h")
 	{
 	}
-	;
 	~InfoTapesCommand()
 	{
 	}
-	;
 	void printUsage();
 	void doCommand(int argc, char **argv);
 };

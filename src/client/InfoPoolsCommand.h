@@ -12,11 +12,9 @@ public:
 			OpenLTFSCommand("pools", ":+h")
 	{
 	}
-	;
 	~InfoPoolsCommand()
 	{
 	}
-	;
 	void printUsage();
 	void doCommand(int argc, char **argv);
 };

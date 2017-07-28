@@ -10,11 +10,9 @@ public:
 			OpenLTFSCommand("recall", ":+hrn:f:")
 	{
 	}
-	;
 	~RecallCommand()
 	{
 	}
-	;
 	void printUsage();
 	void doCommand(int argc, char **argv);
 };

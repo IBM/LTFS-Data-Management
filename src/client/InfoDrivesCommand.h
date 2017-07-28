@@ -12,11 +12,9 @@ public:
 			OpenLTFSCommand("drives", ":+h")
 	{
 	}
-	;
 	~InfoDrivesCommand()
 	{
 	}
-	;
 	void printUsage();
 	void doCommand(int argc, char **argv);
 };

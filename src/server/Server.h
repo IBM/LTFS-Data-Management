@@ -16,7 +16,6 @@ public:
 	Server()
 	{
 	}
-	;
 	void initialize(bool dbUseMemory);
 	void daemonize();
 	void run(Connector *connector, sigset_t set);

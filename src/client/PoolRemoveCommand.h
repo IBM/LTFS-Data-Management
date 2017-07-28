@@ -12,11 +12,9 @@ public:
 			OpenLTFSCommand("remove", ":+hP:t:")
 	{
 	}
-	;
 	~PoolRemoveCommand()
 	{
 	}
-	;
 	void printUsage();
 	void doCommand(int argc, char **argv);
 };

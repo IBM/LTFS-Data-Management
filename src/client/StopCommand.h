@@ -12,11 +12,9 @@ public:
 			OpenLTFSCommand("stop", "hx")
 	{
 	}
-	;
 	~StopCommand()
 	{
 	}
-	;
 	void printUsage();
 	void doCommand(int argc, char **argv);
 };

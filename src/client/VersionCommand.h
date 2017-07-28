@@ -10,11 +10,9 @@ public:
 			OpenLTFSCommand("version", "h")
 	{
 	}
-	;
 	~VersionCommand()
 	{
 	}
-	;
 	void printUsage();
 	void doCommand(int argc, char **argv);
 };

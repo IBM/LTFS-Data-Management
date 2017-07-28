@@ -51,6 +51,5 @@ public:
 	~Scheduler()
 	{
 	}
-	;
 	void run(long key);
 };

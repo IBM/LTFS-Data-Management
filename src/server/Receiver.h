@@ -12,6 +12,5 @@ public:
 	~Receiver()
 	{
 	}
-	;
 	void run(long key, Connector *connector);
 };

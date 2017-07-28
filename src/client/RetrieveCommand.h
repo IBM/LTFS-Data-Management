@@ -14,11 +14,9 @@ public:
 			OpenLTFSCommand("retrieve", "h")
 	{
 	}
-	;
 	~RetrieveCommand()
 	{
 	}
-	;
 	void printUsage();
 	void doCommand(int argc, char **argv);
 };

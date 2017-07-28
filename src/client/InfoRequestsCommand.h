@@ -12,11 +12,9 @@ public:
 			OpenLTFSCommand("requests", ":+hn:")
 	{
 	}
-	;
 	~InfoRequestsCommand()
 	{
 	}
-	;
 	void printUsage();
 	void doCommand(int argc, char **argv);
 };

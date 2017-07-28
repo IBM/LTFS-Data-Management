@@ -12,11 +12,9 @@ public:
 			OpenLTFSCommand("help", "")
 	{
 	}
-	;
 	~HelpCommand()
 	{
 	}
-	;
 	void printUsage();
 	void doCommand(int argc, char **argv);
 };

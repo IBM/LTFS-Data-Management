@@ -14,11 +14,9 @@ public:
 			OpenLTFSCommand("status", "h")
 	{
 	}
-	;
 	~StatusCommand()
 	{
 	}
-	;
 	void printUsage();
 	void doCommand(int argc, char **argv);
 };

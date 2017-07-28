@@ -10,11 +10,9 @@ public:
 			OpenLTFSCommand("migrate", ":+hpn:f:P:")
 	{
 	}
-	;
 	~MigrationCommand()
 	{
 	}
-	;
 	void printUsage();
 	void doCommand(int argc, char **argv);
 };

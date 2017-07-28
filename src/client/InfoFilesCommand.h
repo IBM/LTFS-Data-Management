@@ -10,11 +10,9 @@ public:
 			OpenLTFSCommand("files", ":+hf:")
 	{
 	}
-	;
 	~InfoFilesCommand()
 	{
 	}
-	;
 	void printUsage();
 	void doCommand(int argc, char **argv);
 };

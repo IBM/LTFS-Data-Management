@@ -11,7 +11,6 @@ protected:
 					Const::UNSET)
 	{
 	}
-	;
 	bool preMigrate;
 	bool recToResident;
 	long requestNumber;

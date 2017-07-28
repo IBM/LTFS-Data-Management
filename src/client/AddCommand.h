@@ -12,11 +12,9 @@ public:
 			OpenLTFSCommand("add", ":+m:N:")
 	{
 	}
-	;
 	~AddCommand()
 	{
 	}
-	;
 	void printUsage();
 	void doCommand(int argc, char **argv);
 };

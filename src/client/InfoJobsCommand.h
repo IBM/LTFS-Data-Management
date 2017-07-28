@@ -12,11 +12,9 @@ public:
 			OpenLTFSCommand("jobs", ":+hn:")
 	{
 	}
-	;
 	~InfoJobsCommand()
 	{
 	}
-	;
 	void printUsage();
 	void doCommand(int argc, char **argv);
 };

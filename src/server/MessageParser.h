@@ -48,6 +48,5 @@ public:
 	~MessageParser()
 	{
 	}
-	;
 	static void run(long key, LTFSDmCommServer command, Connector *connector);
 };

@@ -12,7 +12,6 @@ public:
 			OpenLTFSCommand("pool", "")
 	{
 	}
-	;
 	void printUsage()
 	{
 		INFO(LTFSDMC0073I);
@@ -21,5 +20,4 @@ public:
 	void doCommand(int argc, char **argv)
 	{
 	}
-	;
 };

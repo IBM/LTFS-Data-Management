@@ -12,11 +12,9 @@ public:
 			OpenLTFSCommand("add", ":+hP:t:")
 	{
 	}
-	;
 	~PoolAddCommand()
 	{
 	}
-	;
 	void printUsage();
 	void doCommand(int argc, char **argv);
 };
