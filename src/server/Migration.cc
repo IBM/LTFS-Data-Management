@@ -78,7 +78,7 @@ void Migration::addJob(std::string fileName)
 
 		state = checkState(fileName, &fso);
 
-		stmt( Migration::ADD_MIGRATION_JOB )
+		stmt( Migration::ADD_JOB )
 			% DataBase::MIGRATION % fileName % reqNumber % targetState
 			% statbuf.st_size % (long long) fso.getFsId() % fso.getIGen()
 			% (long long) fso.getINode() % statbuf.st_mtim.tv_sec
@@ -86,7 +86,7 @@ void Migration::addJob(std::string fileName)
 	}
 	catch ( const std::exception& e ) {
 		TRACE(Trace::error, e.what());
-		stmt( Migration::ADD_MIGRATION_JOB )
+		stmt( Migration::ADD_JOB )
 			% DataBase::MIGRATION % fileName % reqNumber % targetState
 			% Const::UNSET % Const::UNSET % Const::UNSET % Const::UNSET
 			% Const::UNSET % Const::UNSET % time(NULL) % FsObj::FAILED;
@@ -144,7 +144,7 @@ void Migration::addRequest()
 		replNum++;
 		std::unique_lock<std::mutex> lock(Scheduler::mtx);
 
-		stmt( Migration::ADD_MIGRATION_REQUEST )
+		stmt( Migration::ADD_REQUEST )
 			% DataBase::MIGRATION % reqNumber % targetState % numReplica % replNum
 			% pool % time(NULL) % ( needsTape ? DataBase::REQ_NEW : DataBase::REQ_INPROGRESS );
 
@@ -408,7 +408,7 @@ Migration::req_return_t Migration::migrationStep(int reqNumber, int numRepl, int
 	if ( total > num_found )
 		retval.remaining = true;
 
-	stmt(Migration::SELECT_MIG_JOBS)
+	stmt(Migration::SELECT_JOBS)
 		% reqNumber % state % tapeId;
 	TRACE(Trace::normal, stmt.str());
 	stmt.prepare();
@@ -464,14 +464,14 @@ Migration::req_return_t Migration::migrationStep(int reqNumber, int numRepl, int
 	if ( *suspended == true )
 		retval.suspended = true;
 
-	stmt(Migration::SET_MIG_SUCCESS)
+	stmt(Migration::SET_JOB_SUCCESS)
 		% toState % reqNumber % state % tapeId % genInumString(*inumList);
 	TRACE(Trace::normal, stmt.str());
 	steptime = time(NULL);
 	stmt.doall();
 	TRACE(Trace::always, time(NULL) - steptime);
 
-	stmt(Migration::SET_MIG_RESET)
+	stmt(Migration::RESET_JOB_STATE)
 		% fromState % reqNumber % state;
 	TRACE(Trace::normal, stmt.str());
 	steptime = time(NULL);
@@ -547,13 +547,13 @@ void Migration::execRequest(int reqNumber, int targetState, int numRepl,
 	std::unique_lock<std::mutex> updlock(Scheduler::updmtx);
 
 	if ( retval.suspended )
-		stmt(Migration::UPDATE_MIG_REQUEST)
+		stmt(Migration::UPDATE_REQUEST)
 			% DataBase::REQ_NEW % reqNumber % replNum;
 	else if ( retval.remaining )
-		stmt(Migration::UPDATE_MIG_REQUEST_RESET_TAPE)
+		stmt(Migration::UPDATE_REQUEST_RESET_TAPE)
 			% DataBase::REQ_NEW % reqNumber % replNum;
 	else
-		stmt(Migration::UPDATE_MIG_REQUEST)
+		stmt(Migration::UPDATE_REQUEST)
 			% DataBase::REQ_COMPLETED % reqNumber % replNum;
 
 	TRACE(Trace::normal, stmt.str());

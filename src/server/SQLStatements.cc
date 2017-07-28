@@ -64,7 +64,7 @@ const std::string Scheduler::SMALLEST_MIG_JOB =
 
 /* ======== Migration ======== */
 
-const std::string Migration::ADD_MIGRATION_JOB =
+const std::string Migration::ADD_JOB =
 	"INSERT INTO JOB_QUEUE (OPERATION, FILE_NAME, REQ_NUM, TARGET_STATE, REPL_NUM, TAPE_POOL,"
 	" FILE_SIZE, FS_ID, I_GEN, I_NUM, MTIME_SEC, MTIME_NSEC, LAST_UPD, TAPE_ID, FILE_STATE)"
 	" VALUES (" /* OPERATION */ "%1%, " /* FILE_NAME */ "'%2%', " /* REQ_NUM */ "%3%, "
@@ -73,7 +73,7 @@ const std::string Migration::ADD_MIGRATION_JOB =
 	/* MTIME_SEC */ "%9%, " /* MTIME_NSEC */ "%10%, " /* LAST_UPD */ "%11%, "
 	/* TAPE_ID */ "'', " /* FILE_STATE */ "%12%)";
 
-const  std::string Migration::ADD_MIGRATION_REQUEST =
+const  std::string Migration::ADD_REQUEST =
 	"INSERT INTO REQUEST_QUEUE (OPERATION, REQ_NUM, TARGET_STATE,"
 	" NUM_REPL, REPL_NUM, TAPE_POOL, TAPE_ID, TIME_ADDED, STATE)"
 	" VALUES (" /* OPERATION */  "%1%, " /* FILE_NAME */ "%2%, " /* TARGET_STATE */ "%3%, "
@@ -106,20 +106,20 @@ const std::string Migration::SET_STUBBING =
 	" AND TAPE_ID='%4%'"
 	" AND REPL_NUM=%5%";
 
-const std::string Migration::SELECT_MIG_JOBS =
+const std::string Migration::SELECT_JOBS =
 	"SELECT FILE_NAME, MTIME_SEC, MTIME_NSEC, I_NUM FROM JOB_QUEUE WHERE"
 	" REQ_NUM=%1%"
 	" AND FILE_STATE=%2%"
 	" AND TAPE_ID='%3%'";
 
-const std::string Migration::SET_MIG_SUCCESS =
+const std::string Migration::SET_JOB_SUCCESS =
 	"UPDATE JOB_QUEUE SET FILE_STATE=%1%"
 	" WHERE REQ_NUM=%2%"
 	" AND FILE_STATE=%3%"
 	" AND TAPE_ID='%4%'"
 	" AND I_NUM IN (%5%)";
 
-const std::string Migration::SET_MIG_RESET =
+const std::string Migration::RESET_JOB_STATE =
 	"UPDATE JOB_QUEUE SET FILE_STATE=%1%"
 	" WHERE REQ_NUM=%2%"
 	" AND FILE_STATE=%3%";
@@ -131,19 +131,19 @@ const std::string Migration::FAIL_PREMIGRATED =
 	" AND TAPE_ID='%4%'"
 	" AND REPL_NUM=%5%";
 
-const std::string Migration::UPDATE_MIG_REQUEST =
+const std::string Migration::UPDATE_REQUEST =
 	"UPDATE REQUEST_QUEUE SET STATE=%1%"
 	" WHERE REQ_NUM=%2%"
 	" AND REPL_NUM=%3%";
 
-const std::string Migration::UPDATE_MIG_REQUEST_RESET_TAPE =
+const std::string Migration::UPDATE_REQUEST_RESET_TAPE =
 	"UPDATE REQUEST_QUEUE SET STATE=%1%, TAPE_ID=''"
 	" WHERE REQ_NUM=%2%"
 	" AND REPL_NUM=%3%";
 
 /* ======== SelRecall ======== */
 
-const std::string SelRecall::ADD_SELRECALL_JOB =
+const std::string SelRecall::ADD_JOB =
 	"INSERT INTO JOB_QUEUE (OPERATION, FILE_NAME, REQ_NUM, TARGET_STATE, FILE_SIZE, FS_ID, I_GEN,"
 	" I_NUM, MTIME_SEC, MTIME_NSEC, LAST_UPD, FILE_STATE, TAPE_ID, START_BLOCK)"
 	" VALUES (" /* OPERATION */ "%1%, " /* FILE_NAME */ "'%2%', " /* REQ_NUM */ "%3%, "
@@ -155,7 +155,7 @@ const std::string SelRecall::GET_TAPES =
 	"SELECT TAPE_ID FROM JOB_QUEUE WHERE REQ_NUM=%1%"
 	" GROUP BY TAPE_ID";
 
-const std::string SelRecall::ADD_SELRECALL_REQUEST =
+const std::string SelRecall::ADD_REQUEST =
 	"INSERT INTO REQUEST_QUEUE (OPERATION, REQ_NUM, TARGET_STATE, TAPE_ID, TIME_ADDED, STATE)"
 	" VALUES (" /* OPERATION */ "%1%, " /* REQ_NUM */ "%2%, " /* TARGET_STATE */ "%3%, "
 	/* TAPE_ID */ "'%4%', " /* TIME_ADDED */ "%5%, " /* STATE */ "%6%)";
@@ -166,39 +166,39 @@ const std::string SelRecall::SET_RECALLING =
 	" AND FILE_STATE=%3%"
 	" AND TAPE_ID='%4%'";
 
-const std::string SelRecall::SELECT_REC_JOBS =
+const std::string SelRecall::SELECT_JOBS =
 	"SELECT FILE_NAME, FILE_STATE, I_NUM FROM JOB_QUEUE WHERE REQ_NUM=%1%"
 	" AND TAPE_ID='%2%'"
 	" AND (FILE_STATE=%3% OR FILE_STATE=%4%)"
 	" ORDER BY START_BLOCK";
 
-const std::string SelRecall::FAIL_RECALL =
+const std::string SelRecall::FAIL_JOB =
 	"UPDATE JOB_QUEUE SET FILE_STATE = %1%"
 	" WHERE FILE_NAME='%2%'"
 	" AND REQ_NUM=%3%"
 	" AND TAPE_ID='%4%'";
 
-const std::string SelRecall::SET_REC_SUCCESS =
+const std::string SelRecall::SET_JOB_SUCCESS =
 	"UPDATE JOB_QUEUE SET FILE_STATE = %1%"
 	" WHERE REQ_NUM=%2%"
 	" AND TAPE_ID='%3%'"
 	" AND (FILE_STATE=%4% OR FILE_STATE=%5%)"
 	" AND I_NUM IN (%6%)";
 
-const std::string SelRecall::SET_REC_RESET =
+const std::string SelRecall::RESET_JOB_STATE =
 	"UPDATE JOB_QUEUE SET FILE_STATE = %1%"
 	" WHERE REQ_NUM=%2%"
 	" AND TAPE_ID='%3%'"
 	" AND FILE_STATE=%4%";
 
-const std::string SelRecall::UPDATE_REQ_REQUEST =
+const std::string SelRecall::UPDATE_REQUEST =
 	"UPDATE REQUEST_QUEUE SET STATE=%1%"
 	" WHERE REQ_NUM=%2%"
 	" AND TAPE_ID='%3%';";
 
 /* ======== TransRecall ======== */
 
-const std::string TransRecall::ADD_RECALL_JOB =
+const std::string TransRecall::ADD_JOB =
 	"INSERT INTO JOB_QUEUE (OPERATION, FILE_NAME, REQ_NUM, TARGET_STATE, REPL_NUM, FILE_SIZE, FS_ID, I_GEN,"
 	" I_NUM, MTIME_SEC, MTIME_NSEC, LAST_UPD, FILE_STATE, TAPE_ID, START_BLOCK, CONN_INFO)"
 	" VALUES (" /* OPERATION */ "%1%, " /* FILE_NAME */ "%2%, " /* REQ_NUM */ "%3%, "
@@ -207,19 +207,19 @@ const std::string TransRecall::ADD_RECALL_JOB =
 	/* LAST_UPD */"%12%, " /* FILE_STATE */ "%13%, " /* TAPE_ID */ "'%14%', " /* START_BLOCK */  "%15%, "
 	/* CONN_INFO */ "%16%)";
 
-const std::string TransRecall::CHECK_RECREQ_EXISTS =
+const std::string TransRecall::CHECK_REQUEST_EXISTS =
 	"SELECT STATE FROM REQUEST_QUEUE WHERE REQ_NUM=%1%";
 
-const std::string TransRecall::CHANGE_REC_REQ_NEW =
+const std::string TransRecall::CHANGE_REQUEST_TO_NEW =
 	"UPDATE REQUEST_QUEUE SET STATE=%1%"
 	" WHERE REQ_NUM=%2% AND TAPE_ID='%3%'";
 
-const std::string TransRecall::ADD_RECALL_REQUEST =
+const std::string TransRecall::ADD_REQUEST =
 	"INSERT INTO REQUEST_QUEUE (OPERATION, REQ_NUM, TAPE_ID, TIME_ADDED, STATE)"
 	" VALUES (" /* OPERATION */ "%1%, " /* REQ_NUMR */ "%2%, " /* TAPE_ID */ "'%3%', "
 	/* TIME_ADDED */ "%4%, " /* STATE */ "%5%)";
 
-const std::string TransRecall::REMAINING_REC_JOBS =
+const std::string TransRecall::REMAINING_JOBS =
 	"SELECT FS_ID, I_GEN, I_NUM, FILE_NAME, CONN_INFO  FROM JOB_QUEUE"
 	" WHERE OPERATION=%1%";
 
@@ -229,13 +229,13 @@ const std::string TransRecall::SET_RECALLING =
 	" AND FILE_STATE=%3%"
 	" AND TAPE_ID='%4%'";
 
-const std::string TransRecall::SELECT_REC_JOBS =
+const std::string TransRecall::SELECT_JOBS =
 	"SELECT FS_ID, I_GEN, I_NUM, FILE_NAME, FILE_STATE, TARGET_STATE, CONN_INFO  FROM JOB_QUEUE"
 	" WHERE REQ_NUM=%1%"
 	" AND (FILE_STATE=%2% OR FILE_STATE=%3%)"
 	" AND TAPE_ID='%4%' ORDER BY START_BLOCK";
 
-const std::string TransRecall::DELETE_REC_JOBS =
+const std::string TransRecall::DELETE_JOBS =
 	"DELETE FROM JOB_QUEUE"
 	" WHERE REQ_NUM=%1%"
 	" AND (FILE_STATE=%2% OR FILE_STATE=%3%)"

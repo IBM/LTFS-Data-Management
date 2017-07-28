@@ -16,18 +16,18 @@ private:
 
 	FsObj::file_state checkState(std::string fileName, FsObj *fso);
 
-    static const std::string ADD_MIGRATION_JOB;
-	static const std::string ADD_MIGRATION_REQUEST;
+    static const std::string ADD_JOB;
+	static const std::string ADD_REQUEST;
 	static const std::string FAIL_PREMIGRATION;
 	static const std::string FAIL_STUBBING;
 	static const std::string SET_PREMIGRATING;
 	static const std::string SET_STUBBING;
-	static const std::string SELECT_MIG_JOBS;
-	static const std::string SET_MIG_SUCCESS;
-	static const std::string SET_MIG_RESET;
+	static const std::string SELECT_JOBS;
+	static const std::string SET_JOB_SUCCESS;
+	static const std::string RESET_JOB_STATE;
 	static const std::string FAIL_PREMIGRATED;
-	static const std::string UPDATE_MIG_REQUEST;
-	static const std::string UPDATE_MIG_REQUEST_RESET_TAPE;
+	static const std::string UPDATE_REQUEST;
+	static const std::string UPDATE_REQUEST_RESET_TAPE;
 
 public:
 	struct mig_info_t {
