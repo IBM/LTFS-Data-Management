@@ -21,6 +21,8 @@ SEP = >
 addtgtprefix = $(addprefix $(1)$(SEP), $(2))
 remtgtprefix = $(subst $(1)$(SEP),,$(2))
 
+all: build
+
 BUILDDIRS := $(call addtgtprefix, build, $(COMMONDIRS) $(CONNECDIRS) $(CLIENTDIRS) $(SERVERDIRS))
 build: prepare $(BUILDDIRS)
 $(BUILDDIRS):
