@@ -265,8 +265,8 @@ unsigned long Scheduler::smallestMigJob(int reqNum, int replNum)
 {
 	unsigned long min;
 
-	SQLStatement stmt = SQLStatement(Scheduler::SMALLEST_MIG_JOB) % reqNum
-			% FsObj::RESIDENT % replNum;
+	SQLStatement stmt = SQLStatement(Scheduler::SMALLEST_MIG_JOB) << reqNum
+			<< FsObj::RESIDENT << replNum;
 	stmt.prepare();
 	stmt.step(&min);
 	stmt.finalize();
@@ -293,7 +293,7 @@ void Scheduler::run(long key)
 			break;
 		}
 
-		selstmt(Scheduler::SELECT_REQUEST) % DataBase::REQ_NEW;
+		selstmt(Scheduler::SELECT_REQUEST) << DataBase::REQ_NEW;
 
 		selstmt.prepare();
 		while (selstmt.step(&op, &reqNum, &tgtState, &numRepl, &replNum, &pool,
@@ -316,8 +316,8 @@ void Scheduler::run(long key)
 			switch (op) {
 				case DataBase::MIGRATION:
 					updstmt(Scheduler::UPDATE_MIG_REQUEST)
-							% DataBase::REQ_INPROGRESS % reqNum % replNum
-							% pool;
+							<< DataBase::REQ_INPROGRESS << reqNum << replNum
+							<< pool;
 					updstmt.doall();
 
 					thrdinfo << "Mig(" << reqNum << "," << replNum << ","
@@ -328,7 +328,7 @@ void Scheduler::run(long key)
 					break;
 				case DataBase::SELRECALL:
 					updstmt(Scheduler::UPDATE_REC_REQUEST)
-							% DataBase::REQ_INPROGRESS % reqNum % tapeId;
+							<< DataBase::REQ_INPROGRESS << reqNum << tapeId;
 					updstmt.doall();
 
 					thrdinfo << "SelRec(" << reqNum << ")";
@@ -337,7 +337,7 @@ void Scheduler::run(long key)
 					break;
 				case DataBase::TRARECALL:
 					updstmt(Scheduler::UPDATE_REC_REQUEST)
-							% DataBase::REQ_INPROGRESS % reqNum % tapeId;
+							<< DataBase::REQ_INPROGRESS << reqNum << tapeId;
 					updstmt.doall();
 
 					thrdinfo << "TraRec(" << reqNum << ")";

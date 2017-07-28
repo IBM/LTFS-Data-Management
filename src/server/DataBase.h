@@ -87,9 +87,9 @@ public:
 	}
 
 	template<typename T>
-	SQLStatement& operator%(T s)
+	SQLStatement& operator<<(T s)
 	{
-		fmt % s;
+		fmt % (s);
 		return *this;
 	}
 

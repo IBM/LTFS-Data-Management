@@ -31,7 +31,7 @@ bool FileOperation::queryResult(long reqNumber, long *resident,
 
 		std::unique_lock < std::mutex > lock(Scheduler::updmtx);
 
-		stmt(FileOperation::REQUEST_STATE) % reqNumber;
+		stmt(FileOperation::REQUEST_STATE) << reqNumber;
 		stmt.prepare();
 		while (stmt.step(&state)) {
 			if (state != DataBase::REQ_COMPLETED) {
@@ -62,10 +62,10 @@ bool FileOperation::queryResult(long reqNumber, long *resident,
 			Scheduler::updReq.erase(Scheduler::updReq.find(reqNumber));
 		}
 
-		stmt(FileOperation::DELETE_JOBS) % reqNumber;
+		stmt(FileOperation::DELETE_JOBS) << reqNumber;
 		stmt.doall();
 
-		stmt(FileOperation::DELETE_REQUESTS) % reqNumber;
+		stmt(FileOperation::DELETE_REQUESTS) << reqNumber;
 		stmt.doall();
 	}
 

@@ -17,7 +17,7 @@ void Status::add(int reqNumber)
 
 	singleState state;
 
-	stmt(Status::STATUS) % reqNumber;
+	stmt(Status::STATUS) << reqNumber;
 	stmt.prepare();
 	while (stmt.step(&migState, &num)) {
 		switch (migState) {

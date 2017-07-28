@@ -501,7 +501,7 @@ void MessageParser::infoRequestsMessage(long key, LTFSDmCommServer *command,
 	TRACE(Trace::normal, requestNumber);
 
 	if (requestNumber != Const::UNSET)
-		stmt(MessageParser::INFO_ONE_REQUEST) % requestNumber;
+		stmt(MessageParser::INFO_ONE_REQUEST) << requestNumber;
 	else
 		stmt(MessageParser::INFO_ALL_REQUESTS);
 
@@ -570,7 +570,7 @@ void MessageParser::infoJobsMessage(long key, LTFSDmCommServer *command,
 	TRACE(Trace::normal, requestNumber);
 
 	if (requestNumber != Const::UNSET)
-		stmt(MessageParser::INFO_SEL_JOBS) % requestNumber;
+		stmt(MessageParser::INFO_SEL_JOBS) << requestNumber;
 	else
 		stmt(MessageParser::INFO_ALL_JOBS);
 

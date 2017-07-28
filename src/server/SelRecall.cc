@@ -32,17 +32,17 @@ void SelRecall::addJob(std::string fileName)
 
 		tapeName = Scheduler::getTapeName(fileName, attr.tapeId[0]);
 
-		stmt(SelRecall::ADD_JOB) % DataBase::SELRECALL % fileName % reqNumber
-				% targetState % statbuf.st_size % (long long) fso.getFsId()
-				% fso.getIGen() % (long long) fso.getINode()
-				% statbuf.st_mtim.tv_sec % statbuf.st_mtim.tv_nsec % time(NULL)
-				% state % attr.tapeId[0] % Scheduler::getStartBlock(tapeName);
+		stmt(SelRecall::ADD_JOB) << DataBase::SELRECALL << fileName << reqNumber
+				<< targetState << statbuf.st_size << (long long) fso.getFsId()
+				<< fso.getIGen() << (long long) fso.getINode()
+				<< statbuf.st_mtim.tv_sec << statbuf.st_mtim.tv_nsec << time(NULL)
+				<< state << attr.tapeId[0] << Scheduler::getStartBlock(tapeName);
 	} catch (const std::exception& e) {
 		TRACE(Trace::error, e.what());
-		stmt(SelRecall::ADD_JOB) % DataBase::SELRECALL % fileName % reqNumber
-				% targetState % Const::UNSET % Const::UNSET % Const::UNSET
-				% Const::UNSET % Const::UNSET % Const::UNSET % time(NULL)
-				% FsObj::FAILED % Const::FAILED_TAPE_ID % 0;
+		stmt(SelRecall::ADD_JOB) << DataBase::SELRECALL << fileName << reqNumber
+				<< targetState << Const::UNSET << Const::UNSET << Const::UNSET
+				<< Const::UNSET << Const::UNSET << Const::UNSET << time(NULL)
+				<< FsObj::FAILED << Const::FAILED_TAPE_ID << 0;
 		MSG(LTFSDMS0017E, fileName.c_str());
 	}
 
@@ -58,7 +58,7 @@ void SelRecall::addJob(std::string fileName)
 void SelRecall::addRequest()
 
 {
-	SQLStatement gettapesstmt = SQLStatement(SelRecall::GET_TAPES) % reqNumber;
+	SQLStatement gettapesstmt = SQLStatement(SelRecall::GET_TAPES) << reqNumber;
 	SQLStatement addreqstmt;
 	std::string tapeId;
 	int state;
@@ -82,8 +82,8 @@ void SelRecall::addRequest()
 		else
 			state = DataBase::REQ_INPROGRESS;
 
-		addreqstmt(SelRecall::ADD_REQUEST) % DataBase::SELRECALL % reqNumber
-				% targetState % tapeId % time(NULL) % state;
+		addreqstmt(SelRecall::ADD_REQUEST) << DataBase::SELRECALL << reqNumber
+				<< targetState << tapeId << time(NULL) << state;
 
 		TRACE(Trace::normal, addreqstmt.str());
 
@@ -215,18 +215,18 @@ bool SelRecall::recallStep(int reqNumber, std::string tapeId,
 		assert(drive != nullptr);
 	}
 
-	stmt(SelRecall::SET_RECALLING) % FsObj::RECALLING_MIG % reqNumber
-			% FsObj::MIGRATED % tapeId;
+	stmt(SelRecall::SET_RECALLING) << FsObj::RECALLING_MIG << reqNumber
+			<< FsObj::MIGRATED << tapeId;
 	TRACE(Trace::normal, stmt.str());
 	stmt.doall();
 
-	stmt(SelRecall::SET_RECALLING) % FsObj::RECALLING_PREMIG % reqNumber
-			% FsObj::PREMIGRATED % tapeId;
+	stmt(SelRecall::SET_RECALLING) << FsObj::RECALLING_PREMIG << reqNumber
+			<< FsObj::PREMIGRATED << tapeId;
 	TRACE(Trace::normal, stmt.str());
 	stmt.doall();
 
-	stmt(SelRecall::SELECT_JOBS) % reqNumber % tapeId % FsObj::RECALLING_MIG
-			% FsObj::RECALLING_PREMIG;
+	stmt(SelRecall::SELECT_JOBS) << reqNumber << tapeId << FsObj::RECALLING_MIG
+			<< FsObj::RECALLING_PREMIG;
 	TRACE(Trace::normal, stmt.str());
 	stmt.prepare();
 	start = time(NULL);
@@ -261,7 +261,7 @@ bool SelRecall::recallStep(int reqNumber, std::string tapeId,
 			TRACE(Trace::error, e.what());
 			mrStatus.updateFailed(reqNumber, state);
 			SQLStatement failstmt = SQLStatement(SelRecall::FAIL_JOB)
-					% FsObj::FAILED % fileName % reqNumber % tapeId;
+					<< FsObj::FAILED << fileName << reqNumber << tapeId;
 
 			TRACE(Trace::error, stmt.str());
 			failstmt.doall();
@@ -278,19 +278,19 @@ bool SelRecall::recallStep(int reqNumber, std::string tapeId,
 	}
 	stmt.finalize();
 
-	stmt(SelRecall::SET_JOB_SUCCESS) % toState % reqNumber % tapeId
-			% FsObj::RECALLING_MIG % FsObj::RECALLING_PREMIG
-			% genInumString(inumList);
+	stmt(SelRecall::SET_JOB_SUCCESS) << toState << reqNumber << tapeId
+			<< FsObj::RECALLING_MIG << FsObj::RECALLING_PREMIG
+			<< genInumString(inumList);
 	TRACE(Trace::normal, stmt.str());
 	stmt.doall();
 
-	stmt(SelRecall::RESET_JOB_STATE) % FsObj::MIGRATED % reqNumber % tapeId
-			% FsObj::RECALLING_MIG;
+	stmt(SelRecall::RESET_JOB_STATE) << FsObj::MIGRATED << reqNumber << tapeId
+			<< FsObj::RECALLING_MIG;
 	TRACE(Trace::normal, stmt.str());
 	stmt.doall();
 
-	stmt(SelRecall::RESET_JOB_STATE) % FsObj::PREMIGRATED % reqNumber % tapeId
-			% FsObj::RECALLING_PREMIG;
+	stmt(SelRecall::RESET_JOB_STATE) << FsObj::PREMIGRATED << reqNumber << tapeId
+			<< FsObj::RECALLING_PREMIG;
 	TRACE(Trace::normal, stmt.str());
 	stmt.doall();
 
@@ -335,8 +335,8 @@ bool needsTape)
 	std::unique_lock < std::mutex > updlock(Scheduler::updmtx);
 
 	stmt(SelRecall::UPDATE_REQUEST)
-			% (suspended ? DataBase::REQ_NEW : DataBase::REQ_COMPLETED)
-			% reqNumber % tapeId;
+			<< (suspended ? DataBase::REQ_NEW : DataBase::REQ_COMPLETED)
+			<< reqNumber << tapeId;
 	TRACE(Trace::normal, stmt.str());
 	stmt.doall();
 
