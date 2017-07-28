@@ -31,7 +31,7 @@ void AddCommand::doCommand(int argc, char **argv)
 	char *pathName = NULL;
 	std::string managedFs;
 
-	if ( argc == 1 ) {
+	if (argc == 1) {
 		printUsage();
 		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
@@ -40,27 +40,26 @@ void AddCommand::doCommand(int argc, char **argv)
 
 	pathName = canonicalize_file_name(argv[optind]);
 
-	if ( pathName == NULL ) {
+	if (pathName == NULL) {
 		MSG(LTFSDMC0053E);
 		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
 	managedFs = std::string(pathName);
 
-	if ( LTFSDM::getFs().count(managedFs) == 0 ) {
+	if (LTFSDM::getFs().count(managedFs) == 0) {
 		MSG(LTFSDMC0053E);
 		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
-	if ( argc != optind + 1 ) {
+	if (argc != optind + 1) {
 		printUsage();
 		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
 	try {
 		connect();
-	}
-	catch(const std::exception& e) {
+	} catch (const std::exception& e) {
 		MSG(LTFSDMC0026E);
 		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
@@ -76,27 +75,25 @@ void AddCommand::doCommand(int argc, char **argv)
 
 	try {
 		commCommand.send();
-	}
-	catch(const std::exception& e) {
+	} catch (const std::exception& e) {
 		MSG(LTFSDMC0027E);
 		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
 	try {
 		commCommand.recv();
-	}
-	catch(const std::exception& e) {
+	} catch (const std::exception& e) {
 		MSG(LTFSDMC0028E);
 		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
 	const LTFSDmProtocol::LTFSDmAddResp addresp = commCommand.addresp();
 
-	if( addresp.response() == LTFSDmProtocol::LTFSDmAddResp::FAILED ) {
+	if (addresp.response() == LTFSDmProtocol::LTFSDmAddResp::FAILED) {
 		MSG(LTFSDMC0055E, managedFs);
 		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
-	}
-	else if ( addresp.response() == LTFSDmProtocol::LTFSDmAddResp::ALREADY_ADDED ) {
+	} else if (addresp.response()
+			== LTFSDmProtocol::LTFSDmAddResp::ALREADY_ADDED) {
 		MSG(LTFSDMC0054I, managedFs);
 	}
 }

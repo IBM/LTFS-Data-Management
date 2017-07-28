@@ -6,7 +6,12 @@ class Receiver
 
 {
 public:
-	Receiver() {}
-	~Receiver() {};
+	Receiver()
+	{
+	}
+	~Receiver()
+	{
+	}
+	;
 	void run(long key, Connector *connector);
 };

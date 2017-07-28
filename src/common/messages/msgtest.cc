@@ -27,13 +27,12 @@ int main(int argc, char **argv)
 
 	ifstream compare("msgtest.out");
 
-	while (std::getline(compare, line))
-	{
+	while (std::getline(compare, line)) {
 		savedOut += line.append("\n");
 	}
 
 	int rc;
-	if ( (rc = messageOut.compare(savedOut)) != 0 ) {
+	if ((rc = messageOut.compare(savedOut)) != 0) {
 		cerr << "size of messageOut: " << messageOut.size() << endl;
 		cerr << "size of savedOut: " << savedOut.size() << endl;
 		cerr << "return value: " << rc << endl;
@@ -42,8 +41,7 @@ int main(int argc, char **argv)
 		cerr << "saved output:" << endl;
 		cerr << ">>" << savedOut << "<<" << endl;
 		return -1;
-	}
-	else {
+	} else {
 		return 0;
 	}
 }

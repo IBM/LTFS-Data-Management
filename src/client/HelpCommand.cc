@@ -48,7 +48,7 @@ void HelpCommand::doCommand(int argc, char **argv)
 	OpenLTFSCommand *openLTFSCommand = NULL;
 	std::string command;
 
-	if ( argc == 1 ) {
+	if (argc == 1) {
 		printUsage();
 		return;
 	}
@@ -57,93 +57,70 @@ void HelpCommand::doCommand(int argc, char **argv)
 
 	command = std::string(argv[1]);
 
- 	if  ( StartCommand().compare(command) ) {
+	if (StartCommand().compare(command)) {
 		openLTFSCommand = new StartCommand();
-	}
-	else if ( StopCommand().compare(command) ) {
+	} else if (StopCommand().compare(command)) {
 		openLTFSCommand = new StopCommand();
-	}
-	else if ( MigrationCommand().compare(command) ) {
+	} else if (MigrationCommand().compare(command)) {
 		openLTFSCommand = new MigrationCommand();
-	}
-	else if ( RecallCommand().compare(command) ) {
+	} else if (RecallCommand().compare(command)) {
 		openLTFSCommand = new RecallCommand();
-	}
-	else if ( AddCommand().compare(command) ) {
+	} else if (AddCommand().compare(command)) {
 		openLTFSCommand = new AddCommand();
-	}
-	else if ( StatusCommand().compare(command) ) {
+	} else if (StatusCommand().compare(command)) {
 		openLTFSCommand = new StatusCommand();
-	}
-	else if ( RetrieveCommand().compare(command) ) {
+	} else if (RetrieveCommand().compare(command)) {
 		openLTFSCommand = new RetrieveCommand();
-	}
-	else if ( HelpCommand().compare(command) ) {
+	} else if (HelpCommand().compare(command)) {
 		openLTFSCommand = new HelpCommand();
-	}
-	else if ( InfoCommand().compare(command) ) {
-		if ( argc < 3 ) {
+	} else if (InfoCommand().compare(command)) {
+		if (argc < 3) {
 			openLTFSCommand = new InfoCommand();
-		}
-		else {
+		} else {
 			command = std::string(argv[2]);
 			TRACE(Trace::normal, command.c_str());
-			if      ( InfoRequestsCommand().compare(command) ) {
+			if (InfoRequestsCommand().compare(command)) {
 				openLTFSCommand = new InfoRequestsCommand();
-			}
-			else if ( InfoFilesCommand().compare(command) ) {
+			} else if (InfoFilesCommand().compare(command)) {
 				openLTFSCommand = new InfoFilesCommand();
-			}
-			else if ( InfoJobsCommand().compare(command) ) {
+			} else if (InfoJobsCommand().compare(command)) {
 				openLTFSCommand = new InfoJobsCommand();
-			}
-			else if ( InfoFsCommand().compare(command) ) {
+			} else if (InfoFsCommand().compare(command)) {
 				openLTFSCommand = new InfoFsCommand();
-			}
-			else if ( InfoDrivesCommand().compare(command) ) {
+			} else if (InfoDrivesCommand().compare(command)) {
 				openLTFSCommand = new InfoDrivesCommand();
-			}
-			else if ( InfoTapesCommand().compare(command) ) {
+			} else if (InfoTapesCommand().compare(command)) {
 				openLTFSCommand = new InfoTapesCommand();
-			}
-			else if ( InfoPoolsCommand().compare(command) ) {
+			} else if (InfoPoolsCommand().compare(command)) {
 				openLTFSCommand = new InfoPoolsCommand();
-			}
-			else {
+			} else {
 				openLTFSCommand = new InfoCommand();
 			}
 		}
-	}
-	else if ( PoolCommand().compare(command) ) {
-		if ( argc < 3 ) {
+	} else if (PoolCommand().compare(command)) {
+		if (argc < 3) {
 			openLTFSCommand = new PoolCommand();
-		}
-		else {
+		} else {
 			command = std::string(argv[2]);
 			TRACE(Trace::normal, command.c_str());
-			if      ( PoolCreateCommand().compare(command) ) {
+			if (PoolCreateCommand().compare(command)) {
 				openLTFSCommand = new PoolCreateCommand();
-			}
-			else if ( PoolDeleteCommand().compare(command) ) {
+			} else if (PoolDeleteCommand().compare(command)) {
 				openLTFSCommand = new PoolDeleteCommand();
-			}
-			else if ( PoolAddCommand().compare(command) ) {
+			} else if (PoolAddCommand().compare(command)) {
 				openLTFSCommand = new PoolAddCommand();
-			}
-			else if ( PoolRemoveCommand().compare(command) ) {
+			} else if (PoolRemoveCommand().compare(command)) {
 				openLTFSCommand = new PoolRemoveCommand();
-			}
-			else {
+			} else {
 				openLTFSCommand = new PoolCommand();
 			}
 		}
-	}
-	else {
+	} else {
 		printUsage();
 		goto cleanup;
 	}
 
 	openLTFSCommand->printUsage();
-cleanup:
-	if (openLTFSCommand) delete(openLTFSCommand);
+	cleanup: if (openLTFSCommand)
+		delete (openLTFSCommand);
 }

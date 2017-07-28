@@ -1,6 +1,5 @@
 #include "ServerIncludes.h"
 
-
 void SelRecall::addJob(std::string fileName)
 
 {
@@ -20,31 +19,30 @@ void SelRecall::addJob(std::string fileName)
 		}
 
 		state = fso.getMigState();
-		if ( state == FsObj::RESIDENT ) {
+		if (state == FsObj::RESIDENT) {
 			MSG(LTFSDMS0026I, fileName.c_str());
 			return;
 		}
 
 		attr = fso.getAttribute();
 
-		if ( state == FsObj::MIGRATED ) {
+		if (state == FsObj::MIGRATED) {
 			needsTape.insert(attr.tapeId[0]);
 		}
 
 		tapeName = Scheduler::getTapeName(fileName, attr.tapeId[0]);
 
-		stmt(SelRecall::ADD_JOB)
-			% DataBase::SELRECALL % fileName % reqNumber % targetState %  statbuf.st_size
-			% (long long) fso.getFsId() % fso.getIGen() %  (long long) fso.getINode()
-			% statbuf.st_mtim.tv_sec % statbuf.st_mtim.tv_nsec % time(NULL) % state
-			% attr.tapeId[0] % Scheduler::getStartBlock(tapeName);
-	}
-	catch ( const std::exception& e ) {
+		stmt(SelRecall::ADD_JOB) % DataBase::SELRECALL % fileName % reqNumber
+				% targetState % statbuf.st_size % (long long) fso.getFsId()
+				% fso.getIGen() % (long long) fso.getINode()
+				% statbuf.st_mtim.tv_sec % statbuf.st_mtim.tv_nsec % time(NULL)
+				% state % attr.tapeId[0] % Scheduler::getStartBlock(tapeName);
+	} catch (const std::exception& e) {
 		TRACE(Trace::error, e.what());
-		stmt(SelRecall::ADD_JOB)
-			% DataBase::SELRECALL % fileName % reqNumber % targetState % Const::UNSET
-			% Const::UNSET % Const::UNSET % Const::UNSET % Const::UNSET % Const::UNSET
-			% time(NULL) % FsObj::FAILED % Const::FAILED_TAPE_ID % 0;
+		stmt(SelRecall::ADD_JOB) % DataBase::SELRECALL % fileName % reqNumber
+				% targetState % Const::UNSET % Const::UNSET % Const::UNSET
+				% Const::UNSET % Const::UNSET % Const::UNSET % time(NULL)
+				% FsObj::FAILED % Const::FAILED_TAPE_ID % 0;
 		MSG(LTFSDMS0017E, fileName.c_str());
 	}
 
@@ -70,23 +68,22 @@ void SelRecall::addRequest()
 	gettapesstmt.prepare();
 
 	{
-		std::lock_guard<std::mutex> updlock(Scheduler::updmtx);
+		std::lock_guard < std::mutex > updlock(Scheduler::updmtx);
 		Scheduler::updReq[reqNumber] = false;
 	}
 
-	while ( gettapesstmt.step(&tapeId) ) {
-		std::unique_lock<std::mutex> lock(Scheduler::mtx);
+	while (gettapesstmt.step(&tapeId)) {
+		std::unique_lock < std::mutex > lock(Scheduler::mtx);
 
-		if ( tapeId.compare(Const::FAILED_TAPE_ID) == 0 )
+		if (tapeId.compare(Const::FAILED_TAPE_ID) == 0)
 			state = DataBase::REQ_COMPLETED;
-		else if ( needsTape.count(tapeId) > 0 )
+		else if (needsTape.count(tapeId) > 0)
 			state = DataBase::REQ_NEW;
 		else
 			state = DataBase::REQ_INPROGRESS;
 
-		addreqstmt(SelRecall::ADD_REQUEST)
-			% DataBase::SELRECALL % reqNumber % targetState %  tapeId
-			% time(NULL) % state;
+		addreqstmt(SelRecall::ADD_REQUEST) % DataBase::SELRECALL % reqNumber
+				% targetState % tapeId % time(NULL) % state;
 
 		TRACE(Trace::normal, addreqstmt.str());
 
@@ -94,12 +91,12 @@ void SelRecall::addRequest()
 
 		TRACE(Trace::always, needsTape.count(tapeId), reqNumber, tapeId);
 
-		if ( needsTape.count(tapeId) > 0 ) {
+		if (needsTape.count(tapeId) > 0) {
 			Scheduler::cond.notify_one();
-		}
-		else {
+		} else {
 			thrdinfo << "SelRec(" << reqNumber << ")";
-			subs.enqueue(thrdinfo.str(), SelRecall::execRequest, reqNumber, targetState, tapeId, false);
+			subs.enqueue(thrdinfo.str(), SelRecall::execRequest, reqNumber,
+					targetState, tapeId, false);
 		}
 	}
 
@@ -108,9 +105,8 @@ void SelRecall::addRequest()
 	subs.waitAllRemaining();
 }
 
-
 unsigned long SelRecall::recall(std::string fileName, std::string tapeId,
-								FsObj::file_state state, FsObj::file_state toState)
+		FsObj::file_state state, FsObj::file_state toState)
 
 {
 	struct stat statbuf;
@@ -131,18 +127,17 @@ unsigned long SelRecall::recall(std::string fileName, std::string tapeId,
 
 		curstate = target.getMigState();
 
-		if ( curstate != state ) {
+		if (curstate != state) {
 			MSG(LTFSDMS0035I, fileName);
 			state = curstate;
 		}
-		if ( state == FsObj::RESIDENT ) {
+		if (state == FsObj::RESIDENT) {
 			return 0;
-		}
-		else if ( state == FsObj::MIGRATED ) {
+		} else if (state == FsObj::MIGRATED) {
 			tapeName = Scheduler::getTapeName(fileName, tapeId);
 			fd = open(tapeName.c_str(), O_RDWR);
 
-			if ( fd == -1 ) {
+			if (fd == -1) {
 				TRACE(Trace::error, errno);
 				MSG(LTFSDMS0021E, tapeName.c_str());
 				throw(EXCEPTION(Const::UNSET, tapeName, errno));
@@ -152,18 +147,18 @@ unsigned long SelRecall::recall(std::string fileName, std::string tapeId,
 
 			target.prepareRecall();
 
-			while ( offset < statbuf.st_size ) {
-				if ( Server::forcedTerminate )
+			while (offset < statbuf.st_size) {
+				if (Server::forcedTerminate)
 					throw(EXCEPTION(Error::LTFSDM_OK));
 
 				rsize = read(fd, buffer, sizeof(buffer));
-				if ( rsize == -1 ) {
+				if (rsize == -1) {
 					TRACE(Trace::error, errno);
-					MSG(LTFSDMS0023E,  tapeName.c_str());
+					MSG(LTFSDMS0023E, tapeName.c_str());
 					throw(EXCEPTION(Const::UNSET, fileName, errno));
 				}
 				wsize = target.write(offset, (unsigned long) rsize, buffer);
-				if ( wsize != rsize ) {
+				if (wsize != rsize) {
 					TRACE(Trace::error, errno, wsize, rsize);
 					MSG(LTFSDMS0027E, fileName.c_str());
 					close(fd);
@@ -176,12 +171,11 @@ unsigned long SelRecall::recall(std::string fileName, std::string tapeId,
 		}
 
 		target.finishRecall(toState);
-		if ( toState == FsObj::RESIDENT )
+		if (toState == FsObj::RESIDENT)
 			target.remAttribute();
 		target.unlock();
-	}
-	catch ( const std::exception& e ) {
-		if ( fd != -1 )
+	} catch (const std::exception& e) {
+		if (fd != -1)
 			close(fd);
 		TRACE(Trace::error, e.what());
 		throw(EXCEPTION(Const::UNSET));
@@ -190,7 +184,8 @@ unsigned long SelRecall::recall(std::string fileName, std::string tapeId,
 	return statbuf.st_size;
 }
 
-bool SelRecall::recallStep(int reqNumber, std::string tapeId, FsObj::file_state toState, bool needsTape)
+bool SelRecall::recallStep(int reqNumber, std::string tapeId,
+		FsObj::file_state toState, bool needsTape)
 
 {
 	SQLStatement stmt;
@@ -205,14 +200,14 @@ bool SelRecall::recallStep(int reqNumber, std::string tapeId, FsObj::file_state 
 	TRACE(Trace::full, reqNumber);
 
 	{
-		std::lock_guard<std::mutex> lock(Scheduler::updmtx);
+		std::lock_guard < std::mutex > lock(Scheduler::updmtx);
 		Scheduler::updReq[reqNumber] = true;
 		Scheduler::updcond.notify_all();
 	}
 
-	if ( needsTape ) {
-		for ( std::shared_ptr<OpenLTFSDrive> d : inventory->getDrives() ) {
-			if ( d->get_slot() == inventory->getCartridge(tapeId)->get_slot() ) {
+	if (needsTape) {
+		for (std::shared_ptr<OpenLTFSDrive> d : inventory->getDrives()) {
+			if (d->get_slot() == inventory->getCartridge(tapeId)->get_slot()) {
 				drive = d;
 				break;
 			}
@@ -220,90 +215,90 @@ bool SelRecall::recallStep(int reqNumber, std::string tapeId, FsObj::file_state 
 		assert(drive != nullptr);
 	}
 
-	stmt(SelRecall::SET_RECALLING)
-		% FsObj::RECALLING_MIG % reqNumber %FsObj::MIGRATED % tapeId;
+	stmt(SelRecall::SET_RECALLING) % FsObj::RECALLING_MIG % reqNumber
+			% FsObj::MIGRATED % tapeId;
 	TRACE(Trace::normal, stmt.str());
 	stmt.doall();
 
-	stmt(SelRecall::SET_RECALLING)
-		% FsObj::RECALLING_PREMIG % reqNumber % FsObj::PREMIGRATED % tapeId;
+	stmt(SelRecall::SET_RECALLING) % FsObj::RECALLING_PREMIG % reqNumber
+			% FsObj::PREMIGRATED % tapeId;
 	TRACE(Trace::normal, stmt.str());
 	stmt.doall();
 
-	stmt(SelRecall::SELECT_JOBS)
-		% reqNumber % tapeId % FsObj::RECALLING_MIG % FsObj::RECALLING_PREMIG;
+	stmt(SelRecall::SELECT_JOBS) % reqNumber % tapeId % FsObj::RECALLING_MIG
+			% FsObj::RECALLING_PREMIG;
 	TRACE(Trace::normal, stmt.str());
 	stmt.prepare();
 	start = time(NULL);
-	while ( stmt.step(&fileName, &state, &inum) ) {
-		if ( Server::terminate == true )
+	while (stmt.step(&fileName, &state, &inum)) {
+		if (Server::terminate == true)
 			break;
 
-		if ( state ==  FsObj::RECALLING_MIG )
+		if (state == FsObj::RECALLING_MIG)
 			state = FsObj::MIGRATED;
 		else
 			state = FsObj::PREMIGRATED;
 
 		TRACE(Trace::always, fileName, state, toState);
 
-		if ( state == toState )
+		if (state == toState)
 			continue;
 
-		if ( needsTape && drive->getToUnblock() == DataBase::TRARECALL ) {
+		if (needsTape && drive->getToUnblock() == DataBase::TRARECALL) {
 			suspended = true;
 			break;
 		}
 
 		try {
-			if ( (state == FsObj::MIGRATED) && (needsTape == false) ) {
+			if ((state == FsObj::MIGRATED) && (needsTape == false)) {
 				MSG(LTFSDMS0047E, fileName);
 				throw(EXCEPTION(Const::UNSET, fileName));
 			}
 			recall(fileName, tapeId, state, toState);
 			inumList.push_back(inum);
 			mrStatus.updateSuccess(reqNumber, state, toState);
-		}
-		catch (const std::exception& e) {
+		} catch (const std::exception& e) {
 			TRACE(Trace::error, e.what());
 			mrStatus.updateFailed(reqNumber, state);
 			SQLStatement failstmt = SQLStatement(SelRecall::FAIL_JOB)
-				% FsObj::FAILED % fileName % reqNumber % tapeId;
+					% FsObj::FAILED % fileName % reqNumber % tapeId;
 
 			TRACE(Trace::error, stmt.str());
 			failstmt.doall();
 		}
 
-		if ( time(NULL) - start < 10 )
+		if (time(NULL) - start < 10)
 			continue;
 
 		start = time(NULL);
 
-		std::lock_guard<std::mutex> lock(Scheduler::updmtx);
+		std::lock_guard < std::mutex > lock(Scheduler::updmtx);
 		Scheduler::updReq[reqNumber] = true;
 		Scheduler::updcond.notify_all();
 	}
 	stmt.finalize();
 
-	stmt(SelRecall::SET_JOB_SUCCESS)
-		% toState % reqNumber % tapeId % FsObj::RECALLING_MIG % FsObj::RECALLING_PREMIG
-		% genInumString(inumList);
+	stmt(SelRecall::SET_JOB_SUCCESS) % toState % reqNumber % tapeId
+			% FsObj::RECALLING_MIG % FsObj::RECALLING_PREMIG
+			% genInumString(inumList);
 	TRACE(Trace::normal, stmt.str());
 	stmt.doall();
 
-	stmt(SelRecall::RESET_JOB_STATE)
-		% FsObj::MIGRATED % reqNumber % tapeId % FsObj::RECALLING_MIG;
+	stmt(SelRecall::RESET_JOB_STATE) % FsObj::MIGRATED % reqNumber % tapeId
+			% FsObj::RECALLING_MIG;
 	TRACE(Trace::normal, stmt.str());
 	stmt.doall();
 
-	stmt(SelRecall::RESET_JOB_STATE)
-		% FsObj::PREMIGRATED % reqNumber % tapeId % FsObj::RECALLING_PREMIG;
+	stmt(SelRecall::RESET_JOB_STATE) % FsObj::PREMIGRATED % reqNumber % tapeId
+			% FsObj::RECALLING_PREMIG;
 	TRACE(Trace::normal, stmt.str());
 	stmt.doall();
 
 	return suspended;
 }
 
-void SelRecall::execRequest(int reqNumber, int tgtState, std::string tapeId, bool needsTape)
+void SelRecall::execRequest(int reqNumber, int tgtState, std::string tapeId,
+bool needsTape)
 
 {
 	SQLStatement stmt;
@@ -311,21 +306,22 @@ void SelRecall::execRequest(int reqNumber, int tgtState, std::string tapeId, boo
 
 	mrStatus.add(reqNumber);
 
-	if ( tgtState == LTFSDmProtocol::LTFSDmMigRequest::PREMIGRATED )
-		suspended = recallStep(reqNumber, tapeId, FsObj::PREMIGRATED, needsTape);
+	if (tgtState == LTFSDmProtocol::LTFSDmMigRequest::PREMIGRATED)
+		suspended = recallStep(reqNumber, tapeId, FsObj::PREMIGRATED,
+				needsTape);
 	else
 		suspended = recallStep(reqNumber, tapeId, FsObj::RESIDENT, needsTape);
 
-	std::unique_lock<std::mutex> lock(Scheduler::mtx);
+	std::unique_lock < std::mutex > lock(Scheduler::mtx);
 
 	TRACE(Trace::always, reqNumber, needsTape);
 
-	if ( needsTape ) {
-		std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+	if (needsTape) {
+		std::lock_guard < std::recursive_mutex > lock(OpenLTFSInventory::mtx);
 		inventory->getCartridge(tapeId)->setState(OpenLTFSCartridge::MOUNTED);
 		bool found = false;
-		for ( std::shared_ptr<OpenLTFSDrive> d : inventory->getDrives() ) {
-			if ( d->get_slot() == inventory->getCartridge(tapeId)->get_slot() ) {
+		for (std::shared_ptr<OpenLTFSDrive> d : inventory->getDrives()) {
+			if (d->get_slot() == inventory->getCartridge(tapeId)->get_slot()) {
 				TRACE(Trace::always, d->GetObjectID());
 				d->setFree();
 				d->clearToUnblock();
@@ -336,11 +332,11 @@ void SelRecall::execRequest(int reqNumber, int tgtState, std::string tapeId, boo
 		assert(found == true);
 	}
 
-	std::unique_lock<std::mutex> updlock(Scheduler::updmtx);
+	std::unique_lock < std::mutex > updlock(Scheduler::updmtx);
 
 	stmt(SelRecall::UPDATE_REQUEST)
-		% (suspended ? DataBase::REQ_NEW : DataBase::REQ_COMPLETED)
-		% reqNumber % tapeId;
+			% (suspended ? DataBase::REQ_NEW : DataBase::REQ_COMPLETED)
+			% reqNumber % tapeId;
 	TRACE(Trace::normal, stmt.str());
 	stmt.doall();
 

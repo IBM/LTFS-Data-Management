@@ -1,15 +1,19 @@
 #pragma once
 
-class OpenLTFSDrive : public ltfsadmin::Drive {
+class OpenLTFSDrive: public ltfsadmin::Drive
+{
 private:
 	bool busy;
 	int umountReqNum;
 	DataBase::operation toUnBlock;
 public:
 	ThreadPool<std::string, std::string, long, long, Migration::mig_info_t,
-		std::shared_ptr<std::list<unsigned long>>, std::shared_ptr<bool>> *wqp;
-	OpenLTFSDrive(ltfsadmin::Drive drive) : ltfsadmin::Drive(drive), busy(false),
-											umountReqNum(Const::UNSET), toUnBlock(DataBase::NOOP) {}
+			std::shared_ptr<std::list<unsigned long>>, std::shared_ptr<bool>> *wqp;
+	OpenLTFSDrive(ltfsadmin::Drive drive) :
+			ltfsadmin::Drive(drive), busy(false), umountReqNum(Const::UNSET), toUnBlock(
+					DataBase::NOOP)
+	{
+	}
 	void update(std::shared_ptr<LTFSAdminSession> sess);
 	bool isBusy();
 	void setBusy();
@@ -22,22 +26,22 @@ public:
 	void clearToUnblock();
 };
 
-class OpenLTFSCartridge : public ltfsadmin::Cartridge {
+class OpenLTFSCartridge: public ltfsadmin::Cartridge
+{
 private:
 	unsigned long inProgress;
 	std::string pool;
 	bool requested;
 public:
-	enum state_t {
-		INUSE,
-		MOUNTED,
-		MOVING,
-		UNMOUNTED,
-		INVALID,
-		UNKNOWN
+	enum state_t
+	{
+		INUSE, MOUNTED, MOVING, UNMOUNTED, INVALID, UNKNOWN
 	} state;
-	OpenLTFSCartridge(ltfsadmin::Cartridge cartridge) : ltfsadmin::Cartridge(cartridge), inProgress(0),
-		pool(""), requested(false), state(OpenLTFSCartridge::UNKNOWN) {}
+	OpenLTFSCartridge(ltfsadmin::Cartridge cartridge) :
+			ltfsadmin::Cartridge(cartridge), inProgress(0), pool(""), requested(
+					false), state(OpenLTFSCartridge::UNKNOWN)
+	{
+	}
 	void update(std::shared_ptr<LTFSAdminSession> sess);
 	void setInProgress(unsigned long size);
 	unsigned long getInProgress();
@@ -50,7 +54,8 @@ public:
 	void unsetRequested();
 };
 
-class OpenLTFSPool {
+class OpenLTFSPool
+{
 private:
 	std::string poolName;
 	std::list<std::shared_ptr<OpenLTFSCartridge>> cartridges;
@@ -62,7 +67,8 @@ public:
 	std::list<std::shared_ptr<OpenLTFSCartridge>> getCartridges();
 };
 
-class OpenLTFSInventory {
+class OpenLTFSInventory
+{
 private:
 	std::list<std::shared_ptr<OpenLTFSDrive>> drives;
 	std::list<std::shared_ptr<OpenLTFSCartridge>> cartridges;

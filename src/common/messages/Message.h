@@ -14,26 +14,29 @@
 #include "src/common/errors/errors.h"
 #include "src/common/const/Const.h"
 
-class Message {
+class Message
+{
 private:
 	std::mutex mtx;
 	std::ofstream messagefile;
 public:
-	enum LogType {
-		STDOUT,
-		LOGFILE
+	enum LogType
+	{
+		STDOUT, LOGFILE
 	};
 private:
 	std::atomic<Message::LogType> logType;
 
-	inline void recurse(boost::format *fmter) {}
+	inline void recurse(boost::format *fmter)
+	{
+	}
 	template<typename T>
 	void recurse(boost::format *fmter, T s)
 	{
 		*fmter % s;
 	}
 	template<typename T, typename ... Args>
-	void recurse(boost::format *fmter, T s, Args ... args )
+	void recurse(boost::format *fmter, T s, Args ... args)
 	{
 		*fmter % s;
 		recurse(fmter, args ...);
@@ -43,71 +46,76 @@ private:
 	void writeLog(std::string msgstr);
 
 	template<typename ... Args>
-	void msgOut(msg_id msg, char *filename, int linenr, Args ... args )
+	void msgOut(msg_id msg, char *filename, int linenr, Args ... args)
 
 	{
-		std::string fmtstr = msgname[msg] + std::string("(%d): ") + messages[msg];
+		std::string fmtstr = msgname[msg] + std::string("(%d): ")
+				+ messages[msg];
 		boost::format fmter(fmtstr);
-		fmter.exceptions( boost::io::all_error_bits );
+		fmter.exceptions(boost::io::all_error_bits);
 
 		try {
 			fmter % linenr;
 			recurse(&fmter, args ...);
 			writeOut(fmter.str());
-		}
-		catch(const std::exception& e) {
+		} catch (const std::exception& e) {
 			std::cerr << messages[LTFSDMX0005E] << " (" << msgname[msg] << ":"
-					  << filename << ":" << linenr << ")" << std::endl;
+					<< filename << ":" << linenr << ")" << std::endl;
 		}
 	}
 	template<typename ... Args>
-	void msgLog(msg_id msg, char *filename, int linenr,  Args ... args )
+	void msgLog(msg_id msg, char *filename, int linenr, Args ... args)
 	{
-		std::string fmtstr = msgname[msg] + std::string("(%d): ") + messages[msg];
+		std::string fmtstr = msgname[msg] + std::string("(%d): ")
+				+ messages[msg];
 		boost::format fmter(fmtstr);
-		fmter.exceptions( boost::io::all_error_bits );
+		fmter.exceptions(boost::io::all_error_bits);
 
 		try {
 			fmter % linenr;
 			recurse(&fmter, args ...);
 			writeLog(fmter.str());
-		}
-		catch(const std::exception& e) {
+		} catch (const std::exception& e) {
 			std::cerr << messages[LTFSDMX0005E] << " (" << msgname[msg] << ":"
-					  << filename << ":" << linenr << ")" << std::endl;
+					<< filename << ":" << linenr << ")" << std::endl;
 		}
 	}
 
 public:
-	Message() : logType(Message::STDOUT) {}
+	Message() :
+			logType(Message::STDOUT)
+	{
+	}
 	~Message();
 
 	void init();
 
-	void setLogType(Message::LogType type) {logType = type;}
-
-	template<typename ... Args>
-	void message(msg_id msg, char *filename, int linenr,  Args ... args )
+	void setLogType(Message::LogType type)
 	{
-		if ( logType == Message::STDOUT )
-			msgOut( msg, filename, linenr, args ...);
-		else
-			msgLog( msg, filename, linenr, args ...);
+		logType = type;
 	}
 
 	template<typename ... Args>
-	void info(msg_id msg, char *filename, int linenr, Args ... args )
+	void message(msg_id msg, char *filename, int linenr, Args ... args)
+	{
+		if (logType == Message::STDOUT)
+			msgOut(msg, filename, linenr, args ...);
+		else
+			msgLog(msg, filename, linenr, args ...);
+	}
+
+	template<typename ... Args>
+	void info(msg_id msg, char *filename, int linenr, Args ... args)
 	{
 		boost::format fmter(messages[msg]);
-		fmter.exceptions( boost::io::all_error_bits );
+		fmter.exceptions(boost::io::all_error_bits);
 
 		try {
 			recurse(&fmter, args ...);
 			writeOut(fmter.str());
-		}
-		catch(const std::exception& e) {
-			std::cerr << messages[LTFSDMX0005E] << " ("
-					  << filename << ":" << linenr << ")" << std::endl;
+		} catch (const std::exception& e) {
+			std::cerr << messages[LTFSDMX0005E] << " (" << filename << ":"
+					<< linenr << ")" << std::endl;
 			exit((int) Error::LTFSDM_GENERAL_ERROR);
 		}
 	}

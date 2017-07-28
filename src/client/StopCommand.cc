@@ -30,15 +30,14 @@ void StopCommand::doCommand(int argc, char **argv)
 
 	processOptions(argc, argv);
 
-	if ( argc > 2 ) {
+	if (argc > 2) {
 		printUsage();
 		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
 	try {
 		connect();
-	}
-	catch(const std::exception& e) {
+	} catch (const std::exception& e) {
 		MSG(LTFSDMC0026E);
 		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
@@ -46,7 +45,8 @@ void StopCommand::doCommand(int argc, char **argv)
 	TRACE(Trace::normal, requestNumber);
 
 	do {
-		LTFSDmProtocol::LTFSDmStopRequest *stopreq = commCommand.mutable_stoprequest();
+		LTFSDmProtocol::LTFSDmStopRequest *stopreq =
+				commCommand.mutable_stoprequest();
 		stopreq->set_key(key);
 		stopreq->set_reqnumber(requestNumber);
 		stopreq->set_forced(forced);
@@ -54,16 +54,14 @@ void StopCommand::doCommand(int argc, char **argv)
 
 		try {
 			commCommand.send();
-		}
-		catch(const std::exception& e) {
+		} catch (const std::exception& e) {
 			MSG(LTFSDMC0027E);
 			throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 		}
 
 		try {
 			commCommand.recv();
-		}
-		catch(const std::exception& e) {
+		} catch (const std::exception& e) {
 			MSG(LTFSDMC0028E);
 			throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 		}
@@ -72,29 +70,29 @@ void StopCommand::doCommand(int argc, char **argv)
 
 		finished = stopresp.success();
 
-		if( !finished ) {
+		if (!finished) {
 			MSG(LTFSDMC0101I);
 			sleep(1);
-		}
-		else {
+		} else {
 			break;
 		}
 	} while (true);
 
-	if ( (lockfd = open(Const::SERVER_LOCK_FILE.c_str(), O_RDWR | O_CREAT, 0600)) == -1 ) {
+	if ((lockfd = open(Const::SERVER_LOCK_FILE.c_str(), O_RDWR | O_CREAT, 0600))
+			== -1) {
 		MSG(LTFSDMC0033E);
 		TRACE(Trace::error, Const::SERVER_LOCK_FILE, errno);
 		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
-	while ( flock(lockfd, LOCK_EX | LOCK_NB) == -1 ) {
-		if ( exitClient )
+	while (flock(lockfd, LOCK_EX | LOCK_NB) == -1) {
+		if (exitClient)
 			break;
 		INFO(LTFSDMC0034I);
 		sleep(1);
 	}
 
-	if ( flock(lockfd, LOCK_UN) == -1 ) {
+	if (flock(lockfd, LOCK_UN) == -1) {
 		MSG(LTFSDMC0035E);
 	}
 }

@@ -1,16 +1,18 @@
 #pragma once
 
-class Connector {
+class Connector
+{
 private:
 	struct timespec starttime;
 	bool cleanup;
 public:
-	struct rec_info_t {
+	struct rec_info_t
+	{
 		struct conn_info_t *conn_info;
 		bool toresident;
 		unsigned long long fsid;
-        unsigned int igen;
-        unsigned long long ino;
+		unsigned int igen;
+		unsigned long long ino;
 		std::string filename;
 	};
 	static std::atomic<bool> connectorTerminate;
@@ -19,7 +21,10 @@ public:
 
 	Connector(bool cleanup_);
 	~Connector();
-	struct timespec getStartTime() { return starttime; }
+	struct timespec getStartTime()
+	{
+		return starttime;
+	}
 	void initTransRecalls();
 	void endTransRecalls();
 	rec_info_t getEvents();
@@ -27,23 +32,27 @@ public:
 	void terminate();
 };
 
-class FsObj {
+class FsObj
+{
 private:
 	void *handle;
 	unsigned long handleLength;
 	bool isLocked;
 	bool handleFree;
 public:
-	struct fs_attr_t {
+	struct fs_attr_t
+	{
 		bool managed;
 	};
-	struct mig_attr_t {
+	struct mig_attr_t
+	{
 		unsigned long typeId;
 		bool added;
 		int copies;
-		char tapeId[Const::maxReplica][Const::tapeIdLength+1];
+		char tapeId[Const::maxReplica][Const::tapeIdLength + 1];
 	};
-	enum file_state {
+	enum file_state
+	{
 		RESIDENT,
 		PREMIGRATED,
 		MIGRATED,
@@ -75,13 +84,20 @@ public:
 				return "";
 		}
 	}
-	FsObj(void *_handle, unsigned long _handleLength) : handle(_handle), handleLength(_handleLength), handleFree(false) {}
+	FsObj(void *_handle, unsigned long _handleLength) :
+			handle(_handle), handleLength(_handleLength), handleFree(false)
+	{
+	}
 	FsObj(std::string fileName);
 	FsObj(Connector::rec_info_t recinfo);
 	~FsObj();
 	bool isFsManaged();
-	void manageFs(bool setDispo, struct timespec starttime) { manageFs(setDispo, starttime, "", ""); }
-	void manageFs(bool setDispo, struct timespec starttime, std::string mountPoint, std::string fsName);
+	void manageFs(bool setDispo, struct timespec starttime)
+	{
+		manageFs(setDispo, starttime, "", "");
+	}
+	void manageFs(bool setDispo, struct timespec starttime,
+			std::string mountPoint, std::string fsName);
 	struct stat stat();
 	unsigned long long getFsId();
 	unsigned int getIGen();

@@ -1,4 +1,5 @@
-class Server {
+class Server
+{
 private:
 	SubServer subServer;
 	long key;
@@ -12,7 +13,10 @@ public:
 	static std::atomic<bool> forcedTerminate;
 	static std::atomic<bool> finishTerminate;
 
-	Server() {};
+	Server()
+	{
+	}
+	;
 	void initialize(bool dbUseMemory);
 	void daemonize();
 	void run(Connector *connector, sigset_t set);

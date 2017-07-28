@@ -28,49 +28,45 @@ void PoolRemoveCommand::printUsage()
 
 void PoolRemoveCommand::doCommand(int argc, char **argv)
 {
-	if ( argc <= 2 ) {
+	if (argc <= 2) {
 		printUsage();
 		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
 	processOptions(argc, argv);
 
-	if ( argc != optind ) {
+	if (argc != optind) {
 		printUsage();
 		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
 	try {
 		connect();
-	}
-	catch(const std::exception& e) {
+	} catch (const std::exception& e) {
 		MSG(LTFSDMC0026E);
 		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
-	LTFSDmProtocol::LTFSDmPoolRemoveRequest *poolremovereq = commCommand.mutable_poolremoverequest();
+	LTFSDmProtocol::LTFSDmPoolRemoveRequest *poolremovereq =
+			commCommand.mutable_poolremoverequest();
 	poolremovereq->set_key(key);
 	poolremovereq->set_poolname(poolNames);
 
-	for ( std::string tapeid : tapeList )
+	for (std::string tapeid : tapeList)
 		poolremovereq->add_tapeid(tapeid);
-
 
 	try {
 		commCommand.send();
-	}
-	catch(const std::exception& e) {
+	} catch (const std::exception& e) {
 		MSG(LTFSDMC0027E);
 		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
-
-	for ( unsigned int i = 0; i < tapeList.size(); i++ ) {
+	for (unsigned int i = 0; i < tapeList.size(); i++) {
 
 		try {
 			commCommand.recv();
-		}
-		catch(const std::exception& e) {
+		} catch (const std::exception& e) {
 			MSG(LTFSDMC0028E);
 			throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 		}
@@ -79,7 +75,7 @@ void PoolRemoveCommand::doCommand(int argc, char **argv)
 
 		std::string tapeid = poolresp.tapeid();
 
-		switch ( poolresp.response() ) {
+		switch (poolresp.response()) {
 			case Error::LTFSDM_OK:
 				INFO(LTFSDMC0086I, tapeid, poolNames);
 				break;
@@ -87,7 +83,7 @@ void PoolRemoveCommand::doCommand(int argc, char **argv)
 				MSG(LTFSDMX0025E, poolNames);
 				break;
 			case Error::LTFSDM_TAPE_NOT_EXISTS:
-				MSG(LTFSDMC0084E,tapeid);
+				MSG(LTFSDMC0084E, tapeid);
 				break;
 			case Error::LTFSDM_TAPE_NOT_EXISTS_IN_POOL:
 				MSG(LTFSDMX0022E, tapeid, poolNames);

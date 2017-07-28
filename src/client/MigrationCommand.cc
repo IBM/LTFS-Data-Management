@@ -22,14 +22,12 @@ void MigrationCommand::printUsage()
 	INFO(LTFSDMC0001I);
 }
 
-
 void MigrationCommand::talkToBackend(std::stringstream *parmList)
 
 {
 	try {
 		connect();
-	}
-	catch (const std::exception& e) {
+	} catch (const std::exception& e) {
 		MSG(LTFSDMC0026E);
 		return;
 	}
@@ -41,37 +39,36 @@ void MigrationCommand::talkToBackend(std::stringstream *parmList)
 	migreq->set_pid(getpid());
 	migreq->set_pools(poolNames);
 
-	if ( preMigrate == true )
+	if (preMigrate == true)
 		migreq->set_state(LTFSDmProtocol::LTFSDmMigRequest::PREMIGRATED);
 	else
 		migreq->set_state(LTFSDmProtocol::LTFSDmMigRequest::MIGRATED);
 
 	try {
 		commCommand.send();
-	}
-	catch(const std::exception& e) {
+	} catch (const std::exception& e) {
 		MSG(LTFSDMC0027E);
 		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
 	try {
 		commCommand.recv();
-	}
-	catch(const std::exception& e) {
+	} catch (const std::exception& e) {
 		MSG(LTFSDMC0028E);
 		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
-	const LTFSDmProtocol::LTFSDmMigRequestResp migreqresp = commCommand.migrequestresp();
+	const LTFSDmProtocol::LTFSDmMigRequestResp migreqresp =
+			commCommand.migrequestresp();
 
-	switch ( migreqresp.error() ) {
+	switch (migreqresp.error()) {
 		case Error::LTFSDM_OK:
-			if ( getpid() != migreqresp.pid() ) {
+			if (getpid() != migreqresp.pid()) {
 				MSG(LTFSDMC0036E);
 				TRACE(Trace::error, getpid(), migreqresp.pid());
 				throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 			}
-			if ( requestNumber !=  migreqresp.reqnumber() ) {
+			if (requestNumber != migreqresp.reqnumber()) {
 				MSG(LTFSDMC0037E);
 				TRACE(Trace::error, requestNumber, migreqresp.reqnumber());
 				throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
@@ -103,7 +100,7 @@ void MigrationCommand::doCommand(int argc, char **argv)
 {
 	std::stringstream parmList;
 
-	if ( argc == 1 ) {
+	if (argc == 1) {
 		INFO(LTFSDMC0018E);
 		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
@@ -112,8 +109,7 @@ void MigrationCommand::doCommand(int argc, char **argv)
 
 	try {
 		checkOptions(argc, argv);
-	}
-	catch (const std::exception& e) {
+	} catch (const std::exception& e) {
 		printUsage();
 		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
@@ -121,8 +117,8 @@ void MigrationCommand::doCommand(int argc, char **argv)
 	TRACE(Trace::normal, argc, optind);
 	traceParms();
 
-	if ( !fileList.compare("") ) {
-		for ( int i=optind; i<argc; i++ ) {
+	if (!fileList.compare("")) {
+		for (int i = optind; i < argc; i++) {
 			parmList << argv[i] << std::endl;
 		}
 	}

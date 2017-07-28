@@ -44,7 +44,7 @@ void InfoFilesCommand::doCommand(int argc, char **argv)
 	std::stringstream tapeIds;
 	FsObj::mig_attr_t attr;
 
-	if ( argc == 1 ) {
+	if (argc == 1) {
 		INFO(LTFSDMC0018E);
 		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 
@@ -57,28 +57,27 @@ void InfoFilesCommand::doCommand(int argc, char **argv)
 	TRACE(Trace::normal, argc, optind);
 	traceParms();
 
-	if ( !fileList.compare("") ) {
-		for ( int i=optind; i<argc; i++ ) {
+	if (!fileList.compare("")) {
+		for (int i = optind; i < argc; i++) {
 			parmList << argv[i] << std::endl;
 		}
 	}
 
 	isValidRegularFile();
 
-	if ( fileList.compare("") ) {
+	if (fileList.compare("")) {
 		fileListStrm.open(fileList);
-		input =  dynamic_cast<std::istream*>(&fileListStrm);
-	}
-	else {
+		input = dynamic_cast<std::istream*>(&fileListStrm);
+	} else {
 		input = dynamic_cast<std::istream*>(&parmList);
 	}
 
 	INFO(LTFSDMC0047I);
 
-	while ( std::getline(*input, line) ) {
+	while (std::getline(*input, line)) {
 		try {
 			file_name = canonicalize_file_name(line.c_str());
-			if ( file_name == NULL ) {
+			if (file_name == NULL) {
 				continue;
 			}
 			FsObj fso(file_name);
@@ -86,32 +85,40 @@ void InfoFilesCommand::doCommand(int argc, char **argv)
 			attr = fso.getAttribute();
 			tapeIds.str("");
 			tapeIds.clear();
-			if ( attr.copies == 0 ) {
+			if (attr.copies == 0) {
 				tapeIds << "-";
-			}
-			else {
-				for (int i=0; i<attr.copies; i++) {
-					if ( i != 0 ) tapeIds << ",";
+			} else {
+				for (int i = 0; i < attr.copies; i++) {
+					if (i != 0)
+						tapeIds << ",";
 					tapeIds << attr.tapeId[i];
 				}
 			}
-			if ( !S_ISREG(statbuf.st_mode ) ) {
-				INFO(LTFSDMC0049I, '-', statbuf.st_size, statbuf.st_blocks, tapeIds.str(), file_name);
-			}
-			else {
-				switch(fso.getMigState()) {
-					case FsObj::MIGRATED: migstate='m'; break;
-					case FsObj::PREMIGRATED: migstate='p'; break;
-					case FsObj::RESIDENT: migstate='r'; break;
-					default: migstate=' ';
+			if (!S_ISREG(statbuf.st_mode)) {
+				INFO(LTFSDMC0049I, '-', statbuf.st_size, statbuf.st_blocks,
+						tapeIds.str(), file_name);
+			} else {
+				switch (fso.getMigState()) {
+					case FsObj::MIGRATED:
+						migstate = 'm';
+						break;
+					case FsObj::PREMIGRATED:
+						migstate = 'p';
+						break;
+					case FsObj::RESIDENT:
+						migstate = 'r';
+						break;
+					default:
+						migstate = ' ';
 				}
-				INFO(LTFSDMC0049I, migstate, statbuf.st_size, statbuf.st_blocks, tapeIds.str(), file_name);
+				INFO(LTFSDMC0049I, migstate, statbuf.st_size, statbuf.st_blocks,
+						tapeIds.str(), file_name);
 			}
-		}
-		catch ( const std::exception& e ) {
-			if ( stat(file_name, &statbuf) == -1 )
+		} catch (const std::exception& e) {
+			if (stat(file_name, &statbuf) == -1)
 				continue;
-			INFO(LTFSDMC0049I, '-', statbuf.st_size, statbuf.st_blocks, '-', file_name);
+			INFO(LTFSDMC0049I, '-', statbuf.st_size, statbuf.st_blocks, '-',
+					file_name);
 		}
 	}
 }

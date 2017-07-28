@@ -3,7 +3,7 @@
 void OpenLTFSDrive::update(std::shared_ptr<LTFSAdminSession> sess)
 
 {
-	std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+	std::lock_guard < std::recursive_mutex > lock(OpenLTFSInventory::mtx);
 
 	Drive *drive = dynamic_cast<Drive*>(this);
 	*drive = *(LEControl::InventoryDrive(GetObjectID(), sess));
@@ -12,7 +12,7 @@ void OpenLTFSDrive::update(std::shared_ptr<LTFSAdminSession> sess)
 bool OpenLTFSDrive::isBusy()
 
 {
-	std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+	std::lock_guard < std::recursive_mutex > lock(OpenLTFSInventory::mtx);
 
 	return busy;
 }
@@ -20,7 +20,7 @@ bool OpenLTFSDrive::isBusy()
 void OpenLTFSDrive::setBusy()
 
 {
-	std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+	std::lock_guard < std::recursive_mutex > lock(OpenLTFSInventory::mtx);
 
 	busy = true;
 }
@@ -28,7 +28,7 @@ void OpenLTFSDrive::setBusy()
 void OpenLTFSDrive::setFree()
 
 {
-	std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+	std::lock_guard < std::recursive_mutex > lock(OpenLTFSInventory::mtx);
 
 	busy = false;
 }
@@ -36,7 +36,7 @@ void OpenLTFSDrive::setFree()
 void OpenLTFSDrive::setUnmountReqNum(int reqnum)
 
 {
-	std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+	std::lock_guard < std::recursive_mutex > lock(OpenLTFSInventory::mtx);
 
 	umountReqNum = reqnum;
 }
@@ -44,7 +44,7 @@ void OpenLTFSDrive::setUnmountReqNum(int reqnum)
 int OpenLTFSDrive::getUnmountReqNum()
 
 {
-	std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+	std::lock_guard < std::recursive_mutex > lock(OpenLTFSInventory::mtx);
 
 	return umountReqNum;
 }
@@ -52,7 +52,7 @@ int OpenLTFSDrive::getUnmountReqNum()
 void OpenLTFSDrive::unsetUnmountReqNum()
 
 {
-	std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+	std::lock_guard < std::recursive_mutex > lock(OpenLTFSInventory::mtx);
 
 	umountReqNum = Const::UNSET;
 }
@@ -60,16 +60,16 @@ void OpenLTFSDrive::unsetUnmountReqNum()
 void OpenLTFSDrive::setToUnblock(DataBase::operation op)
 
 {
-	std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+	std::lock_guard < std::recursive_mutex > lock(OpenLTFSInventory::mtx);
 
-	if ( op < toUnBlock )
+	if (op < toUnBlock)
 		toUnBlock = op;
 }
 
 DataBase::operation OpenLTFSDrive::getToUnblock()
 
 {
-	std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+	std::lock_guard < std::recursive_mutex > lock(OpenLTFSInventory::mtx);
 
 	return toUnBlock;
 }
@@ -77,7 +77,7 @@ DataBase::operation OpenLTFSDrive::getToUnblock()
 void OpenLTFSDrive::clearToUnblock()
 
 {
-	std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+	std::lock_guard < std::recursive_mutex > lock(OpenLTFSInventory::mtx);
 
 	toUnBlock = DataBase::NOOP;
 }

@@ -1,6 +1,7 @@
 #pragma once
 
-class DataBase {
+class DataBase
+{
 private:
 	sqlite3 *db;
 	bool dbNeedsClosed;
@@ -8,32 +9,36 @@ private:
 	static const std::string CREATE_JOB_QUEUE;
 	static const std::string CREATE_REQUEST_QUEUE;
 public:
-	enum operation {
-		TRARECALL,
-		SELRECALL,
-		MIGRATION,
-		NOOP
+	enum operation
+	{
+		TRARECALL, SELRECALL, MIGRATION, NOOP
 	};
-	enum req_state {
-		REQ_NEW,
-		REQ_INPROGRESS,
-		REQ_COMPLETED
+	enum req_state
+	{
+		REQ_NEW, REQ_INPROGRESS, REQ_COMPLETED
 	};
 	static std::mutex trans_mutex;
-	DataBase() : db(NULL), dbNeedsClosed(false) {}
+	DataBase() :
+			db(NULL), dbNeedsClosed(false)
+	{
+	}
 	~DataBase();
 	void cleanup();
 	void open(bool dbUseMemory);
 	void createTables();
 	int lastUpdates();
-	sqlite3 *getDB() { return db; }
+	sqlite3 *getDB()
+	{
+		return db;
+	}
 	static std::string opStr(operation op);
 	static std::string reqStateStr(req_state reqs);
 };
 
 extern DataBase DB;
 
-class SQLStatement {
+class SQLStatement
+{
 private:
 	sqlite3_stmt *stmt;
 	boost::format fmt;
@@ -49,7 +54,9 @@ private:
 	void getColumn(unsigned long long *result, int column);
 	void getColumn(std::string *result, int column);
 
-	void eval(int column) {}
+	void eval(int column)
+	{
+	}
 
 	template<typename T>
 	void eval(int column, T s)
@@ -66,13 +73,25 @@ private:
 	}
 
 public:
-	SQLStatement() : stmt(nullptr), fmt(""), stmt_rc(0) {}
-	SQLStatement(std::string fmtstr) : fmt(boost::format(fmtstr)) {}
+	SQLStatement() :
+			stmt(nullptr), fmt(""), stmt_rc(0)
+	{
+	}
+	SQLStatement(std::string fmtstr) :
+			fmt(boost::format(fmtstr))
+	{
+	}
 	SQLStatement& operator()(std::string fmtstr);
-	~SQLStatement() {}
+	~SQLStatement()
+	{
+	}
 
-    template<typename T>
-    SQLStatement& operator%(T s) {fmt % s; return *this;}
+	template<typename T>
+	SQLStatement& operator%(T s)
+	{
+		fmt % s;
+		return *this;
+	}
 
 	std::string str();
 	void bind(int num, int value);
@@ -86,7 +105,7 @@ public:
 
 		stmt_rc = sqlite3_step(stmt);
 
-		if ( stmt_rc != SQLITE_ROW )
+		if (stmt_rc != SQLITE_ROW)
 			return false;
 
 		eval(column, args ...);

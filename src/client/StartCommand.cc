@@ -45,7 +45,7 @@ void StartCommand::determineServerPath()
 #ifdef __linux__
 	char *exelnk = (char*) "/proc/self/exe";
 
-	if ( readlink(exelnk, exepath, PATH_MAX) == -1 ) {
+	if (readlink(exelnk, exepath, PATH_MAX) == -1) {
 		MSG(LTFSDMC0021E);
 		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
@@ -76,7 +76,7 @@ void StartCommand::startServer()
 	int retry = 0;
 	bool success = false;
 
-	if ( stat(serverPath.str().c_str(), &statbuf ) == -1 ) {
+	if (stat(serverPath.str().c_str(), &statbuf) == -1) {
 		MSG(LTFSDMC0021E);
 		TRACE(Trace::error, serverPath.str(), errno);
 		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
@@ -86,20 +86,19 @@ void StartCommand::startServer()
 
 	ltfsdmd = popen(serverPath.str().c_str(), "r");
 
-	if( !ltfsdmd ) {
+	if (!ltfsdmd) {
 		MSG(LTFSDMC0022E);
 		TRACE(Trace::error, errno);
 		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
-    while( fgets(line, sizeof(line), ltfsdmd) ) {
+	while (fgets(line, sizeof(line), ltfsdmd)) {
 		INFO(LTFSDMC0024I, line);
-    }
-
+	}
 
 	ret = pclose(ltfsdmd);
 
-    if(  !WIFEXITED(ret) || WEXITSTATUS(ret) ) {
+	if (!WIFEXITED(ret) || WEXITSTATUS(ret)) {
 		MSG(LTFSDMC0022E);
 		TRACE(Trace::error, ret, WIFEXITED(ret), WEXITSTATUS(ret));
 		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
@@ -108,50 +107,48 @@ void StartCommand::startServer()
 	sleep(1);
 
 	MSG(LTFSDMC0100I);
-	while ( retry < 10 ) {
+	while (retry < 10) {
 		try {
 			connect();
 			success = true;
 			break;
-		}
-		catch (const std::exception& e) {
+		} catch (const std::exception& e) {
 			retry++;
 			sleep(1);
 		}
 	}
 
-	if ( success == false ) {
+	if (success == false) {
 		MSG(LTFSDMC0096E);
 		return;
 	}
 
-	LTFSDmProtocol::LTFSDmStatusRequest *statusreq = commCommand.mutable_statusrequest();
+	LTFSDmProtocol::LTFSDmStatusRequest *statusreq =
+			commCommand.mutable_statusrequest();
 	statusreq->set_key(key);
 	statusreq->set_reqnumber(requestNumber);
 
 	try {
 		commCommand.send();
-	}
-	catch(const std::exception& e) {
+	} catch (const std::exception& e) {
 		MSG(LTFSDMC0027E);
 		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
 	try {
 		commCommand.recv();
-	}
-	catch(const std::exception& e) {
+	} catch (const std::exception& e) {
 		MSG(LTFSDMC0098E);
 		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
-	const LTFSDmProtocol::LTFSDmStatusResp statusresp = commCommand.statusresp();
+	const LTFSDmProtocol::LTFSDmStatusResp statusresp =
+			commCommand.statusresp();
 
-	if( statusresp.success() == true ) {
+	if (statusresp.success() == true) {
 		pid = statusresp.pid();
 		MSG(LTFSDMC0097I, pid);
-	}
-	else {
+	} else {
 		MSG(LTFSDMC0098E);
 		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
@@ -161,7 +158,7 @@ void StartCommand::startServer()
 void StartCommand::doCommand(int argc, char **argv)
 
 {
-	if ( argc > 1 ) {
+	if (argc > 1) {
 		printUsage();
 		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}

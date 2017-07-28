@@ -12,14 +12,14 @@ void Server::signalHandler(sigset_t set, long key)
 	int sig;
 	int requestNumber = ++globalReqNumber;
 
-    while ( true ) {
-        if ( sigwait(&set, &sig))
-            continue;
+	while ( true) {
+		if (sigwait(&set, &sig))
+			continue;
 
-        if ( sig == SIGPIPE ) {
-            MSG(LTFSDMS0048E);
-            continue;
-        }
+		if (sig == SIGPIPE) {
+			MSG(LTFSDMS0048E);
+			continue;
+		}
 
 		MSG(LTFSDMS0085I);
 
@@ -29,8 +29,7 @@ void Server::signalHandler(sigset_t set, long key)
 
 		try {
 			commCommand.connect();
-		}
-		catch(const std::exception& e) {
+		} catch (const std::exception& e) {
 			TRACE(Trace::error, e.what());
 			goto end;
 		}
@@ -39,7 +38,8 @@ void Server::signalHandler(sigset_t set, long key)
 		bool finished = false;
 
 		do {
-			LTFSDmProtocol::LTFSDmStopRequest *stopreq = commCommand.mutable_stoprequest();
+			LTFSDmProtocol::LTFSDmStopRequest *stopreq =
+					commCommand.mutable_stoprequest();
 			stopreq->set_key(key);
 			stopreq->set_reqnumber(requestNumber);
 			stopreq->set_forced(false);
@@ -47,37 +47,35 @@ void Server::signalHandler(sigset_t set, long key)
 
 			try {
 				commCommand.send();
-			}
-			catch(const std::exception& e) {
+			} catch (const std::exception& e) {
 				TRACE(Trace::error, e.what());
 				goto end;
 			}
 
 			try {
 				commCommand.recv();
-			}
-			catch(const std::exception& e) {
+			} catch (const std::exception& e) {
 				TRACE(Trace::error, e.what());
 				goto end;
 			}
 
-			const LTFSDmProtocol::LTFSDmStopResp stopresp = commCommand.stopresp();
+			const LTFSDmProtocol::LTFSDmStopResp stopresp =
+					commCommand.stopresp();
 
 			finished = stopresp.success();
 
-			if( !finished ) {
+			if (!finished) {
 				sleep(1);
-			}
-			else {
+			} else {
 				break;
 			}
 		} while (true);
 
-		if ( sig == SIGUSR1 )
-		 	goto end;
+		if (sig == SIGUSR1)
+			goto end;
 	}
 
-end:
+	end:
 	MSG(LTFSDMS0086I);
 }
 
@@ -86,19 +84,19 @@ void Server::lockServer()
 {
 	int lockfd;
 
-	if ( (lockfd = open(Const::SERVER_LOCK_FILE.c_str(), O_RDWR | O_CREAT, 0600)) == -1 ) {
+	if ((lockfd = open(Const::SERVER_LOCK_FILE.c_str(), O_RDWR | O_CREAT, 0600))
+			== -1) {
 		MSG(LTFSDMS0001E);
 		TRACE(Trace::error, Const::SERVER_LOCK_FILE, errno);
 		throw(EXCEPTION(Const::UNSET, errno));
 	}
 
-	if ( flock(lockfd, LOCK_EX | LOCK_NB) == -1 ) {
+	if (flock(lockfd, LOCK_EX | LOCK_NB) == -1) {
 		TRACE(Trace::error, errno);
-		if ( errno == EWOULDBLOCK ) {
+		if ( errno == EWOULDBLOCK) {
 			MSG(LTFSDMS0002I);
 			throw(EXCEPTION(Const::UNSET, errno));
-		}
-		else {
+		} else {
 			MSG(LTFSDMS0001E);
 			TRACE(Trace::error, errno);
 			throw(EXCEPTION(Const::UNSET, errno));
@@ -115,8 +113,7 @@ void Server::writeKey()
 
 	try {
 		keyFile.open(Const::KEY_FILE, std::fstream::out | std::fstream::trunc);
-	}
-	catch(const std::exception& e) {
+	} catch (const std::exception& e) {
 		TRACE(Trace::error, e.what());
 		MSG(LTFSDMS0003E);
 		throw(EXCEPTION(Const::UNSET));
@@ -129,16 +126,15 @@ void Server::writeKey()
 	keyFile.close();
 }
 
-
 void Server::initialize(bool dbUseMemory)
 
 {
-	if ( setrlimit(RLIMIT_NOFILE, &Const::NOFILE_LIMIT) == -1 ) {
+	if (setrlimit(RLIMIT_NOFILE, &Const::NOFILE_LIMIT) == -1) {
 		MSG(LTFSDMS0046E);
 		throw(EXCEPTION(errno, errno));
 	}
 
-	if ( setrlimit(RLIMIT_NPROC, &Const::NPROC_LIMIT) == -1 ) {
+	if (setrlimit(RLIMIT_NPROC, &Const::NPROC_LIMIT) == -1) {
 		MSG(LTFSDMS0046E);
 		throw(EXCEPTION(errno, errno));
 	}
@@ -150,8 +146,7 @@ void Server::initialize(bool dbUseMemory)
 		DB.cleanup();
 		DB.open(dbUseMemory);
 		DB.createTables();
-	}
-	catch ( const std::exception& e ) {
+	} catch (const std::exception& e) {
 		TRACE(Trace::error, e.what());
 		MSG(LTFSDMS0014E);
 		throw(EXCEPTION(Const::UNSET));
@@ -184,7 +179,7 @@ void Server::daemonize()
 	messageObject.setLogType(Message::LOGFILE);
 
 	/* redirect stdout to log file */
-	if ( (dev_null = open("/dev/null", O_RDWR)) == -1 ) {
+	if ((dev_null = open("/dev/null", O_RDWR)) == -1) {
 		MSG(LTFSDMS0013E);
 		throw(EXCEPTION(errno, errno));
 	}
@@ -206,8 +201,9 @@ void Server::run(Connector *connector, sigset_t set)
 	Server::forcedTerminate = false;
 	Server::finishTerminate = false;
 
-	Scheduler::wqs = new ThreadPool<Migration::mig_info_t, std::shared_ptr<std::list<unsigned long>>>
-		(&Migration::stub, Const::NUM_STUBBING_THREADS, "stub-wq");
+	Scheduler::wqs = new ThreadPool<Migration::mig_info_t,
+			std::shared_ptr<std::list<unsigned long>>>(&Migration::stub,
+			Const::NUM_STUBBING_THREADS, "stub-wq");
 
 	subs.enqueue("Scheduler", &Scheduler::run, &sched, key);
 	subs.enqueue("Signal Handler", &Server::signalHandler, set, key);
@@ -218,9 +214,10 @@ void Server::run(Connector *connector, sigset_t set)
 
 	MSG(LTFSDMS0087I);
 
-	TRACE(Trace::always, (bool) Server::terminate, (bool) Server::forcedTerminate, (bool) Server::finishTerminate);
+	TRACE(Trace::always, (bool) Server::terminate,
+			(bool) Server::forcedTerminate, (bool) Server::finishTerminate);
 
-	for ( std::shared_ptr<OpenLTFSDrive> drive : inventory->getDrives() )
+	for (std::shared_ptr<OpenLTFSDrive> drive : inventory->getDrives())
 		drive->wqp->terminate();
 
 	Scheduler::wqs->terminate();

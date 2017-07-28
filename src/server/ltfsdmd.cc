@@ -4,7 +4,7 @@
 int main(int argc, char **argv)
 
 {
- 	Server ltfsdmd;
+	Server ltfsdmd;
 	int err = Error::LTFSDM_OK;
 	bool detach = true;
 	int opt;
@@ -16,8 +16,8 @@ int main(int argc, char **argv)
 
 	opterr = 0;
 
-	while (( opt = getopt(argc, argv, "fmd:")) != -1 ) {
-		switch( opt ) {
+	while ((opt = getopt(argc, argv, "fmd:")) != -1) {
+		switch (opt) {
 			case 'f':
 				detach = false;
 				break;
@@ -27,8 +27,7 @@ int main(int argc, char **argv)
 			case 'd':
 				try {
 					tl = (Trace::traceLevel) std::stoi(optarg);
-				}
-				catch(const std::exception& e) {
+				} catch (const std::exception& e) {
 					TRACE(Trace::error, e.what());
 					tl = Trace::error;
 				}
@@ -50,8 +49,7 @@ int main(int argc, char **argv)
 
 	try {
 		LTFSDM::init();
-	}
-	catch(const std::exception& e) {
+	} catch (const std::exception& e) {
 		TRACE(Trace::error, e.what());
 		err = Error::LTFSDM_GENERAL_ERROR;
 		goto end;
@@ -64,7 +62,7 @@ int main(int argc, char **argv)
 	try {
 		ltfsdmd.initialize(dbUseMemory);
 
-		if ( detach )
+		if (detach)
 			ltfsdmd.daemonize();
 
 		MSG(LTFSDMX0029I, OPENLTFS_VERSION);
@@ -72,22 +70,19 @@ int main(int argc, char **argv)
 		inventory = new OpenLTFSInventory();
 		connector = new Connector(true);
 		ltfsdmd.run(connector, set);
-	}
-	catch ( const OpenLTFSException& e ) {
-		if ( e.getError() != Error::LTFSDM_OK ) {
+	} catch (const OpenLTFSException& e) {
+		if (e.getError() != Error::LTFSDM_OK) {
 			TRACE(Trace::error, e.what());
 			err = Const::UNSET;
 		}
-	}
-	catch ( const std::exception& e ) {
+	} catch (const std::exception& e) {
 		TRACE(Trace::error, e.what());
 		err = Const::UNSET;
 	}
 
-end:
-	if ( inventory )
-		delete(inventory);
-	if ( connector )
-		delete(connector);
+	end: if (inventory)
+		delete (inventory);
+	if (connector)
+		delete (connector);
 	return (int) err;
 }

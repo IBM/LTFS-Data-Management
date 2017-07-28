@@ -19,8 +19,7 @@ Message::~Message()
 	try {
 		if (messagefile.is_open())
 			messagefile.close();
-	}
-	catch( ... ) {
+	} catch (...) {
 		kill(getpid(), SIGTERM);
 	}
 }
@@ -31,9 +30,9 @@ void Message::init()
 	messagefile.exceptions(std::ofstream::failbit | std::ofstream::badbit);
 
 	try {
-		messagefile.open(Const::LOG_FILE, std::fstream::out | std::fstream::app);
-	}
-	catch(const std::exception& e) {
+		messagefile.open(Const::LOG_FILE,
+				std::fstream::out | std::fstream::app);
+	} catch (const std::exception& e) {
 		std::cerr << messages[LTFSDMX0003E];
 		exit((int) Error::LTFSDM_GENERAL_ERROR);
 	}
@@ -55,8 +54,7 @@ void Message::writeLog(std::string msgstr)
 		messagefile << msgstr;
 		messagefile.flush();
 		mtx.unlock();
-	}
-	catch(const std::exception& e) {
+	} catch (const std::exception& e) {
 		mtx.unlock();
 		std::cerr << messages[LTFSDMX0004E];
 		exit((int) Error::LTFSDM_GENERAL_ERROR);

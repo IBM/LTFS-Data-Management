@@ -1,13 +1,22 @@
 #pragma once
 
-class PoolDeleteCommand : public OpenLTFSCommand
+class PoolDeleteCommand: public OpenLTFSCommand
 
 {
 private:
-	void talkToBackend(std::stringstream *parmList) {}
+	void talkToBackend(std::stringstream *parmList)
+	{
+	}
 public:
-    PoolDeleteCommand() : OpenLTFSCommand("delete", ":+hP:") {};
-    ~PoolDeleteCommand() {};
-    void printUsage();
-    void doCommand(int argc, char **argv);
+	PoolDeleteCommand() :
+			OpenLTFSCommand("delete", ":+hP:")
+	{
+	}
+	;
+	~PoolDeleteCommand()
+	{
+	}
+	;
+	void printUsage();
+	void doCommand(int argc, char **argv);
 };

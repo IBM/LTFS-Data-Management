@@ -6,12 +6,11 @@ std::string FileOperation::genInumString(std::list<unsigned long> inumList)
 	std::stringstream inumss;
 
 	bool first = true;
-	for ( unsigned long inum : inumList ) {
-		if ( first ) {
+	for (unsigned long inum : inumList) {
+		if (first) {
 			inumss << inum;
 			first = false;
-		}
-		else {
+		} else {
 			inumss << ", " << inum;
 		}
 	}
@@ -19,8 +18,7 @@ std::string FileOperation::genInumString(std::list<unsigned long> inumList)
 }
 
 bool FileOperation::queryResult(long reqNumber, long *resident,
-								long *premigrated, long *migrated,
-								long *failed)
+		long *premigrated, long *migrated, long *failed)
 
 {
 	SQLStatement stmt;
@@ -31,35 +29,36 @@ bool FileOperation::queryResult(long reqNumber, long *resident,
 	do {
 		done = true;
 
-		std::unique_lock<std::mutex> lock(Scheduler::updmtx);
+		std::unique_lock < std::mutex > lock(Scheduler::updmtx);
 
 		stmt(FileOperation::REQUEST_STATE) % reqNumber;
 		stmt.prepare();
-		while ( stmt.step(&state) ) {
-			if ( state != DataBase::REQ_COMPLETED ) {
+		while (stmt.step(&state)) {
+			if (state != DataBase::REQ_COMPLETED) {
 				done = false;
 				break;
 			}
 		}
 		stmt.finalize();
 
-		if ( Server::finishTerminate == true )
+		if (Server::finishTerminate == true)
 			done = true;
 
-		if ( done == false ) {
+		if (done == false) {
 			TRACE(Trace::full, reqNumber, (bool) Scheduler::updReq[reqNumber]);
-			Scheduler::updcond.wait(lock, [reqNumber]{return ((Server::finishTerminate == true) || (Scheduler::updReq[reqNumber] == true));});
+			Scheduler::updcond.wait(lock,
+					[reqNumber] {return ((Server::finishTerminate == true) || (Scheduler::updReq[reqNumber] == true));});
 			Scheduler::updReq[reqNumber] = false;
 		}
-	} while(!done && time(NULL) - starttime < 10);
+	} while (!done && time(NULL) - starttime < 10);
 
 	mrStatus.get(reqNumber, resident, premigrated, migrated, failed);
 
-	if ( done ) {
+	if (done) {
 		mrStatus.remove(reqNumber);
 
 		{
-			std::lock_guard<std::mutex> updlock(Scheduler::updmtx);
+			std::lock_guard < std::mutex > updlock(Scheduler::updmtx);
 			Scheduler::updReq.erase(Scheduler::updReq.find(reqNumber));
 		}
 

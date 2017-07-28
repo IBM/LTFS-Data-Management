@@ -28,27 +28,26 @@ void InfoDrivesCommand::doCommand(int argc, char **argv)
 
 	TRACE(Trace::normal, *argv, argc, optind);
 
-	if( argc != optind ) {
+	if (argc != optind) {
 		printUsage();
 		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
 	try {
 		connect();
-	}
-	catch (const std::exception& e) {
+	} catch (const std::exception& e) {
 		MSG(LTFSDMC0026E);
 		return;
 	}
 
-	LTFSDmProtocol::LTFSDmInfoDrivesRequest *infodrives = commCommand.mutable_infodrivesrequest();
+	LTFSDmProtocol::LTFSDmInfoDrivesRequest *infodrives =
+			commCommand.mutable_infodrivesrequest();
 
 	infodrives->set_key(key);
 
 	try {
 		commCommand.send();
-	}
-	catch(const std::exception& e) {
+	} catch (const std::exception& e) {
 		MSG(LTFSDMC0027E);
 		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
@@ -60,21 +59,22 @@ void InfoDrivesCommand::doCommand(int argc, char **argv)
 	do {
 		try {
 			commCommand.recv();
-		}
-		catch(const std::exception& e) {
+		} catch (const std::exception& e) {
 			MSG(LTFSDMC0028E);
 			throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 		}
 
-		const LTFSDmProtocol::LTFSDmInfoDrivesResp infodrivesresp = commCommand.infodrivesresp();
+		const LTFSDmProtocol::LTFSDmInfoDrivesResp infodrivesresp =
+				commCommand.infodrivesresp();
 		id = infodrivesresp.id();
-		std::string devname= infodrivesresp.devname();
+		std::string devname = infodrivesresp.devname();
 		unsigned long slot = infodrivesresp.slot();
 		std::string status = infodrivesresp.status();
 		bool busy = infodrivesresp.busy();
-		if ( id.compare("") != 0 )
-			INFO(LTFSDMC0070I, id, devname, slot, status, busy ? messages[LTFSDMC0071I] : messages[LTFSDMC0072I]);
-	} while ( id.compare("") != 0 );
+		if (id.compare("") != 0)
+			INFO(LTFSDMC0070I, id, devname, slot, status,
+					busy ? messages[LTFSDMC0071I] : messages[LTFSDMC0072I]);
+	} while (id.compare("") != 0);
 
 	return;
 }

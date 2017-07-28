@@ -6,8 +6,9 @@ void Receiver::run(long key, Connector *connector)
 
 {
 	MessageParser mproc;
-	std::unique_lock<std::mutex> lock(Server::termmtx);
-	ThreadPool<long, LTFSDmCommServer, Connector*> wq(&MessageParser::run, Const::MAX_RECEIVER_THREADS, "msg-wq");
+	std::unique_lock < std::mutex > lock(Server::termmtx);
+	ThreadPool<long, LTFSDmCommServer, Connector*> wq(&MessageParser::run,
+			Const::MAX_RECEIVER_THREADS, "msg-wq");
 	LTFSDmCommServer command;
 
 	TRACE(Trace::full, __PRETTY_FUNCTION__);
@@ -16,8 +17,7 @@ void Receiver::run(long key, Connector *connector)
 
 	try {
 		command.listen();
-	}
-	catch(const std::exception& e) {
+	} catch (const std::exception& e) {
 		TRACE(Trace::error, e.what());
 		MSG(LTFSDMS0004E);
 		throw(EXCEPTION(Const::UNSET));
@@ -26,8 +26,7 @@ void Receiver::run(long key, Connector *connector)
 	while (Server::finishTerminate == false) {
 		try {
 			command.accept();
-		}
-		catch(const std::exception& e) {
+		} catch (const std::exception& e) {
 			TRACE(Trace::error, e.what());
 			MSG(LTFSDMS0005E);
 			break;
@@ -35,14 +34,13 @@ void Receiver::run(long key, Connector *connector)
 
 		try {
 			wq.enqueue(Const::UNSET, key, command, connector);
-		}
-		catch(const std::exception& e) {
+		} catch (const std::exception& e) {
 			TRACE(Trace::error, e.what());
 			MSG(LTFSDMS0010E);
 			continue;
 		}
 
-		if ( Server::finishTerminate == false )
+		if (Server::finishTerminate == false)
 			Server::termcond.wait_for(lock, std::chrono::seconds(30));
 	}
 

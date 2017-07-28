@@ -3,9 +3,9 @@
 OpenLTFSPool::OpenLTFSPool(std::string _poolName)
 
 {
-	std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+	std::lock_guard < std::recursive_mutex > lock(OpenLTFSInventory::mtx);
 
-	if ( _poolName.compare("") == 0 ) {
+	if (_poolName.compare("") == 0) {
 		MSG(LTFSDMX0020E);
 		throw(EXCEPTION(Const::UNSET, _poolName));
 	}
@@ -16,7 +16,7 @@ OpenLTFSPool::OpenLTFSPool(std::string _poolName)
 std::string OpenLTFSPool::getPoolName()
 
 {
-	std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+	std::lock_guard < std::recursive_mutex > lock(OpenLTFSInventory::mtx);
 
 	return poolName;
 }
@@ -24,9 +24,9 @@ std::string OpenLTFSPool::getPoolName()
 void OpenLTFSPool::add(std::shared_ptr<OpenLTFSCartridge> cartridge)
 
 {
-	std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+	std::lock_guard < std::recursive_mutex > lock(OpenLTFSInventory::mtx);
 
-	if ( cartridge->getPool().compare("") != 0 ) {
+	if (cartridge->getPool().compare("") != 0) {
 		MSG(LTFSDMX0021E, cartridge->GetObjectID());
 		throw(EXCEPTION(Error::LTFSDM_TAPE_EXISTS_IN_POOL));
 	}
@@ -38,10 +38,10 @@ void OpenLTFSPool::add(std::shared_ptr<OpenLTFSCartridge> cartridge)
 void OpenLTFSPool::remove(std::shared_ptr<OpenLTFSCartridge> cartridge)
 
 {
-	std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+	std::lock_guard < std::recursive_mutex > lock(OpenLTFSInventory::mtx);
 
-	for ( std::shared_ptr<OpenLTFSCartridge> ctrg : cartridges ) {
-		if ( ctrg == cartridge ) {
+	for (std::shared_ptr<OpenLTFSCartridge> ctrg : cartridges) {
+		if (ctrg == cartridge) {
 			cartridge->setPool("");
 			cartridges.remove(cartridge);
 			return;
@@ -55,7 +55,7 @@ void OpenLTFSPool::remove(std::shared_ptr<OpenLTFSCartridge> cartridge)
 std::list<std::shared_ptr<OpenLTFSCartridge>> OpenLTFSPool::getCartridges()
 
 {
-	std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+	std::lock_guard < std::recursive_mutex > lock(OpenLTFSInventory::mtx);
 
 	return cartridges;
 }

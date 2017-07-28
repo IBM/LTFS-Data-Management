@@ -29,59 +29,57 @@ void PoolCreateCommand::printUsage()
 
 void PoolCreateCommand::doCommand(int argc, char **argv)
 {
-	if ( argc <= 2 ) {
+	if (argc <= 2) {
 		printUsage();
 		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
 	processOptions(argc, argv);
 
-	if ( argc != optind ) {
+	if (argc != optind) {
 		printUsage();
 		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
-	if ( std::count(poolNames.begin(), poolNames.end(), 10) > 0 ) {
+	if (std::count(poolNames.begin(), poolNames.end(), 10) > 0) {
 		MSG(LTFSDMC0091E);
 		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
-	if ( std::count(poolNames.begin(), poolNames.end(), 44) > 0 ) {
+	if (std::count(poolNames.begin(), poolNames.end(), 44) > 0) {
 		MSG(LTFSDMC0092E);
 		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
 	try {
 		connect();
-	}
-	catch(const std::exception& e) {
+	} catch (const std::exception& e) {
 		MSG(LTFSDMC0026E);
 		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
-	LTFSDmProtocol::LTFSDmPoolCreateRequest *poolcreatereq = commCommand.mutable_poolcreaterequest();
+	LTFSDmProtocol::LTFSDmPoolCreateRequest *poolcreatereq =
+			commCommand.mutable_poolcreaterequest();
 	poolcreatereq->set_key(key);
 	poolcreatereq->set_poolname(poolNames);
 
 	try {
 		commCommand.send();
-	}
-	catch(const std::exception& e) {
+	} catch (const std::exception& e) {
 		MSG(LTFSDMC0027E);
 		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
 	try {
 		commCommand.recv();
-	}
-	catch(const std::exception& e) {
+	} catch (const std::exception& e) {
 		MSG(LTFSDMC0028E);
 		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
 	const LTFSDmProtocol::LTFSDmPoolResp poolresp = commCommand.poolresp();
 
-	switch ( poolresp.response() ) {
+	switch (poolresp.response()) {
 		case Error::LTFSDM_OK:
 			INFO(LTFSDMC0079I, poolNames);
 			break;

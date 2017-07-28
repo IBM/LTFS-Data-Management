@@ -6,7 +6,7 @@
 #define TB(x)   ((size_t) (x) << 40)
 
 namespace LTFSDM {
-	void init();
-	std::vector<std::string> getTapeIds();
-	std::set<std::string> getFs();
+void init();
+std::vector<std::string> getTapeIds();
+std::set<std::string> getFs();
 }

@@ -30,11 +30,10 @@ void InfoJobsCommand::doCommand(int argc, char **argv)
 
 	TRACE(Trace::normal, *argv, argc, optind);
 
-	if( argc != optind ) {
+	if (argc != optind) {
 		printUsage();
 		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
-	}
-	else if ( requestNumber < Const::UNSET ) {
+	} else if (requestNumber < Const::UNSET) {
 		printUsage();
 		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
@@ -43,21 +42,20 @@ void InfoJobsCommand::doCommand(int argc, char **argv)
 
 	try {
 		connect();
-	}
-	catch (const std::exception& e) {
+	} catch (const std::exception& e) {
 		MSG(LTFSDMC0026E);
 		return;
 	}
 
-	LTFSDmProtocol::LTFSDmInfoJobsRequest *infojobs = commCommand.mutable_infojobsrequest();
+	LTFSDmProtocol::LTFSDmInfoJobsRequest *infojobs =
+			commCommand.mutable_infojobsrequest();
 
 	infojobs->set_key(key);
 	infojobs->set_reqnumber(reqOfInterest);
 
 	try {
 		commCommand.send();
-	}
-	catch(const std::exception& e) {
+	} catch (const std::exception& e) {
 		MSG(LTFSDMC0027E);
 		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
@@ -68,13 +66,13 @@ void InfoJobsCommand::doCommand(int argc, char **argv)
 	do {
 		try {
 			commCommand.recv();
-		}
-		catch(const std::exception& e) {
+		} catch (const std::exception& e) {
 			MSG(LTFSDMC0028E);
 			throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 		}
 
-		const LTFSDmProtocol::LTFSDmInfoJobsResp infojobsresp = commCommand.infojobsresp();
+		const LTFSDmProtocol::LTFSDmInfoJobsResp infojobsresp =
+				commCommand.infojobsresp();
 		std::string operation = infojobsresp.operation();
 		std::string filename = infojobsresp.filename();
 		recnum = infojobsresp.reqnumber();
@@ -82,10 +80,11 @@ void InfoJobsCommand::doCommand(int argc, char **argv)
 		int size = infojobsresp.filesize();
 		std::string tapeid = infojobsresp.tapeid();
 		std::string state = infojobsresp.state();
-		if ( recnum != Const::UNSET )
-			INFO(LTFSDMC0063I, operation, state, recnum, replnum, size, tapeid, filename);
+		if (recnum != Const::UNSET)
+			INFO(LTFSDMC0063I, operation, state, recnum, replnum, size, tapeid,
+					filename);
 
-	} while ( recnum != Const::UNSET );
+	} while (recnum != Const::UNSET);
 
 	return;
 }

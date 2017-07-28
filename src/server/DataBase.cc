@@ -7,7 +7,7 @@ std::mutex DataBase::trans_mutex;
 DataBase::~DataBase()
 
 {
-	if ( dbNeedsClosed)
+	if (dbNeedsClosed)
 		sqlite3_close(db);
 
 	sqlite3_shutdown();
@@ -30,13 +30,12 @@ void DataBase::fits(sqlite3_context *ctx, int argc, sqlite3_value **argv)
 	unsigned long *num_found = (unsigned long *) sqlite3_value_int64(argv[3]);
 	unsigned long *total = (unsigned long *) sqlite3_value_int64(argv[4]);
 
-	if ( *free  >= size ) {
+	if (*free >= size) {
 		*free -= size;
 		(*total)++;
 		(*num_found)++;
 		sqlite3_result_int(ctx, 1);
-	}
-	else {
+	} else {
 		(*total)++;
 		sqlite3_result_int(ctx, 0);
 	}
@@ -49,44 +48,45 @@ void DataBase::open(bool dbUseMemory)
 	std::string sql;
 	std::string uri;
 
-	if ( dbUseMemory )
+	if (dbUseMemory)
 		uri = "file::memory:";
 	else
 		uri = std::string("file:") + Const::DB_FILE;
 
-	rc = sqlite3_config(SQLITE_CONFIG_URI,1);
+	rc = sqlite3_config(SQLITE_CONFIG_URI, 1);
 
-	if ( rc != SQLITE_OK ) {
+	if (rc != SQLITE_OK) {
 		TRACE(Trace::error, rc);
 		throw(EXCEPTION(Const::UNSET, uri, rc));
 	}
 
 	rc = sqlite3_initialize();
 
-	if ( rc != SQLITE_OK ) {
+	if (rc != SQLITE_OK) {
 		TRACE(Trace::error, rc);
 		throw(EXCEPTION(Const::UNSET, rc));
 	}
 
 	rc = sqlite3_open_v2(uri.c_str(), &db, SQLITE_OPEN_READWRITE |
-						 SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX |
-						 SQLITE_OPEN_SHAREDCACHE | SQLITE_OPEN_EXCLUSIVE, NULL);
+	SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX |
+	SQLITE_OPEN_SHAREDCACHE | SQLITE_OPEN_EXCLUSIVE, NULL);
 
-	if ( rc != SQLITE_OK ) {
+	if (rc != SQLITE_OK) {
 		TRACE(Trace::error, rc, uri);
 		throw(EXCEPTION(Const::UNSET, uri, rc));
 	}
 
 	rc = sqlite3_extended_result_codes(db, 1);
 
-	if ( rc != SQLITE_OK ) {
+	if (rc != SQLITE_OK) {
 		TRACE(Trace::error, rc);
 		throw(EXCEPTION(Const::UNSET, rc));
 	}
 
 	dbNeedsClosed = true;
 
-	sqlite3_create_function(db, "FITS", 5, SQLITE_UTF8, NULL, &DataBase::fits, NULL, NULL);
+	sqlite3_create_function(db, "FITS", 5, SQLITE_UTF8, NULL, &DataBase::fits,
+	NULL, NULL);
 }
 
 void DataBase::createTables()
@@ -116,7 +116,6 @@ std::string DataBase::opStr(DataBase::operation op)
 	}
 }
 
-
 std::string DataBase::reqStateStr(DataBase::req_state reqs)
 
 {
@@ -131,7 +130,6 @@ std::string DataBase::reqStateStr(DataBase::req_state reqs)
 			return "";
 	}
 }
-
 
 int DataBase::lastUpdates()
 
@@ -153,7 +151,7 @@ void SQLStatement::prepare()
 
 	rc = sqlite3_prepare_v2(DB.getDB(), fmt.str().c_str(), -1, &stmt, NULL);
 
-	if( rc != SQLITE_OK ) {
+	if (rc != SQLITE_OK) {
 		TRACE(Trace::error, fmt.str(), rc);
 		throw(EXCEPTION(rc, rc));
 	}
@@ -174,13 +172,15 @@ void SQLStatement::getColumn(unsigned int *result, int column)
 void SQLStatement::getColumn(DataBase::operation *result, int column)
 
 {
-	*result = static_cast<DataBase::operation>(sqlite3_column_int(stmt, column));
+	*result =
+			static_cast<DataBase::operation>(sqlite3_column_int(stmt, column));
 }
 
 void SQLStatement::getColumn(DataBase::req_state *result, int column)
 
 {
-	*result = static_cast<DataBase::req_state>(sqlite3_column_int(stmt, column));
+	*result =
+			static_cast<DataBase::req_state>(sqlite3_column_int(stmt, column));
 }
 
 void SQLStatement::getColumn(FsObj::file_state *result, int column)
@@ -204,14 +204,16 @@ void SQLStatement::getColumn(unsigned long *result, int column)
 void SQLStatement::getColumn(unsigned long long *result, int column)
 
 {
-	*result = static_cast<unsigned long long>(sqlite3_column_int64(stmt, column));
+	*result =
+			static_cast<unsigned long long>(sqlite3_column_int64(stmt, column));
 }
 
 void SQLStatement::getColumn(std::string *result, int column)
 
 {
-	const char *column_ctr = reinterpret_cast<const char*>(sqlite3_column_text (stmt, column));
-	if ( column_ctr != NULL)
+	const char *column_ctr = reinterpret_cast<const char*>(sqlite3_column_text(
+			stmt, column));
+	if (column_ctr != NULL)
 		*result = std::string(column_ctr);
 	else
 		*result = "";
@@ -223,13 +225,12 @@ std::string SQLStatement::str()
 	return fmt.str();
 }
 
-
 void SQLStatement::bind(int num, int value)
 
 {
 	int rc;
 
-	if ( (rc = sqlite3_bind_int(stmt, num, value)) != SQLITE_OK ) {
+	if ((rc = sqlite3_bind_int(stmt, num, value)) != SQLITE_OK) {
 		TRACE(Trace::error, rc);
 		EXCEPTION(rc);
 	}
@@ -240,7 +241,8 @@ void SQLStatement::bind(int num, std::string value)
 {
 	int rc;
 
-	if ( (rc = sqlite3_bind_text(stmt, num, value.c_str(), value.size(), 0)) != SQLITE_OK ) {
+	if ((rc = sqlite3_bind_text(stmt, num, value.c_str(), value.size(), 0))
+			!= SQLITE_OK) {
 		TRACE(Trace::error, rc);
 		EXCEPTION(rc);
 	}
@@ -249,15 +251,14 @@ void SQLStatement::bind(int num, std::string value)
 void SQLStatement::finalize()
 
 {
-	if ( stmt_rc != SQLITE_ROW &&
-		 stmt_rc != SQLITE_DONE ) {
+	if (stmt_rc != SQLITE_ROW && stmt_rc != SQLITE_DONE) {
 		TRACE(Trace::error, fmt.str(), stmt_rc);
 		throw(EXCEPTION(stmt_rc, stmt_rc));
 	}
 
 	int rc = sqlite3_finalize(stmt);
 
-	if ( rc != SQLITE_OK ) {
+	if (rc != SQLITE_OK) {
 		TRACE(Trace::error, fmt.str(), rc);
 		throw(EXCEPTION(rc, rc));
 	}

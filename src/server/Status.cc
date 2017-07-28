@@ -1,6 +1,6 @@
 #include "ServerIncludes.h"
 
-Status  mrStatus;
+Status mrStatus;
 
 void Status::add(int reqNumber)
 
@@ -9,18 +9,18 @@ void Status::add(int reqNumber)
 	int num;
 	FsObj::file_state migState;
 
-	std::lock_guard<std::mutex> lock(Status::mtx);
+	std::lock_guard < std::mutex > lock(Status::mtx);
 
 	//assert( allStates.count(reqNumber) == 0 );
-	if ( allStates.count(reqNumber) != 0 )
+	if (allStates.count(reqNumber) != 0)
 		return;
 
 	singleState state;
 
 	stmt(Status::STATUS) % reqNumber;
 	stmt.prepare();
-	while ( stmt.step(&migState, &num) ) {
-		switch ( migState ) {
+	while (stmt.step(&migState, &num)) {
+		switch (migState) {
 			case FsObj::RESIDENT:
 			case FsObj::PREMIGRATING:
 				state.resident = num;
@@ -45,21 +45,21 @@ void Status::add(int reqNumber)
 	allStates[reqNumber] = state;
 }
 
-
 void Status::remove(int reqNumber)
 
 {
-	std::lock_guard<std::mutex> lock(Status::mtx);
+	std::lock_guard < std::mutex > lock(Status::mtx);
 
 	allStates.erase(reqNumber);
 }
 
-void Status::updateSuccess(int reqNumber, FsObj::file_state from, FsObj::file_state to)
+void Status::updateSuccess(int reqNumber, FsObj::file_state from,
+		FsObj::file_state to)
 
 {
-	std::lock_guard<std::mutex> lock(Status::mtx);
+	std::lock_guard < std::mutex > lock(Status::mtx);
 
-	assert( allStates.count(reqNumber) != 0 );
+	assert(allStates.count(reqNumber) != 0);
 
 	singleState state = allStates[reqNumber];
 
@@ -97,7 +97,7 @@ void Status::updateSuccess(int reqNumber, FsObj::file_state from, FsObj::file_st
 void Status::updateFailed(int reqNumber, FsObj::file_state from)
 
 {
-	std::lock_guard<std::mutex> lock(Status::mtx);
+	std::lock_guard < std::mutex > lock(Status::mtx);
 
 	singleState state = allStates[reqNumber];
 
@@ -120,10 +120,11 @@ void Status::updateFailed(int reqNumber, FsObj::file_state from)
 	allStates[reqNumber] = state;
 }
 
-void Status::get(int reqNumber, long *resident, long *premigrated, long *migrated, long *failed)
+void Status::get(int reqNumber, long *resident, long *premigrated,
+		long *migrated, long *failed)
 
 {
-	std::lock_guard<std::mutex> lock(Status::mtx);
+	std::lock_guard < std::mutex > lock(Status::mtx);
 
 	*resident = allStates[reqNumber].resident;
 	*premigrated = allStates[reqNumber].premigrated;

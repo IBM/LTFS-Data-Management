@@ -33,12 +33,17 @@ std::atomic<bool> Connector::connectorTerminate(false);
 std::atomic<bool> Connector::forcedTerminate(false);
 std::atomic<bool> Connector::recallEventSystemStopped(false);
 
-struct conn_info_t {
-	conn_info_t(dm_token_t _token) : token(_token) {}
+struct conn_info_t
+{
+	conn_info_t(dm_token_t _token) :
+			token(_token)
+	{
+	}
 	dm_token_t token;
 };
 
-typedef struct {
+typedef struct
+{
 	unsigned long long fsid;
 	unsigned int igen;
 	unsigned long long ino;
@@ -48,11 +53,11 @@ struct ltstr
 {
 	bool operator()(const fuid_t fuid1, const fuid_t fuid2) const
 	{
-        return ( fuid1.ino < fuid2.ino )
-			|| (( fuid1.ino == fuid2.ino )
-				&& (( fuid1.igen < fuid2.igen )
-					|| (( fuid1.igen == fuid2.igen )
-						&& (( fuid1.fsid < fuid2.fsid )))));
+		return (fuid1.ino < fuid2.ino)
+				|| ((fuid1.ino == fuid2.ino)
+						&& ((fuid1.igen < fuid2.igen)
+								|| ((fuid1.igen == fuid2.igen)
+										&& ((fuid1.fsid < fuid2.fsid)))));
 	}
 };
 
@@ -68,67 +73,68 @@ void dmapiSessionCleanup(dm_sessid_t *oldSid)
 	unsigned int num_sessions = 0;
 	unsigned int num_sessions_res = 0;
 	dm_sessid_t *sidbufp = NULL;
-    unsigned long rseslenp;
+	unsigned long rseslenp;
 	unsigned int rtoklenp;
-    char buffer[DM_SESSION_INFO_LEN];
+	char buffer[DM_SESSION_INFO_LEN];
 
-	sidbufp = (dm_sessid_t*)malloc(sizeof( dm_sessid_t ));
+	sidbufp = (dm_sessid_t*) malloc(sizeof(dm_sessid_t));
 
-	if ( sidbufp == NULL ) {
+	if (sidbufp == NULL) {
 		MSG(LTFSDMD0001E);
 		throw(EXCEPTION(Const::UNSET, *oldSid));
 	}
 
-	while ( dm_getall_sessions(num_sessions, sidbufp, &num_sessions_res) == -1 ) {
-        free(sidbufp);
+	while (dm_getall_sessions(num_sessions, sidbufp, &num_sessions_res) == -1) {
+		free(sidbufp);
 
-        if ( errno != E2BIG ) {
-            TRACE(Trace::error, errno);
+		if ( errno != E2BIG) {
+			TRACE(Trace::error, errno);
 			throw(EXCEPTION(Const::UNSET, errno, *oldSid));
-        }
+		}
 
 		sidbufp = NULL;
-        sidbufp = (dm_sessid_t*)malloc(num_sessions_res * sizeof( dm_sessid_t ));
+		sidbufp = (dm_sessid_t*) malloc(num_sessions_res * sizeof(dm_sessid_t));
 
-		if ( !sidbufp ) {
-            MSG(LTFSDMD0001E);
+		if (!sidbufp) {
+			MSG(LTFSDMD0001E);
 			throw(EXCEPTION(Const::UNSET, *oldSid));
-        }
+		}
 
 		num_sessions = num_sessions_res;
-    }
+	}
 
-	if ( num_sessions )
+	if (num_sessions)
 		MSG(LTFSDMD0002I, num_sessions);
 
 	unsigned int num_tokens = 1024;
 	dm_token_t *tokbufp = NULL;
 
-	for ( i = 0; i < (int)num_sessions; i++ ) {
-        if ( dm_query_session(sidbufp[i], sizeof( buffer ), buffer, &rseslenp) == -1 ) {
-            MSG(LTFSDMD0001E);
+	for (i = 0; i < (int) num_sessions; i++) {
+		if (dm_query_session(sidbufp[i], sizeof(buffer), buffer, &rseslenp)
+				== -1) {
+			MSG(LTFSDMD0001E);
 			free(sidbufp);
 			throw(EXCEPTION(Const::UNSET, errno, *oldSid));
-        }
-		else if (Const::DMAPI_SESSION_NAME.compare(buffer) == 0) {
-			TRACE(Trace::normal, i, (unsigned long) sidbufp[i]);
+		} else if (Const::DMAPI_SESSION_NAME.compare(buffer) == 0) {
+			TRACE(Trace::normal, i, (unsigned long ) sidbufp[i]);
 
-			tokbufp =  (dm_token_t *) malloc(sizeof(dm_token_t) * num_tokens);
-			if ( !tokbufp ) {
+			tokbufp = (dm_token_t *) malloc(sizeof(dm_token_t) * num_tokens);
+			if (!tokbufp) {
 				MSG(LTFSDMD0001E);
 				free(sidbufp);
 				throw(EXCEPTION(Const::UNSET, *oldSid));
 			}
 
-			while (dm_getall_tokens(sidbufp[i], num_tokens, tokbufp, &rtoklenp) == -1) {
-				if ( errno != E2BIG ) {
+			while (dm_getall_tokens(sidbufp[i], num_tokens, tokbufp, &rtoklenp)
+					== -1) {
+				if ( errno != E2BIG) {
 					TRACE(Trace::error, errno);
 					throw(EXCEPTION(Const::UNSET, errno, *oldSid));
 				}
 				free(tokbufp);
 				tokbufp = NULL;
-				tokbufp =  (dm_token_t *) malloc(sizeof(dm_token_t) * rtoklenp);
-				if ( !tokbufp ) {
+				tokbufp = (dm_token_t *) malloc(sizeof(dm_token_t) * rtoklenp);
+				if (!tokbufp) {
 					MSG(LTFSDMD0001E);
 					free(sidbufp);
 					throw(EXCEPTION(Const::UNSET, *oldSid));
@@ -137,22 +143,21 @@ void dmapiSessionCleanup(dm_sessid_t *oldSid)
 
 			TRACE(Trace::normal, rtoklenp);
 
-			for (j = 0; j<rtoklenp; j++)
-			{
-				TRACE(Trace::normal, j, (unsigned long) tokbufp[j]);
-				if ( dm_respond_event(sidbufp[i], tokbufp[j], DM_RESP_ABORT, EINTR, 0, NULL) == 1 )
+			for (j = 0; j < rtoklenp; j++) {
+				TRACE(Trace::normal, j, (unsigned long ) tokbufp[j]);
+				if (dm_respond_event(sidbufp[i], tokbufp[j], DM_RESP_ABORT,
+				EINTR, 0, NULL) == 1)
 					TRACE(Trace::error, errno);
 				else
 					MSG(LTFSDMD0003I);
 			}
 
-			if ( dm_destroy_session(sidbufp[i]) == -1 ) {
+			if (dm_destroy_session(sidbufp[i]) == -1) {
 				TRACE(Trace::error, errno);
 				MSG(LTFSDMD0004E);
 				*oldSid = sidbufp[i];
-			}
-			else {
-				MSG(LTFSDMD0005I, (unsigned long) sidbufp[i]);
+			} else {
+				MSG(LTFSDMD0005I, (unsigned long ) sidbufp[i]);
 			}
 		}
 	}
@@ -162,33 +167,36 @@ void dmapiSessionCleanup(dm_sessid_t *oldSid)
 		free(tokbufp);
 }
 
-Connector::Connector(bool cleanup_) : cleanup(cleanup_)
+Connector::Connector(bool cleanup_) :
+		cleanup(cleanup_)
 
 {
-	char          *version          = NULL;
-    size_t         msglen           = 8;
-    char           msgdatap[8];
-	dm_sessid_t    dmapiSessionLoc;
-	dm_token_t     dmapiTokenLoc;
-	dm_sessid_t    oldSid = DM_NO_SESSION;
+	char *version = NULL;
+	size_t msglen = 8;
+	char msgdatap[8];
+	dm_sessid_t dmapiSessionLoc;
+	dm_token_t dmapiTokenLoc;
+	dm_sessid_t oldSid = DM_NO_SESSION;
 
 	memset((char *) msgdatap, 0, sizeof(msgdatap));
 
-    if (dm_init_service(&version)) {
+	if (dm_init_service(&version)) {
 		TRACE(Trace::error, errno);
 		goto failed;
 	}
 
-	if ( cleanup )
+	if (cleanup)
 		dmapiSessionCleanup(&oldSid);
 
-	if (dm_create_session(oldSid, (char *) Const::DMAPI_SESSION_NAME.c_str(), &dmapiSessionLoc)) {
+	if (dm_create_session(oldSid, (char *) Const::DMAPI_SESSION_NAME.c_str(),
+			&dmapiSessionLoc)) {
 		TRACE(Trace::error, errno);
 		goto failed;
 	}
 
-    if(dm_create_userevent(dmapiSessionLoc, msglen, (void*)msgdatap, &dmapiTokenLoc)) {
-        dm_destroy_session(dmapiSessionLoc);
+	if (dm_create_userevent(dmapiSessionLoc, msglen, (void*) msgdatap,
+			&dmapiTokenLoc)) {
+		dm_destroy_session(dmapiSessionLoc);
 		TRACE(Trace::error, errno);
 		goto failed;
 	}
@@ -197,7 +205,7 @@ Connector::Connector(bool cleanup_) : cleanup(cleanup_)
 	dmapiToken = dmapiTokenLoc;
 	return;
 
-failed:
+	failed:
 	MSG(LTFSDMS0016E);
 	throw(EXCEPTION(Const::UNSET, errno));
 }
@@ -206,16 +214,16 @@ Connector::~Connector()
 
 {
 	try {
-		if ( cleanup )
+		if (cleanup)
 			MSG(LTFSDMS0077I);
-		if ( dm_respond_event(dmapiSession, dmapiToken, DM_RESP_ABORT, EINTR, 0, NULL) == 1 )
+		if (dm_respond_event(dmapiSession, dmapiToken, DM_RESP_ABORT, EINTR, 0,
+		NULL) == 1)
 			TRACE(Trace::error, errno);
 
 		dm_destroy_session(dmapiSession);
-		if ( cleanup )
+		if (cleanup)
 			MSG(LTFSDMS0078I);
-	}
-	catch ( ... ) {
+	} catch (...) {
 		kill(getpid(), SIGTERM);
 	}
 }
@@ -243,9 +251,9 @@ void recoverDisposition()
 	size_t name2Len;
 	char sgName[256], nameBuf[256];
 
-retry:
+	retry:
 	/* Allocate buffer space */
-	bufP =  (char *)malloc( bufLen );
+	bufP = (char *) malloc(bufLen);
 	if (bufP == NULL) {
 		MSG(LTFSDMD0001E);
 		throw(EXCEPTION(Const::UNSET));
@@ -256,7 +264,7 @@ retry:
 	if (rc != 0) {
 		if (errno == E2BIG) {
 			bufLen = rLen;
-			free (bufP);
+			free(bufP);
 			bufP = NULL;
 			goto retry;
 		}
@@ -268,7 +276,7 @@ retry:
 
 	/* Parse returned buffer */
 	for (dispP = (dm_dispinfo_t *) bufP; dispP != NULL;
-		 dispP = DM_STEP_TO_NEXT(dispP, dm_dispinfo_t *)) {
+			dispP = DM_STEP_TO_NEXT(dispP, dm_dispinfo_t *)) {
 
 		/* get fs handle */
 		hp = DM_GET_VALUE(dispP, di_fshandle, u_char *);
@@ -276,12 +284,12 @@ retry:
 
 		/* There are no dispositions if there is no handle */
 		if (dm_handle_is_valid(hp, hlen) == DM_FALSE)
-			break;
+		break;
 
-retry2:
+		retry2:
 		/* Allocate buffer for mount info for this disposition */
 		if (mountBufP == NULL) {
-			mountBufP =  (char *)malloc( mountBufLen );
+			mountBufP = (char *)malloc( mountBufLen );
 			if (mountBufP == NULL) {
 				rc = 1;
 				TRACE(Trace::error, errno);
@@ -291,7 +299,7 @@ retry2:
 
 		/* Recover mount information for this disposition */
 		rc = dm_get_mountinfo(dmapiSession, hp, hlen, DM_NO_TOKEN,
-							  mountBufLen, mountBufP, &mlen);
+				mountBufLen, mountBufP, &mlen);
 		if (rc != 0) {
 			if (errno == E2BIG) {
 				mountBufLen = mlen;
@@ -300,7 +308,7 @@ retry2:
 				goto retry2;
 			}
 			if ((errno == EBADF) ||
-				(errno == EINVAL)) {
+					(errno == EINVAL)) {
 				rc = 0;
 				continue;
 			}
@@ -321,7 +329,7 @@ retry2:
 		name2Len = DM_GET_LEN(mountEventP, me_name2);
 
 		if ((name1Len >= sizeof(nameBuf)) ||
-			(name2Len >= sizeof(sgName))) {
+				(name2Len >= sizeof(sgName))) {
 			rc = -1;
 			TRACE(Trace::error, name1Len, name2Len);
 			goto exit;
@@ -339,25 +347,24 @@ retry2:
 		DMEV_SET(DM_EVENT_TRUNCATE, eventSet);
 
 		rc = dm_set_disp(dmapiSession, hand1P, hand1Len,
-						 DM_NO_TOKEN, &eventSet, DM_EVENT_MAX);
+				DM_NO_TOKEN, &eventSet, DM_EVENT_MAX);
 		if (rc < 0) {
 			TRACE(Trace::error, errno);
 			goto exit;
 		}
 	}
 
-exit:
+	exit:
 
 	if (bufP != NULL)
-		free (bufP);
+		free(bufP);
 	if (mountBufP != NULL)
-		free (mountBufP);
-	if ( rc != 0 ) {
+		free(mountBufP);
+	if (rc != 0) {
 		MSG(LTFSDMD0006E);
 		throw(EXCEPTION(Const::UNSET, rc));
 	}
 }
-
 
 void Connector::initTransRecalls()
 
@@ -369,15 +376,16 @@ void Connector::initTransRecalls()
 	/* Register for mount events */
 	DMEV_ZERO(eventSet);
 	DMEV_SET(DM_EVENT_MOUNT, eventSet);
-	if ( dm_set_disp(dmapiSession, DM_GLOBAL_HANP, DM_GLOBAL_HLEN, DM_NO_TOKEN,
-					 &eventSet, DM_EVENT_MAX) == -1 ) {
+	if (dm_set_disp(dmapiSession, DM_GLOBAL_HANP, DM_GLOBAL_HLEN, DM_NO_TOKEN,
+			&eventSet, DM_EVENT_MAX) == -1) {
 		TRACE(Trace::error, errno);
 		throw(EXCEPTION(Const::UNSET, errno));
 	}
 }
 
-
-void Connector::endTransRecalls() {}
+void Connector::endTransRecalls()
+{
+}
 
 Connector::rec_info_t Connector::getEvents()
 
@@ -405,23 +413,23 @@ Connector::rec_info_t Connector::getEvents()
 	dm_token_t token;
 	int retries;
 
-	recinfo = (Connector::rec_info_t) {0, 0, 0, 0, 0, ""};
+	recinfo = (Connector::rec_info_t ) { 0, 0, 0, 0, 0, "" };
 
-	while ( dm_get_events(dmapiSession, 1, DM_EV_WAIT, sizeof(eventBuf), eventBuf, &rlen) == -1 ) {
+	while (dm_get_events(dmapiSession, 1, DM_EV_WAIT, sizeof(eventBuf),
+			eventBuf, &rlen) == -1) {
 		TRACE(Trace::error, errno);
-		if ( errno != EINTR && errno != EAGAIN )
+		if ( errno != EINTR && errno != EAGAIN)
 			throw(EXCEPTION(Const::UNSET, errno));
 	}
 
-    /* Process event */
-    eventMsgP = (dm_eventmsg_t *) eventBuf;
-    token = eventMsgP->ev_token;
+	/* Process event */
+	eventMsgP = (dm_eventmsg_t *) eventBuf;
+	token = eventMsgP->ev_token;
 
 	TRACE(Trace::normal, eventMsgP->ev_type);
 
-	switch (eventMsgP->ev_type)
-	{
-        case DM_EVENT_MOUNT:
+	switch (eventMsgP->ev_type) {
+		case DM_EVENT_MOUNT:
 			mountEventP = DM_GET_VALUE(eventMsgP, ev_data, dm_mount_event_t*);
 			hand1P = DM_GET_VALUE(mountEventP , me_handle1, void *);
 			hand1Len = DM_GET_LEN(mountEventP, me_handle1);
@@ -432,11 +440,10 @@ Connector::rec_info_t Connector::getEvents()
 			name2P = DM_GET_VALUE(mountEventP, me_name2, char *);
 			name2Len = DM_GET_LEN(mountEventP, me_name2);
 
-			if ((name1Len >= sizeof(nameBuf)) ||
-				(name2Len >= sizeof(sgName)))
-			{
+			if ((name1Len >= sizeof(nameBuf)) || (name2Len >= sizeof(sgName))) {
 				TRACE(Trace::error, name1Len, name2Len);
-				throw(EXCEPTION(Const::UNSET, name1Len, sizeof(nameBuf), name2Len, name2Len));
+				throw(EXCEPTION(Const::UNSET, name1Len, sizeof(nameBuf),
+						name2Len, name2Len));
 			}
 
 			memcpy(nameBuf, name1P, name1Len);
@@ -454,27 +461,28 @@ Connector::rec_info_t Connector::getEvents()
 			DMEV_SET(DM_EVENT_WRITE, eventSet);
 			DMEV_SET(DM_EVENT_TRUNCATE, eventSet);
 
-			if ( dm_set_disp(dmapiSession, hand1P, hand1Len, DM_NO_TOKEN, &eventSet, DM_EVENT_MAX) == -1 ) {
+			if (dm_set_disp(dmapiSession, hand1P, hand1Len, DM_NO_TOKEN,
+					&eventSet, DM_EVENT_MAX) == -1) {
 				TRACE(Trace::error, errno);
 				throw(EXCEPTION(Const::UNSET, errno));
 			}
 
 			/* Respond w/ continue to indicate we are managing this fs */
-			if ( dm_respond_event(dmapiSession, token, DM_RESP_CONTINUE, 0, 0, NULL) == -1 ) {
+			if (dm_respond_event(dmapiSession, token, DM_RESP_CONTINUE, 0, 0,
+			NULL) == -1) {
 				TRACE(Trace::error, errno);
 				throw(EXCEPTION(Const::UNSET, errno));
 			}
 
 			retries = 0;
 
-			while ( retries < 4 ) {
+			while (retries < 4) {
 				try {
 					FsObj fileSystem(handRP, handRLen);
 					fileSystem.manageFs(false, starttime);
 					break;
-				}
-				catch ( const OpenLTFSException& e ) {
-					switch ( e.getError() ) {
+				} catch (const OpenLTFSException& e) {
+					switch (e.getError()) {
 						case Error::LTFSDM_FS_ADD_ERROR:
 							usleep(100000);
 							retries++;
@@ -486,11 +494,11 @@ Connector::rec_info_t Connector::getEvents()
 				}
 			}
 
-			if ( retries == 4 )
+			if (retries == 4)
 				MSG(LTFSDMD0011E, nameBuf);
 			TRACE(Trace::normal, retries);
 
-			break;  /* end of case DM_EVENT_MOUNT */
+			break; /* end of case DM_EVENT_MOUNT */
 		case DM_EVENT_READ:
 		case DM_EVENT_WRITE:
 		case DM_EVENT_TRUNCATE:
@@ -502,16 +510,16 @@ Connector::rec_info_t Connector::getEvents()
 
 			/* Get a handle to the file being accessed */
 			dataEventP = DM_GET_VALUE(eventMsgP, ev_data,
-									  dm_data_event_t *);
+					dm_data_event_t *);
 			hand1P = DM_GET_VALUE(dataEventP, de_handle, void *);
 			hand1Len = DM_GET_LEN(dataEventP, de_handle);
 
 			/* Recall file data on-line */
 			/*
-			rc = handleDataEvents(eventMsgP->ev_type, sid, token, coresidentRecall,
-								  hand1P, hand1Len,
-								  dataEventP->de_offset, dataEventP->de_length);
-			*/
+			 rc = handleDataEvents(eventMsgP->ev_type, sid, token, coresidentRecall,
+			 hand1P, hand1Len,
+			 dataEventP->de_offset, dataEventP->de_length);
+			 */
 			recinfo.toresident = toresident;
 			recinfo.conn_info = new conn_info_t(token);
 
@@ -551,14 +559,15 @@ void Connector::respondRecallEvent(rec_info_t recinfo, bool success)
 {
 	dm_token_t token = recinfo.conn_info->token;
 
-	if ( success == true ) {
-		if ( dm_respond_event(dmapiSession, token, DM_RESP_CONTINUE, 0, 0, NULL) == -1 ) {
+	if (success == true) {
+		if (dm_respond_event(dmapiSession, token, DM_RESP_CONTINUE, 0, 0, NULL)
+				== -1) {
 			TRACE(Trace::error, errno);
 			throw(EXCEPTION(Const::UNSET));
 		}
-	}
-	else {
-		if ( dm_respond_event(dmapiSession, token, DM_RESP_ABORT, EIO, 0, NULL) == -1 ) {
+	} else {
+		if (dm_respond_event(dmapiSession, token, DM_RESP_ABORT, EIO, 0, NULL)
+				== -1) {
 			TRACE(Trace::error, errno);
 			throw(EXCEPTION(Const::UNSET));
 		}
@@ -570,9 +579,9 @@ void Connector::respondRecallEvent(rec_info_t recinfo, bool success)
 void Connector::terminate()
 
 {
-	if ( dm_send_msg(dmapiSession, DM_MSGTYPE_ASYNC,
-					 Const::DMAPI_TERMINATION_MESSAGE.size(),
-					 (void *) Const::DMAPI_TERMINATION_MESSAGE.c_str()) == -1 ) {
+	if (dm_send_msg(dmapiSession, DM_MSGTYPE_ASYNC,
+			Const::DMAPI_TERMINATION_MESSAGE.size(),
+			(void *) Const::DMAPI_TERMINATION_MESSAGE.c_str()) == -1) {
 		TRACE(Trace::error, errno);
 		MSG(LTFSDMD0007E);
 	}
@@ -580,23 +589,24 @@ void Connector::terminate()
 	Connector::connectorTerminate = true;
 }
 
-FsObj::FsObj(std::string fileName)
-	: handle(NULL), handleLength(0), isLocked(false), handleFree(true)
+FsObj::FsObj(std::string fileName) :
+		handle(NULL), handleLength(0), isLocked(false), handleFree(true)
 
 {
 	char *fname = (char *) fileName.c_str();
 
-	if ( dm_path_to_handle(fname, &handle, &handleLength) != 0 ) {
+	if (dm_path_to_handle(fname, &handle, &handleLength) != 0) {
 		TRACE(Trace::error, errno);
 		throw(EXCEPTION(errno, fileName));
 	}
 }
 
-FsObj::FsObj(Connector::rec_info_t recinfo)
-	: handle(NULL), handleLength(0), isLocked(false), handleFree(true)
+FsObj::FsObj(Connector::rec_info_t recinfo) :
+		handle(NULL), handleLength(0), isLocked(false), handleFree(true)
 
 {
-	if ( dm_make_handle(&recinfo.fsid, &recinfo.ino, &recinfo.igen, &handle, &handleLength) != 0 ) {
+	if (dm_make_handle(&recinfo.fsid, &recinfo.ino, &recinfo.igen, &handle,
+			&handleLength) != 0) {
 		TRACE(Trace::error, errno);
 		throw(EXCEPTION(errno, recinfo.ino));
 	}
@@ -605,8 +615,8 @@ FsObj::FsObj(Connector::rec_info_t recinfo)
 FsObj::~FsObj()
 
 {
-	if ( handleFree )
-	dm_handle_free(handle, handleLength);
+	if (handleFree)
+		dm_handle_free(handle, handleLength);
 }
 
 bool FsObj::isFsManaged()
@@ -618,22 +628,22 @@ bool FsObj::isFsManaged()
 
 	memset(&attr, 0, sizeof(fs_attr_t));
 
-    rc = dm_get_dmattr(dmapiSession, handle, handleLength, DM_NO_TOKEN,
-					   (dm_attrname_t *) Const::DMAPI_ATTR_FS.c_str(), sizeof(attr), &attr, &rsize);
+	rc = dm_get_dmattr(dmapiSession, handle, handleLength, DM_NO_TOKEN,
+			(dm_attrname_t *) Const::DMAPI_ATTR_FS.c_str(), sizeof(attr), &attr,
+			&rsize);
 
-
-	if ( rc == -1 && errno == ENOENT ) {
+	if (rc == -1 && errno == ENOENT) {
 		return false;
-	}
-	else if ( rc == -1 ) {
+	} else if (rc == -1) {
 		TRACE(Trace::error, errno);
-		throw(EXCEPTION(Error::LTFSDM_FS_CHECK_ERROR, (unsigned long) handle));
+		throw(EXCEPTION(Error::LTFSDM_FS_CHECK_ERROR, (unsigned long ) handle));
 	}
 
 	return attr.managed;
 }
 
-void FsObj::manageFs(bool setDispo, struct timespec starttime, std::string mountPoint, std::string fsName)
+void FsObj::manageFs(bool setDispo, struct timespec starttime,
+		std::string mountPoint, std::string fsName)
 
 {
 	FsObj::fs_attr_t attr;
@@ -641,47 +651,53 @@ void FsObj::manageFs(bool setDispo, struct timespec starttime, std::string mount
 	memset(&attr, 0, sizeof(fs_attr_t));
 	attr.managed = true;
 	void *fsHandle = NULL;
-    unsigned long fsHandleLength;
+	unsigned long fsHandleLength;
 
 	lock();
-	if ( dm_set_dmattr(dmapiSession, handle, handleLength,
-					   dmapiToken, (dm_attrname_t *) Const::DMAPI_ATTR_FS.c_str(),
-					   0, sizeof(fs_attr_t), (void *) &attr) == -1 ) {
+	if (dm_set_dmattr(dmapiSession, handle, handleLength, dmapiToken,
+			(dm_attrname_t *) Const::DMAPI_ATTR_FS.c_str(), 0,
+			sizeof(fs_attr_t), (void *) &attr) == -1) {
 		unlock();
 		TRACE(Trace::error, errno);
-		throw(EXCEPTION(Error::LTFSDM_FS_ADD_ERROR, (unsigned long) handle, errno, mountPoint));
+		throw(EXCEPTION(Error::LTFSDM_FS_ADD_ERROR, (unsigned long ) handle,
+				errno, mountPoint));
 	}
 	unlock();
 
-	if ( setDispo ) {
+	if (setDispo) {
 		DMEV_ZERO(eventSet);
 		DMEV_SET(DM_EVENT_READ, eventSet);
 		DMEV_SET(DM_EVENT_WRITE, eventSet);
 		DMEV_SET(DM_EVENT_TRUNCATE, eventSet);
 
 		try {
-			if ( dm_handle_to_fshandle(handle, handleLength, &fsHandle, &fsHandleLength) == -1 ) {
+			if (dm_handle_to_fshandle(handle, handleLength, &fsHandle,
+					&fsHandleLength) == -1) {
 				TRACE(Trace::error, handle, fsHandle, errno);
-				throw(EXCEPTION(Error::LTFSDM_FS_ADD_ERROR, (unsigned long) handle, errno, mountPoint));
+				throw(EXCEPTION(Error::LTFSDM_FS_ADD_ERROR,
+						(unsigned long ) handle, errno, mountPoint));
 			}
-			if ( dm_set_disp(dmapiSession, fsHandle, fsHandleLength, DM_NO_TOKEN, &eventSet, DM_EVENT_MAX) == -1 ) {
+			if (dm_set_disp(dmapiSession, fsHandle, fsHandleLength, DM_NO_TOKEN,
+					&eventSet, DM_EVENT_MAX) == -1) {
 				dm_handle_free(fsHandle, fsHandleLength);
 				TRACE(Trace::error, errno);
-				throw(EXCEPTION(Error::LTFSDM_FS_ADD_ERROR, (unsigned long) handle, errno, mountPoint));
+				throw(EXCEPTION(Error::LTFSDM_FS_ADD_ERROR,
+						(unsigned long ) handle, errno, mountPoint));
 			}
-		}
-		catch ( const OpenLTFSException& e ) {
+		} catch (const OpenLTFSException& e) {
 			lock();
 			attr.managed = false;
-			if ( dm_set_dmattr(dmapiSession, handle, handleLength,
-							   dmapiToken, (dm_attrname_t *) Const::DMAPI_ATTR_FS.c_str(),
-							   0, sizeof(fs_attr_t), (void *) &attr) == -1 ) {
+			if (dm_set_dmattr(dmapiSession, handle, handleLength, dmapiToken,
+					(dm_attrname_t *) Const::DMAPI_ATTR_FS.c_str(), 0,
+					sizeof(fs_attr_t), (void *) &attr) == -1) {
 				unlock();
 				TRACE(Trace::error, e.getError());
-				throw(EXCEPTION(Error::LTFSDM_FS_ADD_ERROR, (unsigned long) handle, errno, mountPoint));
+				throw(EXCEPTION(Error::LTFSDM_FS_ADD_ERROR,
+						(unsigned long ) handle, errno, mountPoint));
 			}
 			unlock();
-			throw(EXCEPTION(Error::LTFSDM_FS_ADD_ERROR, (unsigned long) handle, mountPoint));
+			throw(EXCEPTION(Error::LTFSDM_FS_ADD_ERROR, (unsigned long ) handle,
+					mountPoint));
 		}
 		dm_handle_free(fsHandle, fsHandleLength);
 	}
@@ -695,13 +711,13 @@ struct stat FsObj::stat()
 
 	memset(&statbuf, 0, sizeof(statbuf));
 
-	if ( handle == NULL )
+	if (handle == NULL)
 		return statbuf;
 
- 	if ( dm_get_fileattr(dmapiSession, handle, handleLength,
-						 DM_NO_TOKEN, DM_AT_STAT, &dmstatbuf) != 0 ) {
+	if (dm_get_fileattr(dmapiSession, handle, handleLength, DM_NO_TOKEN,
+			DM_AT_STAT, &dmstatbuf) != 0) {
 		TRACE(Trace::error, errno);
-	    throw(EXCEPTION(errno, errno, (unsigned long) handle));
+		throw(EXCEPTION(errno, errno, (unsigned long ) handle));
 	}
 
 	statbuf.st_dev = dmstatbuf.dt_dev;
@@ -726,12 +742,12 @@ unsigned long long FsObj::getFsId()
 {
 	unsigned long long fsid;
 
-	if ( handleLength == 0 )
+	if (handleLength == 0)
 		return 0;
 
 	if (dm_handle_to_fsid(handle, handleLength, &fsid)) {
 		TRACE(Trace::error, errno);
-	    throw(EXCEPTION(errno, errno, (unsigned long) handle));
+		throw(EXCEPTION(errno, errno, (unsigned long ) handle));
 	}
 
 	return fsid;
@@ -742,12 +758,12 @@ unsigned int FsObj::getIGen()
 {
 	unsigned int igen;
 
-	if ( handleLength == 0 )
+	if (handleLength == 0)
 		return 0;
 
 	if (dm_handle_to_igen(handle, handleLength, &igen)) {
 		TRACE(Trace::error, errno);
-	    throw(EXCEPTION(errno, errno, (unsigned long) handle));
+		throw(EXCEPTION(errno, errno, (unsigned long ) handle));
 	}
 
 	return igen;
@@ -758,12 +774,12 @@ unsigned long long FsObj::getINode()
 {
 	unsigned long long ino;
 
-	if ( handleLength == 0 )
+	if (handleLength == 0)
 		return 0;
 
 	if (dm_handle_to_ino(handle, handleLength, &ino)) {
 		TRACE(Trace::error, errno);
-	    throw(EXCEPTION(errno, ino, (unsigned long) handle));
+		throw(EXCEPTION(errno, ino, (unsigned long ) handle));
 	}
 
 	return ino;
@@ -773,27 +789,28 @@ void FsObj::lock()
 
 {
 	int rc;
-	fuid_t fuid = (fuid_t) {getFsId(), getIGen(), getINode()};
+	fuid_t fuid = (fuid_t ) { getFsId(), getIGen(), getINode() };
 	std::stringstream sstream;
 
-	std::unique_lock<std::mutex> lock(mtx);
+	std::unique_lock < std::mutex > lock(mtx);
 
-	if ( fuidMap.count(fuid) == 0 ) {
-		rc = dm_request_right(dmapiSession, handle, handleLength,
-							  dmapiToken, DM_RR_WAIT, DM_RIGHT_EXCL);
+	if (fuidMap.count(fuid) == 0) {
+		rc = dm_request_right(dmapiSession, handle, handleLength, dmapiToken,
+				DM_RR_WAIT, DM_RIGHT_EXCL);
 
-		if ( rc == -1 ) {
+		if (rc == -1) {
 			TRACE(Trace::error, errno);
-			throw(EXCEPTION(errno, errno, (unsigned long) handle, fuid.ino));
+			throw(EXCEPTION(errno, errno, (unsigned long ) handle, fuid.ino));
 		}
 
 		fuidMap[fuid] = 1;
-		sstream << "new(" << fuidMap[fuid] << "): " << fuid.fsid << ", " << fuid.igen << ", " << fuid.ino;
+		sstream << "new(" << fuidMap[fuid] << "): " << fuid.fsid << ", "
+				<< fuid.igen << ", " << fuid.ino;
 		TRACE(Trace::full, sstream.str());
-	}
-	else {
+	} else {
 		fuidMap[fuid]++;
-		sstream << "inc(" << fuidMap[fuid] << "): " << fuid.fsid << ", " << fuid.igen << ", " << fuid.ino;
+		sstream << "inc(" << fuidMap[fuid] << "): " << fuid.fsid << ", "
+				<< fuid.igen << ", " << fuid.ino;
 		TRACE(Trace::full, sstream.str());
 	}
 
@@ -804,37 +821,39 @@ void FsObj::unlock()
 
 {
 	int rc;
-	fuid_t fuid = (fuid_t) {getFsId(), getIGen(), getINode()};
+	fuid_t fuid = (fuid_t ) { getFsId(), getIGen(), getINode() };
 	std::stringstream sstream;
 
-	std::unique_lock<std::mutex> lock(mtx);
+	std::unique_lock < std::mutex > lock(mtx);
 
-	if ( isLocked == false ) {
+	if (isLocked == false) {
 		TRACE(Trace::error, isLocked);
 		throw(EXCEPTION(Const::UNSET, fuid.ino));
 	}
 
-	if  ( fuidMap.count(fuid) != 1 ) {
-		TRACE(Trace::error, fuidMap.count(fuid), fuid.fsid, fuid.igen, fuid.ino);
+	if (fuidMap.count(fuid) != 1) {
+		TRACE(Trace::error, fuidMap.count(fuid), fuid.fsid, fuid.igen,
+				fuid.ino);
 	}
 
-	assert ( fuidMap.count(fuid) == 1 );
+	assert(fuidMap.count(fuid) == 1);
 
-	if ( fuidMap[fuid] == 1 ) {
+	if (fuidMap[fuid] == 1) {
 		rc = dm_release_right(dmapiSession, handle, handleLength, dmapiToken);
 
-		if ( rc == -1 ) {
+		if (rc == -1) {
 			TRACE(Trace::error, errno);
-			throw(EXCEPTION(errno, errno, (unsigned long) handle, fuid.ino));
+			throw(EXCEPTION(errno, errno, (unsigned long ) handle, fuid.ino));
 		}
 
 		fuidMap.erase(fuid);
-		sstream << "rem(" << fuidMap.count(fuid) << "): " << fuid.fsid << ", " << fuid.igen << ", " << fuid.ino;
+		sstream << "rem(" << fuidMap.count(fuid) << "): " << fuid.fsid << ", "
+				<< fuid.igen << ", " << fuid.ino;
 		TRACE(Trace::full, sstream.str());
-	}
-	else {
+	} else {
 		fuidMap[fuid]--;
-		sstream << "dec(" << fuidMap[fuid] << "): " << fuid.fsid << ", " << fuid.igen << ", " << fuid.ino;
+		sstream << "dec(" << fuidMap[fuid] << "): " << fuid.fsid << ", "
+				<< fuid.igen << ", " << fuid.ino;
 		TRACE(Trace::full, sstream.str());
 	}
 
@@ -846,8 +865,8 @@ long FsObj::read(long offset, unsigned long size, char *buffer)
 {
 	long rsize;
 
-	rsize = dm_read_invis(dmapiSession, handle, handleLength,
-						  dmapiToken, offset, size, buffer);
+	rsize = dm_read_invis(dmapiSession, handle, handleLength, dmapiToken,
+			offset, size, buffer);
 
 	TRACE(Trace::full, offset, size, rsize);
 
@@ -860,12 +879,11 @@ long FsObj::write(long offset, unsigned long size, char *buffer)
 	long wsize;
 
 	wsize = dm_write_invis(dmapiSession, handle, handleLength, dmapiToken,
-						   DM_WRITE_SYNC, offset, size, buffer);
+			DM_WRITE_SYNC, offset, size, buffer);
 	TRACE(Trace::full, offset, size, wsize);
 
 	return wsize;
 }
-
 
 void FsObj::addAttribute(mig_attr_t value)
 
@@ -875,13 +893,13 @@ void FsObj::addAttribute(mig_attr_t value)
 	value.typeId = typeid(mig_attr_t).hash_code();
 	value.added = true;
 
-	rc = dm_set_dmattr(dmapiSession, handle, handleLength,
-					   dmapiToken, (dm_attrname_t *) Const::DMAPI_ATTR_MIG.c_str(),
-					   0, sizeof(mig_attr_t), (void *) &value);
+	rc = dm_set_dmattr(dmapiSession, handle, handleLength, dmapiToken,
+			(dm_attrname_t *) Const::DMAPI_ATTR_MIG.c_str(), 0,
+			sizeof(mig_attr_t), (void *) &value);
 
-	if ( rc == -1 ) {
+	if (rc == -1) {
 		TRACE(Trace::error, errno);
-		throw(EXCEPTION(errno, errno, (unsigned long) handle));
+		throw(EXCEPTION(errno, errno, (unsigned long ) handle));
 	}
 }
 
@@ -890,12 +908,12 @@ void FsObj::remAttribute()
 {
 	int rc;
 
-	rc = dm_remove_dmattr(dmapiSession, handle, handleLength,
-						  dmapiToken, 0, (dm_attrname_t *) Const::DMAPI_ATTR_MIG.c_str());
+	rc = dm_remove_dmattr(dmapiSession, handle, handleLength, dmapiToken, 0,
+			(dm_attrname_t *) Const::DMAPI_ATTR_MIG.c_str());
 
-	if ( rc == -1 ) {
+	if (rc == -1) {
 		TRACE(Trace::error, errno);
-		throw(EXCEPTION(errno, errno, (unsigned long) handle));
+		throw(EXCEPTION(errno, errno, (unsigned long ) handle));
 	}
 }
 
@@ -909,19 +927,18 @@ FsObj::mig_attr_t FsObj::getAttribute()
 	memset(&attr, 0, sizeof(mig_attr_t));
 
 	rc = dm_get_dmattr(dmapiSession, handle, handleLength, DM_NO_TOKEN,
-					   (dm_attrname_t *) Const::DMAPI_ATTR_MIG.c_str(), sizeof(attr), &attr, &rsize);
+			(dm_attrname_t *) Const::DMAPI_ATTR_MIG.c_str(), sizeof(attr),
+			&attr, &rsize);
 
-	if ( rc == -1 && errno == ENOENT ) {
+	if (rc == -1 && errno == ENOENT) {
 		attr.added = false;
 		return attr;
-	}
-	else if ( rc == -1 ) {
+	} else if (rc == -1) {
 		TRACE(Trace::error, errno);
-		throw(EXCEPTION(errno, errno, (unsigned long) handle));
-	}
-	else if ( attr.typeId != typeid(attr).hash_code() ) {
+		throw(EXCEPTION(errno, errno, (unsigned long ) handle));
+	} else if (attr.typeId != typeid(attr).hash_code()) {
 		TRACE(Trace::error, attr.typeId);
-		throw(EXCEPTION(Error::LTFSDM_ATTR_FORMAT, (unsigned long) handle));
+		throw(EXCEPTION(Error::LTFSDM_ATTR_FORMAT, (unsigned long ) handle));
 	}
 
 	return attr;
@@ -934,18 +951,18 @@ void FsObj::preparePremigration()
 	dm_region_t reg;
 	dm_boolean_t exact;
 
-
 	/* Always remove entire file */
 	reg.rg_offset = 0;
-	reg.rg_size = 0;         /* 0 = infinity */
+	reg.rg_size = 0; /* 0 = infinity */
 
 	/* Mark the region as premigrated */
 	reg.rg_flags = DM_REGION_WRITE | DM_REGION_TRUNCATE;
-	rc = dm_set_region(dmapiSession, handle, handleLength, dmapiToken, 1, &reg, &exact);
+	rc = dm_set_region(dmapiSession, handle, handleLength, dmapiToken, 1, &reg,
+			&exact);
 
-	if ( rc == -1 ) {
+	if (rc == -1) {
 		TRACE(Trace::error, errno);
-		throw(EXCEPTION(errno, errno, (unsigned long) handle));
+		throw(EXCEPTION(errno, errno, (unsigned long ) handle));
 	}
 }
 
@@ -970,36 +987,35 @@ void FsObj::finishRecall(FsObj::file_state fstate)
 	dm_region_t reg;
 	dm_boolean_t exact;
 
-	if ( fstate == FsObj::PREMIGRATED ) {
+	if (fstate == FsObj::PREMIGRATED) {
 		/* Always remove entire file */
 		reg.rg_offset = 0;
-		reg.rg_size = 0;;         /* 0 = infinity */
+		reg.rg_size = 0;
+		; /* 0 = infinity */
 
 		/* Mark the region as off-line */
 		reg.rg_flags = DM_REGION_WRITE | DM_REGION_TRUNCATE;
-		rc = dm_set_region(dmapiSession, handle, handleLength,
-						   dmapiToken, 1, &reg, &exact);
+		rc = dm_set_region(dmapiSession, handle, handleLength, dmapiToken, 1,
+				&reg, &exact);
 
-		if ( rc == -1 ) {
+		if (rc == -1) {
 			TRACE(Trace::error, errno);
-			throw(EXCEPTION(errno, errno, (unsigned long) handle));
+			throw(EXCEPTION(errno, errno, (unsigned long ) handle));
 		}
-	}
-	else {
+	} else {
 		memset(&reg, 0, sizeof(reg));
 		reg.rg_flags = DM_REGION_NOEVENT;
 
-		rc = dm_set_region(dmapiSession, handle, handleLength,
-						   dmapiToken, 0, &reg, &exact);
+		rc = dm_set_region(dmapiSession, handle, handleLength, dmapiToken, 0,
+				&reg, &exact);
 
-		if ( rc == -1 ) {
+		if (rc == -1) {
 			TRACE(Trace::error, errno);
-			throw(EXCEPTION(errno, errno, (unsigned long) handle));
+			throw(EXCEPTION(errno, errno, (unsigned long ) handle));
 		}
 	}
 
 }
-
 
 void FsObj::prepareStubbing()
 
@@ -1008,21 +1024,21 @@ void FsObj::prepareStubbing()
 	dm_region_t reg;
 	dm_boolean_t exact;
 
-
 	/* Always remove entire file */
 	reg.rg_offset = 0;
-	reg.rg_size = 0;;         /* 0 = infinity */
+	reg.rg_size = 0;
+	; /* 0 = infinity */
 
 	/* Mark the region as off-line */
 	reg.rg_flags = DM_REGION_READ | DM_REGION_WRITE | DM_REGION_TRUNCATE;
-	rc = dm_set_region(dmapiSession, handle, handleLength, dmapiToken, 1, &reg, &exact);
+	rc = dm_set_region(dmapiSession, handle, handleLength, dmapiToken, 1, &reg,
+			&exact);
 
-	if ( rc == -1 ) {
+	if (rc == -1) {
 		TRACE(Trace::error, errno);
-		throw(EXCEPTION(errno, errno, (unsigned long) handle));
+		throw(EXCEPTION(errno, errno, (unsigned long ) handle));
 	}
 }
-
 
 void FsObj::stub()
 
@@ -1032,17 +1048,16 @@ void FsObj::stub()
 	/* Remove online data within the region */
 	rc = dm_punch_hole(dmapiSession, handle, handleLength, dmapiToken, 0, 0);
 
-	if ( rc == -1 ) {
+	if (rc == -1) {
 		TRACE(Trace::error, errno);
-		throw(EXCEPTION(errno, errno, (unsigned long) handle));
+		throw(EXCEPTION(errno, errno, (unsigned long ) handle));
 	}
 }
 
-
 FsObj::file_state FsObj::getMigState()
 {
-    unsigned int nelem = 2;
-    dm_region_t regbuf[2];
+	unsigned int nelem = 2;
+	dm_region_t regbuf[2];
 	std::stringstream infos;
 	int rc;
 	unsigned int i;
@@ -1050,41 +1065,40 @@ FsObj::file_state FsObj::getMigState()
 
 	attr = getAttribute();
 
-	if ( attr.added == false )
+	if (attr.added == false)
 		return FsObj::RESIDENT;
 
-    memset(regbuf, 0, sizeof( regbuf ));
+	memset(regbuf, 0, sizeof(regbuf));
 
-    rc = dm_get_region(dmapiSession, handle, handleLength,
-					   DM_NO_TOKEN, nelem, regbuf, &nelem);
+	rc = dm_get_region(dmapiSession, handle, handleLength, DM_NO_TOKEN, nelem,
+			regbuf, &nelem);
 
-	if ( rc == -1 ) {
+	if (rc == -1) {
 		TRACE(Trace::error, errno);
-		throw(EXCEPTION(errno, errno, (unsigned long) handle));
-    }
+		throw(EXCEPTION(errno, errno, (unsigned long ) handle));
+	}
 
-    for (i = 0; i < nelem; i++ ) {
+	for (i = 0; i < nelem; i++) {
 		infos << "region nr: " << i << ", offset: " << regbuf[i].rg_offset
-			  << ", size: " << regbuf[i].rg_size << ", flag: " << regbuf[i].rg_size;
+				<< ", size: " << regbuf[i].rg_size << ", flag: "
+				<< regbuf[i].rg_size;
 		TRACE(Trace::full, infos.str());
 	}
 
-	if ( nelem > 1 ) {
+	if (nelem > 1) {
 		TRACE(Trace::error, nelem);
-		throw(EXCEPTION(Const::UNSET, (unsigned long) handle));
-    }
+		throw(EXCEPTION(Const::UNSET, (unsigned long ) handle));
+	}
 
-	if ( nelem == 0 ) {
+	if (nelem == 0) {
 		return FsObj::RESIDENT;
-	}
-	else if ( regbuf[0].rg_flags == (DM_REGION_READ | DM_REGION_WRITE | DM_REGION_TRUNCATE) ) {
+	} else if (regbuf[0].rg_flags
+			== (DM_REGION_READ | DM_REGION_WRITE | DM_REGION_TRUNCATE)) {
 		return FsObj::MIGRATED;
-	}
-	else if ( regbuf[0].rg_flags == ( DM_REGION_WRITE | DM_REGION_TRUNCATE) ) {
+	} else if (regbuf[0].rg_flags == (DM_REGION_WRITE | DM_REGION_TRUNCATE)) {
 		return FsObj::PREMIGRATED;
-	}
-	else {
+	} else {
 		TRACE(Trace::error, regbuf[0].rg_flags);
-		throw(EXCEPTION(Const::UNSET, (unsigned long) handle));
+		throw(EXCEPTION(Const::UNSET, (unsigned long ) handle));
 	}
 }

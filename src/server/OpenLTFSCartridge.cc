@@ -3,7 +3,7 @@
 void OpenLTFSCartridge::update(std::shared_ptr<LTFSAdminSession> sess)
 
 {
- 	std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+	std::lock_guard < std::recursive_mutex > lock(OpenLTFSInventory::mtx);
 
 	Cartridge *cartridge = dynamic_cast<Cartridge*>(this);
 	*cartridge = *(LEControl::InventoryCartridge(GetObjectID(), sess));
@@ -12,7 +12,7 @@ void OpenLTFSCartridge::update(std::shared_ptr<LTFSAdminSession> sess)
 void OpenLTFSCartridge::setInProgress(unsigned long size)
 
 {
- 	std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+	std::lock_guard < std::recursive_mutex > lock(OpenLTFSInventory::mtx);
 
 	inProgress = size;
 }
@@ -20,7 +20,7 @@ void OpenLTFSCartridge::setInProgress(unsigned long size)
 unsigned long OpenLTFSCartridge::getInProgress()
 
 {
- 	std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+	std::lock_guard < std::recursive_mutex > lock(OpenLTFSInventory::mtx);
 
 	return inProgress;
 }
@@ -28,7 +28,7 @@ unsigned long OpenLTFSCartridge::getInProgress()
 void OpenLTFSCartridge::setPool(std::string _pool)
 
 {
- 	std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+	std::lock_guard < std::recursive_mutex > lock(OpenLTFSInventory::mtx);
 
 	pool = _pool;
 }
@@ -36,14 +36,14 @@ void OpenLTFSCartridge::setPool(std::string _pool)
 std::string OpenLTFSCartridge::getPool()
 
 {
- 	std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+	std::lock_guard < std::recursive_mutex > lock(OpenLTFSInventory::mtx);
 
 	return pool;
 }
 void OpenLTFSCartridge::setState(state_t _state)
 
 {
- 	std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+	std::lock_guard < std::recursive_mutex > lock(OpenLTFSInventory::mtx);
 
 	state = _state;
 }
@@ -51,7 +51,7 @@ void OpenLTFSCartridge::setState(state_t _state)
 OpenLTFSCartridge::state_t OpenLTFSCartridge::getState()
 
 {
- 	std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+	std::lock_guard < std::recursive_mutex > lock(OpenLTFSInventory::mtx);
 
 	return state;
 }
@@ -59,7 +59,7 @@ OpenLTFSCartridge::state_t OpenLTFSCartridge::getState()
 bool OpenLTFSCartridge::isRequested()
 
 {
- 	std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+	std::lock_guard < std::recursive_mutex > lock(OpenLTFSInventory::mtx);
 
 	return requested;
 }
@@ -67,7 +67,7 @@ bool OpenLTFSCartridge::isRequested()
 void OpenLTFSCartridge::setRequested()
 
 {
- 	std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+	std::lock_guard < std::recursive_mutex > lock(OpenLTFSInventory::mtx);
 
 	requested = true;
 }
@@ -75,7 +75,7 @@ void OpenLTFSCartridge::setRequested()
 void OpenLTFSCartridge::unsetRequested()
 
 {
- 	std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+	std::lock_guard < std::recursive_mutex > lock(OpenLTFSInventory::mtx);
 
 	requested = false;
 }

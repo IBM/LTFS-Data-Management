@@ -44,7 +44,7 @@ void VersionCommand::doCommand(int argc, char **argv)
 
 	processOptions(argc, argv);
 
-	if ( argc > 1 ) {
+	if (argc > 1) {
 		printUsage();
 		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}

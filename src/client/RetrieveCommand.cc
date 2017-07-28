@@ -25,41 +25,40 @@ void RetrieveCommand::doCommand(int argc, char **argv)
 {
 	processOptions(argc, argv);
 
-	if ( argc > 1 ) {
+	if (argc > 1) {
 		printUsage();
 		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
 	try {
 		connect();
-	}
-	catch (const std::exception& e) {
+	} catch (const std::exception& e) {
 		MSG(LTFSDMC0026E);
 		return;
 	}
 
-	LTFSDmProtocol::LTFSDmRetrieveRequest *retrievereq = commCommand.mutable_retrieverequest();
+	LTFSDmProtocol::LTFSDmRetrieveRequest *retrievereq =
+			commCommand.mutable_retrieverequest();
 	retrievereq->set_key(key);
 
 	try {
 		commCommand.send();
-	}
-	catch(const std::exception& e) {
+	} catch (const std::exception& e) {
 		MSG(LTFSDMC0027E);
 		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
 	try {
 		commCommand.recv();
-	}
-	catch(const std::exception& e) {
+	} catch (const std::exception& e) {
 		MSG(LTFSDMC0028E);
 		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
 	}
 
-	const LTFSDmProtocol::LTFSDmRetrieveResp retrieveresp = commCommand.retrieveresp();
+	const LTFSDmProtocol::LTFSDmRetrieveResp retrieveresp =
+			commCommand.retrieveresp();
 
-	switch ( retrieveresp.error() ) {
+	switch (retrieveresp.error()) {
 		case Error::LTFSDM_DRIVE_BUSY:
 			MSG(LTFSDMC0095I);
 			break;
