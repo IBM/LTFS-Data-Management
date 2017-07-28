@@ -85,7 +85,7 @@ public:
 		}
 	}
 	FsObj(void *_handle, unsigned long _handleLength) :
-			handle(_handle), handleLength(_handleLength), handleFree(false)
+			handle(_handle), handleLength(_handleLength), isLocked(false), handleFree(false)
 	{
 	}
 	FsObj(std::string fileName);

@@ -6,9 +6,9 @@ class Scheduler
 private:
 	DataBase::operation op;
 	int reqNum;
-	int tgtState;
 	int numRepl;
 	int replNum;
+	int tgtState;
 	std::string tapeId;
 	std::string pool;
 	SubServer subs;
@@ -45,7 +45,7 @@ public:
 	{
 		inventory->unmount(driveid, cartridgeid);
 	}
-	Scheduler()
+	Scheduler() : op(DataBase::NOOP), reqNum(Const::UNSET), numRepl(Const::UNSET), replNum(Const::UNSET), tgtState(0)
 	{
 	}
 	~Scheduler()

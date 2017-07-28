@@ -13,7 +13,7 @@ public:
 	static std::atomic<bool> forcedTerminate;
 	static std::atomic<bool> finishTerminate;
 
-	Server()
+	Server() : key(Const::UNSET)
 	{
 	}
 	void initialize(bool dbUseMemory);

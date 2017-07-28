@@ -11,7 +11,7 @@ public:
 			std::shared_ptr<std::list<unsigned long>>, std::shared_ptr<bool>> *wqp;
 	OpenLTFSDrive(ltfsadmin::Drive drive) :
 			ltfsadmin::Drive(drive), busy(false), umountReqNum(Const::UNSET), toUnBlock(
-					DataBase::NOOP)
+					DataBase::NOOP), wqp(nullptr)
 	{
 	}
 	void update(std::shared_ptr<LTFSAdminSession> sess);

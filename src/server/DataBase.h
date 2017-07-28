@@ -78,7 +78,7 @@ public:
 	{
 	}
 	SQLStatement(std::string fmtstr) :
-			fmt(boost::format(fmtstr))
+		stmt(nullptr), fmt(boost::format(fmtstr)), stmt_rc(0)
 	{
 	}
 	SQLStatement& operator()(std::string fmtstr);
