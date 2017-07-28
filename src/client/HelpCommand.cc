@@ -37,90 +37,90 @@
 
 void HelpCommand::printUsage()
 {
-	INFO(LTFSDMC0008I);
-	INFO(LTFSDMC0020I);
-	INFO(LTFSDMC0073I);
+    INFO(LTFSDMC0008I);
+    INFO(LTFSDMC0020I);
+    INFO(LTFSDMC0073I);
 }
 
 void HelpCommand::doCommand(int argc, char **argv)
 
 {
-	OpenLTFSCommand *openLTFSCommand = NULL;
-	std::string command;
+    OpenLTFSCommand *openLTFSCommand = NULL;
+    std::string command;
 
-	if (argc == 1) {
-		printUsage();
-		return;
-	}
+    if (argc == 1) {
+        printUsage();
+        return;
+    }
 
-	TRACE(Trace::normal, argc, command.c_str());
+    TRACE(Trace::normal, argc, command.c_str());
 
-	command = std::string(argv[1]);
+    command = std::string(argv[1]);
 
-	if (StartCommand().compare(command)) {
-		openLTFSCommand = new StartCommand();
-	} else if (StopCommand().compare(command)) {
-		openLTFSCommand = new StopCommand();
-	} else if (MigrationCommand().compare(command)) {
-		openLTFSCommand = new MigrationCommand();
-	} else if (RecallCommand().compare(command)) {
-		openLTFSCommand = new RecallCommand();
-	} else if (AddCommand().compare(command)) {
-		openLTFSCommand = new AddCommand();
-	} else if (StatusCommand().compare(command)) {
-		openLTFSCommand = new StatusCommand();
-	} else if (RetrieveCommand().compare(command)) {
-		openLTFSCommand = new RetrieveCommand();
-	} else if (HelpCommand().compare(command)) {
-		openLTFSCommand = new HelpCommand();
-	} else if (InfoCommand().compare(command)) {
-		if (argc < 3) {
-			openLTFSCommand = new InfoCommand();
-		} else {
-			command = std::string(argv[2]);
-			TRACE(Trace::normal, command.c_str());
-			if (InfoRequestsCommand().compare(command)) {
-				openLTFSCommand = new InfoRequestsCommand();
-			} else if (InfoFilesCommand().compare(command)) {
-				openLTFSCommand = new InfoFilesCommand();
-			} else if (InfoJobsCommand().compare(command)) {
-				openLTFSCommand = new InfoJobsCommand();
-			} else if (InfoFsCommand().compare(command)) {
-				openLTFSCommand = new InfoFsCommand();
-			} else if (InfoDrivesCommand().compare(command)) {
-				openLTFSCommand = new InfoDrivesCommand();
-			} else if (InfoTapesCommand().compare(command)) {
-				openLTFSCommand = new InfoTapesCommand();
-			} else if (InfoPoolsCommand().compare(command)) {
-				openLTFSCommand = new InfoPoolsCommand();
-			} else {
-				openLTFSCommand = new InfoCommand();
-			}
-		}
-	} else if (PoolCommand().compare(command)) {
-		if (argc < 3) {
-			openLTFSCommand = new PoolCommand();
-		} else {
-			command = std::string(argv[2]);
-			TRACE(Trace::normal, command.c_str());
-			if (PoolCreateCommand().compare(command)) {
-				openLTFSCommand = new PoolCreateCommand();
-			} else if (PoolDeleteCommand().compare(command)) {
-				openLTFSCommand = new PoolDeleteCommand();
-			} else if (PoolAddCommand().compare(command)) {
-				openLTFSCommand = new PoolAddCommand();
-			} else if (PoolRemoveCommand().compare(command)) {
-				openLTFSCommand = new PoolRemoveCommand();
-			} else {
-				openLTFSCommand = new PoolCommand();
-			}
-		}
-	} else {
-		printUsage();
-		goto cleanup;
-	}
+    if (StartCommand().compare(command)) {
+        openLTFSCommand = new StartCommand();
+    } else if (StopCommand().compare(command)) {
+        openLTFSCommand = new StopCommand();
+    } else if (MigrationCommand().compare(command)) {
+        openLTFSCommand = new MigrationCommand();
+    } else if (RecallCommand().compare(command)) {
+        openLTFSCommand = new RecallCommand();
+    } else if (AddCommand().compare(command)) {
+        openLTFSCommand = new AddCommand();
+    } else if (StatusCommand().compare(command)) {
+        openLTFSCommand = new StatusCommand();
+    } else if (RetrieveCommand().compare(command)) {
+        openLTFSCommand = new RetrieveCommand();
+    } else if (HelpCommand().compare(command)) {
+        openLTFSCommand = new HelpCommand();
+    } else if (InfoCommand().compare(command)) {
+        if (argc < 3) {
+            openLTFSCommand = new InfoCommand();
+        } else {
+            command = std::string(argv[2]);
+            TRACE(Trace::normal, command.c_str());
+            if (InfoRequestsCommand().compare(command)) {
+                openLTFSCommand = new InfoRequestsCommand();
+            } else if (InfoFilesCommand().compare(command)) {
+                openLTFSCommand = new InfoFilesCommand();
+            } else if (InfoJobsCommand().compare(command)) {
+                openLTFSCommand = new InfoJobsCommand();
+            } else if (InfoFsCommand().compare(command)) {
+                openLTFSCommand = new InfoFsCommand();
+            } else if (InfoDrivesCommand().compare(command)) {
+                openLTFSCommand = new InfoDrivesCommand();
+            } else if (InfoTapesCommand().compare(command)) {
+                openLTFSCommand = new InfoTapesCommand();
+            } else if (InfoPoolsCommand().compare(command)) {
+                openLTFSCommand = new InfoPoolsCommand();
+            } else {
+                openLTFSCommand = new InfoCommand();
+            }
+        }
+    } else if (PoolCommand().compare(command)) {
+        if (argc < 3) {
+            openLTFSCommand = new PoolCommand();
+        } else {
+            command = std::string(argv[2]);
+            TRACE(Trace::normal, command.c_str());
+            if (PoolCreateCommand().compare(command)) {
+                openLTFSCommand = new PoolCreateCommand();
+            } else if (PoolDeleteCommand().compare(command)) {
+                openLTFSCommand = new PoolDeleteCommand();
+            } else if (PoolAddCommand().compare(command)) {
+                openLTFSCommand = new PoolAddCommand();
+            } else if (PoolRemoveCommand().compare(command)) {
+                openLTFSCommand = new PoolRemoveCommand();
+            } else {
+                openLTFSCommand = new PoolCommand();
+            }
+        }
+    } else {
+        printUsage();
+        goto cleanup;
+    }
 
-	openLTFSCommand->printUsage();
-	cleanup: if (openLTFSCommand)
-		delete (openLTFSCommand);
+    openLTFSCommand->printUsage();
+    cleanup: if (openLTFSCommand)
+        delete (openLTFSCommand);
 }

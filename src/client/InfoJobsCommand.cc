@@ -19,72 +19,72 @@
 
 void InfoJobsCommand::printUsage()
 {
-	INFO(LTFSDMC0059I);
+    INFO(LTFSDMC0059I);
 }
 
 void InfoJobsCommand::doCommand(int argc, char **argv)
 {
-	long reqOfInterest;
+    long reqOfInterest;
 
-	processOptions(argc, argv);
+    processOptions(argc, argv);
 
-	TRACE(Trace::normal, *argv, argc, optind);
+    TRACE(Trace::normal, *argv, argc, optind);
 
-	if (argc != optind) {
-		printUsage();
-		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
-	} else if (requestNumber < Const::UNSET) {
-		printUsage();
-		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
-	}
+    if (argc != optind) {
+        printUsage();
+        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+    } else if (requestNumber < Const::UNSET) {
+        printUsage();
+        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+    }
 
-	reqOfInterest = requestNumber;
+    reqOfInterest = requestNumber;
 
-	try {
-		connect();
-	} catch (const std::exception& e) {
-		MSG(LTFSDMC0026E);
-		return;
-	}
+    try {
+        connect();
+    } catch (const std::exception& e) {
+        MSG(LTFSDMC0026E);
+        return;
+    }
 
-	LTFSDmProtocol::LTFSDmInfoJobsRequest *infojobs =
-			commCommand.mutable_infojobsrequest();
+    LTFSDmProtocol::LTFSDmInfoJobsRequest *infojobs =
+            commCommand.mutable_infojobsrequest();
 
-	infojobs->set_key(key);
-	infojobs->set_reqnumber(reqOfInterest);
+    infojobs->set_key(key);
+    infojobs->set_reqnumber(reqOfInterest);
 
-	try {
-		commCommand.send();
-	} catch (const std::exception& e) {
-		MSG(LTFSDMC0027E);
-		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
-	}
+    try {
+        commCommand.send();
+    } catch (const std::exception& e) {
+        MSG(LTFSDMC0027E);
+        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+    }
 
-	INFO(LTFSDMC0062I);
-	int recnum;
+    INFO(LTFSDMC0062I);
+    int recnum;
 
-	do {
-		try {
-			commCommand.recv();
-		} catch (const std::exception& e) {
-			MSG(LTFSDMC0028E);
-			throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
-		}
+    do {
+        try {
+            commCommand.recv();
+        } catch (const std::exception& e) {
+            MSG(LTFSDMC0028E);
+            throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+        }
 
-		const LTFSDmProtocol::LTFSDmInfoJobsResp infojobsresp =
-				commCommand.infojobsresp();
-		std::string operation = infojobsresp.operation();
-		std::string filename = infojobsresp.filename();
-		recnum = infojobsresp.reqnumber();
-		int replnum = infojobsresp.replnumber();
-		int size = infojobsresp.filesize();
-		std::string tapeid = infojobsresp.tapeid();
-		std::string state = infojobsresp.state();
-		if (recnum != Const::UNSET)
-			INFO(LTFSDMC0063I, operation, state, recnum, replnum, size, tapeid,
-					filename);
+        const LTFSDmProtocol::LTFSDmInfoJobsResp infojobsresp =
+                commCommand.infojobsresp();
+        std::string operation = infojobsresp.operation();
+        std::string filename = infojobsresp.filename();
+        recnum = infojobsresp.reqnumber();
+        int replnum = infojobsresp.replnumber();
+        int size = infojobsresp.filesize();
+        std::string tapeid = infojobsresp.tapeid();
+        std::string state = infojobsresp.state();
+        if (recnum != Const::UNSET)
+            INFO(LTFSDMC0063I, operation, state, recnum, replnum, size, tapeid,
+                    filename);
 
-	} while (recnum != Const::UNSET);
+    } while (recnum != Const::UNSET);
 
-	return;
+    return;
 }

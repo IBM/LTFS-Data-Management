@@ -18,56 +18,56 @@
 
 void StatusCommand::printUsage()
 {
-	INFO(LTFSDMC0030I);
+    INFO(LTFSDMC0030I);
 }
 
 void StatusCommand::doCommand(int argc, char **argv)
 {
-	int pid;
+    int pid;
 
-	processOptions(argc, argv);
+    processOptions(argc, argv);
 
-	if (argc > 1) {
-		printUsage();
-		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
-	}
+    if (argc > 1) {
+        printUsage();
+        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+    }
 
-	try {
-		connect();
-	} catch (const std::exception& e) {
-		MSG(LTFSDMC0026E);
-		return;
-	}
+    try {
+        connect();
+    } catch (const std::exception& e) {
+        MSG(LTFSDMC0026E);
+        return;
+    }
 
-	TRACE(Trace::normal, requestNumber);
+    TRACE(Trace::normal, requestNumber);
 
-	LTFSDmProtocol::LTFSDmStatusRequest *statusreq =
-			commCommand.mutable_statusrequest();
-	statusreq->set_key(key);
-	statusreq->set_reqnumber(requestNumber);
+    LTFSDmProtocol::LTFSDmStatusRequest *statusreq =
+            commCommand.mutable_statusrequest();
+    statusreq->set_key(key);
+    statusreq->set_reqnumber(requestNumber);
 
-	try {
-		commCommand.send();
-	} catch (const std::exception& e) {
-		MSG(LTFSDMC0027E);
-		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
-	}
+    try {
+        commCommand.send();
+    } catch (const std::exception& e) {
+        MSG(LTFSDMC0027E);
+        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+    }
 
-	try {
-		commCommand.recv();
-	} catch (const std::exception& e) {
-		MSG(LTFSDMC0028E);
-		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
-	}
+    try {
+        commCommand.recv();
+    } catch (const std::exception& e) {
+        MSG(LTFSDMC0028E);
+        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+    }
 
-	const LTFSDmProtocol::LTFSDmStatusResp statusresp =
-			commCommand.statusresp();
+    const LTFSDmProtocol::LTFSDmStatusResp statusresp =
+            commCommand.statusresp();
 
-	if (statusresp.success() == true) {
-		pid = statusresp.pid();
-		MSG(LTFSDMC0032I, pid);
-	} else {
-		MSG(LTFSDMC0029E);
-		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
-	}
+    if (statusresp.success() == true) {
+        pid = statusresp.pid();
+        MSG(LTFSDMC0032I, pid);
+    } else {
+        MSG(LTFSDMC0029E);
+        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+    }
 }

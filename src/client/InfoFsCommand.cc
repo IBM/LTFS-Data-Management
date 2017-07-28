@@ -27,7 +27,7 @@
 
 void InfoFsCommand::printUsage()
 {
-	INFO(LTFSDMC0056I);
+    INFO(LTFSDMC0056I);
 }
 
 void InfoFsCommand::talkToBackend(std::stringstream *parmList)
@@ -37,33 +37,33 @@ void InfoFsCommand::talkToBackend(std::stringstream *parmList)
 
 void InfoFsCommand::doCommand(int argc, char **argv)
 {
-	std::set<std::string> fsList;
-	std::set<std::string>::iterator it;
-	Connector connector(false);
+    std::set<std::string> fsList;
+    std::set<std::string>::iterator it;
+    Connector connector(false);
 
-	processOptions(argc, argv);
+    processOptions(argc, argv);
 
-	if (argc > 1) {
-		printUsage();
-		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
-	}
+    if (argc > 1) {
+        printUsage();
+        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+    }
 
-	fsList = LTFSDM::getFs();
+    fsList = LTFSDM::getFs();
 
-	for (it = fsList.begin(); it != fsList.end(); ++it) {
-		try {
-			FsObj fileSystem(*it);
-			if (fileSystem.isFsManaged()) {
-				INFO(LTFSDMC0057I, *it);
-			}
-		} catch (const OpenLTFSException& e) {
-			switch (e.getError()) {
-				case Error::LTFSDM_FS_CHECK_ERROR:
-					MSG(LTFSDMC0058E, *it);
-					break;
-			}
-		} catch (const std::exception& e) {
-		}
-	}
+    for (it = fsList.begin(); it != fsList.end(); ++it) {
+        try {
+            FsObj fileSystem(*it);
+            if (fileSystem.isFsManaged()) {
+                INFO(LTFSDMC0057I, *it);
+            }
+        } catch (const OpenLTFSException& e) {
+            switch (e.getError()) {
+                case Error::LTFSDM_FS_CHECK_ERROR:
+                    MSG(LTFSDMC0058E, *it);
+                    break;
+            }
+        } catch (const std::exception& e) {
+        }
+    }
 
 }

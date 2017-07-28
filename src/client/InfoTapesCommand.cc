@@ -19,67 +19,67 @@
 
 void InfoTapesCommand::printUsage()
 {
-	INFO(LTFSDMC0065I);
+    INFO(LTFSDMC0065I);
 }
 
 void InfoTapesCommand::doCommand(int argc, char **argv)
 {
-	processOptions(argc, argv);
+    processOptions(argc, argv);
 
-	TRACE(Trace::normal, *argv, argc, optind);
+    TRACE(Trace::normal, *argv, argc, optind);
 
-	if (argc != optind) {
-		printUsage();
-		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
-	}
+    if (argc != optind) {
+        printUsage();
+        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+    }
 
-	try {
-		connect();
-	} catch (const std::exception& e) {
-		MSG(LTFSDMC0026E);
-		return;
-	}
+    try {
+        connect();
+    } catch (const std::exception& e) {
+        MSG(LTFSDMC0026E);
+        return;
+    }
 
-	LTFSDmProtocol::LTFSDmInfoTapesRequest *infotapes =
-			commCommand.mutable_infotapesrequest();
+    LTFSDmProtocol::LTFSDmInfoTapesRequest *infotapes =
+            commCommand.mutable_infotapesrequest();
 
-	infotapes->set_key(key);
+    infotapes->set_key(key);
 
-	try {
-		commCommand.send();
-	} catch (const std::exception& e) {
-		MSG(LTFSDMC0027E);
-		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
-	}
+    try {
+        commCommand.send();
+    } catch (const std::exception& e) {
+        MSG(LTFSDMC0027E);
+        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+    }
 
-	INFO(LTFSDMC0066I);
+    INFO(LTFSDMC0066I);
 
-	std::string id;
+    std::string id;
 
-	do {
-		try {
-			commCommand.recv();
-		} catch (const std::exception& e) {
-			MSG(LTFSDMC0028E);
-			throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
-		}
+    do {
+        try {
+            commCommand.recv();
+        } catch (const std::exception& e) {
+            MSG(LTFSDMC0028E);
+            throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+        }
 
-		const LTFSDmProtocol::LTFSDmInfoTapesResp infotapesresp =
-				commCommand.infotapesresp();
-		id = infotapesresp.id();
-		unsigned long slot = infotapesresp.slot();
-		unsigned long totalcap = infotapesresp.totalcap();
-		unsigned long remaincap = infotapesresp.remaincap();
-		std::string status = infotapesresp.status();
-		unsigned long inprogress = infotapesresp.inprogress();
-		std::string pool = infotapesresp.pool();
-		if (pool.compare("") == 0)
-			pool = messages[LTFSDMC0090I];
-		std::string state = infotapesresp.state();
-		if (id.compare("") != 0)
-			INFO(LTFSDMC0067I, id, slot, totalcap, remaincap, status,
-					inprogress, pool, state);
-	} while (id.compare("") != 0);
+        const LTFSDmProtocol::LTFSDmInfoTapesResp infotapesresp =
+                commCommand.infotapesresp();
+        id = infotapesresp.id();
+        unsigned long slot = infotapesresp.slot();
+        unsigned long totalcap = infotapesresp.totalcap();
+        unsigned long remaincap = infotapesresp.remaincap();
+        std::string status = infotapesresp.status();
+        unsigned long inprogress = infotapesresp.inprogress();
+        std::string pool = infotapesresp.pool();
+        if (pool.compare("") == 0)
+            pool = messages[LTFSDMC0090I];
+        std::string state = infotapesresp.state();
+        if (id.compare("") != 0)
+            INFO(LTFSDMC0067I, id, slot, totalcap, remaincap, status,
+                    inprogress, pool, state);
+    } while (id.compare("") != 0);
 
-	return;
+    return;
 }

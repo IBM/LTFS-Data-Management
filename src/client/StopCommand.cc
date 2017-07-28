@@ -20,79 +20,79 @@
 
 void StopCommand::printUsage()
 {
-	INFO(LTFSDMC0007I);
+    INFO(LTFSDMC0007I);
 }
 
 void StopCommand::doCommand(int argc, char **argv)
 {
-	int lockfd;
-	bool finished = false;
+    int lockfd;
+    bool finished = false;
 
-	processOptions(argc, argv);
+    processOptions(argc, argv);
 
-	if (argc > 2) {
-		printUsage();
-		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
-	}
+    if (argc > 2) {
+        printUsage();
+        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+    }
 
-	try {
-		connect();
-	} catch (const std::exception& e) {
-		MSG(LTFSDMC0026E);
-		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
-	}
+    try {
+        connect();
+    } catch (const std::exception& e) {
+        MSG(LTFSDMC0026E);
+        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+    }
 
-	TRACE(Trace::normal, requestNumber);
+    TRACE(Trace::normal, requestNumber);
 
-	do {
-		LTFSDmProtocol::LTFSDmStopRequest *stopreq =
-				commCommand.mutable_stoprequest();
-		stopreq->set_key(key);
-		stopreq->set_reqnumber(requestNumber);
-		stopreq->set_forced(forced);
-		stopreq->set_finish(false);
+    do {
+        LTFSDmProtocol::LTFSDmStopRequest *stopreq =
+                commCommand.mutable_stoprequest();
+        stopreq->set_key(key);
+        stopreq->set_reqnumber(requestNumber);
+        stopreq->set_forced(forced);
+        stopreq->set_finish(false);
 
-		try {
-			commCommand.send();
-		} catch (const std::exception& e) {
-			MSG(LTFSDMC0027E);
-			throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
-		}
+        try {
+            commCommand.send();
+        } catch (const std::exception& e) {
+            MSG(LTFSDMC0027E);
+            throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+        }
 
-		try {
-			commCommand.recv();
-		} catch (const std::exception& e) {
-			MSG(LTFSDMC0028E);
-			throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
-		}
+        try {
+            commCommand.recv();
+        } catch (const std::exception& e) {
+            MSG(LTFSDMC0028E);
+            throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+        }
 
-		const LTFSDmProtocol::LTFSDmStopResp stopresp = commCommand.stopresp();
+        const LTFSDmProtocol::LTFSDmStopResp stopresp = commCommand.stopresp();
 
-		finished = stopresp.success();
+        finished = stopresp.success();
 
-		if (!finished) {
-			MSG(LTFSDMC0101I);
-			sleep(1);
-		} else {
-			break;
-		}
-	} while (true);
+        if (!finished) {
+            MSG(LTFSDMC0101I);
+            sleep(1);
+        } else {
+            break;
+        }
+    } while (true);
 
-	if ((lockfd = open(Const::SERVER_LOCK_FILE.c_str(), O_RDWR | O_CREAT, 0600))
-			== -1) {
-		MSG(LTFSDMC0033E);
-		TRACE(Trace::error, Const::SERVER_LOCK_FILE, errno);
-		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
-	}
+    if ((lockfd = open(Const::SERVER_LOCK_FILE.c_str(), O_RDWR | O_CREAT, 0600))
+            == -1) {
+        MSG(LTFSDMC0033E);
+        TRACE(Trace::error, Const::SERVER_LOCK_FILE, errno);
+        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+    }
 
-	while (flock(lockfd, LOCK_EX | LOCK_NB) == -1) {
-		if (exitClient)
-			break;
-		INFO(LTFSDMC0034I);
-		sleep(1);
-	}
+    while (flock(lockfd, LOCK_EX | LOCK_NB) == -1) {
+        if (exitClient)
+            break;
+        INFO(LTFSDMC0034I);
+        sleep(1);
+    }
 
-	if (flock(lockfd, LOCK_UN) == -1) {
-		MSG(LTFSDMC0035E);
-	}
+    if (flock(lockfd, LOCK_UN) == -1) {
+        MSG(LTFSDMC0035E);
+    }
 }

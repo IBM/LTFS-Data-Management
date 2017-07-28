@@ -18,54 +18,54 @@
 
 void RetrieveCommand::printUsage()
 {
-	INFO(LTFSDMC0093I);
+    INFO(LTFSDMC0093I);
 }
 
 void RetrieveCommand::doCommand(int argc, char **argv)
 {
-	processOptions(argc, argv);
+    processOptions(argc, argv);
 
-	if (argc > 1) {
-		printUsage();
-		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
-	}
+    if (argc > 1) {
+        printUsage();
+        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+    }
 
-	try {
-		connect();
-	} catch (const std::exception& e) {
-		MSG(LTFSDMC0026E);
-		return;
-	}
+    try {
+        connect();
+    } catch (const std::exception& e) {
+        MSG(LTFSDMC0026E);
+        return;
+    }
 
-	LTFSDmProtocol::LTFSDmRetrieveRequest *retrievereq =
-			commCommand.mutable_retrieverequest();
-	retrievereq->set_key(key);
+    LTFSDmProtocol::LTFSDmRetrieveRequest *retrievereq =
+            commCommand.mutable_retrieverequest();
+    retrievereq->set_key(key);
 
-	try {
-		commCommand.send();
-	} catch (const std::exception& e) {
-		MSG(LTFSDMC0027E);
-		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
-	}
+    try {
+        commCommand.send();
+    } catch (const std::exception& e) {
+        MSG(LTFSDMC0027E);
+        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+    }
 
-	try {
-		commCommand.recv();
-	} catch (const std::exception& e) {
-		MSG(LTFSDMC0028E);
-		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
-	}
+    try {
+        commCommand.recv();
+    } catch (const std::exception& e) {
+        MSG(LTFSDMC0028E);
+        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+    }
 
-	const LTFSDmProtocol::LTFSDmRetrieveResp retrieveresp =
-			commCommand.retrieveresp();
+    const LTFSDmProtocol::LTFSDmRetrieveResp retrieveresp =
+            commCommand.retrieveresp();
 
-	switch (retrieveresp.error()) {
-		case Error::LTFSDM_DRIVE_BUSY:
-			MSG(LTFSDMC0095I);
-			break;
-		case Error::LTFSDM_OK:
-			break;
-		default:
-			MSG(LTFSDMC0094E);
-			throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
-	}
+    switch (retrieveresp.error()) {
+        case Error::LTFSDM_DRIVE_BUSY:
+            MSG(LTFSDMC0095I);
+            break;
+        case Error::LTFSDM_OK:
+            break;
+        default:
+            MSG(LTFSDMC0094E);
+            throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+    }
 }

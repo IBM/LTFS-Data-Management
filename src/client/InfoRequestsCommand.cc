@@ -19,69 +19,69 @@
 
 void InfoRequestsCommand::printUsage()
 {
-	INFO(LTFSDMC0009I);
+    INFO(LTFSDMC0009I);
 }
 
 void InfoRequestsCommand::doCommand(int argc, char **argv)
 {
-	long reqOfInterest;
+    long reqOfInterest;
 
-	processOptions(argc, argv);
+    processOptions(argc, argv);
 
-	TRACE(Trace::normal, *argv, argc, optind);
+    TRACE(Trace::normal, *argv, argc, optind);
 
-	if (argc != optind) {
-		printUsage();
-		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
-	} else if (requestNumber < Const::UNSET) {
-		printUsage();
-		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
-	}
+    if (argc != optind) {
+        printUsage();
+        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+    } else if (requestNumber < Const::UNSET) {
+        printUsage();
+        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+    }
 
-	reqOfInterest = requestNumber;
+    reqOfInterest = requestNumber;
 
-	try {
-		connect();
-	} catch (const std::exception& e) {
-		MSG(LTFSDMC0026E);
-		return;
-	}
+    try {
+        connect();
+    } catch (const std::exception& e) {
+        MSG(LTFSDMC0026E);
+        return;
+    }
 
-	LTFSDmProtocol::LTFSDmInfoRequestsRequest *inforeqs =
-			commCommand.mutable_inforequestsrequest();
+    LTFSDmProtocol::LTFSDmInfoRequestsRequest *inforeqs =
+            commCommand.mutable_inforequestsrequest();
 
-	inforeqs->set_key(key);
-	inforeqs->set_reqnumber(reqOfInterest);
+    inforeqs->set_key(key);
+    inforeqs->set_reqnumber(reqOfInterest);
 
-	try {
-		commCommand.send();
-	} catch (const std::exception& e) {
-		MSG(LTFSDMC0027E);
-		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
-	}
+    try {
+        commCommand.send();
+    } catch (const std::exception& e) {
+        MSG(LTFSDMC0027E);
+        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+    }
 
-	INFO(LTFSDMC0060I);
-	int recnum;
+    INFO(LTFSDMC0060I);
+    int recnum;
 
-	do {
-		try {
-			commCommand.recv();
-		} catch (const std::exception& e) {
-			MSG(LTFSDMC0028E);
-			throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
-		}
+    do {
+        try {
+            commCommand.recv();
+        } catch (const std::exception& e) {
+            MSG(LTFSDMC0028E);
+            throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+        }
 
-		const LTFSDmProtocol::LTFSDmInfoRequestsResp inforeqsresp =
-				commCommand.inforequestsresp();
-		std::string operation = inforeqsresp.operation();
-		recnum = inforeqsresp.reqnumber();
-		std::string tapeid = inforeqsresp.tapeid();
-		std::string tstate = inforeqsresp.targetstate();
-		std::string state = inforeqsresp.state();
-		if (recnum != Const::UNSET)
-			INFO(LTFSDMC0061I, operation, recnum, tapeid, tstate, state);
+        const LTFSDmProtocol::LTFSDmInfoRequestsResp inforeqsresp =
+                commCommand.inforequestsresp();
+        std::string operation = inforeqsresp.operation();
+        recnum = inforeqsresp.reqnumber();
+        std::string tapeid = inforeqsresp.tapeid();
+        std::string tstate = inforeqsresp.targetstate();
+        std::string state = inforeqsresp.state();
+        if (recnum != Const::UNSET)
+            INFO(LTFSDMC0061I, operation, recnum, tapeid, tstate, state);
 
-	} while (recnum != Const::UNSET);
+    } while (recnum != Const::UNSET);
 
-	return;
+    return;
 }

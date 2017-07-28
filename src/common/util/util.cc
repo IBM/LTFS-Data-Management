@@ -23,69 +23,69 @@
 void mkTmpDir()
 
 {
-	struct stat statbuf;
+    struct stat statbuf;
 
-	if (stat(Const::LTFSDM_TMP_DIR.c_str(), &statbuf) != 0) {
-		if (mkdir(Const::LTFSDM_TMP_DIR.c_str(), 0700) != 0) {
-			std::cerr << messages[LTFSDMX0006E] << Const::LTFSDM_TMP_DIR
-					<< std::endl;
-			throw(EXCEPTION(Const::UNSET));
-		}
-	} else if (!S_ISDIR(statbuf.st_mode)) {
-		std::cerr << Const::LTFSDM_TMP_DIR << messages[LTFSDMX0007E]
-				<< std::endl;
-		throw(EXCEPTION(Const::UNSET));
-	}
+    if (stat(Const::LTFSDM_TMP_DIR.c_str(), &statbuf) != 0) {
+        if (mkdir(Const::LTFSDM_TMP_DIR.c_str(), 0700) != 0) {
+            std::cerr << messages[LTFSDMX0006E] << Const::LTFSDM_TMP_DIR
+                    << std::endl;
+            throw(EXCEPTION(Const::UNSET));
+        }
+    } else if (!S_ISDIR(statbuf.st_mode)) {
+        std::cerr << Const::LTFSDM_TMP_DIR << messages[LTFSDMX0007E]
+                << std::endl;
+        throw(EXCEPTION(Const::UNSET));
+    }
 }
 
 void LTFSDM::init()
 
 {
-	mkTmpDir();
-	messageObject.init();
-	traceObject.init();
+    mkTmpDir();
+    messageObject.init();
+    traceObject.init();
 }
 
 std::vector<std::string> LTFSDM::getTapeIds()
 
 {
-	std::vector<std::string> tapeIds;
-	std::ifstream tpfile("/tmp/tapeids");
-	std::string line;
+    std::vector<std::string> tapeIds;
+    std::ifstream tpfile("/tmp/tapeids");
+    std::string line;
 
-	while (std::getline(tpfile, line)) {
-		tapeIds.push_back(line);
-	}
+    while (std::getline(tpfile, line)) {
+        tapeIds.push_back(line);
+    }
 
-	return tapeIds;
+    return tapeIds;
 }
 
 std::set<std::string> LTFSDM::getFs()
 
 {
-	unsigned int buflen = 32 * 1024;
-	char *buffer = NULL;
-	struct mntent mntbuf;
-	FILE *MNTINFO;
-	std::set<std::string> mountList;
+    unsigned int buflen = 32 * 1024;
+    char *buffer = NULL;
+    struct mntent mntbuf;
+    FILE *MNTINFO;
+    std::set<std::string> mountList;
 
-	MNTINFO = setmntent("/proc/mounts", "r");
-	if (!MNTINFO) {
-		throw(EXCEPTION(errno, errno));
-	}
+    MNTINFO = setmntent("/proc/mounts", "r");
+    if (!MNTINFO) {
+        throw(EXCEPTION(errno, errno));
+    }
 
-	buffer = (char *) malloc(buflen);
+    buffer = (char *) malloc(buflen);
 
-	if (buffer == NULL)
-		throw(EXCEPTION(Const::UNSET));
+    if (buffer == NULL)
+        throw(EXCEPTION(Const::UNSET));
 
-	while (getmntent_r(MNTINFO, &mntbuf, buffer, buflen))
-		if (!strcmp(mntbuf.mnt_type, "xfs") || !strcmp(mntbuf.mnt_type, "ext4"))
-			mountList.insert(std::string(mntbuf.mnt_dir));
+    while (getmntent_r(MNTINFO, &mntbuf, buffer, buflen))
+        if (!strcmp(mntbuf.mnt_type, "xfs") || !strcmp(mntbuf.mnt_type, "ext4"))
+            mountList.insert(std::string(mntbuf.mnt_dir));
 
-	endmntent(MNTINFO);
+    endmntent(MNTINFO);
 
-	free(buffer);
+    free(buffer);
 
-	return mountList;
+    return mountList;
 }

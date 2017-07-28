@@ -19,61 +19,61 @@
 
 void InfoPoolsCommand::printUsage()
 {
-	INFO(LTFSDMC0087I);
+    INFO(LTFSDMC0087I);
 }
 
 void InfoPoolsCommand::doCommand(int argc, char **argv)
 {
-	processOptions(argc, argv);
+    processOptions(argc, argv);
 
-	TRACE(Trace::normal, *argv, argc, optind);
+    TRACE(Trace::normal, *argv, argc, optind);
 
-	if (argc != optind) {
-		printUsage();
-		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
-	}
+    if (argc != optind) {
+        printUsage();
+        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+    }
 
-	try {
-		connect();
-	} catch (const std::exception& e) {
-		MSG(LTFSDMC0026E);
-		return;
-	}
+    try {
+        connect();
+    } catch (const std::exception& e) {
+        MSG(LTFSDMC0026E);
+        return;
+    }
 
-	LTFSDmProtocol::LTFSDmInfoPoolsRequest *infopools =
-			commCommand.mutable_infopoolsrequest();
+    LTFSDmProtocol::LTFSDmInfoPoolsRequest *infopools =
+            commCommand.mutable_infopoolsrequest();
 
-	infopools->set_key(key);
+    infopools->set_key(key);
 
-	try {
-		commCommand.send();
-	} catch (const std::exception& e) {
-		MSG(LTFSDMC0027E);
-		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
-	}
+    try {
+        commCommand.send();
+    } catch (const std::exception& e) {
+        MSG(LTFSDMC0027E);
+        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+    }
 
-	INFO(LTFSDMC0088I);
+    INFO(LTFSDMC0088I);
 
-	std::string name;
+    std::string name;
 
-	do {
-		try {
-			commCommand.recv();
-		} catch (const std::exception& e) {
-			MSG(LTFSDMC0028E);
-			throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
-		}
+    do {
+        try {
+            commCommand.recv();
+        } catch (const std::exception& e) {
+            MSG(LTFSDMC0028E);
+            throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+        }
 
-		const LTFSDmProtocol::LTFSDmInfoPoolsResp infopoolsresp =
-				commCommand.infopoolsresp();
-		name = infopoolsresp.poolname();
-		unsigned long total = infopoolsresp.total();
-		unsigned long free = infopoolsresp.free();
-		unsigned long unref = infopoolsresp.unref();
-		unsigned long numtapes = infopoolsresp.numtapes();
-		if (name.compare("") != 0)
-			INFO(LTFSDMC0089I, name, total, free, unref, numtapes);
-	} while (name.compare("") != 0);
+        const LTFSDmProtocol::LTFSDmInfoPoolsResp infopoolsresp =
+                commCommand.infopoolsresp();
+        name = infopoolsresp.poolname();
+        unsigned long total = infopoolsresp.total();
+        unsigned long free = infopoolsresp.free();
+        unsigned long unref = infopoolsresp.unref();
+        unsigned long numtapes = infopoolsresp.numtapes();
+        if (name.compare("") != 0)
+            INFO(LTFSDMC0089I, name, total, free, unref, numtapes);
+    } while (name.compare("") != 0);
 
-	return;
+    return;
 }

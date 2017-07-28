@@ -23,73 +23,73 @@
 
 void PoolRemoveCommand::printUsage()
 {
-	INFO(LTFSDMC0078I);
+    INFO(LTFSDMC0078I);
 }
 
 void PoolRemoveCommand::doCommand(int argc, char **argv)
 {
-	if (argc <= 2) {
-		printUsage();
-		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
-	}
+    if (argc <= 2) {
+        printUsage();
+        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+    }
 
-	processOptions(argc, argv);
+    processOptions(argc, argv);
 
-	if (argc != optind) {
-		printUsage();
-		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
-	}
+    if (argc != optind) {
+        printUsage();
+        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+    }
 
-	try {
-		connect();
-	} catch (const std::exception& e) {
-		MSG(LTFSDMC0026E);
-		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
-	}
+    try {
+        connect();
+    } catch (const std::exception& e) {
+        MSG(LTFSDMC0026E);
+        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+    }
 
-	LTFSDmProtocol::LTFSDmPoolRemoveRequest *poolremovereq =
-			commCommand.mutable_poolremoverequest();
-	poolremovereq->set_key(key);
-	poolremovereq->set_poolname(poolNames);
+    LTFSDmProtocol::LTFSDmPoolRemoveRequest *poolremovereq =
+            commCommand.mutable_poolremoverequest();
+    poolremovereq->set_key(key);
+    poolremovereq->set_poolname(poolNames);
 
-	for (std::string tapeid : tapeList)
-		poolremovereq->add_tapeid(tapeid);
+    for (std::string tapeid : tapeList)
+        poolremovereq->add_tapeid(tapeid);
 
-	try {
-		commCommand.send();
-	} catch (const std::exception& e) {
-		MSG(LTFSDMC0027E);
-		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
-	}
+    try {
+        commCommand.send();
+    } catch (const std::exception& e) {
+        MSG(LTFSDMC0027E);
+        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+    }
 
-	for (unsigned int i = 0; i < tapeList.size(); i++) {
+    for (unsigned int i = 0; i < tapeList.size(); i++) {
 
-		try {
-			commCommand.recv();
-		} catch (const std::exception& e) {
-			MSG(LTFSDMC0028E);
-			throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
-		}
+        try {
+            commCommand.recv();
+        } catch (const std::exception& e) {
+            MSG(LTFSDMC0028E);
+            throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+        }
 
-		const LTFSDmProtocol::LTFSDmPoolResp poolresp = commCommand.poolresp();
+        const LTFSDmProtocol::LTFSDmPoolResp poolresp = commCommand.poolresp();
 
-		std::string tapeid = poolresp.tapeid();
+        std::string tapeid = poolresp.tapeid();
 
-		switch (poolresp.response()) {
-			case Error::LTFSDM_OK:
-				INFO(LTFSDMC0086I, tapeid, poolNames);
-				break;
-			case Error::LTFSDM_POOL_NOT_EXISTS:
-				MSG(LTFSDMX0025E, poolNames);
-				break;
-			case Error::LTFSDM_TAPE_NOT_EXISTS:
-				MSG(LTFSDMC0084E, tapeid);
-				break;
-			case Error::LTFSDM_TAPE_NOT_EXISTS_IN_POOL:
-				MSG(LTFSDMX0022E, tapeid, poolNames);
-				break;
-			default:
-				MSG(LTFSDMC0085E, tapeid, poolNames);
-		}
-	}
+        switch (poolresp.response()) {
+            case Error::LTFSDM_OK:
+                INFO(LTFSDMC0086I, tapeid, poolNames);
+                break;
+            case Error::LTFSDM_POOL_NOT_EXISTS:
+                MSG(LTFSDMX0025E, poolNames);
+                break;
+            case Error::LTFSDM_TAPE_NOT_EXISTS:
+                MSG(LTFSDMC0084E, tapeid);
+                break;
+            case Error::LTFSDM_TAPE_NOT_EXISTS_IN_POOL:
+                MSG(LTFSDMX0022E, tapeid, poolNames);
+                break;
+            default:
+                MSG(LTFSDMC0085E, tapeid, poolNames);
+        }
+    }
 }

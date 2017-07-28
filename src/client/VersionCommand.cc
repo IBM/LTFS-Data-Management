@@ -28,7 +28,7 @@
 
 void VersionCommand::printUsage()
 {
-	INFO(LTFSDMC0102I);
+    INFO(LTFSDMC0102I);
 }
 
 void VersionCommand::talkToBackend(std::stringstream *parmList)
@@ -38,16 +38,16 @@ void VersionCommand::talkToBackend(std::stringstream *parmList)
 
 void VersionCommand::doCommand(int argc, char **argv)
 {
-	std::set<std::string> fsList;
-	std::set<std::string>::iterator it;
-	Connector connector(false);
+    std::set<std::string> fsList;
+    std::set<std::string>::iterator it;
+    Connector connector(false);
 
-	processOptions(argc, argv);
+    processOptions(argc, argv);
 
-	if (argc > 1) {
-		printUsage();
-		throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
-	}
+    if (argc > 1) {
+        printUsage();
+        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+    }
 
-	INFO(LTFSDMX0029I, OPENLTFS_VERSION);
+    INFO(LTFSDMX0029I, OPENLTFS_VERSION);
 }
