@@ -27,19 +27,19 @@ public:
 private:
     std::atomic<Message::LogType> logType;
 
-    inline void recurse(boost::format *fmter)
+    inline void processParms(boost::format *fmter)
     {
     }
     template<typename T>
-    void recurse(boost::format *fmter, T s)
+    void processParms(boost::format *fmter, T s)
     {
         *fmter % s;
     }
     template<typename T, typename ... Args>
-    void recurse(boost::format *fmter, T s, Args ... args)
+    void processParms(boost::format *fmter, T s, Args ... args)
     {
         *fmter % s;
-        recurse(fmter, args ...);
+        processParms(fmter, args ...);
     }
 
     void writeOut(std::string msgstr);
@@ -56,7 +56,7 @@ private:
 
         try {
             fmter % linenr;
-            recurse(&fmter, args ...);
+            processParms(&fmter, args ...);
             writeOut(fmter.str());
         } catch (const std::exception& e) {
             std::cerr << messages[LTFSDMX0005E] << " (" << msgname[msg] << ":"
@@ -73,7 +73,7 @@ private:
 
         try {
             fmter % linenr;
-            recurse(&fmter, args ...);
+            processParms(&fmter, args ...);
             writeLog(fmter.str());
         } catch (const std::exception& e) {
             std::cerr << messages[LTFSDMX0005E] << " (" << msgname[msg] << ":"
@@ -111,7 +111,7 @@ public:
         fmter.exceptions(boost::io::all_error_bits);
 
         try {
-            recurse(&fmter, args ...);
+            processParms(&fmter, args ...);
             writeOut(fmter.str());
         } catch (const std::exception& e) {
             std::cerr << messages[LTFSDMX0005E] << " (" << filename << ":"

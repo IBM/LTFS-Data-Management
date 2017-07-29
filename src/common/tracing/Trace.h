@@ -30,13 +30,13 @@ public:
 private:
     std::atomic<Trace::traceLevel> trclevel;
 
-    std::string recurse()
+    std::string processParms()
     {
         return "";
     }
 
     template<typename T>
-    void recurse(std::string varlist, T s)
+    void processParms(std::string varlist, T s)
     {
         tracefile
                 << varlist.substr(varlist.find_first_not_of(" "),
@@ -44,12 +44,12 @@ private:
     }
 
     template<typename T, typename ... Args>
-    void recurse(std::string varlist, T s, Args ... args)
+    void processParms(std::string varlist, T s, Args ... args)
     {
         tracefile
                 << varlist.substr(varlist.find_first_not_of(" "),
                         varlist.find(',')) << "(" << s << "), ";
-        recurse(varlist.substr(varlist.find(',') + 1, varlist.size()),
+        processParms(varlist.substr(varlist.find(',') + 1, varlist.size()),
                 args ...);
     }
 public:
@@ -94,7 +94,7 @@ public:
                         << syscall(SYS_gettid) << "]:" << std::setfill('-')
                         << std::setw(20) << basename((char *) filename) << "("
                         << std::setfill('0') << std::setw(4) << linenr << "): ";
-                recurse(varlist, args ...);
+                processParms(varlist, args ...);
                 tracefile << std::endl;
                 tracefile.flush();
                 mtx.unlock();
