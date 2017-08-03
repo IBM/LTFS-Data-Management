@@ -227,7 +227,7 @@ void FsObj::manageFs(bool setDispo, struct timespec starttime,
                 &mountpt, sizeof(mountpt)) == -1) {
             if ( errno != ENODATA)
                 TRACE(Trace::error, errno);
-            mountPoint = fh->fileName + std::string(".managed");
+            mountPoint = fh->fileName + ".managed";
         } else {
             mountPoint = mountpt;
         }
@@ -238,12 +238,12 @@ void FsObj::manageFs(bool setDispo, struct timespec starttime,
                 &fsname, sizeof(fsname)) == -1) {
             if ( errno != ENODATA)
                 TRACE(Trace::error, errno);
-            fsName = std::string("[") + fh->fileName + std::string("]");
+            fsName = std::string("[") + fh->fileName + "]";
         } else {
             fsName = fsname;
         }
     } else {
-        fsName = std::string("[") + fsName + std::string("]");
+        fsName = std::string("[") + fsName + "]";
     }
 
     umount2(mountPoint.c_str(), MNT_FORCE);

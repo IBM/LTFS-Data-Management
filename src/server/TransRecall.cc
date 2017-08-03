@@ -15,7 +15,7 @@ void TransRecall::addRequest(Connector::rec_info_t recinfo, std::string tapeId,
     if (recinfo.filename.compare("") == 0)
         filename = "NULL";
     else
-        filename = std::string("'") + recinfo.filename + std::string("'");
+        filename = std::string("'") + recinfo.filename + "'";
 
     try {
         FsObj fso(recinfo);

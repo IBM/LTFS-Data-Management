@@ -49,7 +49,7 @@ private:
     void msgOut(msg_id msg, char *filename, int linenr, Args ... args)
 
     {
-        std::string fmtstr = msgname[msg] + std::string("(%d): ")
+        std::string fmtstr = msgname[msg] + "(%d): "
                 + messages[msg];
         boost::format fmter(fmtstr);
         fmter.exceptions(boost::io::all_error_bits);
@@ -66,7 +66,7 @@ private:
     template<typename ... Args>
     void msgLog(msg_id msg, char *filename, int linenr, Args ... args)
     {
-        std::string fmtstr = msgname[msg] + std::string("(%d): ")
+        std::string fmtstr = msgname[msg] + "(%d): "
                 + messages[msg];
         boost::format fmter(fmtstr);
         fmter.exceptions(boost::io::all_error_bits);

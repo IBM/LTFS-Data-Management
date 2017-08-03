@@ -17,7 +17,7 @@ void DataBase::cleanup()
 
 {
     unlink(Const::DB_FILE.c_str());
-    unlink((Const::DB_FILE + std::string("-journal")).c_str());
+    unlink((Const::DB_FILE + "-journal").c_str());
 }
 
 void DataBase::fits(sqlite3_context *ctx, int argc, sqlite3_value **argv)
