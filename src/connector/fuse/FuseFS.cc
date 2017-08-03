@@ -41,6 +41,7 @@
 #include "FuseFS.h"
 
 FuseFS::serialize FuseFS::trecall_submit;
+const struct fuse_operations FuseFS::ltfsdm_operations = FuseFS::init_operations();
 
 Connector::rec_info_t FuseFS::recinfo_share = (Connector::rec_info_t ) { 0, 0,
                 0, 0, 0, "" };
@@ -1043,50 +1044,49 @@ void *FuseFS::ltfsdm_init(struct fuse_conn_info *conn)
 struct fuse_operations FuseFS::init_operations()
 
 {
-    struct fuse_operations ltfsdm_operations;
+    struct fuse_operations ops;
 
-    memset(&ltfsdm_operations, 0, sizeof(ltfsdm_operations));
+    memset(&ops, 0, sizeof(struct fuse_operations));
 
-    ltfsdm_operations.init = FuseFS::ltfsdm_init;
+    ops.init = FuseFS::ltfsdm_init;
 
-    ltfsdm_operations.getattr = FuseFS::ltfsdm_getattr;
-    ltfsdm_operations.access = FuseFS::ltfsdm_access;
-    ltfsdm_operations.readlink = FuseFS::ltfsdm_readlink;
+    ops.getattr = FuseFS::ltfsdm_getattr;
+    ops.access = FuseFS::ltfsdm_access;
+    ops.readlink = FuseFS::ltfsdm_readlink;
 
-    ltfsdm_operations.opendir = FuseFS::ltfsdm_opendir;
-    ltfsdm_operations.readdir = FuseFS::ltfsdm_readdir;
-    ltfsdm_operations.releasedir = FuseFS::ltfsdm_releasedir;
+    ops.opendir = FuseFS::ltfsdm_opendir;
+    ops.readdir = FuseFS::ltfsdm_readdir;
+    ops.releasedir = FuseFS::ltfsdm_releasedir;
 
-    ltfsdm_operations.mknod = FuseFS::ltfsdm_mknod;
-    ltfsdm_operations.mkdir = FuseFS::ltfsdm_mkdir;
-    ltfsdm_operations.symlink = FuseFS::ltfsdm_symlink;
-    ltfsdm_operations.unlink = FuseFS::ltfsdm_unlink;
-    ltfsdm_operations.rmdir = FuseFS::ltfsdm_rmdir;
-    ltfsdm_operations.rename = FuseFS::ltfsdm_rename;
-    ltfsdm_operations.link = FuseFS::ltfsdm_link;
-    ltfsdm_operations.chmod = FuseFS::ltfsdm_chmod;
-    ltfsdm_operations.chown = FuseFS::ltfsdm_chown;
-    ltfsdm_operations.truncate = FuseFS::ltfsdm_truncate;
-    ltfsdm_operations.utimens = FuseFS::ltfsdm_utimens;
-    ltfsdm_operations.open = FuseFS::ltfsdm_open;
-    ltfsdm_operations.ftruncate = FuseFS::ltfsdm_ftruncate;
-    //ltfsdm_operations.read			= FuseFS::ltfsdm_read;
-    ltfsdm_operations.read_buf = FuseFS::ltfsdm_read_buf;
-    //tfsdm_operations.write			= FuseFS::ltfsdm_write;
-    ltfsdm_operations.write_buf = FuseFS::ltfsdm_write_buf;
-    ltfsdm_operations.statfs = FuseFS::ltfsdm_statfs;
-    ltfsdm_operations.release = FuseFS::ltfsdm_release;
-    ltfsdm_operations.flush = FuseFS::ltfsdm_flush;
-    ltfsdm_operations.fsync = FuseFS::ltfsdm_fsync;
-    ltfsdm_operations.fallocate = FuseFS::ltfsdm_fallocate;
-    ltfsdm_operations.setxattr = FuseFS::ltfsdm_setxattr;
-    ltfsdm_operations.getxattr = FuseFS::ltfsdm_getxattr;
-    ltfsdm_operations.listxattr = FuseFS::ltfsdm_listxattr;
-    ltfsdm_operations.removexattr = FuseFS::ltfsdm_removexattr;
+    ops.mknod = FuseFS::ltfsdm_mknod;
+    ops.mkdir = FuseFS::ltfsdm_mkdir;
+    ops.symlink = FuseFS::ltfsdm_symlink;
+    ops.unlink = FuseFS::ltfsdm_unlink;
+    ops.rmdir = FuseFS::ltfsdm_rmdir;
+    ops.rename = FuseFS::ltfsdm_rename;
+    ops.link = FuseFS::ltfsdm_link;
+    ops.chmod = FuseFS::ltfsdm_chmod;
+    ops.chown = FuseFS::ltfsdm_chown;
+    ops.truncate = FuseFS::ltfsdm_truncate;
+    ops.utimens = FuseFS::ltfsdm_utimens;
+    ops.open = FuseFS::ltfsdm_open;
+    ops.ftruncate = FuseFS::ltfsdm_ftruncate;
+    //ops.read			= FuseFS::ltfsdm_read;
+    ops.read_buf = FuseFS::ltfsdm_read_buf;
+    //ops.write			= FuseFS::ltfsdm_write;
+    ops.write_buf = FuseFS::ltfsdm_write_buf;
+    ops.statfs = FuseFS::ltfsdm_statfs;
+    ops.release = FuseFS::ltfsdm_release;
+    ops.flush = FuseFS::ltfsdm_flush;
+    ops.fsync = FuseFS::ltfsdm_fsync;
+    ops.fallocate = FuseFS::ltfsdm_fallocate;
+    ops.setxattr = FuseFS::ltfsdm_setxattr;
+    ops.getxattr = FuseFS::ltfsdm_getxattr;
+    ops.listxattr = FuseFS::ltfsdm_listxattr;
+    ops.removexattr = FuseFS::ltfsdm_removexattr;
 
-    return ltfsdm_operations;
+    return ops;
 }
-;
 
 FuseFS::FuseFS(std::string sourcedir, std::string mountpt, std::string fsName,
         struct timespec starttime) :
@@ -1094,8 +1094,7 @@ FuseFS::FuseFS(std::string sourcedir, std::string mountpt, std::string fsName,
 
 {
     std::stringstream options;
-    struct fuse_args fargs = FUSE_ARGS_INIT(0, NULL);
-    struct fuse_operations ltfsdm_operations = init_operations();
+    fargs = FUSE_ARGS_INIT(0, NULL);
 
     ctx = (FuseFS::openltfs_ctx *) malloc(sizeof(FuseFS::openltfs_ctx));
     memset(ctx, 0, sizeof(FuseFS::openltfs_ctx));
@@ -1135,8 +1134,6 @@ FuseFS::FuseFS(std::string sourcedir, std::string mountpt, std::string fsName,
     openltfs = fuse_new(openltfsch, &fargs, &ltfsdm_operations,
             sizeof(ltfsdm_operations), (void *) ctx);
 
-    fuse_opt_free_args(&fargs);
-
     if (openltfs == NULL) {
         MSG(LTFSDMF0006E);
         throw(EXCEPTION(Error::LTFSDM_FS_ADD_ERROR));
@@ -1156,6 +1153,7 @@ FuseFS::~FuseFS()
     try {
         MSG(LTFSDMS0079I, mountpt.c_str());
         MSG(LTFSDMF0007I);
+        fuse_opt_free_args(&fargs);
         fuse_exit(openltfs);
         fuse_unmount(mountpt.c_str(), openltfsch);
         TRACE(Trace::always, mountpt, (bool) Connector::forcedTerminate);

@@ -66,12 +66,21 @@ private:
     };
 
     static thread_local std::string lsourcedir;
+    std::thread *fusefs;
+    struct FuseFS::openltfs_ctx *ctx;
+    std::string mountpt;
+    struct fuse_chan *openltfsch = NULL;
+    struct fuse *openltfs = NULL;
+    struct fuse_args fargs;
+    static const struct fuse_operations ltfsdm_operations;
 
     static bool needsRecovery(FuseFS::mig_info miginfo);
     static void recoverState(const char *path,
             FuseFS::mig_info::state_num state);
     static std::string source_path(const char *path);
     static int recall_file(FuseFS::ltfsdm_file_info *linfo, bool toresident);
+    static struct fuse_operations init_operations();
+    static FuseFS::mig_info getMigInfoAt(int dirfd, const char *path);
 
     // FUSE call backs
     static int ltfsdm_getattr(const char *path, struct stat *statbuf);
@@ -119,14 +128,6 @@ private:
     static int ltfsdm_removexattr(const char *path, const char *name);
     static void *ltfsdm_init(struct fuse_conn_info *conn);
 
-    std::thread *fusefs;
-    struct FuseFS::openltfs_ctx *ctx;
-    std::string mountpt;
-    struct fuse_chan *openltfsch = NULL;
-    struct fuse *openltfs = NULL;
-
-    struct fuse_operations init_operations();
-    static FuseFS::mig_info getMigInfoAt(int dirfd, const char *path);
 public:
     static struct serialize
     {
