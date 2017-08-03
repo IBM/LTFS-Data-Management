@@ -31,6 +31,7 @@ public:
     static void threadfunc(int i, int num_thrds, wq_data_t *wq_data)
     {
         int reqNum;
+        char threadName[64];
 
         std::packaged_task < void() > ltask;
         std::unique_lock < std::mutex > lock(wq_data->mtx_add);
@@ -53,8 +54,14 @@ public:
             wq_data->cond_resp.notify_one();
             lock2.unlock();
 
+            memset(threadName, 0, 64);
+            pthread_getname_np(pthread_self(), threadName, 63);
+            pthread_setname_np(pthread_self(), std::string(threadName).append("+").c_str());
+
             ltask();
             ltask.reset();
+
+            pthread_setname_np(pthread_self(), threadName);
 
             lock.lock();
 
