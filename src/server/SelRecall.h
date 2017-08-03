@@ -9,7 +9,7 @@ private:
     LTFSDmProtocol::LTFSDmSelRecRequest::State targetState;
     static unsigned long recall(std::string fileName, std::string tapeId,
             FsObj::file_state state, FsObj::file_state toState);
-    static bool recallStep(int reqNumber, std::string tapeId,
+    static bool processFile(int reqNumber, std::string tapeId,
             FsObj::file_state toState, bool needsTape);
 
     static const std::string ADD_JOB;

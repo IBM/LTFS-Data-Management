@@ -352,7 +352,7 @@ void Migration::stub(Migration::mig_info_t mig_info,
                 mig_info.toState);
 }
 
-Migration::req_return_t Migration::migrationStep(int reqNumber, int numRepl,
+Migration::req_return_t Migration::processFile(int reqNumber, int numRepl,
         int replNum, std::string tapeId, FsObj::file_state fromState,
         FsObj::file_state toState)
 
@@ -499,7 +499,7 @@ void Migration::execRequest(int reqNumber, int targetState, int numRepl,
     TRACE(Trace::always, reqNumber, needsTape);
 
     if (needsTape) {
-        retval = migrationStep(reqNumber, numRepl, replNum, tapeId,
+        retval = processFile(reqNumber, numRepl, replNum, tapeId,
                 FsObj::RESIDENT, FsObj::PREMIGRATED);
 
         tapePath << inventory->getMountPoint() << "/" << tapeId;
@@ -546,7 +546,7 @@ void Migration::execRequest(int reqNumber, int targetState, int numRepl,
     }
 
     if (!failed && targetState != LTFSDmProtocol::LTFSDmMigRequest::PREMIGRATED)
-        migrationStep(reqNumber, numRepl, replNum, tapeId, FsObj::PREMIGRATED,
+        processFile(reqNumber, numRepl, replNum, tapeId, FsObj::PREMIGRATED,
                 FsObj::MIGRATED);
 
     std::unique_lock<std::mutex> updlock(Scheduler::updmtx);

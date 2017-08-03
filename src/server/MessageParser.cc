@@ -338,8 +338,6 @@ void MessageParser::stopMessage(long key, LTFSDmCommServer *command,
         numreqs = 0;
 
         if (Server::forcedTerminate == false && Server::finishTerminate == false) {
-            std::stringstream ssql;
-
             stmt(MessageParser::ALL_REQUESTS);
             stmt.prepare();
             while (stmt.step(&state)) {

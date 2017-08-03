@@ -296,7 +296,7 @@ unsigned long TransRecall::recall(Connector::rec_info_t recinfo,
     return statbuf.st_size;
 }
 
-void TransRecall::recallStep(int reqNum, std::string tapeId)
+void TransRecall::processFile(int reqNum, std::string tapeId)
 
 {
     Connector::rec_info_t recinfo;
@@ -369,7 +369,7 @@ void TransRecall::execRequest(int reqNum, std::string tapeId)
     SQLStatement stmt;
     int remaining = 0;
 
-    recallStep(reqNum, tapeId);
+    processFile(reqNum, tapeId);
 
     std::unique_lock<std::mutex> lock(Scheduler::mtx);
 
