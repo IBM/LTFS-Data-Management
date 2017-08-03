@@ -89,7 +89,7 @@ int main(int argc, char *argv[])
         goto cleanup;
     }
 
-    command = std::string(argv[1]);
+    command = argv[1];
 
     TRACE(Trace::normal, argc, command.c_str());
 
@@ -121,7 +121,7 @@ int main(int argc, char *argv[])
         }
         argc--;
         argv++;
-        command = std::string(argv[1]);
+        command = argv[1];
         TRACE(Trace::normal, command.c_str());
         if (InfoRequestsCommand().compare(command)) {
             openLTFSCommand =
@@ -159,7 +159,7 @@ int main(int argc, char *argv[])
         }
         argc--;
         argv++;
-        command = std::string(argv[1]);
+        command = argv[1];
         TRACE(Trace::normal, command.c_str());
         if (PoolCreateCommand().compare(command)) {
             openLTFSCommand =

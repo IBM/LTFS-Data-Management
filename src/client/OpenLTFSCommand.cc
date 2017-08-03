@@ -58,19 +58,19 @@ void OpenLTFSCommand::processOptions(int argc, char **argv)
                 }
                 break;
             case 'f':
-                fileList = std::string(optarg);
+                fileList = optarg;
                 break;
             case 'm':
-                mountPoint = std::string(optarg);
+                mountPoint = optarg;
                 break;
             case 'N':
-                fsName = std::string(optarg);
+                fsName = optarg;
                 break;
             case 'P':
-                poolNames = std::string(optarg);
+                poolNames = optarg;
                 break;
             case 't':
-                tapeList.push_back(std::string(optarg));
+                tapeList.push_back(optarg);
                 break;
             case 'x':
                 forced = true;

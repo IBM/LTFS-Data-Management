@@ -55,7 +55,7 @@ void HelpCommand::doCommand(int argc, char **argv)
 
     TRACE(Trace::normal, argc, command.c_str());
 
-    command = std::string(argv[1]);
+    command = argv[1];
 
     if (StartCommand().compare(command)) {
         openLTFSCommand = new StartCommand();
@@ -77,7 +77,7 @@ void HelpCommand::doCommand(int argc, char **argv)
         if (argc < 3) {
             openLTFSCommand = new InfoCommand();
         } else {
-            command = std::string(argv[2]);
+            command = argv[2];
             TRACE(Trace::normal, command.c_str());
             if (InfoRequestsCommand().compare(command)) {
                 openLTFSCommand = new InfoRequestsCommand();
@@ -101,7 +101,7 @@ void HelpCommand::doCommand(int argc, char **argv)
         if (argc < 3) {
             openLTFSCommand = new PoolCommand();
         } else {
-            command = std::string(argv[2]);
+            command = argv[2];
             TRACE(Trace::normal, command.c_str());
             if (PoolCreateCommand().compare(command)) {
                 openLTFSCommand = new PoolCreateCommand();

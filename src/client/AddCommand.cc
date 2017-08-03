@@ -45,7 +45,7 @@ void AddCommand::doCommand(int argc, char **argv)
         throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
     }
 
-    managedFs = std::string(pathName);
+    managedFs = pathName;
 
     if (LTFSDM::getFs().count(managedFs) == 0) {
         MSG(LTFSDMC0053E);

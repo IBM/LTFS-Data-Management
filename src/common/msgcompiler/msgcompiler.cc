@@ -57,7 +57,7 @@ int main(int argc, char **argv)
 		else if (line[0] == '"') {
 			messages.back().msgtxt += '\n';
 			messages.back().msgtxt += "                       ";
-			messages.back().msgtxt += std::string("+std::string(") + line + ")";
+			messages.back().msgtxt += "+std::string(" + line + ")";
 		}
 		// new message
 		else {
