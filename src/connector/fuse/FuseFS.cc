@@ -997,6 +997,7 @@ int FuseFS::ltfsdm_getxattr(const char *path, const char *name, char *value,
     if (Const::OPEN_LTFS_EA_FSINFO.compare(name) == 0) {
         strncpy(value, FuseFS::source_path(path).c_str(), PATH_MAX - 1);
         size = strlen(value) + 1;
+        TRACE(Trace::full, path, size);
         return size;
     } else if ((attrsize = lgetxattr(FuseFS::source_path(path).c_str(), name,
             value, size)) == -1) {
@@ -1005,6 +1006,7 @@ int FuseFS::ltfsdm_getxattr(const char *path, const char *name, char *value,
             != std::string::npos) {
         return (-1 * ENOTSUP);
     } else {
+        TRACE(Trace::full, path, attrsize);
         return attrsize;
     }
 }
