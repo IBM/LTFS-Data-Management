@@ -38,6 +38,33 @@ void thrdf2(int j, int n)
     //sleep(1);
 }
 
+void thrdf3(int j, int n)
+
+{
+    const std::string baseName = "/mnt/lxfs.managed/test3/x.";
+    std::string fileName = "";
+    struct stat statbuf;
+
+    if ( n>0 ) {
+        SubServer subs;
+        n--;
+        for(int i=0; i<4; i++) {
+            fileName = baseName;
+            fileName.append(std::to_string(random()%2000));
+            //FsObj file(fileName);
+            //std::cout << file.getINode() << std::endl;
+            stat(fileName.c_str(), &statbuf);
+            std::stringstream thrdname;
+            thrdname << "test:" << n << "." << j << "." << i << std::endl;
+            subs.enqueue(thrdname.str(), &thrdf3, i, n);
+        }
+        subs.waitAllRemaining();
+    }
+
+
+    //sleep(1);
+}
+
 int main(int argc, char **argv)
 
 {
@@ -51,12 +78,28 @@ int main(int argc, char **argv)
     wq.waitCompletion(Const::UNSET);
     wq.terminate();*/
 
+/*
     SubServer subs;
 
     for(int i=0; i<4; i++)
         subs.enqueue(std::string("test:").append(std::to_string(i)), &thrdf2, i, 4);
 
     subs.waitAllRemaining();
+*/
+
+    FsObj fileSystem("/mnt/lxfs");
+    SubServer subs;
+
+    fileSystem.manageFs(true, (struct timespec) {0,0});
+
+    srandom(time(NULL));
+
+    for(int i=0; i<4; i++)
+        subs.enqueue(std::string("test:").append(std::to_string(i)), &thrdf3, i, 4);
+
+    subs.waitAllRemaining();
+
+
 
     return 0;
 }

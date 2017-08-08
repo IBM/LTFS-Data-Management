@@ -216,6 +216,18 @@ message LTFSDmRetrieveResp {
 	required int64 error = 1;
 }
 
+message LTFSDmTransRecRequest {
+    required bool toresident = 1;
+    required int64 fsid = 2;
+    required int32 igen = 3;
+    required int64 ino = 4;
+    required bytes filename = 5;
+}
+
+message LTFSDmTransRecResp {
+	required bool success =1;
+}
+
 message Command {
 	oneof commands {
 		LTFSDmReqNumber reqnum = 1;
@@ -251,5 +263,7 @@ message Command {
 		LTFSDmInfoPoolsResp infopoolsresp = 31;
 		LTFSDmRetrieveRequest retrieverequest = 32;
 		LTFSDmRetrieveResp retrieveresp = 33;
+		LTFSDmTransRecRequest transrecrequest = 34;
+		LTFSDmTransRecResp transrecresp = 35;
 	}
 }

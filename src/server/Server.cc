@@ -25,7 +25,7 @@ void Server::signalHandler(sigset_t set, long key)
 
         MSG(LTFSDMS0049I, sig);
 
-        LTFSDmCommClient commCommand;
+        LTFSDmCommClient commCommand(Const::CLIENT_SOCKET_FILE);
 
         try {
             commCommand.connect();
@@ -138,6 +138,9 @@ void Server::initialize(bool dbUseMemory)
         MSG(LTFSDMS0046E);
         throw(EXCEPTION(errno, errno));
     }
+
+    unlink(Const::CLIENT_SOCKET_FILE.c_str());
+    unlink(Const::RECALL_SOCKET_FILE.c_str());
 
     lockServer();
     writeKey();

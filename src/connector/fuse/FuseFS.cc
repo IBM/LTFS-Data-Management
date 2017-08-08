@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <sys/mount.h>
 #include <linux/fs.h>
 #include <dirent.h>
 #include <sys/time.h>
@@ -37,11 +38,18 @@
 #include "src/common/errors/errors.h"
 #include "src/common/const/Const.h"
 
+#include "src/common/comm/ltfsdm.pb.h"
+#include "src/common/comm/LTFSDmComm.h"
+
 #include "src/connector/Connector.h"
 #include "FuseFS.h"
 
-FuseFS::serialize FuseFS::trecall_submit;
-const struct fuse_operations FuseFS::ltfsdm_operations = FuseFS::init_operations();
+struct openltfs_ctx
+{
+    char sourcedir[PATH_MAX];
+    char mountpoint[PATH_MAX];
+    struct timespec starttime;
+};
 
 Connector::rec_info_t FuseFS::recinfo_share = (Connector::rec_info_t ) { 0, 0,
                 0, 0, 0, "" };
@@ -172,12 +180,12 @@ bool FuseFS::needsRecovery(FuseFS::mig_info miginfo)
             | (miginfo.state == FuseFS::mig_info::state_num::STUBBING)
             | (miginfo.state == FuseFS::mig_info::state_num::IN_RECALL)) {
 
-        if (((FuseFS::openltfs_ctx *) fc->private_data)->starttime.tv_sec
+        if (((openltfs_ctx *) fc->private_data)->starttime.tv_sec
                 < miginfo.changed.tv_sec)
             return false;
-        else if ((((FuseFS::openltfs_ctx *) fc->private_data)->starttime.tv_sec
+        else if ((((openltfs_ctx *) fc->private_data)->starttime.tv_sec
                 == miginfo.changed.tv_sec)
-                && (((FuseFS::openltfs_ctx *) fc->private_data)->starttime.tv_nsec
+                && (((openltfs_ctx *) fc->private_data)->starttime.tv_nsec
                         < miginfo.changed.tv_nsec))
             return false;
         else
@@ -193,10 +201,10 @@ void FuseFS::recoverState(const char *path, FuseFS::mig_info::state_num state)
     struct fuse_context *fc = fuse_get_context();
 
     std::string fusepath =
-            ((FuseFS::openltfs_ctx *) fc->private_data)->mountpoint
+            ((openltfs_ctx *) fc->private_data)->mountpoint
                     + std::string(path);
     std::string sourcepath =
-            ((FuseFS::openltfs_ctx *) fc->private_data)->sourcedir
+            ((openltfs_ctx *) fc->private_data)->sourcedir
                     + std::string(path);
 
     TRACE(Trace::error, fusepath, state);
@@ -249,7 +257,7 @@ std::string FuseFS::source_path(const char *path)
     FuseFS::mig_info miginfo;
 
     struct fuse_context *fc = fuse_get_context();
-    fullpath = ((FuseFS::openltfs_ctx *) fc->private_data)->sourcedir
+    fullpath = ((openltfs_ctx *) fc->private_data)->sourcedir
             + std::string(path);
 
     try {
@@ -273,9 +281,8 @@ int FuseFS::recall_file(FuseFS::ltfsdm_file_info *linfo, bool toresident)
 {
     struct stat statbuf;
     unsigned int igen;
-    conn_info_t *conn_info;
     bool success;
-    std::unique_lock<std::mutex> *lock_reply;
+
 
     if (fstat(linfo->fd, &statbuf) == -1) {
         TRACE(Trace::error, fuse_get_context()->pid, errno);
@@ -289,32 +296,45 @@ int FuseFS::recall_file(FuseFS::ltfsdm_file_info *linfo, bool toresident)
 
     TRACE(Trace::always, linfo->sourcepath, statbuf.st_ino, toresident);
 
-    std::unique_lock<std::mutex> lock(FuseFS::trecall_submit.mtx);
     if (Connector::recallEventSystemStopped == true)
         return -1;
-    FuseFS::trecall_submit.wait_cond.wait(lock,
-            []() {return no_rec_event != false;});
-    no_rec_event = false;
 
-    conn_info = new conn_info_t;
-    recinfo_share.conn_info = conn_info;
-    recinfo_share.toresident = toresident;
-    recinfo_share.fsid = statbuf.st_dev;
-    recinfo_share.igen = igen;
-    recinfo_share.ino = statbuf.st_ino;
-    recinfo_share.filename = linfo->sourcepath;
+    LTFSDmCommClient recRequest(Const::RECALL_SOCKET_FILE);
 
-    lock_reply = new std::unique_lock<std::mutex>(conn_info->trecall_reply.mtx);
-    FuseFS::trecall_submit.cond.notify_one();
-    lock.unlock();
-    conn_info->trecall_reply.cond.wait(*lock_reply);
+    try {
+        recRequest.connect();
+    } catch (const std::exception& e) {
+        std::cout << "error connecting, errno: " << errno << std::endl;
+        return -1;
+    }
 
-    success = conn_info->trecall_reply.success;
+    LTFSDmProtocol::LTFSDmTransRecRequest *recrequest = recRequest.mutable_transrecrequest();
+
+    recrequest->set_toresident(toresident);
+    recrequest->set_fsid(statbuf.st_dev);
+    recrequest->set_igen(igen);
+    recrequest->set_ino(statbuf.st_ino);
+    recrequest->set_filename(linfo->sourcepath);
+
+    try {
+        recRequest.send();
+    } catch (const std::exception& e) {
+        MSG(LTFSDMS0091E);
+        return -1;
+    }
+
+    try {
+        recRequest.recv();
+    } catch (const std::exception& e) {
+        std::cout << "error gettting response, errno: " << errno << std::endl;
+        return -1;
+    }
+
+    const LTFSDmProtocol::LTFSDmTransRecResp recresp = recRequest.transrecresp();
+
+    success = recresp.success();
 
     TRACE(Trace::always, linfo->sourcepath, statbuf.st_ino, success);
-
-    delete (lock_reply);
-    delete (conn_info);
 
     if (success == false)
         return -1;
@@ -1090,16 +1110,54 @@ struct fuse_operations FuseFS::init_operations()
     return ops;
 }
 
+void FuseFS::execute(std::string command)
+
+{
+    int ret;
+
+    pthread_setname_np(pthread_self(), "FuseFS");
+
+    ret = system(command.c_str());
+
+    if (!WIFEXITED(ret) || WEXITSTATUS(ret)) {
+        TRACE(Trace::error, ret, WIFEXITED(ret), WEXITSTATUS(ret));
+        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+    }
+}
+
 FuseFS::FuseFS(std::string sourcedir, std::string mountpt, std::string fsName,
         struct timespec starttime) :
         mountpt(mountpt)
 
 {
+    std::stringstream stream;
+
+    stream << "/root/OpenLTFS/bin/FuseFS " << sourcedir << " " << mountpt
+            << " " << fsName << " " << starttime.tv_sec
+            << " " << starttime.tv_nsec << " 2>&1";
+
+    thrd = new std::thread(&FuseFS::execute, stream.str());
+}
+
+int main(int argc, char **argv)
+
+{
+    std::string sourcedir(argv[1]);
+    std::string mountpt(argv[2]);
+    std::string fsName(argv[3]);
+    struct timespec starttime = {std::stol(argv[4], nullptr), std::stol(argv[5], nullptr)};
+    struct fuse_chan *openltfsch = NULL;
+    struct fuse *openltfs = NULL;
+    const struct fuse_operations ltfsdm_operations = FuseFS::init_operations();
+
+    struct openltfs_ctx *ctx;
+    struct fuse_args fargs;
+
     std::stringstream options;
     fargs = FUSE_ARGS_INIT(0, NULL);
 
-    ctx = (FuseFS::openltfs_ctx *) malloc(sizeof(FuseFS::openltfs_ctx));
-    memset(ctx, 0, sizeof(FuseFS::openltfs_ctx));
+    ctx = (openltfs_ctx *) malloc(sizeof(struct openltfs_ctx));
+    memset(ctx, 0, sizeof(struct openltfs_ctx));
     strncpy(ctx->sourcedir, sourcedir.c_str(), PATH_MAX - 1);
     strncpy(ctx->mountpoint, mountpt.c_str(), PATH_MAX - 1);
     ctx->starttime = starttime;
@@ -1119,7 +1177,7 @@ FuseFS::FuseFS(std::string sourcedir, std::string mountpt, std::string fsName,
 
     if (fuse_parse_cmdline(&fargs, NULL, NULL, NULL) != 0) {
         MSG(LTFSDMF0004E, errno);
-        throw(EXCEPTION(Error::LTFSDM_FS_ADD_ERROR, errno, options.str()));
+        return Error::LTFSDM_GENERAL_ERROR;
     }
 
     MSG(LTFSDMF0002I, mountpt.c_str());
@@ -1128,7 +1186,7 @@ FuseFS::FuseFS(std::string sourcedir, std::string mountpt, std::string fsName,
 
     if (openltfsch == NULL) {
         MSG(LTFSDMF0005E, mountpt.c_str());
-        throw(EXCEPTION(Error::LTFSDM_FS_ADD_ERROR, errno, mountpt));
+        return Error::LTFSDM_GENERAL_ERROR;
     }
 
     MSG(LTFSDMF0003I);
@@ -1138,35 +1196,42 @@ FuseFS::FuseFS(std::string sourcedir, std::string mountpt, std::string fsName,
 
     if (openltfs == NULL) {
         MSG(LTFSDMF0006E);
-        throw(EXCEPTION(Error::LTFSDM_FS_ADD_ERROR));
+        return Error::LTFSDM_GENERAL_ERROR;
     }
 
-    fusefs = new std::thread(fuse_loop_mt, openltfs);
+    if ( fuse_loop_mt(openltfs) == -1 )
+        return Error::LTFSDM_GENERAL_ERROR;
 
-    std::stringstream threadName;
-    threadName << "FS:" << ctx->sourcedir;
-    pthread_setname_np(fusefs->native_handle(),
-            threadName.str().substr(0, 14).c_str());
+    return Error::LTFSDM_OK;
 }
 
 FuseFS::~FuseFS()
 
 {
+    int rc = 0;
+
     try {
         MSG(LTFSDMS0079I, mountpt.c_str());
         MSG(LTFSDMF0007I);
-        fuse_opt_free_args(&fargs);
-        fuse_exit(openltfs);
-        fuse_unmount(mountpt.c_str(), openltfsch);
-        TRACE(Trace::always, mountpt, (bool) Connector::forcedTerminate);
-        if (Connector::forcedTerminate)
-            fusefs->detach();
-        else
-            fusefs->join();
-        TRACE(Trace::always, mountpt, (bool) Connector::forcedTerminate);
-        delete (fusefs);
-        free(ctx);
+        do {
+            if ( Connector::forcedTerminate )
+                rc = umount2(mountpt.c_str(), MNT_FORCE | MNT_DETACH);
+            else
+                rc = umount(mountpt.c_str());
+            if ( rc == -1 ) {
+                if ( errno == EBUSY ) {
+                    sleep(1);
+                    continue;
+                }
+                else {
+                    throw(EXCEPTION(errno, errno));
+                }
+            }
+            break;
+        } while(true);
         MSG(LTFSDMS0080I, mountpt.c_str());
+        thrd->join();
+        delete(thrd);
     } catch (...) {
         kill(getpid(), SIGTERM);
     }

@@ -33,6 +33,9 @@
 #include "src/common/errors/errors.h"
 #include "src/common/const/Const.h"
 
+#include "src/common/comm/ltfsdm.pb.h"
+#include "src/common/comm/LTFSDmComm.h"
+
 #include "src/connector/Connector.h"
 #include "FuseFS.h"
 
@@ -46,6 +49,8 @@ std::vector<FuseFS*> managedFss;
 std::unique_lock<std::mutex> *trecall_lock;
 }
 ;
+
+LTFSDmCommServer recrequest(Const::RECALL_SOCKET_FILE);
 
 Connector::Connector(bool cleanup_) :
         cleanup(cleanup_)
@@ -79,15 +84,18 @@ Connector::~Connector()
 void Connector::initTransRecalls()
 
 {
-    FuseConnector::trecall_lock = new std::unique_lock<std::mutex>(
-            FuseFS::trecall_submit.mtx);
+    try {
+        recrequest.listen();
+    } catch (const std::exception& e) {
+        TRACE(Trace::error, e.what());
+        MSG(LTFSDMS0090E);
+        throw(EXCEPTION(Const::UNSET));
+    }
 }
 
 void Connector::endTransRecalls()
 
 {
-    Connector::recallEventSystemStopped = true;
-    FuseConnector::trecall_lock->unlock();
 }
 
 Connector::rec_info_t Connector::getEvents()
@@ -95,11 +103,25 @@ Connector::rec_info_t Connector::getEvents()
 {
     Connector::rec_info_t recinfo;
 
-    FuseFS::no_rec_event = true;
-    FuseFS::trecall_submit.wait_cond.notify_all();
-    FuseFS::trecall_submit.cond.wait(*FuseConnector::trecall_lock);
-    recinfo = FuseFS::recinfo_share;
-    FuseFS::recinfo_share = (Connector::rec_info_t ) { 0, 0, 0, 0, 0, "" };
+    recrequest.accept();
+
+    try {
+        recrequest.recv();
+    } catch (const std::exception& e) {
+        std::cout << "error receiving recall information" << std::endl;
+    }
+
+    const LTFSDmProtocol::LTFSDmTransRecRequest request = recrequest.transrecrequest();
+
+    struct conn_info_t *conn_info = new struct conn_info_t;
+    conn_info->reqrequest = new LTFSDmCommServer(recrequest);
+
+    recinfo.conn_info = conn_info;
+    recinfo.toresident = request.toresident();
+    recinfo.fsid = request.fsid();
+    recinfo.igen = request.igen();
+    recinfo.ino = request.ino();
+    recinfo.filename = request.filename();
 
     return recinfo;
 }
@@ -107,24 +129,51 @@ Connector::rec_info_t Connector::getEvents()
 void Connector::respondRecallEvent(rec_info_t recinfo, bool success)
 
 {
-    conn_info_t *conn_info = recinfo.conn_info;
-    conn_info->trecall_reply.success = success;
+    LTFSDmProtocol::LTFSDmTransRecResp *trecresp = recinfo.conn_info->reqrequest->mutable_transrecresp();
+
+    trecresp->set_success(success);
+
+    try {
+        recinfo.conn_info->reqrequest->send();
+    } catch (const std::exception& e) {
+        TRACE(Trace::error, e.what());
+        MSG(LTFSDMS0007E);
+    }
 
     TRACE(Trace::always, recinfo.filename, success);
 
-    std::unique_lock<std::mutex> lock(conn_info->trecall_reply.mtx);
-    conn_info->trecall_reply.cond.notify_one();
+    delete(recinfo.conn_info->reqrequest);
+    delete(recinfo.conn_info);
 }
 
 void Connector::terminate()
 
 {
-    std::lock_guard<std::mutex> lock(FuseFS::trecall_submit.mtx);
-
-    FuseFS::recinfo_share = (Connector::rec_info_t ) { 0, 0, 0, 0, 0, "" };
-    FuseFS::trecall_submit.cond.notify_one();
-
     Connector::connectorTerminate = true;
+
+    LTFSDmCommClient commCommand(Const::RECALL_SOCKET_FILE);
+
+    try {
+        commCommand.connect();
+    } catch (const std::exception& e) {
+        std::cout << "error connecting, errno: " << errno << std::endl;
+        throw(EXCEPTION(errno, errno));
+    }
+
+    LTFSDmProtocol::LTFSDmTransRecRequest *recrequest = commCommand.mutable_transrecrequest();
+
+    recrequest->set_toresident(false);
+    recrequest->set_fsid(0);
+    recrequest->set_igen(0);
+    recrequest->set_ino(0);
+    recrequest->set_filename("");
+
+    try {
+        commCommand.send();
+    } catch (const std::exception& e) {
+        MSG(LTFSDMS0091E);
+        throw(EXCEPTION(errno, errno));
+    }
 }
 
 struct FuseHandle
