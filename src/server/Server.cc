@@ -139,11 +139,11 @@ void Server::initialize(bool dbUseMemory)
         throw(EXCEPTION(errno, errno));
     }
 
-    unlink(Const::CLIENT_SOCKET_FILE.c_str());
-    unlink(Const::RECALL_SOCKET_FILE.c_str());
-
     lockServer();
     writeKey();
+
+    unlink(Const::CLIENT_SOCKET_FILE.c_str());
+    unlink(Const::RECALL_SOCKET_FILE.c_str());
 
     try {
         DB.cleanup();
