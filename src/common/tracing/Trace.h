@@ -22,6 +22,7 @@ class Trace
 private:
     std::mutex mtx;
     std::ofstream tracefile;
+    std::string fileName;
 public:
     enum traceLevel
     {
@@ -59,7 +60,7 @@ public:
     }
     ~Trace();
 
-    void init();
+    void init(std::string extension = "");
     void rotate();
 
     void setTrclevel(traceLevel level);

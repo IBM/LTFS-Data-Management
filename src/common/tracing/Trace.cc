@@ -54,13 +54,18 @@ int Trace::getTrclevel()
     return trclevel;
 }
 
-void Trace::init()
+void Trace::init(std::string extension)
 
 {
+
+    fileName = Const::TRACE_FILE;
+    if ( extension.compare("") != 0 )
+        fileName.append(extension);
+
     tracefile.exceptions(std::ios::failbit | std::ios::badbit);
 
     try {
-        tracefile.open(Const::TRACE_FILE,
+        tracefile.open(fileName,
                 std::fstream::out | std::fstream::app);
     } catch (const std::exception& e) {
         MSG(LTFSDMX0001E);
@@ -75,16 +80,16 @@ void Trace::rotate()
     tracefile.close();
 
     if (std::string(__progname).compare("ltfsdmd") == 0) {
-        unlink((Const::TRACE_FILE + ".2").c_str());
-        rename((Const::TRACE_FILE + ".1").c_str(),
-                (Const::TRACE_FILE + ".2").c_str());
-        rename(Const::TRACE_FILE.c_str(), (Const::TRACE_FILE + ".1").c_str());
+        unlink((fileName + ".2").c_str());
+        rename((fileName + ".1").c_str(),
+                (fileName + ".2").c_str());
+        rename(fileName.c_str(), (fileName + ".1").c_str());
     }
 
     tracefile.exceptions(std::ios::failbit | std::ios::badbit);
 
     try {
-        tracefile.open(Const::TRACE_FILE,
+        tracefile.open(fileName,
                 std::fstream::out | std::fstream::app);
     } catch (const std::exception& e) {
         MSG(LTFSDMX0001E);

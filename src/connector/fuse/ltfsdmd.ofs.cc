@@ -1149,8 +1149,11 @@ FuseFS::FuseFS(std::string sourcedir, std::string mountpt, std::string fsName,
     stream << dirname(exepath) << "/" << Const::OVERLAY_FS_COMMAND
             << " -s " << sourcedir << " -m " << mountpt
             << " -f " << fsName << " -S " << starttime.tv_sec
-            << " -N " << starttime.tv_nsec << " 2>&1";
+            << " -N " << starttime.tv_nsec
+            << " -l " << messageObject.getLogType()
+            << " -t " << traceObject.getTrclevel()  << " 2>&1";
 
+    TRACE(Trace::always, stream.str());
     thrd = new std::thread(&FuseFS::execute, sourcedir, stream.str());
 }
 
@@ -1161,11 +1164,14 @@ int main(int argc, char **argv)
     std::string mountpt("");
     std::string fsName("");
     struct timespec starttime = {0,0};
-
+    Message::LogType logType;
+    Trace::traceLevel tl;
+    bool logTypeSet = false;
+    bool traceLevelSet = false;
     int opt;
     opterr = 0;
 
-    while ((opt = getopt(argc, argv, "s:m:f:S:N:")) != -1) {
+    while ((opt = getopt(argc, argv, "s:m:f:S:N:l:t:")) != -1) {
         switch (opt) {
             case 's':
                 if (sourcedir.compare("") != 0)
@@ -1192,16 +1198,37 @@ int main(int argc, char **argv)
                     return Error::LTFSDM_GENERAL_ERROR;
                 starttime.tv_nsec = std::stol(optarg, nullptr);
                 break;
+            case 'l':
+                if ( logTypeSet )
+                    return Error::LTFSDM_GENERAL_ERROR;
+                logType = static_cast<Message::LogType>(std::stoi(optarg, nullptr));
+                logTypeSet = true;
+                break;
+            case 't':
+                if ( traceLevelSet )
+                    return Error::LTFSDM_GENERAL_ERROR;
+                tl = static_cast<Trace::traceLevel>(std::stoi(optarg, nullptr));
+                traceLevelSet = true;
+                break;
             default:
-                MSG(LTFSDMF0031E);
                 return Error::LTFSDM_GENERAL_ERROR;
         }
     }
 
-    if ( optind != 11 ) {
-        MSG(LTFSDMF0031E);
+    if ( optind != 15 ) {
         return Error::LTFSDM_GENERAL_ERROR;
     }
+
+    std::string mp = mountpt;
+    std::replace( mp.begin(), mp.end(), '/', '.');
+    messageObject.init(mp);
+    messageObject.setLogType(logType);
+
+    MSG(LTFSDMF0031I);
+
+    traceObject.init(mp);
+    traceObject.setTrclevel(tl);
+
 
     struct fuse_chan *openltfsch = NULL;
     struct fuse *openltfs = NULL;

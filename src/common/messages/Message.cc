@@ -24,13 +24,17 @@ Message::~Message()
     }
 }
 
-void Message::init()
+void Message::init(std::string extension)
 
 {
+    fileName = Const::LOG_FILE;
+    if ( extension.compare("") != 0 )
+        fileName.append(extension);
+
     messagefile.exceptions(std::ofstream::failbit | std::ofstream::badbit);
 
     try {
-        messagefile.open(Const::LOG_FILE,
+        messagefile.open(fileName,
                 std::fstream::out | std::fstream::app);
     } catch (const std::exception& e) {
         std::cerr << messages[LTFSDMX0003E];

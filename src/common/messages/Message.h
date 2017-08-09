@@ -19,6 +19,7 @@ class Message
 private:
     std::mutex mtx;
     std::ofstream messagefile;
+    std::string fileName;
 public:
     enum LogType
     {
@@ -88,11 +89,16 @@ public:
     }
     ~Message();
 
-    void init();
+    void init(std::string extension = "");
 
     void setLogType(Message::LogType type)
     {
         logType = type;
+    }
+
+    Message::LogType getLogType()
+    {
+        return logType;
     }
 
     template<typename ... Args>
