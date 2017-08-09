@@ -1124,6 +1124,10 @@ void FuseFS::execute(std::string sourcedir, std::string command)
         MSG(LTFSDMF0023E, sourcedir, WEXITSTATUS(ret));
         kill(getpid(), SIGTERM);
     }
+    else if (Connector::connectorTerminate == false) {
+        MSG(LTFSDMF0030I, sourcedir);
+        kill(getpid(), SIGTERM);
+    }
 }
 
 FuseFS::FuseFS(std::string sourcedir, std::string mountpt, std::string fsName,
