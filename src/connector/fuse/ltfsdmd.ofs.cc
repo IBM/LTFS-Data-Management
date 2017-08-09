@@ -1147,9 +1147,9 @@ FuseFS::FuseFS(std::string sourcedir, std::string mountpt, std::string fsName,
     }
 
     stream << dirname(exepath) << "/" << Const::OVERLAY_FS_COMMAND
-            << " " << sourcedir << " " << mountpt
-            << " " << fsName << " " << starttime.tv_sec
-            << " " << starttime.tv_nsec << " >/dev/null 2>&1";
+            << " -s " << sourcedir << " -m " << mountpt
+            << " -f " << fsName << " -S " << starttime.tv_sec
+            << " -N " << starttime.tv_nsec << " 2>&1";
 
     thrd = new std::thread(&FuseFS::execute, sourcedir, stream.str());
 }
@@ -1157,10 +1157,52 @@ FuseFS::FuseFS(std::string sourcedir, std::string mountpt, std::string fsName,
 int main(int argc, char **argv)
 
 {
-    std::string sourcedir(argv[1]);
-    std::string mountpt(argv[2]);
-    std::string fsName(argv[3]);
-    struct timespec starttime = {std::stol(argv[4], nullptr), std::stol(argv[5], nullptr)};
+    std::string sourcedir("");
+    std::string mountpt("");
+    std::string fsName("");
+    struct timespec starttime = {0,0};
+
+    int opt;
+    opterr = 0;
+
+    while ((opt = getopt(argc, argv, "s:m:f:S:N:")) != -1) {
+        switch (opt) {
+            case 's':
+                if (sourcedir.compare("") != 0)
+                    return Error::LTFSDM_GENERAL_ERROR;
+                sourcedir = optarg;
+                break;
+            case 'm':
+                if (mountpt.compare("") != 0)
+                    return Error::LTFSDM_GENERAL_ERROR;
+                mountpt = optarg;
+                break;
+            case 'f':
+                if (fsName.compare("") != 0)
+                    return Error::LTFSDM_GENERAL_ERROR;
+                fsName = optarg;
+                break;
+            case 'S':
+                if ( starttime.tv_sec != 0)
+                    return Error::LTFSDM_GENERAL_ERROR;
+                starttime.tv_sec = std::stol(optarg, nullptr);
+                break;
+            case 'N':
+                if ( starttime.tv_nsec != 0)
+                    return Error::LTFSDM_GENERAL_ERROR;
+                starttime.tv_nsec = std::stol(optarg, nullptr);
+                break;
+            default:
+                MSG(LTFSDMF0031E);
+                return Error::LTFSDM_GENERAL_ERROR;
+        }
+    }
+
+    if ( optind != 11 ) {
+        MSG(LTFSDMF0031E);
+        return Error::LTFSDM_GENERAL_ERROR;
+    }
+
     struct fuse_chan *openltfsch = NULL;
     struct fuse *openltfs = NULL;
     const struct fuse_operations ltfsdm_operations = FuseFS::init_operations();
