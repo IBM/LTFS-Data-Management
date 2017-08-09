@@ -56,6 +56,7 @@ Connector::Connector(bool cleanup_) :
 
 {
     clock_gettime(CLOCK_REALTIME, &starttime);
+    FuseFS::ltfsdmKey = LTFSDM::getkey();
 }
 
 Connector::~Connector()
@@ -102,6 +103,7 @@ Connector::rec_info_t Connector::getEvents()
 
 {
     Connector::rec_info_t recinfo;
+    long key;
 
     recrequest.accept();
 
@@ -113,6 +115,13 @@ Connector::rec_info_t Connector::getEvents()
     }
 
     const LTFSDmProtocol::LTFSDmTransRecRequest request = recrequest.transrecrequest();
+
+    key = request.key();
+    if ( FuseFS::ltfsdmKey != key ) {
+        TRACE(Trace::error, (long) FuseFS::ltfsdmKey, key);
+        recinfo = (rec_info_t) {NULL, false, 0, 0, 0, ""};
+        return recinfo;
+    }
 
     struct conn_info_t *conn_info = new struct conn_info_t;
     conn_info->reqrequest = new LTFSDmCommServer(recrequest);
@@ -165,6 +174,7 @@ void Connector::terminate()
 
     LTFSDmProtocol::LTFSDmTransRecRequest *recrequest = commCommand.mutable_transrecrequest();
 
+    recrequest->set_key(FuseFS::ltfsdmKey);
     recrequest->set_toresident(false);
     recrequest->set_fsid(0);
     recrequest->set_igen(0);

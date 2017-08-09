@@ -5,6 +5,7 @@
 #include <string>
 #include <fstream>
 #include <list>
+#include <set>
 #include <sstream>
 #include <exception>
 
@@ -12,6 +13,7 @@
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
 #include "src/common/errors/errors.h"
+#include "src/common/util/util.h"
 
 #include "src/common/comm/ltfsdm.pb.h"
 #include "src/common/comm/LTFSDmComm.h"
@@ -129,22 +131,7 @@ void OpenLTFSCommand::getRequestNumber()
 void OpenLTFSCommand::connect()
 
 {
-    std::ifstream keyFile;
-    std::string line;
-
-    keyFile.exceptions(std::ofstream::failbit | std::ofstream::badbit);
-
-    try {
-        keyFile.open(Const::KEY_FILE);
-        std::getline(keyFile, line);
-        key = std::stol(line);
-    } catch (const std::exception& e) {
-        TRACE(Trace::error, key);
-        MSG(LTFSDMC0025E);
-        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
-    }
-
-    keyFile.close();
+    key = LTFSDM::getkey();
 
     try {
         commCommand.connect();

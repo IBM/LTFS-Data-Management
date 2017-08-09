@@ -89,3 +89,27 @@ std::set<std::string> LTFSDM::getFs()
 
     return mountList;
 }
+
+long LTFSDM::getkey()
+
+{
+    std::ifstream keyFile;
+    std::string line;
+    long key = Const::UNSET;
+
+    keyFile.exceptions(std::ofstream::failbit | std::ofstream::badbit);
+
+    try {
+        keyFile.open(Const::KEY_FILE);
+        std::getline(keyFile, line);
+        key = std::stol(line);
+    } catch (const std::exception& e) {
+        TRACE(Trace::error, key);
+        MSG(LTFSDMX0030E);
+        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+    }
+
+    keyFile.close();
+
+    return key;
+}

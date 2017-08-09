@@ -55,6 +55,7 @@ Connector::rec_info_t FuseFS::recinfo_share = (Connector::rec_info_t ) { 0, 0,
                 0, 0, 0, "" };
 std::atomic<fuid_t> FuseFS::trecall_fuid((fuid_t ) { 0, 0, 0 });
 std::atomic<bool> FuseFS::no_rec_event(false);
+std::atomic<long> FuseFS::ltfsdmKey(Const::UNSET);
 
 FuseFS::mig_info FuseFS::genMigInfo(const char *path,
         FuseFS::mig_info::state_num state)
@@ -310,6 +311,7 @@ int FuseFS::recall_file(FuseFS::ltfsdm_file_info *linfo, bool toresident)
 
     LTFSDmProtocol::LTFSDmTransRecRequest *recrequest = recRequest.mutable_transrecrequest();
 
+    recrequest->set_key(FuseFS::ltfsdmKey);
     recrequest->set_toresident(toresident);
     recrequest->set_fsid(statbuf.st_dev);
     recrequest->set_igen(igen);
@@ -1167,6 +1169,9 @@ int main(int argc, char **argv)
     struct fuse_args fargs;
 
     std::stringstream options;
+
+    FuseFS::ltfsdmKey = LTFSDM::getkey();
+
     fargs = FUSE_ARGS_INIT(0, NULL);
 
     ctx = (openltfs_ctx *) malloc(sizeof(struct openltfs_ctx));

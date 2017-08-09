@@ -121,6 +121,7 @@ public:
     static Connector::rec_info_t recinfo_share;
     static std::atomic<fuid_t> trecall_fuid;
     static std::atomic<bool> no_rec_event;
+    static std::atomic<long> ltfsdmKey;
 
     static FuseFS::mig_info genMigInfo(const char *path,
             FuseFS::mig_info::state_num state);
