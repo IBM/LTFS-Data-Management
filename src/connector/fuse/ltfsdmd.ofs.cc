@@ -42,7 +42,7 @@
 #include "src/common/comm/LTFSDmComm.h"
 
 #include "src/connector/Connector.h"
-#include "FuseFS.h"
+#include "ltfsdmd.ofs.h"
 
 struct openltfs_ctx
 {
@@ -304,7 +304,7 @@ int FuseFS::recall_file(FuseFS::ltfsdm_file_info *linfo, bool toresident)
     try {
         recRequest.connect();
     } catch (const std::exception& e) {
-        std::cout << "error connecting, errno: " << errno << std::endl;
+        MSG(LTFSDMF0021E, e.what(), errno);
         return -1;
     }
 
@@ -319,14 +319,14 @@ int FuseFS::recall_file(FuseFS::ltfsdm_file_info *linfo, bool toresident)
     try {
         recRequest.send();
     } catch (const std::exception& e) {
-        MSG(LTFSDMS0091E);
+        MSG(LTFSDMF0024E);
         return -1;
     }
 
     try {
         recRequest.recv();
     } catch (const std::exception& e) {
-        std::cout << "error gettting response, errno: " << errno << std::endl;
+        MSG(LTFSDMF0022E, e.what(), errno);
         return -1;
     }
 
@@ -1110,18 +1110,19 @@ struct fuse_operations FuseFS::init_operations()
     return ops;
 }
 
-void FuseFS::execute(std::string command)
+void FuseFS::execute(std::string sourcedir, std::string command)
 
 {
     int ret;
 
-    pthread_setname_np(pthread_self(), "FuseFS");
+    pthread_setname_np(pthread_self(), "ltfsdmd.ofs");
 
     ret = system(command.c_str());
 
     if (!WIFEXITED(ret) || WEXITSTATUS(ret)) {
         TRACE(Trace::error, ret, WIFEXITED(ret), WEXITSTATUS(ret));
-        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+        MSG(LTFSDMF0023E, sourcedir, WEXITSTATUS(ret));
+        kill(getpid(), SIGTERM);
     }
 }
 
@@ -1131,12 +1132,20 @@ FuseFS::FuseFS(std::string sourcedir, std::string mountpt, std::string fsName,
 
 {
     std::stringstream stream;
+    char exepath[PATH_MAX];
+    char *exelnk = (char*) "/proc/self/exe";
 
-    stream << "/root/OpenLTFS/bin/FuseFS " << sourcedir << " " << mountpt
+    if (readlink(exelnk, exepath, PATH_MAX) == -1) {
+        MSG(LTFSDMC0021E);
+        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+    }
+
+    stream << dirname(exepath) << "/" << Const::OVERLAY_FS_COMMAND
+            << " " << sourcedir << " " << mountpt
             << " " << fsName << " " << starttime.tv_sec
-            << " " << starttime.tv_nsec << " 2>&1";
+            << " " << starttime.tv_nsec << " >/dev/null 2>&1";
 
-    thrd = new std::thread(&FuseFS::execute, stream.str());
+    thrd = new std::thread(&FuseFS::execute, sourcedir, stream.str());
 }
 
 int main(int argc, char **argv)
@@ -1211,7 +1220,7 @@ FuseFS::~FuseFS()
     int rc = 0;
 
     try {
-        MSG(LTFSDMS0079I, mountpt.c_str());
+        MSG(LTFSDMF0028I, mountpt.c_str());
         MSG(LTFSDMF0007I);
         do {
             if ( Connector::forcedTerminate )
@@ -1229,7 +1238,7 @@ FuseFS::~FuseFS()
             }
             break;
         } while(true);
-        MSG(LTFSDMS0080I, mountpt.c_str());
+        MSG(LTFSDMF0029I, mountpt.c_str());
         thrd->join();
         delete(thrd);
     } catch (...) {

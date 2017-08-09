@@ -12,7 +12,6 @@
 #include <errno.h>
 
 #include <fuse.h>
-
 #include <string>
 #include <sstream>
 #include <atomic>
@@ -37,7 +36,7 @@
 #include "src/common/comm/LTFSDmComm.h"
 
 #include "src/connector/Connector.h"
-#include "FuseFS.h"
+#include <src/connector/fuse/ltfsdmd.ofs.h>
 
 std::atomic<bool> Connector::connectorTerminate(false);
 std::atomic<bool> Connector::forcedTerminate(false);
@@ -66,7 +65,7 @@ Connector::~Connector()
         std::string mountpt;
 
         if (cleanup)
-            MSG(LTFSDMS0077I);
+            MSG(LTFSDMF0025I);
 
         for (auto const& fn : FuseConnector::managedFss) {
             mountpt = fn->getMountPoint();
@@ -75,7 +74,7 @@ Connector::~Connector()
                 MSG(LTFSDMF0008W, mountpt.c_str());
         }
         if (cleanup)
-            MSG(LTFSDMS0078I);
+            MSG(LTFSDMF0027I);
     } catch (...) {
         kill(getpid(), SIGTERM);
     }
@@ -88,7 +87,7 @@ void Connector::initTransRecalls()
         recrequest.listen();
     } catch (const std::exception& e) {
         TRACE(Trace::error, e.what());
-        MSG(LTFSDMS0090E);
+        MSG(LTFSDMF0026E);
         throw(EXCEPTION(Const::UNSET));
     }
 }
@@ -96,6 +95,7 @@ void Connector::initTransRecalls()
 void Connector::endTransRecalls()
 
 {
+    recrequest.closeRef();
 }
 
 Connector::rec_info_t Connector::getEvents()
@@ -108,7 +108,8 @@ Connector::rec_info_t Connector::getEvents()
     try {
         recrequest.recv();
     } catch (const std::exception& e) {
-        std::cout << "error receiving recall information" << std::endl;
+        MSG(LTFSDMF0019E, e.what(), errno);
+        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
     }
 
     const LTFSDmProtocol::LTFSDmTransRecRequest request = recrequest.transrecrequest();
@@ -142,6 +143,8 @@ void Connector::respondRecallEvent(rec_info_t recinfo, bool success)
 
     TRACE(Trace::always, recinfo.filename, success);
 
+    recinfo.conn_info->reqrequest->closeAcc();
+
     delete(recinfo.conn_info->reqrequest);
     delete(recinfo.conn_info);
 }
@@ -156,8 +159,8 @@ void Connector::terminate()
     try {
         commCommand.connect();
     } catch (const std::exception& e) {
-        std::cout << "error connecting, errno: " << errno << std::endl;
-        throw(EXCEPTION(errno, errno));
+        MSG(LTFSDMF0020E, e.what(), errno);
+        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
     }
 
     LTFSDmProtocol::LTFSDmTransRecRequest *recrequest = commCommand.mutable_transrecrequest();
@@ -171,7 +174,7 @@ void Connector::terminate()
     try {
         commCommand.send();
     } catch (const std::exception& e) {
-        MSG(LTFSDMS0091E);
+        MSG(LTFSDMF0024E);
         throw(EXCEPTION(errno, errno));
     }
 }

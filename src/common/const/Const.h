@@ -3,6 +3,7 @@
 namespace Const {
 const int UNSET = -1;
 const std::string SERVER_COMMAND = "ltfsdmd";
+const std::string OVERLAY_FS_COMMAND = "ltfsdmd.ofs";
 const int OUTPUT_LINE_SIZE = 1024;
 const std::string LTFSDM_TMP_DIR = "/var/run/ltfsdm";
 const std::string DELIM = "/";

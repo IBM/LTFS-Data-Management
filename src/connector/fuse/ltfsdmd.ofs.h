@@ -115,7 +115,7 @@ private:
     static int ltfsdm_removexattr(const char *path, const char *name);
     static void *ltfsdm_init(struct fuse_conn_info *conn);
 
-    static void execute(std::string command);
+    static void execute(std::string sourcedir, std::string command);
 
 public:
     static Connector::rec_info_t recinfo_share;
