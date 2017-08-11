@@ -4,10 +4,12 @@
 
 #include <iostream>
 #include <fstream>
+#include <set>
 
 #include "src/common/const/Const.h"
 #include "src/common/messages/Message.h"
 #include "src/common/errors/errors.h"
+#include "src/common/util/util.h"
 
 #include "Trace.h"
 
@@ -71,6 +73,8 @@ void Trace::init(std::string extension)
         MSG(LTFSDMX0001E);
         exit((int) Error::LTFSDM_GENERAL_ERROR);
     }
+
+    LTFSDM::setCloExec(fileName);
 }
 
 void Trace::rotate()
@@ -95,4 +99,6 @@ void Trace::rotate()
         MSG(LTFSDMX0001E);
         exit((int) Error::LTFSDM_GENERAL_ERROR);
     }
+
+    LTFSDM::setCloExec(fileName);
 }

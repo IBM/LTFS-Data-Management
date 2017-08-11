@@ -4,10 +4,13 @@
 
 #include <iostream>
 #include <fstream>
+#include <vector>
+#include <set>
 #include <mutex>
 
 #include "src/common/const/Const.h"
 #include "src/common/errors/errors.h"
+#include "src/common/util/util.h"
 
 #include "Message.h"
 
@@ -40,6 +43,8 @@ void Message::init(std::string extension)
         std::cerr << messages[LTFSDMX0003E];
         exit((int) Error::LTFSDM_GENERAL_ERROR);
     }
+
+    LTFSDM::setCloExec(fileName);
 }
 
 void Message::writeOut(std::string msgstr)

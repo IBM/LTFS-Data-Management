@@ -1171,6 +1171,11 @@ int main(int argc, char **argv)
     int opt;
     opterr = 0;
 
+    const struct fuse_operations ltfsdm_operations = FuseFS::init_operations();
+    struct openltfs_ctx *ctx;
+    struct fuse_args fargs;
+    std::stringstream options;
+
     while ((opt = getopt(argc, argv, "s:m:f:S:N:l:t:")) != -1) {
         switch (opt) {
             case 's':
@@ -1229,19 +1234,7 @@ int main(int argc, char **argv)
     traceObject.init(mp);
     traceObject.setTrclevel(tl);
 
-
-    struct fuse_chan *openltfsch = NULL;
-    struct fuse *openltfs = NULL;
-    const struct fuse_operations ltfsdm_operations = FuseFS::init_operations();
-
-    struct openltfs_ctx *ctx;
-    struct fuse_args fargs;
-
-    std::stringstream options;
-
     FuseFS::ltfsdmKey = LTFSDM::getkey();
-
-    fargs = FUSE_ARGS_INIT(0, NULL);
 
     ctx = (openltfs_ctx *) malloc(sizeof(struct openltfs_ctx));
     memset(ctx, 0, sizeof(struct openltfs_ctx));
@@ -1251,45 +1244,20 @@ int main(int argc, char **argv)
 
     MSG(LTFSDMF0001I, ctx->sourcedir, mountpt);
 
+    fargs = FUSE_ARGS_INIT(0, NULL);
+    fuse_opt_add_arg(&fargs, argv[0]);
     fuse_opt_add_arg(&fargs, mountpt.c_str());
-
     options << "-ouse_ino,fsname=OpenLTFS:" << fsName
             << ",nopath,default_permissions,allow_other,max_background="
             << Const::MAX_FUSE_BACKGROUND;
-
     fuse_opt_add_arg(&fargs, options.str().c_str());
+    fuse_opt_add_arg(&fargs, "-f");
     if (getppid() != 1 && traceObject.getTrclevel() == Trace::full)
         fuse_opt_add_arg(&fargs, "-d");
-    fuse_opt_parse(&fargs, NULL, NULL, NULL);
-
-    if (fuse_parse_cmdline(&fargs, NULL, NULL, NULL) != 0) {
-        MSG(LTFSDMF0004E, errno);
-        return Error::LTFSDM_GENERAL_ERROR;
-    }
 
     MSG(LTFSDMF0002I, mountpt.c_str());
 
-    openltfsch = fuse_mount(mountpt.c_str(), &fargs);
-
-    if (openltfsch == NULL) {
-        MSG(LTFSDMF0005E, mountpt.c_str());
-        return Error::LTFSDM_GENERAL_ERROR;
-    }
-
-    MSG(LTFSDMF0003I);
-
-    openltfs = fuse_new(openltfsch, &fargs, &ltfsdm_operations,
-            sizeof(ltfsdm_operations), (void *) ctx);
-
-    if (openltfs == NULL) {
-        MSG(LTFSDMF0006E);
-        return Error::LTFSDM_GENERAL_ERROR;
-    }
-
-    if ( fuse_loop_mt(openltfs) == -1 )
-        return Error::LTFSDM_GENERAL_ERROR;
-
-    return Error::LTFSDM_OK;
+    return fuse_main(fargs.argc, fargs.argv, &ltfsdm_operations, (void *) ctx);
 }
 
 FuseFS::~FuseFS()
@@ -1311,7 +1279,7 @@ FuseFS::~FuseFS()
                     continue;
                 }
                 else {
-                    throw(EXCEPTION(errno, errno));
+                    umount2(mountpt.c_str(), MNT_FORCE | MNT_DETACH);
                 }
             }
             break;

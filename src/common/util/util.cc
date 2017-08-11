@@ -2,6 +2,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <dirent.h>
 #include <mntent.h>
 #include <sys/resource.h>
 
@@ -112,4 +114,42 @@ long LTFSDM::getkey()
     keyFile.close();
 
     return key;
+}
+
+void LTFSDM::setCloExec(std::string fileName)
+
+{
+    std::stringstream fddir;
+    DIR *dir;
+    struct dirent *entry;
+    char link[PATH_MAX];
+    int fd;
+    int flags;
+    char *cfileName = canonicalize_file_name(fileName.c_str());
+
+    if ( cfileName == NULL )
+        return;
+
+    fddir << "/proc/" << getpid() << "/fd";
+
+    dir = opendir(fddir.str().c_str());
+
+    if ( dir == NULL )
+        return;
+
+    while ( (entry = readdir(dir)) ) {
+        memset(link, 0, PATH_MAX);
+        if  (readlink(fddir.str().append("/").append(entry->d_name).c_str(), link, PATH_MAX-1) == -1)
+            continue;
+
+        if ( std::string(cfileName).compare(link) == 0 ) {
+           fd = atoi(entry->d_name);
+           flags = fcntl(fd, F_GETFD);
+           flags |= FD_CLOEXEC;
+           fcntl(fd, F_SETFD, flags);
+           break;
+        }
+    }
+
+    closedir(dir);
 }
