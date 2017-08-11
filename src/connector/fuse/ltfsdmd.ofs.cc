@@ -295,7 +295,7 @@ int FuseFS::recall_file(FuseFS::ltfsdm_file_info *linfo, bool toresident)
         return (-1 * errno);
     }
 
-    TRACE(Trace::always, linfo->sourcepath, statbuf.st_ino, toresident);
+    TRACE(Trace::full, linfo->sourcepath, statbuf.st_ino, toresident);
 
     if (Connector::recallEventSystemStopped == true)
         return -1;
