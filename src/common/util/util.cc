@@ -2,6 +2,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <dirent.h>
 #include <mntent.h>
 #include <sys/resource.h>
 
@@ -88,4 +90,28 @@ std::set<std::string> LTFSDM::getFs()
     free(buffer);
 
     return mountList;
+}
+
+long LTFSDM::getkey()
+
+{
+    std::ifstream keyFile;
+    std::string line;
+    long key = Const::UNSET;
+
+    keyFile.exceptions(std::ofstream::failbit | std::ofstream::badbit);
+
+    try {
+        keyFile.open(Const::KEY_FILE);
+        std::getline(keyFile, line);
+        key = std::stol(line);
+    } catch (const std::exception& e) {
+        TRACE(Trace::error, key);
+        MSG(LTFSDMX0030E);
+        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+    }
+
+    keyFile.close();
+
+    return key;
 }

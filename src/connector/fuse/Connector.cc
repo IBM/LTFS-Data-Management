@@ -12,7 +12,6 @@
 #include <errno.h>
 
 #include <fuse.h>
-
 #include <string>
 #include <sstream>
 #include <atomic>
@@ -33,8 +32,11 @@
 #include "src/common/errors/errors.h"
 #include "src/common/const/Const.h"
 
+#include "src/common/comm/ltfsdm.pb.h"
+#include "src/common/comm/LTFSDmComm.h"
+
 #include "src/connector/Connector.h"
-#include "FuseFS.h"
+#include <src/connector/fuse/ltfsdmd.ofs.h>
 
 std::atomic<bool> Connector::connectorTerminate(false);
 std::atomic<bool> Connector::forcedTerminate(false);
@@ -47,11 +49,14 @@ std::unique_lock<std::mutex> *trecall_lock;
 }
 ;
 
+LTFSDmCommServer recrequest(Const::RECALL_SOCKET_FILE);
+
 Connector::Connector(bool cleanup_) :
         cleanup(cleanup_)
 
 {
     clock_gettime(CLOCK_REALTIME, &starttime);
+    FuseFS::ltfsdmKey = LTFSDM::getkey();
 }
 
 Connector::~Connector()
@@ -61,7 +66,7 @@ Connector::~Connector()
         std::string mountpt;
 
         if (cleanup)
-            MSG(LTFSDMS0077I);
+            MSG(LTFSDMF0025I);
 
         for (auto const& fn : FuseConnector::managedFss) {
             mountpt = fn->getMountPoint();
@@ -70,7 +75,7 @@ Connector::~Connector()
                 MSG(LTFSDMF0008W, mountpt.c_str());
         }
         if (cleanup)
-            MSG(LTFSDMS0078I);
+            MSG(LTFSDMF0027I);
     } catch (...) {
         kill(getpid(), SIGTERM);
     }
@@ -79,27 +84,54 @@ Connector::~Connector()
 void Connector::initTransRecalls()
 
 {
-    FuseConnector::trecall_lock = new std::unique_lock<std::mutex>(
-            FuseFS::trecall_submit.mtx);
+    try {
+        recrequest.listen();
+    } catch (const std::exception& e) {
+        TRACE(Trace::error, e.what());
+        MSG(LTFSDMF0026E);
+        throw(EXCEPTION(Const::UNSET));
+    }
 }
 
 void Connector::endTransRecalls()
 
 {
-    Connector::recallEventSystemStopped = true;
-    FuseConnector::trecall_lock->unlock();
+    recrequest.closeRef();
 }
 
 Connector::rec_info_t Connector::getEvents()
 
 {
     Connector::rec_info_t recinfo;
+    long key;
 
-    FuseFS::no_rec_event = true;
-    FuseFS::trecall_submit.wait_cond.notify_all();
-    FuseFS::trecall_submit.cond.wait(*FuseConnector::trecall_lock);
-    recinfo = FuseFS::recinfo_share;
-    FuseFS::recinfo_share = (Connector::rec_info_t ) { 0, 0, 0, 0, 0, "" };
+    recrequest.accept();
+
+    try {
+        recrequest.recv();
+    } catch (const std::exception& e) {
+        MSG(LTFSDMF0019E, e.what(), errno);
+        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+    }
+
+    const LTFSDmProtocol::LTFSDmTransRecRequest request = recrequest.transrecrequest();
+
+    key = request.key();
+    if ( FuseFS::ltfsdmKey != key ) {
+        TRACE(Trace::error, (long) FuseFS::ltfsdmKey, key);
+        recinfo = (rec_info_t) {NULL, false, 0, 0, 0, ""};
+        return recinfo;
+    }
+
+    struct conn_info_t *conn_info = new struct conn_info_t;
+    conn_info->reqrequest = new LTFSDmCommServer(recrequest);
+
+    recinfo.conn_info = conn_info;
+    recinfo.toresident = request.toresident();
+    recinfo.fsid = request.fsid();
+    recinfo.igen = request.igen();
+    recinfo.ino = request.ino();
+    recinfo.filename = request.filename();
 
     return recinfo;
 }
@@ -107,24 +139,54 @@ Connector::rec_info_t Connector::getEvents()
 void Connector::respondRecallEvent(rec_info_t recinfo, bool success)
 
 {
-    conn_info_t *conn_info = recinfo.conn_info;
-    conn_info->trecall_reply.success = success;
+    LTFSDmProtocol::LTFSDmTransRecResp *trecresp = recinfo.conn_info->reqrequest->mutable_transrecresp();
+
+    trecresp->set_success(success);
+
+    try {
+        recinfo.conn_info->reqrequest->send();
+    } catch (const std::exception& e) {
+        TRACE(Trace::error, e.what());
+        MSG(LTFSDMS0007E);
+    }
 
     TRACE(Trace::always, recinfo.filename, success);
 
-    std::unique_lock<std::mutex> lock(conn_info->trecall_reply.mtx);
-    conn_info->trecall_reply.cond.notify_one();
+    recinfo.conn_info->reqrequest->closeAcc();
+
+    delete(recinfo.conn_info->reqrequest);
+    delete(recinfo.conn_info);
 }
 
 void Connector::terminate()
 
 {
-    std::lock_guard<std::mutex> lock(FuseFS::trecall_submit.mtx);
-
-    FuseFS::recinfo_share = (Connector::rec_info_t ) { 0, 0, 0, 0, 0, "" };
-    FuseFS::trecall_submit.cond.notify_one();
-
     Connector::connectorTerminate = true;
+
+    LTFSDmCommClient commCommand(Const::RECALL_SOCKET_FILE);
+
+    try {
+        commCommand.connect();
+    } catch (const std::exception& e) {
+        MSG(LTFSDMF0020E, e.what(), errno);
+        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+    }
+
+    LTFSDmProtocol::LTFSDmTransRecRequest *recrequest = commCommand.mutable_transrecrequest();
+
+    recrequest->set_key(FuseFS::ltfsdmKey);
+    recrequest->set_toresident(false);
+    recrequest->set_fsid(0);
+    recrequest->set_igen(0);
+    recrequest->set_ino(0);
+    recrequest->set_filename("");
+
+    try {
+        commCommand.send();
+    } catch (const std::exception& e) {
+        MSG(LTFSDMF0024E);
+        throw(EXCEPTION(errno, errno));
+    }
 }
 
 struct FuseHandle

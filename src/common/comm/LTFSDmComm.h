@@ -4,8 +4,11 @@ extern std::atomic<bool> exitClient;
 
 class LTFSDmComm: public LTFSDmProtocol::Command
 {
+protected:
+    std::string sockFile;
 public:
-    LTFSDmComm()
+    LTFSDmComm(const std::string _sockFile) :
+        sockFile(_sockFile)
     {
     }
     ~LTFSDmComm()
@@ -20,8 +23,10 @@ class LTFSDmCommClient: public LTFSDmComm
 private:
     std::atomic<int> socRefFd;
 public:
-    LTFSDmCommClient() :
-            socRefFd(Const::UNSET)
+    LTFSDmCommClient(const std::string _sockFile) :
+        LTFSDmComm(_sockFile),
+        socRefFd(Const::UNSET)
+
     {
     }
     ~LTFSDmCommClient()
@@ -46,12 +51,14 @@ private:
     std::atomic<int> socRefFd;
     std::atomic<int> socAccFd;
 public:
-    LTFSDmCommServer() :
-            socRefFd(Const::UNSET), socAccFd(Const::UNSET)
+    LTFSDmCommServer(const std::string _sockFile) :
+        LTFSDmComm(_sockFile), socRefFd(Const::UNSET), socAccFd(Const::UNSET)
     {
     }
     LTFSDmCommServer(const LTFSDmCommServer& command) :
-            socRefFd((int) command.socRefFd), socAccFd((int) command.socAccFd)
+        LTFSDmComm(command.sockFile), socRefFd((int) command.socRefFd),
+        socAccFd((int) command.socAccFd)
+
     {
     }
     ~LTFSDmCommServer()

@@ -185,7 +185,7 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId,
 
         TRACE(Trace::always, mig_info.fileName);
 
-        tapeName = Scheduler::getTapeName(mig_info.fileName, tapeId);
+        tapeName = Scheduler::getTapeName(&source, tapeId);
 
         fd = open(tapeName.c_str(), O_RDWR | O_CREAT);
 

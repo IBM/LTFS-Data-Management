@@ -8,7 +8,7 @@ protected:
                     Const::UNSET), fileList(""), command(command_), optionStr(
                     optionStr_), fsName(""), mountPoint(""), startTime(
                     time(NULL)), poolNames(""), tapeList( { }), forced(false), key(
-                    Const::UNSET)
+                    Const::UNSET), commCommand(Const::CLIENT_SOCKET_FILE)
     {
     }
     bool preMigrate;

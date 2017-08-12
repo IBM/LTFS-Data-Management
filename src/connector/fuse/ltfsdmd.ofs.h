@@ -44,13 +44,6 @@ public:
     };
 
 private:
-    struct openltfs_ctx
-    {
-        char sourcedir[PATH_MAX];
-        char mountpoint[PATH_MAX];
-        struct timespec starttime;
-    };
-
     struct ltfsdm_file_info
     {
         int fd;
@@ -66,20 +59,14 @@ private:
     };
 
     static thread_local std::string lsourcedir;
-    std::thread *fusefs;
-    struct FuseFS::openltfs_ctx *ctx;
     std::string mountpt;
-    struct fuse_chan *openltfsch = NULL;
-    struct fuse *openltfs = NULL;
-    struct fuse_args fargs;
-    static const struct fuse_operations ltfsdm_operations;
+    std::thread *thrd;
 
     static bool needsRecovery(FuseFS::mig_info miginfo);
     static void recoverState(const char *path,
             FuseFS::mig_info::state_num state);
     static std::string source_path(const char *path);
     static int recall_file(FuseFS::ltfsdm_file_info *linfo, bool toresident);
-    static struct fuse_operations init_operations();
     static FuseFS::mig_info getMigInfoAt(int dirfd, const char *path);
 
     // FUSE call backs
@@ -128,23 +115,20 @@ private:
     static int ltfsdm_removexattr(const char *path, const char *name);
     static void *ltfsdm_init(struct fuse_conn_info *conn);
 
+    static void execute(std::string sourcedir, std::string command);
+
 public:
-    static struct serialize
-    {
-        std::mutex mtx;
-        std::condition_variable cond;
-        std::condition_variable wait_cond;
-        bool success;
-    } trecall_submit;
     static Connector::rec_info_t recinfo_share;
     static std::atomic<fuid_t> trecall_fuid;
     static std::atomic<bool> no_rec_event;
+    static std::atomic<long> ltfsdmKey;
 
     static FuseFS::mig_info genMigInfo(const char *path,
             FuseFS::mig_info::state_num state);
     static void setMigInfo(const char *path, FuseFS::mig_info::state_num state);
     static int remMigInfo(const char *path);
     static FuseFS::mig_info getMigInfo(const char *path);
+    static struct fuse_operations init_operations();
     std::string getMountPoint()
     {
         return mountpt;
@@ -156,5 +140,5 @@ public:
 
 struct conn_info_t
 {
-    FuseFS::serialize trecall_reply;
+    LTFSDmCommServer *reqrequest;
 };

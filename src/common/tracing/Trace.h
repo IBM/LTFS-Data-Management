@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdio.h>
 #include <time.h>
 #include <unistd.h>
 #include <string.h>
@@ -7,21 +8,21 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/syscall.h>
-#include <string>
-#include <iostream>
 #include <fstream>
 #include <iomanip>
 #include <atomic>
 #include <mutex>
 
 #include "src/common/messages/Message.h"
+#include "src/common/exception/OpenLTFSException.h"
 #include "src/common/errors/errors.h"
 
 class Trace
 {
 private:
     std::mutex mtx;
-    std::ofstream tracefile;
+    int fd;
+    std::string fileName;
 public:
     enum traceLevel
     {
@@ -30,36 +31,34 @@ public:
 private:
     std::atomic<Trace::traceLevel> trclevel;
 
-    std::string processParms()
+    void processParms(std::stringstream *stream)
     {
-        return "";
+        *stream << "";
     }
 
     template<typename T>
-    void processParms(std::string varlist, T s)
+    void processParms(std::stringstream *stream, std::string varlist, T s)
     {
-        tracefile
-                << varlist.substr(varlist.find_first_not_of(" "),
-                        varlist.size()) << "(" << s << ")";
+        *stream << varlist.substr(varlist.find_first_not_of(" "),
+                varlist.size()) << "(" << s << ")";
     }
 
     template<typename T, typename ... Args>
-    void processParms(std::string varlist, T s, Args ... args)
+    void processParms(std::stringstream *stream, std::string varlist, T s, Args ... args)
     {
-        tracefile
-                << varlist.substr(varlist.find_first_not_of(" "),
-                        varlist.find(',')) << "(" << s << "), ";
-        processParms(varlist.substr(varlist.find(',') + 1, varlist.size()),
+        *stream << varlist.substr(varlist.find_first_not_of(" "),
+                varlist.find(',')) << "(" << s << "), ";
+        processParms(stream, varlist.substr(varlist.find(',') + 1, varlist.size()),
                 args ...);
     }
 public:
     Trace() :
-            trclevel(error)
+            fd(Const::UNSET), fileName(Const::TRACE_FILE), trclevel(error)
     {
     }
     ~Trace();
 
-    void init();
+    void init(std::string extension = "");
     void rotate();
 
     void setTrclevel(traceLevel level);
@@ -72,34 +71,30 @@ public:
     {
         struct timeval curtime;
         struct tm tmval;
-        ;
+        std::stringstream stream;
         char curctime[26];
 
         if (getTrclevel() > none && tl <= getTrclevel()) {
-            gettimeofday(&curtime, NULL);
-            localtime_r(&(curtime.tv_sec), &tmval);
-            strftime(curctime, sizeof(curctime) - 1, "%Y-%m-%dT%H:%M:%S",
-                    &tmval);
-
             try {
-                mtx.lock();
-
-                if (tracefile.tellp() > 100 * 1024 * 1024)
-                    rotate();
-
-                tracefile << curctime << "." << std::setfill('0')
+                gettimeofday(&curtime, NULL);
+                localtime_r(&(curtime.tv_sec), &tmval);
+                strftime(curctime, sizeof(curctime) - 1, "%Y-%m-%dT%H:%M:%S",
+                        &tmval);
+                stream << curctime << "." << std::setfill('0')
                         << std::setw(6) << curtime.tv_usec << ":["
                         << std::setfill('0') << std::setw(6) << getpid() << ":"
                         << std::setfill('0') << std::setw(6)
                         << syscall(SYS_gettid) << "]:" << std::setfill('-')
                         << std::setw(20) << basename((char *) filename) << "("
                         << std::setfill('0') << std::setw(4) << linenr << "): ";
-                processParms(varlist, args ...);
-                tracefile << std::endl;
-                tracefile.flush();
-                mtx.unlock();
+                processParms(&stream, varlist, args ...);
+                stream << std::endl;
+
+                rotate();
+                if ( write(fd,stream.str().c_str(),stream.str().size() )
+                            != stream.str().size() )
+                        throw(EXCEPTION(errno));
             } catch (const std::exception& e) {
-                mtx.unlock();
                 MSG(LTFSDMX0002E);
                 exit((int) Error::LTFSDM_GENERAL_ERROR);
             }

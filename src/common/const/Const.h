@@ -3,13 +3,15 @@
 namespace Const {
 const int UNSET = -1;
 const std::string SERVER_COMMAND = "ltfsdmd";
+const std::string OVERLAY_FS_COMMAND = "ltfsdmd.ofs";
 const int OUTPUT_LINE_SIZE = 1024;
 const std::string LTFSDM_TMP_DIR = "/var/run/ltfsdm";
 const std::string DELIM = "/";
 const std::string SERVER_LOCK_FILE = LTFSDM_TMP_DIR + DELIM + SERVER_COMMAND + ".lock";
 const std::string TRACE_FILE = LTFSDM_TMP_DIR + DELIM + "OpenLTFS.trc";
 const std::string LOG_FILE = LTFSDM_TMP_DIR + DELIM + "OpenLTFS.log";
-const std::string SOCKET_FILE = LTFSDM_TMP_DIR + DELIM + "OpenLTFS.soc";
+const std::string CLIENT_SOCKET_FILE = LTFSDM_TMP_DIR + DELIM + "OpenLTFS.client.soc";
+const std::string RECALL_SOCKET_FILE = LTFSDM_TMP_DIR + DELIM + "OpenLTFS.recall.soc";
 const std::string KEY_FILE = LTFSDM_TMP_DIR + DELIM + "OpenLTFS.key";
 const std::string DB_FILE = LTFSDM_TMP_DIR + DELIM + "OpenLTFS.db";
 const std::string CONFIG_FILE = "/etc/ltfsdm.conf";

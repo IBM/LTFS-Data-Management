@@ -30,7 +30,7 @@ void SelRecall::addJob(std::string fileName)
             needsTape.insert(attr.tapeId[0]);
         }
 
-        tapeName = Scheduler::getTapeName(fileName, attr.tapeId[0]);
+        tapeName = Scheduler::getTapeName(&fso, attr.tapeId[0]);
 
         stmt(SelRecall::ADD_JOB) << DataBase::SELRECALL << fileName << reqNumber
                 << targetState << statbuf.st_size << (long long) fso.getFsId()
@@ -135,7 +135,7 @@ unsigned long SelRecall::recall(std::string fileName, std::string tapeId,
         if (state == FsObj::RESIDENT) {
             return 0;
         } else if (state == FsObj::MIGRATED) {
-            tapeName = Scheduler::getTapeName(fileName, tapeId);
+            tapeName = Scheduler::getTapeName(&target, tapeId);
             fd = open(tapeName.c_str(), O_RDWR);
 
             if (fd == -1) {

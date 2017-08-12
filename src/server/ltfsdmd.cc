@@ -16,6 +16,11 @@ int main(int argc, char **argv)
 
     opterr = 0;
 
+    if ( chdir("/") == -1 ) {
+        MSG(LTFSDMS0092E, errno);
+        goto end;
+    }
+
     while ((opt = getopt(argc, argv, "fmd:")) != -1) {
         switch (opt) {
             case 'f':

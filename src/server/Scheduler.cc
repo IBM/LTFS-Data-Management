@@ -8,15 +8,14 @@ std::map<int, std::atomic<bool>> Scheduler::updReq;
 
 ThreadPool<Migration::mig_info_t, std::shared_ptr<std::list<unsigned long>>> *Scheduler::wqs;
 
-std::string Scheduler::getTapeName(std::string fileName, std::string tapeId)
+std::string Scheduler::getTapeName(FsObj *diskFile, std::string tapeId)
 
 {
-    FsObj diskFile(fileName);
     std::stringstream tapeName;
 
     tapeName << inventory->getMountPoint() << "/" << tapeId << "/"
-            << Const::LTFS_NAME << "." << diskFile.getFsId() << "."
-            << diskFile.getIGen() << "." << diskFile.getINode();
+            << Const::LTFS_NAME << "." << diskFile->getFsId() << "."
+            << diskFile->getIGen() << "." << diskFile->getINode();
 
     return tapeName.str();
 }

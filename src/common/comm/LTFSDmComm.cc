@@ -30,8 +30,7 @@ void LTFSDmCommClient::connect()
 
     memset(&addr, 0, sizeof(addr));
     addr.sun_family = AF_UNIX;
-    strncpy(addr.sun_path, Const::SOCKET_FILE.c_str(),
-            sizeof(addr.sun_path) - 1);
+    strncpy(addr.sun_path, sockFile.c_str(), sizeof(addr.sun_path) - 1);
 
     if (::connect(socRefFd, (struct sockaddr*) &addr, sizeof(addr)) == -1) {
         TRACE(Trace::error, errno);
@@ -48,17 +47,14 @@ void LTFSDmCommServer::listen()
 {
     struct sockaddr_un addr;
 
-    if ((socRefFd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
+    if ((socRefFd = socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0)) == -1) {
         TRACE(Trace::error, errno);
         throw(EXCEPTION(Const::UNSET));
     }
 
     memset(&addr, 0, sizeof(addr));
     addr.sun_family = AF_UNIX;
-    strncpy(addr.sun_path, Const::SOCKET_FILE.c_str(),
-            sizeof(addr.sun_path) - 1);
-
-    unlink(Const::SOCKET_FILE.c_str());
+    strncpy(addr.sun_path, sockFile.c_str(), sizeof(addr.sun_path) - 1);
 
     if (bind((int) socRefFd, (struct sockaddr*) &addr, sizeof(addr)) == -1) {
         TRACE(Trace::error, errno);

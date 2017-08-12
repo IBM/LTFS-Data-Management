@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <sys/mount.h>
 #include <linux/fs.h>
 #include <dirent.h>
 #include <sys/time.h>
@@ -37,16 +38,24 @@
 #include "src/common/errors/errors.h"
 #include "src/common/const/Const.h"
 
-#include "src/connector/Connector.h"
-#include "FuseFS.h"
+#include "src/common/comm/ltfsdm.pb.h"
+#include "src/common/comm/LTFSDmComm.h"
 
-FuseFS::serialize FuseFS::trecall_submit;
-const struct fuse_operations FuseFS::ltfsdm_operations = FuseFS::init_operations();
+#include "src/connector/Connector.h"
+#include "ltfsdmd.ofs.h"
+
+struct openltfs_ctx
+{
+    char sourcedir[PATH_MAX];
+    char mountpoint[PATH_MAX];
+    struct timespec starttime;
+};
 
 Connector::rec_info_t FuseFS::recinfo_share = (Connector::rec_info_t ) { 0, 0,
                 0, 0, 0, "" };
 std::atomic<fuid_t> FuseFS::trecall_fuid((fuid_t ) { 0, 0, 0 });
 std::atomic<bool> FuseFS::no_rec_event(false);
+std::atomic<long> FuseFS::ltfsdmKey(Const::UNSET);
 
 FuseFS::mig_info FuseFS::genMigInfo(const char *path,
         FuseFS::mig_info::state_num state)
@@ -172,12 +181,12 @@ bool FuseFS::needsRecovery(FuseFS::mig_info miginfo)
             | (miginfo.state == FuseFS::mig_info::state_num::STUBBING)
             | (miginfo.state == FuseFS::mig_info::state_num::IN_RECALL)) {
 
-        if (((FuseFS::openltfs_ctx *) fc->private_data)->starttime.tv_sec
+        if (((openltfs_ctx *) fc->private_data)->starttime.tv_sec
                 < miginfo.changed.tv_sec)
             return false;
-        else if ((((FuseFS::openltfs_ctx *) fc->private_data)->starttime.tv_sec
+        else if ((((openltfs_ctx *) fc->private_data)->starttime.tv_sec
                 == miginfo.changed.tv_sec)
-                && (((FuseFS::openltfs_ctx *) fc->private_data)->starttime.tv_nsec
+                && (((openltfs_ctx *) fc->private_data)->starttime.tv_nsec
                         < miginfo.changed.tv_nsec))
             return false;
         else
@@ -193,10 +202,10 @@ void FuseFS::recoverState(const char *path, FuseFS::mig_info::state_num state)
     struct fuse_context *fc = fuse_get_context();
 
     std::string fusepath =
-            ((FuseFS::openltfs_ctx *) fc->private_data)->mountpoint
+            ((openltfs_ctx *) fc->private_data)->mountpoint
                     + std::string(path);
     std::string sourcepath =
-            ((FuseFS::openltfs_ctx *) fc->private_data)->sourcedir
+            ((openltfs_ctx *) fc->private_data)->sourcedir
                     + std::string(path);
 
     TRACE(Trace::error, fusepath, state);
@@ -249,7 +258,7 @@ std::string FuseFS::source_path(const char *path)
     FuseFS::mig_info miginfo;
 
     struct fuse_context *fc = fuse_get_context();
-    fullpath = ((FuseFS::openltfs_ctx *) fc->private_data)->sourcedir
+    fullpath = ((openltfs_ctx *) fc->private_data)->sourcedir
             + std::string(path);
 
     try {
@@ -273,9 +282,8 @@ int FuseFS::recall_file(FuseFS::ltfsdm_file_info *linfo, bool toresident)
 {
     struct stat statbuf;
     unsigned int igen;
-    conn_info_t *conn_info;
     bool success;
-    std::unique_lock<std::mutex> *lock_reply;
+
 
     if (fstat(linfo->fd, &statbuf) == -1) {
         TRACE(Trace::error, fuse_get_context()->pid, errno);
@@ -289,32 +297,46 @@ int FuseFS::recall_file(FuseFS::ltfsdm_file_info *linfo, bool toresident)
 
     TRACE(Trace::always, linfo->sourcepath, statbuf.st_ino, toresident);
 
-    std::unique_lock<std::mutex> lock(FuseFS::trecall_submit.mtx);
     if (Connector::recallEventSystemStopped == true)
         return -1;
-    FuseFS::trecall_submit.wait_cond.wait(lock,
-            []() {return no_rec_event != false;});
-    no_rec_event = false;
 
-    conn_info = new conn_info_t;
-    recinfo_share.conn_info = conn_info;
-    recinfo_share.toresident = toresident;
-    recinfo_share.fsid = statbuf.st_dev;
-    recinfo_share.igen = igen;
-    recinfo_share.ino = statbuf.st_ino;
-    recinfo_share.filename = linfo->sourcepath;
+    LTFSDmCommClient recRequest(Const::RECALL_SOCKET_FILE);
 
-    lock_reply = new std::unique_lock<std::mutex>(conn_info->trecall_reply.mtx);
-    FuseFS::trecall_submit.cond.notify_one();
-    lock.unlock();
-    conn_info->trecall_reply.cond.wait(*lock_reply);
+    try {
+        recRequest.connect();
+    } catch (const std::exception& e) {
+        MSG(LTFSDMF0021E, e.what(), errno);
+        return -1;
+    }
 
-    success = conn_info->trecall_reply.success;
+    LTFSDmProtocol::LTFSDmTransRecRequest *recrequest = recRequest.mutable_transrecrequest();
+
+    recrequest->set_key(FuseFS::ltfsdmKey);
+    recrequest->set_toresident(toresident);
+    recrequest->set_fsid(statbuf.st_dev);
+    recrequest->set_igen(igen);
+    recrequest->set_ino(statbuf.st_ino);
+    recrequest->set_filename(linfo->sourcepath);
+
+    try {
+        recRequest.send();
+    } catch (const std::exception& e) {
+        MSG(LTFSDMF0024E);
+        return -1;
+    }
+
+    try {
+        recRequest.recv();
+    } catch (const std::exception& e) {
+        MSG(LTFSDMF0022E, e.what(), errno);
+        return -1;
+    }
+
+    const LTFSDmProtocol::LTFSDmTransRecResp recresp = recRequest.transrecresp();
+
+    success = recresp.success();
 
     TRACE(Trace::always, linfo->sourcepath, statbuf.st_ino, success);
-
-    delete (lock_reply);
-    delete (conn_info);
 
     if (success == false)
         return -1;
@@ -997,6 +1019,7 @@ int FuseFS::ltfsdm_getxattr(const char *path, const char *name, char *value,
     if (Const::OPEN_LTFS_EA_FSINFO.compare(name) == 0) {
         strncpy(value, FuseFS::source_path(path).c_str(), PATH_MAX - 1);
         size = strlen(value) + 1;
+        TRACE(Trace::full, path, size);
         return size;
     } else if ((attrsize = lgetxattr(FuseFS::source_path(path).c_str(), name,
             value, size)) == -1) {
@@ -1005,6 +1028,7 @@ int FuseFS::ltfsdm_getxattr(const char *path, const char *name, char *value,
             != std::string::npos) {
         return (-1 * ENOTSUP);
     } else {
+        TRACE(Trace::full, path, attrsize);
         return attrsize;
     }
 }
@@ -1088,83 +1112,181 @@ struct fuse_operations FuseFS::init_operations()
     return ops;
 }
 
+void FuseFS::execute(std::string sourcedir, std::string command)
+
+{
+    int ret;
+
+    pthread_setname_np(pthread_self(), "ltfsdmd.ofs");
+
+    ret = system(command.c_str());
+
+    if (!WIFEXITED(ret) || WEXITSTATUS(ret)) {
+        TRACE(Trace::error, ret, WIFEXITED(ret), WEXITSTATUS(ret));
+        MSG(LTFSDMF0023E, sourcedir, WEXITSTATUS(ret));
+        kill(getpid(), SIGTERM);
+    }
+    else if (Connector::connectorTerminate == false) {
+        MSG(LTFSDMF0030I, sourcedir);
+        kill(getpid(), SIGTERM);
+    }
+}
+
 FuseFS::FuseFS(std::string sourcedir, std::string mountpt, std::string fsName,
         struct timespec starttime) :
         mountpt(mountpt)
 
 {
-    std::stringstream options;
-    fargs = FUSE_ARGS_INIT(0, NULL);
+    std::stringstream stream;
+    char exepath[PATH_MAX];
+    char *exelnk = (char*) "/proc/self/exe";
 
-    ctx = (FuseFS::openltfs_ctx *) malloc(sizeof(FuseFS::openltfs_ctx));
-    memset(ctx, 0, sizeof(FuseFS::openltfs_ctx));
+    if (readlink(exelnk, exepath, PATH_MAX) == -1) {
+        MSG(LTFSDMC0021E);
+        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+    }
+
+    stream << dirname(exepath) << "/" << Const::OVERLAY_FS_COMMAND
+            << " -s " << sourcedir << " -m " << mountpt
+            << " -f " << fsName << " -S " << starttime.tv_sec
+            << " -N " << starttime.tv_nsec
+            << " -l " << messageObject.getLogType()
+            << " -t " << traceObject.getTrclevel()  << " 2>&1";
+
+    TRACE(Trace::always, stream.str());
+    thrd = new std::thread(&FuseFS::execute, sourcedir, stream.str());
+}
+
+int main(int argc, char **argv)
+
+{
+    std::string sourcedir("");
+    std::string mountpt("");
+    std::string fsName("");
+    struct timespec starttime = {0,0};
+    Message::LogType logType;
+    Trace::traceLevel tl;
+    bool logTypeSet = false;
+    bool traceLevelSet = false;
+    int opt;
+    opterr = 0;
+
+    const struct fuse_operations ltfsdm_operations = FuseFS::init_operations();
+    struct openltfs_ctx *ctx;
+    struct fuse_args fargs;
+    std::stringstream options;
+
+    while ((opt = getopt(argc, argv, "s:m:f:S:N:l:t:")) != -1) {
+        switch (opt) {
+            case 's':
+                if (sourcedir.compare("") != 0)
+                    return Error::LTFSDM_GENERAL_ERROR;
+                sourcedir = optarg;
+                break;
+            case 'm':
+                if (mountpt.compare("") != 0)
+                    return Error::LTFSDM_GENERAL_ERROR;
+                mountpt = optarg;
+                break;
+            case 'f':
+                if (fsName.compare("") != 0)
+                    return Error::LTFSDM_GENERAL_ERROR;
+                fsName = optarg;
+                break;
+            case 'S':
+                if ( starttime.tv_sec != 0)
+                    return Error::LTFSDM_GENERAL_ERROR;
+                starttime.tv_sec = std::stol(optarg, nullptr);
+                break;
+            case 'N':
+                if ( starttime.tv_nsec != 0)
+                    return Error::LTFSDM_GENERAL_ERROR;
+                starttime.tv_nsec = std::stol(optarg, nullptr);
+                break;
+            case 'l':
+                if ( logTypeSet )
+                    return Error::LTFSDM_GENERAL_ERROR;
+                logType = static_cast<Message::LogType>(std::stoi(optarg, nullptr));
+                logTypeSet = true;
+                break;
+            case 't':
+                if ( traceLevelSet )
+                    return Error::LTFSDM_GENERAL_ERROR;
+                tl = static_cast<Trace::traceLevel>(std::stoi(optarg, nullptr));
+                traceLevelSet = true;
+                break;
+            default:
+                return Error::LTFSDM_GENERAL_ERROR;
+        }
+    }
+
+    if ( optind != 15 ) {
+        return Error::LTFSDM_GENERAL_ERROR;
+    }
+
+    std::string mp = mountpt;
+    std::replace( mp.begin(), mp.end(), '/', '.');
+    messageObject.init(mp);
+    messageObject.setLogType(logType);
+
+    MSG(LTFSDMF0031I);
+
+    traceObject.init(mp);
+    traceObject.setTrclevel(tl);
+
+    FuseFS::ltfsdmKey = LTFSDM::getkey();
+
+    ctx = (openltfs_ctx *) malloc(sizeof(struct openltfs_ctx));
+    memset(ctx, 0, sizeof(struct openltfs_ctx));
     strncpy(ctx->sourcedir, sourcedir.c_str(), PATH_MAX - 1);
     strncpy(ctx->mountpoint, mountpt.c_str(), PATH_MAX - 1);
     ctx->starttime = starttime;
 
     MSG(LTFSDMF0001I, ctx->sourcedir, mountpt);
 
+    fargs = FUSE_ARGS_INIT(0, NULL);
+    fuse_opt_add_arg(&fargs, argv[0]);
     fuse_opt_add_arg(&fargs, mountpt.c_str());
-
     options << "-ouse_ino,fsname=OpenLTFS:" << fsName
             << ",nopath,default_permissions,allow_other,max_background="
             << Const::MAX_FUSE_BACKGROUND;
-
     fuse_opt_add_arg(&fargs, options.str().c_str());
+    fuse_opt_add_arg(&fargs, "-f");
     if (getppid() != 1 && traceObject.getTrclevel() == Trace::full)
         fuse_opt_add_arg(&fargs, "-d");
-    fuse_opt_parse(&fargs, NULL, NULL, NULL);
-
-    if (fuse_parse_cmdline(&fargs, NULL, NULL, NULL) != 0) {
-        MSG(LTFSDMF0004E, errno);
-        throw(EXCEPTION(Error::LTFSDM_FS_ADD_ERROR, errno, options.str()));
-    }
 
     MSG(LTFSDMF0002I, mountpt.c_str());
 
-    openltfsch = fuse_mount(mountpt.c_str(), &fargs);
-
-    if (openltfsch == NULL) {
-        MSG(LTFSDMF0005E, mountpt.c_str());
-        throw(EXCEPTION(Error::LTFSDM_FS_ADD_ERROR, errno, mountpt));
-    }
-
-    MSG(LTFSDMF0003I);
-
-    openltfs = fuse_new(openltfsch, &fargs, &ltfsdm_operations,
-            sizeof(ltfsdm_operations), (void *) ctx);
-
-    if (openltfs == NULL) {
-        MSG(LTFSDMF0006E);
-        throw(EXCEPTION(Error::LTFSDM_FS_ADD_ERROR));
-    }
-
-    fusefs = new std::thread(fuse_loop_mt, openltfs);
-
-    std::stringstream threadName;
-    threadName << "FS:" << ctx->sourcedir;
-    pthread_setname_np(fusefs->native_handle(),
-            threadName.str().substr(0, 14).c_str());
+    return fuse_main(fargs.argc, fargs.argv, &ltfsdm_operations, (void *) ctx);
 }
 
 FuseFS::~FuseFS()
 
 {
+    int rc = 0;
+
     try {
-        MSG(LTFSDMS0079I, mountpt.c_str());
+        MSG(LTFSDMF0028I, mountpt.c_str());
         MSG(LTFSDMF0007I);
-        fuse_opt_free_args(&fargs);
-        fuse_exit(openltfs);
-        fuse_unmount(mountpt.c_str(), openltfsch);
-        TRACE(Trace::always, mountpt, (bool) Connector::forcedTerminate);
-        if (Connector::forcedTerminate)
-            fusefs->detach();
-        else
-            fusefs->join();
-        TRACE(Trace::always, mountpt, (bool) Connector::forcedTerminate);
-        delete (fusefs);
-        free(ctx);
-        MSG(LTFSDMS0080I, mountpt.c_str());
+        do {
+            if ( Connector::forcedTerminate )
+                rc = umount2(mountpt.c_str(), MNT_FORCE | MNT_DETACH);
+            else
+                rc = umount(mountpt.c_str());
+            if ( rc == -1 ) {
+                if ( errno == EBUSY ) {
+                    sleep(1);
+                    continue;
+                }
+                else {
+                    umount2(mountpt.c_str(), MNT_FORCE | MNT_DETACH);
+                }
+            }
+            break;
+        } while(true);
+        MSG(LTFSDMF0029I, mountpt.c_str());
+        thrd->join();
+        delete(thrd);
     } catch (...) {
         kill(getpid(), SIGTERM);
     }
