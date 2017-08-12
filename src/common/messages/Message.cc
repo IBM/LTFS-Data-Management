@@ -36,7 +36,7 @@ void Message::init(std::string extension)
     if ( extension.compare("") != 0 )
         fileName.append(extension);
 
-    fd = open(fileName.c_str(), O_RDWR | O_CREAT | O_CLOEXEC | O_SYNC , 0700 );
+    fd = open(fileName.c_str(), O_RDWR | O_CREAT | O_CLOEXEC | O_SYNC , 0644 );
 
     if ( fd == Const::UNSET ) {
         MSG(LTFSDMX0001E);
@@ -55,8 +55,8 @@ void Message::writeOut(std::string msgstr)
 void Message::writeLog(std::string msgstr)
 
 {
-    if ( write(fd,msgstr.c_str(),msgstr.size() + 1 )
-                != (long) msgstr.size() + 1) {
+    if ( write(fd,msgstr.c_str(),msgstr.size() )
+                != (long) msgstr.size() ) {
         std::cerr << messages[LTFSDMX0004E];
         exit((int) Error::LTFSDM_GENERAL_ERROR);
     }

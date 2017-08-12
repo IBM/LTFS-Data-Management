@@ -91,8 +91,8 @@ public:
                 stream << std::endl;
 
                 rotate();
-                if ( write(fd,stream.str().c_str(),stream.str().size() + 1 )
-                            != stream.str().size() + 1)
+                if ( write(fd,stream.str().c_str(),stream.str().size() )
+                            != stream.str().size() )
                         throw(EXCEPTION(errno));
             } catch (const std::exception& e) {
                 MSG(LTFSDMX0002E);
