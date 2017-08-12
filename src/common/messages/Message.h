@@ -18,7 +18,7 @@ class Message
 {
 private:
     std::mutex mtx;
-    std::ofstream messagefile;
+    int fd;
     std::string fileName;
 public:
     enum LogType
@@ -84,7 +84,7 @@ private:
 
 public:
     Message() :
-            logType(Message::STDOUT)
+            fd(Const::UNSET), fileName(Const::LOG_FILE), logType(Message::STDOUT)
     {
     }
     ~Message();

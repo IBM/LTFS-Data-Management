@@ -10,5 +10,4 @@ void init();
 std::vector<std::string> getTapeIds();
 std::set<std::string> getFs();
 long getkey();
-void setCloExec(std::string fileName);
 }

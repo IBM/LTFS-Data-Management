@@ -1,15 +1,20 @@
 #include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <sys/types.h>
 #include <signal.h>
 #include <sys/resource.h>
 
 #include <iostream>
 #include <fstream>
 #include <set>
+#include <mutex>
 
 #include "src/common/const/Const.h"
 #include "src/common/messages/Message.h"
 #include "src/common/errors/errors.h"
 #include "src/common/util/util.h"
+#include "src/common/exception/OpenLTFSException.h"
 
 #include "Trace.h"
 
@@ -20,12 +25,9 @@ Trace traceObject;
 Trace::~Trace()
 
 {
-    try {
-        if (tracefile.is_open())
-            tracefile.close();
-    } catch (...) {
-        kill(getpid(), SIGTERM);
-    }
+    if ( fd != Const::UNSET )
+        close(fd);
+    fd = Const::UNSET;
 }
 
 void Trace::setTrclevel(traceLevel level)
@@ -59,29 +61,26 @@ int Trace::getTrclevel()
 void Trace::init(std::string extension)
 
 {
-
-    fileName = Const::TRACE_FILE;
     if ( extension.compare("") != 0 )
         fileName.append(extension);
 
-    tracefile.exceptions(std::ios::failbit | std::ios::badbit);
+    fd = open(fileName.c_str(), O_RDWR | O_CREAT | O_TRUNC | O_CLOEXEC | O_SYNC , 0700 );
 
-    try {
-        tracefile.open(fileName,
-                std::fstream::out | std::fstream::app);
-    } catch (const std::exception& e) {
+    if ( fd == Const::UNSET ) {
         MSG(LTFSDMX0001E);
         exit((int) Error::LTFSDM_GENERAL_ERROR);
     }
-
-    LTFSDM::setCloExec(fileName);
 }
 
 void Trace::rotate()
 
 {
-    tracefile.flush();
-    tracefile.close();
+    std::lock_guard<std::mutex> lock(mtx);
+
+    if (lseek(fd, 0, SEEK_CUR) < 100 * 1024 * 1024)
+        return;
+
+    close(fd);
 
     if (std::string(__progname).compare("ltfsdmd") == 0) {
         unlink((fileName + ".2").c_str());
@@ -90,15 +89,5 @@ void Trace::rotate()
         rename(fileName.c_str(), (fileName + ".1").c_str());
     }
 
-    tracefile.exceptions(std::ios::failbit | std::ios::badbit);
-
-    try {
-        tracefile.open(fileName,
-                std::fstream::out | std::fstream::app);
-    } catch (const std::exception& e) {
-        MSG(LTFSDMX0001E);
-        exit((int) Error::LTFSDM_GENERAL_ERROR);
-    }
-
-    LTFSDM::setCloExec(fileName);
+    init("");
 }
