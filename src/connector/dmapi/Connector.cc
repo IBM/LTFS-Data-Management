@@ -696,8 +696,8 @@ void FsObj::manageFs(bool setDispo, struct timespec starttime,
 						(unsigned long ) handle, errno, mountPoint));
 			}
 			unlock();
-			THROW(Error::LTFSDM_FS_ADD_ERROR, (unsigned long  handle,
-					mountPoint));
+			THROW(Error::LTFSDM_FS_ADD_ERROR, (unsigned long)  handle,
+					mountPoint);
 		}
 		dm_handle_free(fsHandle, fsHandleLength);
 	}
