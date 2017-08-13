@@ -64,7 +64,7 @@ void Trace::init(std::string extension)
     if ( extension.compare("") != 0 )
         fileName.append(extension);
 
-    fd = open(fileName.c_str(), O_RDWR | O_CREAT | O_CLOEXEC | O_SYNC , 0644 );
+    fd = open(fileName.c_str(), O_RDWR | O_CREAT | O_APPEND | O_CLOEXEC | O_SYNC , 0644 );
 
     if ( fd == Const::UNSET ) {
         MSG(LTFSDMX0001E);
