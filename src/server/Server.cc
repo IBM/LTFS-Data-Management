@@ -88,18 +88,18 @@ void Server::lockServer()
             == -1) {
         MSG(LTFSDMS0001E);
         TRACE(Trace::error, Const::SERVER_LOCK_FILE, errno);
-        throw(EXCEPTION(Const::UNSET, errno));
+        THROW(Const::UNSET, errno);
     }
 
     if (flock(lockfd, LOCK_EX | LOCK_NB) == -1) {
         TRACE(Trace::error, errno);
         if ( errno == EWOULDBLOCK) {
             MSG(LTFSDMS0002I);
-            throw(EXCEPTION(Const::UNSET, errno));
+            THROW(Const::UNSET, errno);
         } else {
             MSG(LTFSDMS0001E);
             TRACE(Trace::error, errno);
-            throw(EXCEPTION(Const::UNSET, errno));
+            THROW(Const::UNSET, errno);
         }
     }
 }
@@ -116,7 +116,7 @@ void Server::writeKey()
     } catch (const std::exception& e) {
         TRACE(Trace::error, e.what());
         MSG(LTFSDMS0003E);
-        throw(EXCEPTION(Const::UNSET));
+        THROW(Const::UNSET);
     }
 
     srandom(time(NULL));
@@ -131,12 +131,12 @@ void Server::initialize(bool dbUseMemory)
 {
     if (setrlimit(RLIMIT_NOFILE, &Const::NOFILE_LIMIT) == -1) {
         MSG(LTFSDMS0046E);
-        throw(EXCEPTION(errno, errno));
+        THROW(errno, errno);
     }
 
     if (setrlimit(RLIMIT_NPROC, &Const::NPROC_LIMIT) == -1) {
         MSG(LTFSDMS0046E);
-        throw(EXCEPTION(errno, errno));
+        THROW(errno, errno);
     }
 
     lockServer();
@@ -152,7 +152,7 @@ void Server::initialize(bool dbUseMemory)
     } catch (const std::exception& e) {
         TRACE(Trace::error, e.what());
         MSG(LTFSDMS0014E);
-        throw(EXCEPTION(Const::UNSET));
+        THROW(Const::UNSET);
     }
 }
 
@@ -168,13 +168,13 @@ void Server::daemonize()
     }
 
     if (pid > 0) {
-        throw(EXCEPTION(Error::LTFSDM_OK));
+        THROW(Error::LTFSDM_OK);
     }
 
     sid = setsid();
     if (sid < 0) {
         MSG(LTFSDMS0012E);
-        throw(EXCEPTION(Const::UNSET, sid));
+        THROW(Const::UNSET, sid);
     }
 
     TRACE(Trace::always, getpid());
@@ -184,7 +184,7 @@ void Server::daemonize()
     /* redirect stdout to log file */
     if ((dev_null = open("/dev/null", O_RDWR)) == -1) {
         MSG(LTFSDMS0013E);
-        throw(EXCEPTION(errno, errno));
+        THROW(errno, errno);
     }
     dup2(dev_null, STDIN_FILENO);
     dup2(dev_null, STDOUT_FILENO);

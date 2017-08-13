@@ -65,4 +65,4 @@ public:
     }
 };
 
-#define EXCEPTION(args ...) OpenLTFSException(OpenLTFSException::processArgs(__FILE__, __LINE__, ##args))
+#define THROW(args ...) OpenLTFSException(OpenLTFSException::processArgs(__FILE__, __LINE__, ##args))

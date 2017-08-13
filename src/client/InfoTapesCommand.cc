@@ -30,7 +30,7 @@ void InfoTapesCommand::doCommand(int argc, char **argv)
 
     if (argc != optind) {
         printUsage();
-        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+        THROW(Error::LTFSDM_GENERAL_ERROR);
     }
 
     try {
@@ -49,7 +49,7 @@ void InfoTapesCommand::doCommand(int argc, char **argv)
         commCommand.send();
     } catch (const std::exception& e) {
         MSG(LTFSDMC0027E);
-        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+        THROW(Error::LTFSDM_GENERAL_ERROR);
     }
 
     INFO(LTFSDMC0066I);
@@ -61,7 +61,7 @@ void InfoTapesCommand::doCommand(int argc, char **argv)
             commCommand.recv();
         } catch (const std::exception& e) {
             MSG(LTFSDMC0028E);
-            throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+            THROW(Error::LTFSDM_GENERAL_ERROR);
         }
 
         const LTFSDmProtocol::LTFSDmInfoTapesResp infotapesresp =

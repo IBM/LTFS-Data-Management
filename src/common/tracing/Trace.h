@@ -93,7 +93,7 @@ public:
                 rotate();
                 if ( write(fd,stream.str().c_str(),stream.str().size() )
                             != stream.str().size() )
-                        throw(EXCEPTION(errno));
+                        THROW(errno);
             } catch (const std::exception& e) {
                 MSG(LTFSDMX0002E);
                 exit((int) Error::LTFSDM_GENERAL_ERROR);

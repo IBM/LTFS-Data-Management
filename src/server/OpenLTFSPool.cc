@@ -7,7 +7,7 @@ OpenLTFSPool::OpenLTFSPool(std::string _poolName)
 
     if (_poolName.compare("") == 0) {
         MSG(LTFSDMX0020E);
-        throw(EXCEPTION(Const::UNSET, _poolName));
+        THROW(Const::UNSET, _poolName);
     }
 
     poolName = _poolName;
@@ -28,7 +28,7 @@ void OpenLTFSPool::add(std::shared_ptr<OpenLTFSCartridge> cartridge)
 
     if (cartridge->getPool().compare("") != 0) {
         MSG(LTFSDMX0021E, cartridge->GetObjectID());
-        throw(EXCEPTION(Error::LTFSDM_TAPE_EXISTS_IN_POOL));
+        THROW(Error::LTFSDM_TAPE_EXISTS_IN_POOL);
     }
 
     cartridge->setPool(poolName);
@@ -49,7 +49,7 @@ void OpenLTFSPool::remove(std::shared_ptr<OpenLTFSCartridge> cartridge)
     }
 
     MSG(LTFSDMX0022E, cartridge->GetObjectID(), poolName);
-    throw(EXCEPTION(Error::LTFSDM_TAPE_NOT_EXISTS_IN_POOL));
+    THROW(Error::LTFSDM_TAPE_NOT_EXISTS_IN_POOL);
 }
 
 std::list<std::shared_ptr<OpenLTFSCartridge>> OpenLTFSPool::getCartridges()

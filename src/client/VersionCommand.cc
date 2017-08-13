@@ -46,7 +46,7 @@ void VersionCommand::doCommand(int argc, char **argv)
 
     if (argc > 1) {
         printUsage();
-        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+        THROW(Error::LTFSDM_GENERAL_ERROR);
     }
 
     INFO(LTFSDMX0029I, OPENLTFS_VERSION);

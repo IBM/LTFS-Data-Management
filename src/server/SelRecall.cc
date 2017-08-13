@@ -141,7 +141,7 @@ unsigned long SelRecall::recall(std::string fileName, std::string tapeId,
             if (fd == -1) {
                 TRACE(Trace::error, errno);
                 MSG(LTFSDMS0021E, tapeName.c_str());
-                throw(EXCEPTION(Const::UNSET, tapeName, errno));
+                THROW(Const::UNSET, tapeName, errno);
             }
 
             statbuf = target.stat();
@@ -150,20 +150,20 @@ unsigned long SelRecall::recall(std::string fileName, std::string tapeId,
 
             while (offset < statbuf.st_size) {
                 if (Server::forcedTerminate)
-                    throw(EXCEPTION(Error::LTFSDM_OK));
+                    THROW(Error::LTFSDM_OK);
 
                 rsize = read(fd, buffer, sizeof(buffer));
                 if (rsize == -1) {
                     TRACE(Trace::error, errno);
                     MSG(LTFSDMS0023E, tapeName.c_str());
-                    throw(EXCEPTION(Const::UNSET, fileName, errno));
+                    THROW(Const::UNSET, fileName, errno);
                 }
                 wsize = target.write(offset, (unsigned long) rsize, buffer);
                 if (wsize != rsize) {
                     TRACE(Trace::error, errno, wsize, rsize);
                     MSG(LTFSDMS0027E, fileName.c_str());
                     close(fd);
-                    throw(EXCEPTION(Const::UNSET, fileName, wsize, rsize));
+                    THROW(Const::UNSET, fileName, wsize, rsize);
                 }
                 offset += rsize;
             }
@@ -179,7 +179,7 @@ unsigned long SelRecall::recall(std::string fileName, std::string tapeId,
         if (fd != -1)
             close(fd);
         TRACE(Trace::error, e.what());
-        throw(EXCEPTION(Const::UNSET));
+        THROW(Const::UNSET);
     }
 
     return statbuf.st_size;
@@ -253,7 +253,7 @@ bool SelRecall::processFile(int reqNumber, std::string tapeId,
         try {
             if ((state == FsObj::MIGRATED) && (needsTape == false)) {
                 MSG(LTFSDMS0047E, fileName);
-                throw(EXCEPTION(Const::UNSET, fileName));
+                THROW(Const::UNSET, fileName);
             }
             recall(fileName, tapeId, state, toState);
             inumList.push_back(inum);

@@ -252,7 +252,7 @@ unsigned long TransRecall::recall(Connector::rec_info_t recinfo,
             if (fd == -1) {
                 TRACE(Trace::error, errno);
                 MSG(LTFSDMS0021E, tapeName.c_str());
-                throw(EXCEPTION(Const::UNSET, tapeName, errno));
+                THROW(Const::UNSET, tapeName, errno);
             }
 
             statbuf = target.stat();
@@ -261,20 +261,20 @@ unsigned long TransRecall::recall(Connector::rec_info_t recinfo,
 
             while (offset < statbuf.st_size) {
                 if (Server::forcedTerminate)
-                    throw(EXCEPTION(Const::UNSET, tapeName));
+                    THROW(Const::UNSET, tapeName);
 
                 rsize = read(fd, buffer, sizeof(buffer));
                 if (rsize == -1) {
                     TRACE(Trace::error, errno);
                     MSG(LTFSDMS0023E, tapeName.c_str());
-                    throw(EXCEPTION(Const::UNSET, tapeName, errno));
+                    THROW(Const::UNSET, tapeName, errno);
                 }
                 wsize = target.write(offset, (unsigned long) rsize, buffer);
                 if (wsize != rsize) {
                     TRACE(Trace::error, errno, wsize, rsize);
                     MSG(LTFSDMS0033E, recinfo.ino);
                     close(fd);
-                    throw(EXCEPTION(Const::UNSET, recinfo.ino, wsize, rsize));
+                    THROW(Const::UNSET, recinfo.ino, wsize, rsize);
                 }
                 offset += rsize;
             }
@@ -290,7 +290,7 @@ unsigned long TransRecall::recall(Connector::rec_info_t recinfo,
         TRACE(Trace::error, e.what());
         if (fd != -1)
             close(fd);
-        throw(EXCEPTION(Const::UNSET));
+        THROW(Const::UNSET);
     }
 
     return statbuf.st_size;

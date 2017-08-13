@@ -45,7 +45,7 @@ void InfoFsCommand::doCommand(int argc, char **argv)
 
     if (argc > 1) {
         printUsage();
-        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+        THROW(Error::LTFSDM_GENERAL_ERROR);
     }
 
     fsList = LTFSDM::getFs();

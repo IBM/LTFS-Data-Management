@@ -31,12 +31,12 @@ void mkTmpDir()
         if (mkdir(Const::LTFSDM_TMP_DIR.c_str(), 0700) != 0) {
             std::cerr << messages[LTFSDMX0006E] << Const::LTFSDM_TMP_DIR
                     << std::endl;
-            throw(EXCEPTION(Const::UNSET));
+            THROW(Const::UNSET);
         }
     } else if (!S_ISDIR(statbuf.st_mode)) {
         std::cerr << Const::LTFSDM_TMP_DIR << messages[LTFSDMX0007E]
                 << std::endl;
-        throw(EXCEPTION(Const::UNSET));
+        THROW(Const::UNSET);
     }
 }
 
@@ -73,13 +73,13 @@ std::set<std::string> LTFSDM::getFs()
 
     MNTINFO = setmntent("/proc/mounts", "r");
     if (!MNTINFO) {
-        throw(EXCEPTION(errno, errno));
+        THROW(errno, errno);
     }
 
     buffer = (char *) malloc(buflen);
 
     if (buffer == NULL)
-        throw(EXCEPTION(Const::UNSET));
+        THROW(Const::UNSET);
 
     while (getmntent_r(MNTINFO, &mntbuf, buffer, buflen))
         if (!strcmp(mntbuf.mnt_type, "xfs") || !strcmp(mntbuf.mnt_type, "ext4"))
@@ -108,7 +108,7 @@ long LTFSDM::getkey()
     } catch (const std::exception& e) {
         TRACE(Trace::error, key);
         MSG(LTFSDMX0030E);
-        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+        THROW(Error::LTFSDM_GENERAL_ERROR);
     }
 
     keyFile.close();

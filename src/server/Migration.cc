@@ -192,7 +192,7 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId,
         if (fd == -1) {
             TRACE(Trace::error, errno);
             MSG(LTFSDMS0021E, tapeName.c_str());
-            throw(EXCEPTION(Const::UNSET, tapeName, errno));
+            THROW(Const::UNSET, tapeName, errno);
         }
 
         source.lock();
@@ -202,14 +202,14 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId,
         if (stat(mig_info.fileName.c_str(), &statbuf) == -1) {
             TRACE(Trace::error, errno);
             MSG(LTFSDMS0040E, mig_info.fileName);
-            throw(EXCEPTION(Const::UNSET, mig_info.fileName, errno));
+            THROW(Const::UNSET, mig_info.fileName, errno);
         }
         if (statbuf.st_mtim.tv_sec != secs
                 || statbuf.st_mtim.tv_nsec != nsecs) {
             TRACE(Trace::error, statbuf.st_mtim.tv_sec, secs,
                     statbuf.st_mtim.tv_nsec, nsecs);
             MSG(LTFSDMS0041W, mig_info.fileName);
-            throw(EXCEPTION(Const::UNSET, mig_info.fileName));
+            THROW(Const::UNSET, mig_info.fileName);
         }
 
         {
@@ -221,12 +221,12 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId,
                 source.remAttribute();
                 std::lock_guard<std::mutex> lock(Migration::pmigmtx);
                 *suspended = true;
-                throw(EXCEPTION(Error::LTFSDM_OK));
+                THROW(Error::LTFSDM_OK);
             }
 
             while (offset < statbuf.st_size) {
                 if (Server::forcedTerminate)
-                    throw(EXCEPTION(Error::LTFSDM_OK));
+                    THROW(Error::LTFSDM_OK);
 
                 rsize = source.read(offset,
                         statbuf.st_size - offset > Const::READ_BUFFER_SIZE ?
@@ -235,7 +235,7 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId,
                 if (rsize == -1) {
                     TRACE(Trace::error, errno);
                     MSG(LTFSDMS0023E, mig_info.fileName);
-                    throw(EXCEPTION(errno, errno, mig_info.fileName));
+                    THROW(errno, errno, mig_info.fileName);
                 }
 
                 wsize = write(fd, buffer, rsize);
@@ -243,15 +243,14 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId,
                 if (wsize != rsize) {
                     TRACE(Trace::error, errno, wsize, rsize);
                     MSG(LTFSDMS0022E, tapeName.c_str());
-                    throw(EXCEPTION(Const::UNSET, mig_info.fileName, wsize,
-                            rsize));
+                    THROW(Const::UNSET, mig_info.fileName, wsize, rsize);
                 }
 
                 offset += rsize;
                 if (stat(mig_info.fileName.c_str(), &statbuf_changed) == -1) {
                     TRACE(Trace::error, errno);
                     MSG(LTFSDMS0040E, mig_info.fileName);
-                    throw(EXCEPTION(Const::UNSET, mig_info.fileName, errno));
+                    THROW(Const::UNSET, mig_info.fileName, errno);
                 }
 
                 if (statbuf_changed.st_mtim.tv_sec != secs
@@ -259,7 +258,7 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId,
                     TRACE(Trace::error, statbuf_changed.st_mtim.tv_sec, secs,
                             statbuf_changed.st_mtim.tv_nsec, nsecs);
                     MSG(LTFSDMS0041W, mig_info.fileName);
-                    throw(EXCEPTION(Const::UNSET, mig_info.fileName));
+                    THROW(Const::UNSET, mig_info.fileName);
                 }
             }
         }
@@ -268,7 +267,7 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId,
                 mig_info.fileName.length(), 0) == -1) {
             TRACE(Trace::error, errno);
             MSG(LTFSDMS0025E, Const::LTFS_ATTR, tapeName);
-            throw(EXCEPTION(Const::UNSET, mig_info.fileName, errno));
+            THROW(Const::UNSET, mig_info.fileName, errno);
         }
 
         mrStatus.updateSuccess(mig_info.reqNumber, mig_info.fromState,

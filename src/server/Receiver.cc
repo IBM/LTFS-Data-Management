@@ -20,7 +20,7 @@ void Receiver::run(long key, Connector *connector)
     } catch (const std::exception& e) {
         TRACE(Trace::error, e.what());
         MSG(LTFSDMS0004E);
-        throw(EXCEPTION(Const::UNSET));
+        THROW(Const::UNSET);
     }
 
     while (Server::finishTerminate == false) {

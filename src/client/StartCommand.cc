@@ -47,14 +47,14 @@ void StartCommand::determineServerPath()
 
     if (readlink(exelnk, exepath, PATH_MAX) == -1) {
         MSG(LTFSDMC0021E);
-        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+        THROW(Error::LTFSDM_GENERAL_ERROR);
     }
 #elif __APPLE__
     uint32_t size = PATH_MAX;
     if ( _NSGetExecutablePath(exepath, &size) != 0 ) {
         MSG(LTFSDMC0021E);
         TRACE(Trace::error, errno);
-        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+        THROW(Error::LTFSDM_GENERAL_ERROR);
     }
 #else
 #error "unsupported platform"
@@ -79,7 +79,7 @@ void StartCommand::startServer()
     if (stat(serverPath.str().c_str(), &statbuf) == -1) {
         MSG(LTFSDMC0021E);
         TRACE(Trace::error, serverPath.str(), errno);
-        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+        THROW(Error::LTFSDM_GENERAL_ERROR);
     }
 
     MSG(LTFSDMC0099I);
@@ -89,7 +89,7 @@ void StartCommand::startServer()
     if (!ltfsdmd) {
         MSG(LTFSDMC0022E);
         TRACE(Trace::error, errno);
-        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+        THROW(Error::LTFSDM_GENERAL_ERROR);
     }
 
     while (fgets(line, sizeof(line), ltfsdmd)) {
@@ -101,7 +101,7 @@ void StartCommand::startServer()
     if (!WIFEXITED(ret) || WEXITSTATUS(ret)) {
         MSG(LTFSDMC0022E);
         TRACE(Trace::error, ret, WIFEXITED(ret), WEXITSTATUS(ret));
-        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+        THROW(Error::LTFSDM_GENERAL_ERROR);
     }
 
     sleep(1);
@@ -132,14 +132,14 @@ void StartCommand::startServer()
         commCommand.send();
     } catch (const std::exception& e) {
         MSG(LTFSDMC0027E);
-        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+        THROW(Error::LTFSDM_GENERAL_ERROR);
     }
 
     try {
         commCommand.recv();
     } catch (const std::exception& e) {
         MSG(LTFSDMC0098E);
-        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+        THROW(Error::LTFSDM_GENERAL_ERROR);
     }
 
     const LTFSDmProtocol::LTFSDmStatusResp statusresp =
@@ -150,7 +150,7 @@ void StartCommand::startServer()
         MSG(LTFSDMC0097I, pid);
     } else {
         MSG(LTFSDMC0098E);
-        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+        THROW(Error::LTFSDM_GENERAL_ERROR);
     }
 
 }
@@ -160,7 +160,7 @@ void StartCommand::doCommand(int argc, char **argv)
 {
     if (argc > 1) {
         printUsage();
-        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+        THROW(Error::LTFSDM_GENERAL_ERROR);
     }
 
     determineServerPath();

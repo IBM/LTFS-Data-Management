@@ -32,10 +32,10 @@ void InfoRequestsCommand::doCommand(int argc, char **argv)
 
     if (argc != optind) {
         printUsage();
-        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+        THROW(Error::LTFSDM_GENERAL_ERROR);
     } else if (requestNumber < Const::UNSET) {
         printUsage();
-        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+        THROW(Error::LTFSDM_GENERAL_ERROR);
     }
 
     reqOfInterest = requestNumber;
@@ -57,7 +57,7 @@ void InfoRequestsCommand::doCommand(int argc, char **argv)
         commCommand.send();
     } catch (const std::exception& e) {
         MSG(LTFSDMC0027E);
-        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+        THROW(Error::LTFSDM_GENERAL_ERROR);
     }
 
     INFO(LTFSDMC0060I);
@@ -68,7 +68,7 @@ void InfoRequestsCommand::doCommand(int argc, char **argv)
             commCommand.recv();
         } catch (const std::exception& e) {
             MSG(LTFSDMC0028E);
-            throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+            THROW(Error::LTFSDM_GENERAL_ERROR);
         }
 
         const LTFSDmProtocol::LTFSDmInfoRequestsResp inforeqsresp =

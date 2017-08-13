@@ -89,7 +89,7 @@ void Connector::initTransRecalls()
     } catch (const std::exception& e) {
         TRACE(Trace::error, e.what());
         MSG(LTFSDMF0026E);
-        throw(EXCEPTION(Const::UNSET));
+        THROW(Const::UNSET);
     }
 }
 
@@ -111,7 +111,7 @@ Connector::rec_info_t Connector::getEvents()
         recrequest.recv();
     } catch (const std::exception& e) {
         MSG(LTFSDMF0019E, e.what(), errno);
-        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+        THROW(Error::LTFSDM_GENERAL_ERROR);
     }
 
     const LTFSDmProtocol::LTFSDmTransRecRequest request = recrequest.transrecrequest();
@@ -169,7 +169,7 @@ void Connector::terminate()
         commCommand.connect();
     } catch (const std::exception& e) {
         MSG(LTFSDMF0020E, e.what(), errno);
-        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+        THROW(Error::LTFSDM_GENERAL_ERROR);
     }
 
     LTFSDmProtocol::LTFSDmTransRecRequest *recrequest = commCommand.mutable_transrecrequest();
@@ -185,7 +185,7 @@ void Connector::terminate()
         commCommand.send();
     } catch (const std::exception& e) {
         MSG(LTFSDMF0024E);
-        throw(EXCEPTION(errno, errno));
+        THROW(errno, errno);
     }
 }
 
@@ -234,7 +234,7 @@ FsObj::FsObj(Connector::rec_info_t recinfo) :
 
     if (fh->fd == -1) {
         TRACE(Trace::error, errno);
-        throw(EXCEPTION(errno, errno, recinfo.filename));
+        THROW(errno, errno, recinfo.filename);
     }
 
     handle = (void *) fh;
@@ -344,7 +344,7 @@ void FsObj::manageFs(bool setDispo, struct timespec starttime,
             MSG(LTFSDMF0009E, fh->fileName.c_str());
             if (managed == 1)
                 delete (FS);
-            throw(EXCEPTION(Error::LTFSDM_FS_ADD_ERROR, errno, fh->fileName));
+            THROW(Error::LTFSDM_FS_ADD_ERROR, errno, fh->fileName);
         } else if (setxattr(fh->fileName.c_str(),
                 Const::OPEN_LTFS_EA_FSNAME.c_str(), fsName.c_str(),
                 fsName.size() + 1, 0) == -1) {
@@ -352,7 +352,7 @@ void FsObj::manageFs(bool setDispo, struct timespec starttime,
             MSG(LTFSDMF0009E, fh->fileName.c_str());
             if (managed == 1)
                 delete (FS);
-            throw(EXCEPTION(Error::LTFSDM_FS_ADD_ERROR, errno, fh->fileName));
+            THROW(Error::LTFSDM_FS_ADD_ERROR, errno, fh->fileName);
         } else if (setxattr(fh->fileName.c_str(),
                 Const::OPEN_LTFS_EA_MANAGED.c_str(), &managed, sizeof(managed),
                 0) == -1) {
@@ -360,14 +360,14 @@ void FsObj::manageFs(bool setDispo, struct timespec starttime,
             MSG(LTFSDMF0009E, fh->fileName.c_str());
             if (managed == 1)
                 delete (FS);
-            throw(EXCEPTION(Error::LTFSDM_FS_ADD_ERROR, errno, fh->fileName));
+            THROW(Error::LTFSDM_FS_ADD_ERROR, errno, fh->fileName);
         }
     }
 
     if (managed == 0) {
         rmdir(mountPoint.c_str());
         MSG(LTFSDMF0009E, fh->fileName.c_str());
-        throw(EXCEPTION(Error::LTFSDM_FS_ADD_ERROR, fh->fileName));
+        THROW(Error::LTFSDM_FS_ADD_ERROR, fh->fileName);
     } else {
         FuseConnector::managedFss.push_back(FS);
     }
@@ -390,7 +390,7 @@ struct stat FsObj::stat()
         memset(&statbuf, 0, sizeof(statbuf));
         if (fstat(fh->fd, &statbuf) == -1) {
             TRACE(Trace::error, errno);
-            throw(EXCEPTION(errno, errno, fh->sourcePath));
+            THROW(errno, errno, fh->sourcePath);
         }
     }
 
@@ -407,7 +407,7 @@ unsigned long long FsObj::getFsId()
     memset(&statbuf, 0, sizeof(statbuf));
     if (fstat(fh->fd, &statbuf) == -1) {
         TRACE(Trace::error, errno);
-        throw(EXCEPTION(errno, errno, fh->sourcePath));
+        THROW(errno, errno, fh->sourcePath);
     }
 
     // TODO
@@ -424,7 +424,7 @@ unsigned int FsObj::getIGen()
 
     if (ioctl(fh->fd, FS_IOC_GETVERSION, &igen)) {
         TRACE(Trace::error, errno);
-        throw(EXCEPTION(errno, errno, fh->sourcePath));
+        THROW(errno, errno, fh->sourcePath);
     }
 
     return igen;
@@ -440,7 +440,7 @@ unsigned long long FsObj::getINode()
     memset(&statbuf, 0, sizeof(statbuf));
     if (fstat(fh->fd, &statbuf) == -1) {
         TRACE(Trace::error, errno);
-        throw(EXCEPTION(errno, errno, fh->sourcePath));
+        THROW(errno, errno, fh->sourcePath);
     }
 
     ino = statbuf.st_ino;
@@ -477,7 +477,7 @@ long FsObj::read(long offset, unsigned long size, char *buffer)
 
     if (rsize == -1) {
         TRACE(Trace::error, errno);
-        throw(EXCEPTION(errno, errno, fh->sourcePath));
+        THROW(errno, errno, fh->sourcePath);
     }
 
     return rsize;
@@ -492,7 +492,7 @@ long FsObj::write(long offset, unsigned long size, char *buffer)
 
     if (wsize == -1) {
         TRACE(Trace::error, errno);
-        throw(EXCEPTION(errno, errno, fh->sourcePath));
+        THROW(errno, errno, fh->sourcePath);
     }
 
     return wsize;
@@ -506,7 +506,7 @@ void FsObj::addAttribute(mig_attr_t value)
     if (fsetxattr(fh->fd, Const::OPEN_LTFS_EA_MIGINFO_EXT.c_str(),
             (void *) &value, sizeof(value), 0) == -1) {
         TRACE(Trace::error, errno);
-        throw(EXCEPTION(errno, errno, fh->sourcePath));
+        THROW(errno, errno, fh->sourcePath);
     }
 }
 
@@ -519,14 +519,14 @@ void FsObj::remAttribute()
         TRACE(Trace::error, errno);
         MSG(LTFSDMF0018W, Const::OPEN_LTFS_EA_MIGINFO_EXT);
         if ( errno != ENODATA)
-            throw(EXCEPTION(errno, errno, fh->sourcePath));
+            THROW(errno, errno, fh->sourcePath);
     }
 
     if (fremovexattr(fh->fd, Const::OPEN_LTFS_EA_MIGINFO_INT.c_str()) == -1) {
         TRACE(Trace::error, errno);
         MSG(LTFSDMF0018W, Const::OPEN_LTFS_EA_MIGINFO_INT);
         if ( errno != ENODATA)
-            throw(EXCEPTION(errno, errno, fh->sourcePath));
+            THROW(errno, errno, fh->sourcePath);
     }
 }
 
@@ -541,7 +541,7 @@ FsObj::mig_attr_t FsObj::getAttribute()
             (void *) &value, sizeof(value)) == -1) {
         if ( errno != ENODATA) {
             TRACE(Trace::error, errno);
-            throw(EXCEPTION(errno, errno, fh->sourcePath));
+            THROW(errno, errno, fh->sourcePath);
         }
     }
 
@@ -614,7 +614,7 @@ void FsObj::stub()
 
     if (fstat(fh->fd, &statbuf) == -1) {
         TRACE(Trace::error, errno);
-        throw(EXCEPTION(errno, errno, fh->sourcePath));
+        THROW(errno, errno, fh->sourcePath);
     }
 
     if (ftruncate(fh->fd, 0) == -1) {
@@ -622,7 +622,7 @@ void FsObj::stub()
         MSG(LTFSDMF0016E, fh->fileName);
         FuseFS::setMigInfo(fh->sourcePath.c_str(),
                 FuseFS::mig_info::state_num::PREMIGRATED);
-        throw(EXCEPTION(errno, errno, fh->sourcePath));
+        THROW(errno, errno, fh->sourcePath);
     }
 
     FuseFS::setMigInfo(fh->sourcePath.c_str(),

@@ -67,7 +67,7 @@ FuseFS::mig_info FuseFS::genMigInfo(const char *path,
 
     if (stat(path, &miginfo.statinfo)) {
         TRACE(Trace::error, errno);
-        throw(EXCEPTION(errno, errno, path));
+        THROW(errno, errno, path);
     }
 
     miginfo.state = state;
@@ -93,10 +93,10 @@ void FuseFS::setMigInfo(const char *path, FuseFS::mig_info::state_num state)
     if ((size = getxattr(path, Const::OPEN_LTFS_EA_MIGINFO_INT.c_str(),
             (void *) &miginfo, sizeof(miginfo))) == -1) {
         if ( errno != ENODATA) {
-            throw(EXCEPTION(errno, errno, path));
+            THROW(errno, errno, path);
         }
     } else if (size != sizeof(miginfo)) {
-        throw(EXCEPTION(EIO, size, sizeof(miginfo), path));
+        THROW(EIO, size, sizeof(miginfo), path);
     }
 
     if (miginfo.state != FuseFS::mig_info::state_num::NO_STATE) {
@@ -107,7 +107,7 @@ void FuseFS::setMigInfo(const char *path, FuseFS::mig_info::state_num state)
 
     if (setxattr(path, Const::OPEN_LTFS_EA_MIGINFO_INT.c_str(),
             (void *) &miginfo_new, sizeof(miginfo_new), 0) == -1)
-        throw(EXCEPTION(errno, errno, path));
+        THROW(errno, errno, path);
 }
 
 int FuseFS::remMigInfo(const char *path)
@@ -138,7 +138,7 @@ FuseFS::mig_info FuseFS::getMigInfo(const char *path)
         /* check for errno */
         return miginfo;
     } else if (size != sizeof(miginfo)) {
-        throw(EXCEPTION(EIO, size, sizeof(miginfo), path));
+        THROW(EIO, size, sizeof(miginfo), path);
     }
 
     return miginfo;
@@ -154,7 +154,7 @@ FuseFS::mig_info FuseFS::getMigInfoAt(int dirfd, const char *path)
     memset(&miginfo, 0, sizeof(miginfo));
 
     if ((fd = openat(dirfd, path, O_RDONLY)) == -1)
-        throw(EXCEPTION(errno, errno, dirfd));
+        THROW(errno, errno, dirfd);
 
     if ((size = fgetxattr(fd, Const::OPEN_LTFS_EA_MIGINFO_INT.c_str(),
             (void *) &miginfo, sizeof(miginfo))) == -1) {
@@ -167,7 +167,7 @@ FuseFS::mig_info FuseFS::getMigInfoAt(int dirfd, const char *path)
     close(fd);
 
     if (size != sizeof(miginfo))
-        throw(EXCEPTION(EIO, size, sizeof(miginfo), fd));
+        THROW(EIO, size, sizeof(miginfo), fd);
 
     return miginfo;
 }
@@ -1143,7 +1143,7 @@ FuseFS::FuseFS(std::string sourcedir, std::string mountpt, std::string fsName,
 
     if (readlink(exelnk, exepath, PATH_MAX) == -1) {
         MSG(LTFSDMC0021E);
-        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+        THROW(Error::LTFSDM_GENERAL_ERROR);
     }
 
     stream << dirname(exepath) << "/" << Const::OVERLAY_FS_COMMAND

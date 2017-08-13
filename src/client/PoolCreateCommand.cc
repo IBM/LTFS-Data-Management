@@ -31,31 +31,31 @@ void PoolCreateCommand::doCommand(int argc, char **argv)
 {
     if (argc <= 2) {
         printUsage();
-        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+        THROW(Error::LTFSDM_GENERAL_ERROR);
     }
 
     processOptions(argc, argv);
 
     if (argc != optind) {
         printUsage();
-        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+        THROW(Error::LTFSDM_GENERAL_ERROR);
     }
 
     if (std::count(poolNames.begin(), poolNames.end(), 10) > 0) {
         MSG(LTFSDMC0091E);
-        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+        THROW(Error::LTFSDM_GENERAL_ERROR);
     }
 
     if (std::count(poolNames.begin(), poolNames.end(), 44) > 0) {
         MSG(LTFSDMC0092E);
-        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+        THROW(Error::LTFSDM_GENERAL_ERROR);
     }
 
     try {
         connect();
     } catch (const std::exception& e) {
         MSG(LTFSDMC0026E);
-        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+        THROW(Error::LTFSDM_GENERAL_ERROR);
     }
 
     LTFSDmProtocol::LTFSDmPoolCreateRequest *poolcreatereq =
@@ -67,14 +67,14 @@ void PoolCreateCommand::doCommand(int argc, char **argv)
         commCommand.send();
     } catch (const std::exception& e) {
         MSG(LTFSDMC0027E);
-        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+        THROW(Error::LTFSDM_GENERAL_ERROR);
     }
 
     try {
         commCommand.recv();
     } catch (const std::exception& e) {
         MSG(LTFSDMC0028E);
-        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+        THROW(Error::LTFSDM_GENERAL_ERROR);
     }
 
     const LTFSDmProtocol::LTFSDmPoolResp poolresp = commCommand.poolresp();

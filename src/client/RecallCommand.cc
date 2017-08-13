@@ -48,14 +48,14 @@ void RecallCommand::talkToBackend(std::stringstream *parmList)
         commCommand.send();
     } catch (const std::exception& e) {
         MSG(LTFSDMC0027E);
-        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+        THROW(Error::LTFSDM_GENERAL_ERROR);
     }
 
     try {
         commCommand.recv();
     } catch (const std::exception& e) {
         MSG(LTFSDMC0028E);
-        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+        THROW(Error::LTFSDM_GENERAL_ERROR);
     }
 
     const LTFSDmProtocol::LTFSDmSelRecRequestResp recreqresp =
@@ -66,21 +66,21 @@ void RecallCommand::talkToBackend(std::stringstream *parmList)
             if (getpid() != recreqresp.pid()) {
                 MSG(LTFSDMC0036E);
                 TRACE(Trace::error, getpid(), recreqresp.pid());
-                throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+                THROW(Error::LTFSDM_GENERAL_ERROR);
             }
             if (requestNumber != recreqresp.reqnumber()) {
                 MSG(LTFSDMC0037E);
                 TRACE(Trace::error, requestNumber, recreqresp.reqnumber());
-                throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+                THROW(Error::LTFSDM_GENERAL_ERROR);
             }
             break;
         case Error::LTFSDM_TERMINATING:
             MSG(LTFSDMC0101I);
-            throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+            THROW(Error::LTFSDM_GENERAL_ERROR);
             break;
         default:
             MSG(LTFSDMC0029E);
-            throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+            THROW(Error::LTFSDM_GENERAL_ERROR);
     }
 
     sendObjects(parmList);
@@ -94,7 +94,7 @@ void RecallCommand::doCommand(int argc, char **argv)
 
     if (argc == 1) {
         INFO(LTFSDMC0018E);
-        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+        THROW(Error::LTFSDM_GENERAL_ERROR);
 
     }
 
@@ -104,7 +104,7 @@ void RecallCommand::doCommand(int argc, char **argv)
         checkOptions(argc, argv);
     } catch (const std::exception& e) {
         printUsage();
-        throw(EXCEPTION(Error::LTFSDM_GENERAL_ERROR));
+        THROW(Error::LTFSDM_GENERAL_ERROR);
     }
 
     TRACE(Trace::normal, argc, optind);
