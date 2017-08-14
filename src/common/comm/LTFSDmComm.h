@@ -8,7 +8,7 @@ protected:
     std::string sockFile;
 public:
     LTFSDmComm(const std::string _sockFile) :
-        sockFile(_sockFile)
+            sockFile(_sockFile)
     {
     }
     ~LTFSDmComm()
@@ -24,8 +24,7 @@ private:
     std::atomic<int> socRefFd;
 public:
     LTFSDmCommClient(const std::string _sockFile) :
-        LTFSDmComm(_sockFile),
-        socRefFd(Const::UNSET)
+            LTFSDmComm(_sockFile), socRefFd(Const::UNSET)
 
     {
     }
@@ -52,12 +51,13 @@ private:
     std::atomic<int> socAccFd;
 public:
     LTFSDmCommServer(const std::string _sockFile) :
-        LTFSDmComm(_sockFile), socRefFd(Const::UNSET), socAccFd(Const::UNSET)
+            LTFSDmComm(_sockFile), socRefFd(Const::UNSET), socAccFd(
+                    Const::UNSET)
     {
     }
     LTFSDmCommServer(const LTFSDmCommServer& command) :
-        LTFSDmComm(command.sockFile), socRefFd((int) command.socRefFd),
-        socAccFd((int) command.socAccFd)
+            LTFSDmComm(command.sockFile), socRefFd((int) command.socRefFd), socAccFd(
+                    (int) command.socAccFd)
 
     {
     }

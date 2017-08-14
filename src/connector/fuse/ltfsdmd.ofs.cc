@@ -201,12 +201,10 @@ void FuseFS::recoverState(const char *path, FuseFS::mig_info::state_num state)
 {
     struct fuse_context *fc = fuse_get_context();
 
-    std::string fusepath =
-            ((openltfs_ctx *) fc->private_data)->mountpoint
-                    + std::string(path);
-    std::string sourcepath =
-            ((openltfs_ctx *) fc->private_data)->sourcedir
-                    + std::string(path);
+    std::string fusepath = ((openltfs_ctx *) fc->private_data)->mountpoint
+            + std::string(path);
+    std::string sourcepath = ((openltfs_ctx *) fc->private_data)->sourcedir
+            + std::string(path);
 
     TRACE(Trace::error, fusepath, state);
 
@@ -284,7 +282,6 @@ int FuseFS::recall_file(FuseFS::ltfsdm_file_info *linfo, bool toresident)
     unsigned int igen;
     bool success;
 
-
     if (fstat(linfo->fd, &statbuf) == -1) {
         TRACE(Trace::error, fuse_get_context()->pid, errno);
         return (-1 * errno);
@@ -309,7 +306,8 @@ int FuseFS::recall_file(FuseFS::ltfsdm_file_info *linfo, bool toresident)
         return -1;
     }
 
-    LTFSDmProtocol::LTFSDmTransRecRequest *recrequest = recRequest.mutable_transrecrequest();
+    LTFSDmProtocol::LTFSDmTransRecRequest *recrequest =
+            recRequest.mutable_transrecrequest();
 
     recrequest->set_key(FuseFS::ltfsdmKey);
     recrequest->set_toresident(toresident);
@@ -332,7 +330,8 @@ int FuseFS::recall_file(FuseFS::ltfsdm_file_info *linfo, bool toresident)
         return -1;
     }
 
-    const LTFSDmProtocol::LTFSDmTransRecResp recresp = recRequest.transrecresp();
+    const LTFSDmProtocol::LTFSDmTransRecResp recresp =
+            recRequest.transrecresp();
 
     success = recresp.success();
 
@@ -1125,8 +1124,7 @@ void FuseFS::execute(std::string sourcedir, std::string command)
         TRACE(Trace::error, ret, WIFEXITED(ret), WEXITSTATUS(ret));
         MSG(LTFSDMF0023E, sourcedir, WEXITSTATUS(ret));
         kill(getpid(), SIGTERM);
-    }
-    else if (Connector::connectorTerminate == false) {
+    } else if (Connector::connectorTerminate == false) {
         MSG(LTFSDMF0030I, sourcedir);
         kill(getpid(), SIGTERM);
     }
@@ -1146,12 +1144,11 @@ FuseFS::FuseFS(std::string sourcedir, std::string mountpt, std::string fsName,
         THROW(Error::LTFSDM_GENERAL_ERROR);
     }
 
-    stream << dirname(exepath) << "/" << Const::OVERLAY_FS_COMMAND
-            << " -s " << sourcedir << " -m " << mountpt
-            << " -f " << fsName << " -S " << starttime.tv_sec
-            << " -N " << starttime.tv_nsec
-            << " -l " << messageObject.getLogType()
-            << " -t " << traceObject.getTrclevel()  << " 2>&1";
+    stream << dirname(exepath) << "/" << Const::OVERLAY_FS_COMMAND << " -s "
+            << sourcedir << " -m " << mountpt << " -f " << fsName << " -S "
+            << starttime.tv_sec << " -N " << starttime.tv_nsec << " -l "
+            << messageObject.getLogType() << " -t " << traceObject.getTrclevel()
+            << " 2>&1";
 
     TRACE(Trace::always, stream.str());
     thrd = new std::thread(&FuseFS::execute, sourcedir, stream.str());
@@ -1163,7 +1160,7 @@ int main(int argc, char **argv)
     std::string sourcedir("");
     std::string mountpt("");
     std::string fsName("");
-    struct timespec starttime = {0,0};
+    struct timespec starttime = { 0, 0 };
     Message::LogType logType;
     Trace::traceLevel tl;
     bool logTypeSet = false;
@@ -1194,23 +1191,24 @@ int main(int argc, char **argv)
                 fsName = optarg;
                 break;
             case 'S':
-                if ( starttime.tv_sec != 0)
+                if (starttime.tv_sec != 0)
                     return Error::LTFSDM_GENERAL_ERROR;
                 starttime.tv_sec = std::stol(optarg, nullptr);
                 break;
             case 'N':
-                if ( starttime.tv_nsec != 0)
+                if (starttime.tv_nsec != 0)
                     return Error::LTFSDM_GENERAL_ERROR;
                 starttime.tv_nsec = std::stol(optarg, nullptr);
                 break;
             case 'l':
-                if ( logTypeSet )
+                if (logTypeSet)
                     return Error::LTFSDM_GENERAL_ERROR;
-                logType = static_cast<Message::LogType>(std::stoi(optarg, nullptr));
+                logType = static_cast<Message::LogType>(std::stoi(optarg,
+                        nullptr));
                 logTypeSet = true;
                 break;
             case 't':
-                if ( traceLevelSet )
+                if (traceLevelSet)
                     return Error::LTFSDM_GENERAL_ERROR;
                 tl = static_cast<Trace::traceLevel>(std::stoi(optarg, nullptr));
                 traceLevelSet = true;
@@ -1220,12 +1218,12 @@ int main(int argc, char **argv)
         }
     }
 
-    if ( optind != 15 ) {
+    if (optind != 15) {
         return Error::LTFSDM_GENERAL_ERROR;
     }
 
     std::string mp = mountpt;
-    std::replace( mp.begin(), mp.end(), '/', '.');
+    std::replace(mp.begin(), mp.end(), '/', '.');
     messageObject.init(mp);
     messageObject.setLogType(logType);
 
@@ -1257,7 +1255,7 @@ int main(int argc, char **argv)
 
     MSG(LTFSDMF0002I, mountpt.c_str());
 
-    return fuse_main(fargs.argc, fargs.argv, &ltfsdm_operations, (void *) ctx);
+    return fuse_main(fargs.argc, fargs.argv, &ltfsdm_operations, (void * ) ctx);
 }
 
 FuseFS::~FuseFS()
@@ -1269,24 +1267,23 @@ FuseFS::~FuseFS()
         MSG(LTFSDMF0028I, mountpt.c_str());
         MSG(LTFSDMF0007I);
         do {
-            if ( Connector::forcedTerminate )
+            if (Connector::forcedTerminate)
                 rc = umount2(mountpt.c_str(), MNT_FORCE | MNT_DETACH);
             else
                 rc = umount(mountpt.c_str());
-            if ( rc == -1 ) {
-                if ( errno == EBUSY ) {
+            if (rc == -1) {
+                if ( errno == EBUSY) {
                     sleep(1);
                     continue;
-                }
-                else {
+                } else {
                     umount2(mountpt.c_str(), MNT_FORCE | MNT_DETACH);
                 }
             }
             break;
-        } while(true);
+        } while (true);
         MSG(LTFSDMF0029I, mountpt.c_str());
         thrd->join();
-        delete(thrd);
+        delete (thrd);
     } catch (...) {
         kill(getpid(), SIGTERM);
     }

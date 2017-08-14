@@ -114,12 +114,13 @@ Connector::rec_info_t Connector::getEvents()
         THROW(Error::LTFSDM_GENERAL_ERROR);
     }
 
-    const LTFSDmProtocol::LTFSDmTransRecRequest request = recrequest.transrecrequest();
+    const LTFSDmProtocol::LTFSDmTransRecRequest request =
+            recrequest.transrecrequest();
 
     key = request.key();
-    if ( FuseFS::ltfsdmKey != key ) {
-        TRACE(Trace::error, (long) FuseFS::ltfsdmKey, key);
-        recinfo = (rec_info_t) {NULL, false, 0, 0, 0, ""};
+    if (FuseFS::ltfsdmKey != key) {
+        TRACE(Trace::error, (long ) FuseFS::ltfsdmKey, key);
+        recinfo = (rec_info_t ) { NULL, false, 0, 0, 0, "" };
         return recinfo;
     }
 
@@ -139,7 +140,8 @@ Connector::rec_info_t Connector::getEvents()
 void Connector::respondRecallEvent(rec_info_t recinfo, bool success)
 
 {
-    LTFSDmProtocol::LTFSDmTransRecResp *trecresp = recinfo.conn_info->reqrequest->mutable_transrecresp();
+    LTFSDmProtocol::LTFSDmTransRecResp *trecresp =
+            recinfo.conn_info->reqrequest->mutable_transrecresp();
 
     trecresp->set_success(success);
 
@@ -154,8 +156,8 @@ void Connector::respondRecallEvent(rec_info_t recinfo, bool success)
 
     recinfo.conn_info->reqrequest->closeAcc();
 
-    delete(recinfo.conn_info->reqrequest);
-    delete(recinfo.conn_info);
+    delete (recinfo.conn_info->reqrequest);
+    delete (recinfo.conn_info);
 }
 
 void Connector::terminate()
@@ -172,7 +174,8 @@ void Connector::terminate()
         THROW(Error::LTFSDM_GENERAL_ERROR);
     }
 
-    LTFSDmProtocol::LTFSDmTransRecRequest *recrequest = commCommand.mutable_transrecrequest();
+    LTFSDmProtocol::LTFSDmTransRecRequest *recrequest =
+            commCommand.mutable_transrecrequest();
 
     recrequest->set_key(FuseFS::ltfsdmKey);
     recrequest->set_toresident(false);

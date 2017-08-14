@@ -16,7 +16,7 @@ int main(int argc, char **argv)
 
     opterr = 0;
 
-    if ( chdir("/") == -1 ) {
+    if (chdir("/") == -1) {
         MSG(LTFSDMS0092E, errno);
         goto end;
     }

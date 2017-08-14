@@ -25,7 +25,7 @@ Trace traceObject;
 Trace::~Trace()
 
 {
-    if ( fd != Const::UNSET )
+    if (fd != Const::UNSET)
         close(fd);
     fd = Const::UNSET;
 }
@@ -61,12 +61,13 @@ int Trace::getTrclevel()
 void Trace::init(std::string extension)
 
 {
-    if ( extension.compare("") != 0 )
+    if (extension.compare("") != 0)
         fileName.append(extension);
 
-    fd = open(fileName.c_str(), O_RDWR | O_CREAT | O_APPEND | O_CLOEXEC | O_SYNC , 0644 );
+    fd = open(fileName.c_str(),
+    O_RDWR | O_CREAT | O_APPEND | O_CLOEXEC | O_SYNC, 0644);
 
-    if ( fd == Const::UNSET ) {
+    if (fd == Const::UNSET) {
         MSG(LTFSDMX0001E);
         exit((int) Error::LTFSDM_GENERAL_ERROR);
     }
@@ -82,11 +83,17 @@ void Trace::rotate()
 
     close(fd);
 
-    if (std::string(__progname).compare("ltfsdmd") == 0) {
-        unlink((fileName + ".2").c_str());
-        rename((fileName + ".1").c_str(),
-                (fileName + ".2").c_str());
-        rename(fileName.c_str(), (fileName + ".1").c_str());
+    if (unlink((fileName + ".2").c_str()) == -1 && errno != ENOENT) {
+        MSG(LTFSDMX0031E, errno);
+        exit((int) Error::LTFSDM_GENERAL_ERROR);
+    } else if (rename((fileName + ".1").c_str(), (fileName + ".2").c_str())
+            == -1 && errno != ENOENT) {
+        MSG(LTFSDMX0031E, errno);
+        exit((int) Error::LTFSDM_GENERAL_ERROR);
+    } else if (rename(fileName.c_str(), (fileName + ".1").c_str())
+            == -1&& errno != ENOENT) {
+        MSG(LTFSDMX0031E, errno);
+        exit((int) Error::LTFSDM_GENERAL_ERROR);
     }
 
     init("");

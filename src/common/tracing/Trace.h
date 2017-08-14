@@ -39,16 +39,20 @@ private:
     template<typename T>
     void processParms(std::stringstream *stream, std::string varlist, T s)
     {
-        *stream << varlist.substr(varlist.find_first_not_of(" "),
-                varlist.size()) << "(" << s << ")";
+        *stream
+                << varlist.substr(varlist.find_first_not_of(" "),
+                        varlist.size()) << "(" << s << ")";
     }
 
     template<typename T, typename ... Args>
-    void processParms(std::stringstream *stream, std::string varlist, T s, Args ... args)
+    void processParms(std::stringstream *stream, std::string varlist, T s,
+            Args ... args)
     {
-        *stream << varlist.substr(varlist.find_first_not_of(" "),
-                varlist.find(',')) << "(" << s << "), ";
-        processParms(stream, varlist.substr(varlist.find(',') + 1, varlist.size()),
+        *stream
+                << varlist.substr(varlist.find_first_not_of(" "),
+                        varlist.find(',')) << "(" << s << "), ";
+        processParms(stream,
+                varlist.substr(varlist.find(',') + 1, varlist.size()),
                 args ...);
     }
 public:
@@ -80,20 +84,20 @@ public:
                 localtime_r(&(curtime.tv_sec), &tmval);
                 strftime(curctime, sizeof(curctime) - 1, "%Y-%m-%dT%H:%M:%S",
                         &tmval);
-                stream << curctime << "." << std::setfill('0')
-                        << std::setw(6) << curtime.tv_usec << ":["
-                        << std::setfill('0') << std::setw(6) << getpid() << ":"
-                        << std::setfill('0') << std::setw(6)
-                        << syscall(SYS_gettid) << "]:" << std::setfill('-')
-                        << std::setw(20) << basename((char *) filename) << "("
+                stream << curctime << "." << std::setfill('0') << std::setw(6)
+                        << curtime.tv_usec << ":[" << std::setfill('0')
+                        << std::setw(6) << getpid() << ":" << std::setfill('0')
+                        << std::setw(6) << syscall(SYS_gettid) << "]:"
+                        << std::setfill('-') << std::setw(20)
+                        << basename((char *) filename) << "("
                         << std::setfill('0') << std::setw(4) << linenr << "): ";
                 processParms(&stream, varlist, args ...);
                 stream << std::endl;
 
                 rotate();
-                if ( write(fd,stream.str().c_str(),stream.str().size() )
-                            != stream.str().size() )
-                        THROW(errno);
+                if (write(fd, stream.str().c_str(), stream.str().size())
+                        != stream.str().size())
+                    THROW(errno);
             } catch (const std::exception& e) {
                 MSG(LTFSDMX0002E);
                 exit((int) Error::LTFSDM_GENERAL_ERROR);

@@ -14,7 +14,7 @@ public:
     }
     void printUsage()
     {
-        INFO (LTFSDMC0073I);
+        INFO(LTFSDMC0073I);
     }
     ;
     void doCommand(int argc, char **argv)
