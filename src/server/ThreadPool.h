@@ -5,95 +5,92 @@ template<typename ... Args> class ThreadPool
 private:
     std::mutex enqueue_mtx; // seems to be necessary
 
-    struct wq_data_t
-    {
-        std::mutex mtx_add;
-        std::condition_variable cond_add;
-        std::condition_variable cond_init;
-        std::mutex mtx_resp;
-        std::condition_variable cond_resp;
-        std::condition_variable cond_cont;
-        std::condition_variable cond_fin;
+	std::mutex mtx_main;
+	std::condition_variable cond_main;
+	std::condition_variable cond_init;
+	std::mutex mtx_resp;
+	std::condition_variable cond_resp;
+	std::condition_variable cond_cont;
+	std::condition_variable cond_fin;
 
-        std::packaged_task<void()> task;
-        std::atomic<bool> terminate;
-        std::atomic<int> started;
-        std::atomic<int> occupied;
-        int reqNum;
-        std::map<int, long> numJobs;
-    } wq_data;
+	std::packaged_task<void()> task;
+	std::atomic<int> started;
+	std::atomic<int> occupied;
+	std::atomic<bool> new_work;
+	std::atomic<int> global_req_num;
+	std::map<int, long> numJobs;
 
     const std::function<void(Args ... args)> func;
     int num_thrds;
-    std::vector<std::thread> threads;
+	std::atomic<int> num_thrds_started;
+	std::thread *new_thread;
+	std::thread *last_thread;
     std::string name;
+
+
 public:
-    static void threadfunc(int i, int num_thrds, wq_data_t *wq_data)
+    void threadfunc()
     {
-        int reqNum;
-        char threadName[64];
+        int req_num;
+		std::thread *t = last_thread;
+
+        pthread_setname_np(pthread_self(), name.c_str());
 
         std::packaged_task < void() > ltask;
-        std::unique_lock < std::mutex > lock(wq_data->mtx_add);
-        wq_data->started++;
-        wq_data->cond_init.notify_one();
+        std::unique_lock < std::mutex > lock(mtx_main);
+        started++;
+        cond_init.notify_one();
 
         while (true) {
-            wq_data->cond_add.wait(lock);
-            if (wq_data->terminate == true)
+            cond_main.wait_for(lock, std::chrono::seconds(10));
+            if ( new_work == false ) {
+				lock.unlock();
+				if ( t == nullptr ) {
+					num_thrds_started--;
+					cond_main.notify_all();
+					return;
+				}
+                num_thrds_started--;
+                cond_main.notify_all();
+				t->join();
+				delete(t);
                 return;
-            wq_data->occupied++;
-            reqNum = wq_data->reqNum;
-            wq_data->numJobs[reqNum]++;
+            }
+            new_work = false;
+            occupied++;
+            req_num = global_req_num;
+            numJobs[req_num]++;
 
-            ltask = std::move(wq_data->task);
+            ltask = std::move(task);
 
             lock.unlock();
 
-            std::unique_lock < std::mutex > lock2(wq_data->mtx_resp);
-            wq_data->cond_resp.notify_one();
+            std::unique_lock < std::mutex > lock2(mtx_resp);
+            cond_resp.notify_one();
             lock2.unlock();
-
-            memset(threadName, 0, 64);
-            pthread_getname_np(pthread_self(), threadName, 63);
-            pthread_setname_np(pthread_self(), std::string(threadName).append("+").c_str());
 
             ltask();
             ltask.reset();
 
-            pthread_setname_np(pthread_self(), threadName);
-
             lock.lock();
 
-            if (wq_data->terminate == true)
-                return;
-
-            wq_data->occupied--;
-            wq_data->numJobs[reqNum]--;
-            wq_data->cond_fin.notify_all();
-            if (wq_data->occupied == num_thrds - 1)
-                wq_data->cond_cont.notify_one();
+            occupied--;
+            numJobs[req_num]--;
+            cond_fin.notify_all();
+            if (occupied == num_thrds - 1)
+                cond_cont.notify_one();
         }
     }
 
     ThreadPool(std::function<void(Args ... args)> func_, int num_thrds_,
             std::string name_) :
-            func(func_), num_thrds(num_thrds_), name(name_)
+	func(func_), num_thrds(num_thrds_), num_thrds_started(0),
+		new_thread(nullptr), last_thread(nullptr),  name(name_)
+
     {
-        wq_data.terminate = false;
-        wq_data.started = 0;
-        wq_data.occupied = 0;
-
-        for (int i = 0; i < num_thrds; i++) {
-            threads.push_back(std::thread(&threadfunc, i, num_thrds, &wq_data));
-            std::stringstream tname;
-            tname << name << ":" << std::setfill('0') << std::setw(2) << i;
-            pthread_setname_np(threads[i].native_handle(), tname.str().c_str());
-        }
-
-        std::unique_lock < std::mutex > lock(wq_data.mtx_add);
-        wq_data.cond_init.wait(lock,
-                [this] {return wq_data.started == num_thrds;});
+        started = 0;
+        occupied = 0;
+        new_work = false;
     }
 
     static void execute(std::function<void(Args ... args)> func, Args ... args)
@@ -101,43 +98,54 @@ public:
         func(args ...);
     }
 
-    void enqueue(int reqNum, Args ... args)
+    void enqueue(int req_num, Args ... args)
     {
-        std::lock_guard < std::mutex > elock(enqueue_mtx);
-        std::unique_lock < std::mutex > lock(wq_data.mtx_add);
-        if (wq_data.occupied == num_thrds)
-            wq_data.cond_cont.wait(lock);
+		std::vector<std::thread>::iterator it;
 
-        wq_data.reqNum = reqNum;
+        std::lock_guard < std::mutex > elock(enqueue_mtx);
+        std::unique_lock < std::mutex > lock(mtx_main);
+        new_work = true;
+        if (occupied == num_thrds)
+            cond_cont.wait(lock);
+
+
+        if ( num_thrds_started == occupied ) {
+            new_thread = new std::thread(&ThreadPool::threadfunc, this);
+            num_thrds_started++;
+            cond_init.wait(lock);
+			last_thread = new_thread;
+			new_thread = nullptr;
+        }
+
+        global_req_num = req_num;
 
         std::packaged_task < void() > task_(std::bind(execute, func, args ...));
-        wq_data.task = std::move(task_);
+        task = std::move(task_);
 
-        std::unique_lock < std::mutex > lock2(wq_data.mtx_resp);
-        wq_data.cond_add.notify_one();
+        std::unique_lock < std::mutex > lock2(mtx_resp);
+        cond_main.notify_one();
         lock.unlock();
-        wq_data.cond_resp.wait(lock2);
+        cond_resp.wait(lock2);
     }
 
-    void waitCompletion(int reqNum)
+    void waitCompletion(int req_num)
 
     {
-        std::unique_lock < std::mutex > lock(wq_data.mtx_add);
-        wq_data.cond_fin.wait(lock,
-                [this, reqNum] {return wq_data.numJobs[reqNum] == 0;});
-        wq_data.numJobs.erase(reqNum);
+        std::unique_lock < std::mutex > lock(mtx_main);
+        cond_fin.wait(lock,
+                [this, req_num] {return numJobs[req_num] == 0;});
+        numJobs.erase(req_num);
     }
 
     void terminate()
     {
-        std::unique_lock < std::mutex > lock(wq_data.mtx_add);
-        wq_data.terminate = true;
-        wq_data.cond_add.notify_all();
-        lock.unlock();
-        for (int i = 0; i < num_thrds; i++) {
-            threads[i].join();
-        }
-        threads.clear();
-        num_thrds = 0;
+        std::unique_lock < std::mutex > lock(mtx_main);
+
+		cond_main.wait(lock, [this] {return num_thrds_started == 0;});
+		last_thread->join();
+		delete(last_thread);
+		last_thread = nullptr;
+
+		return;
     }
 };
