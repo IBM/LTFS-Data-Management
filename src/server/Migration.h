@@ -31,6 +31,8 @@ private:
     static const std::string UPDATE_REQUEST;
     static const std::string UPDATE_REQUEST_RESET_TAPE;
 
+    static ThreadPool<int, int, int, int, std::string, std::string, bool> swq;
+
 public:
     struct mig_info_t
     {

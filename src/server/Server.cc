@@ -206,7 +206,7 @@ void Server::run(Connector *connector, sigset_t set)
 
     Scheduler::wqs = new ThreadPool<Migration::mig_info_t,
             std::shared_ptr<std::list<unsigned long>>>(&Migration::stub,
-            Const::MAX_STUBBING_THREADS, "stub-wq");
+            Const::MAX_STUBBING_THREADS, "stub1-wq");
 
     subs.enqueue("Scheduler", &Scheduler::run, &sched, key);
     subs.enqueue("Signal Handler", &Server::signalHandler, set, key);
@@ -219,9 +219,6 @@ void Server::run(Connector *connector, sigset_t set)
 
     TRACE(Trace::always, (bool) Server::terminate,
             (bool) Server::forcedTerminate, (bool) Server::finishTerminate);
-
-    for (std::shared_ptr<OpenLTFSDrive> drive : inventory->getDrives())
-        delete (drive->wqp);
 
     delete (Scheduler::wqs);
 

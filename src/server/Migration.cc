@@ -2,6 +2,9 @@
 
 std::mutex Migration::pmigmtx;
 
+ThreadPool<int, int, int, int, std::string, std::string, bool>
+    Migration::swq(&Migration::execRequest, Const::MAX_STUBBING_THREADS, "stub2-wq");
+
 FsObj::file_state Migration::checkState(std::string fileName, FsObj *fso)
 
 {
@@ -123,7 +126,6 @@ void Migration::addRequest()
     std::stringstream ssql;
     SQLStatement stmt;
     std::stringstream thrdinfo;
-    SubServer subs;
 
     for (std::string pool : pools)
         TRACE(Trace::normal, pool);
@@ -152,14 +154,11 @@ void Migration::addRequest()
         if (needsTape) {
             Scheduler::cond.notify_one();
         } else {
-            thrdinfo << "Mig(" << reqNumber << "," << replNum << "," << pool
-                    << ")";
-            subs.enqueue(thrdinfo.str(), Migration::execRequest, reqNumber,
-                    targetState, numReplica, replNum, pool, "", needsTape);
+            swq.enqueue(reqNumber, reqNumber, targetState, numReplica, replNum, pool, "", needsTape);
         }
     }
 
-    subs.waitAllRemaining();
+    swq.waitCompletion(reqNumber);
 }
 
 std::mutex writemtx;

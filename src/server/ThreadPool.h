@@ -21,11 +21,11 @@ private:
     std::map<int, long> numJobs;
 
     const std::function<void(Args ... args)> func;
-    int num_thrds;
+    const int num_thrds;
     std::atomic<int> num_thrds_started;
     std::thread *new_thread;
     std::thread *last_thread;
-    std::string name;
+    const std::string name;
 
     void threadfunc()
     {
@@ -83,19 +83,15 @@ private:
 public:
     ThreadPool(std::function<void(Args ... args)> func_, int num_thrds_,
             std::string name_) :
-            func(func_), num_thrds(num_thrds_), num_thrds_started(0), new_thread(
-                    nullptr), last_thread(nullptr), name(name_)
+            started(0), occupied(0), new_work(false), func(func_), num_thrds(
+                    num_thrds_), num_thrds_started(0), new_thread(nullptr), last_thread(
+                    nullptr), name(name_)
 
     {
-        started = 0;
-        occupied = 0;
-        new_work = false;
     }
 
     void enqueue(int req_num, Args ... args)
     {
-        std::vector<std::thread>::iterator it;
-
         std::lock_guard < std::mutex > elock(enqueue_mtx);
         std::unique_lock < std::mutex > lock(mtx_main);
         new_work = true;
@@ -131,16 +127,18 @@ public:
 
     ~ThreadPool()
     {
-        try {
-            std::unique_lock < std::mutex > lock(mtx_main);
+        if (last_thread != nullptr) {
+            try {
+                std::unique_lock < std::mutex > lock(mtx_main);
 
-            cond_main.wait(lock, [this] {return num_thrds_started == 0;});
-            last_thread->join();
-            delete (last_thread);
-            last_thread = nullptr;
-        } catch (std::exception& e) {
-            TRACE(Trace::error, e.what());
-            MSG(LTFSDMS0074E, e.what());
+                cond_main.wait(lock, [this] {return num_thrds_started == 0;});
+                last_thread->join();
+                delete (last_thread);
+                last_thread = nullptr;
+            } catch (std::exception& e) {
+                TRACE(Trace::error, e.what());
+                MSG(LTFSDMS0074E, e.what());
+            }
         }
 
         return;
