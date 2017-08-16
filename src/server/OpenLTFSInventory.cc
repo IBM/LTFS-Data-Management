@@ -45,7 +45,7 @@ void OpenLTFSInventory::inventorize()
             THROW(Error::LTFSDM_DRIVE_BUSY);
 
     for (std::shared_ptr<OpenLTFSDrive> d : drives)
-        d->wqp->terminate();
+        delete (d->wqp);
 
     drives.clear();
     cartridges.clear();
@@ -130,7 +130,7 @@ void OpenLTFSInventory::inventorize()
                         Migration::mig_info_t,
                         std::shared_ptr<std::list<unsigned long>>,
                         std::shared_ptr<bool>>(&Migration::preMigrate,
-                        Const::NUM_PREMIG_THREADS, threadName.str());
+                        Const::MAX_PREMIG_THREADS, threadName.str());
     }
 }
 

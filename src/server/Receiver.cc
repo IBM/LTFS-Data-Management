@@ -51,7 +51,6 @@ void Receiver::run(long key, Connector *connector)
     lock.unlock();
 
     wq.waitCompletion(Const::UNSET);
-    wq.terminate();
 
     command.closeRef();
 
