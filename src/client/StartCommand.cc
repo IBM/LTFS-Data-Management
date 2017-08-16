@@ -42,23 +42,11 @@ void StartCommand::determineServerPath()
 
     TRACE(Trace::normal, Const::SERVER_COMMAND);
 
-#ifdef __linux__
-    char *exelnk = (char*) "/proc/self/exe";
-
-    if (readlink(exelnk, exepath, PATH_MAX) == -1) {
+    memset(exepath, 0, PATH_MAX);
+    if (readlink("/proc/self/exe", exepath, PATH_MAX - 1) == -1) {
         MSG(LTFSDMC0021E);
         THROW(Error::LTFSDM_GENERAL_ERROR);
     }
-#elif __APPLE__
-    uint32_t size = PATH_MAX;
-    if ( _NSGetExecutablePath(exepath, &size) != 0 ) {
-        MSG(LTFSDMC0021E);
-        TRACE(Trace::error, errno);
-        THROW(Error::LTFSDM_GENERAL_ERROR);
-    }
-#else
-#error "unsupported platform"
-#endif
 
     serverPath << dirname(exepath) << "/" << Const::SERVER_COMMAND;
 

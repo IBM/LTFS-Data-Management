@@ -1137,9 +1137,9 @@ FuseFS::FuseFS(std::string sourcedir, std::string mountpt, std::string fsName,
 {
     std::stringstream stream;
     char exepath[PATH_MAX];
-    char *exelnk = (char*) "/proc/self/exe";
-
-    if (readlink(exelnk, exepath, PATH_MAX) == -1) {
+  
+    memset(exepath, 0, PATH_MAX);
+	if (readlink("/proc/self/exe", exepath, PATH_MAX - 1) == -1) {
         MSG(LTFSDMC0021E);
         THROW(Error::LTFSDM_GENERAL_ERROR);
     }
