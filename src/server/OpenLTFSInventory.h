@@ -7,13 +7,11 @@ private:
     int umountReqNum;
     DataBase::operation toUnBlock;
 public:
+    std::mutex *mtx;
     ThreadPool<std::string, std::string, long, long, Migration::mig_info_t,
             std::shared_ptr<std::list<unsigned long>>, std::shared_ptr<bool>> *wqp;
-    OpenLTFSDrive(ltfsadmin::Drive drive) :
-            ltfsadmin::Drive(drive), busy(false), umountReqNum(Const::UNSET), toUnBlock(
-                    DataBase::NOOP), wqp(nullptr)
-    {
-    }
+    OpenLTFSDrive(ltfsadmin::Drive drive);
+    ~OpenLTFSDrive();
     void update(std::shared_ptr<LTFSAdminSession> sess);
     bool isBusy();
     void setBusy();

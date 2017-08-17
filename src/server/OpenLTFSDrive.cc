@@ -1,5 +1,16 @@
 #include "ServerIncludes.h"
 
+OpenLTFSDrive::OpenLTFSDrive(ltfsadmin::Drive drive) :
+        ltfsadmin::Drive(drive), busy(false), umountReqNum(Const::UNSET), toUnBlock(
+                DataBase::NOOP), mtx(nullptr), wqp(nullptr)
+{
+}
+
+OpenLTFSDrive::~OpenLTFSDrive()
+{
+    delete(mtx);
+}
+
 void OpenLTFSDrive::update(std::shared_ptr<LTFSAdminSession> sess)
 
 {

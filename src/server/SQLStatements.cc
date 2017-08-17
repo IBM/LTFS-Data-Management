@@ -122,7 +122,8 @@ const std::string Migration::SET_JOB_SUCCESS =
 const std::string Migration::RESET_JOB_STATE =
         "UPDATE JOB_QUEUE SET FILE_STATE=%1%"
                 " WHERE REQ_NUM=%2%"
-                " AND FILE_STATE=%3%";
+                " AND FILE_STATE=%3%"
+                " AND TAPE_ID='%4%'";
 
 const std::string Migration::FAIL_PREMIGRATED =
         "UPDATE JOB_QUEUE SET FILE_STATE=%1%"

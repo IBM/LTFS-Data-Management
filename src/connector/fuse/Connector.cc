@@ -9,6 +9,7 @@
 #include <string.h>
 #include <limits.h>
 #include <sys/resource.h>
+#include <sys/file.h>
 #include <errno.h>
 
 #include <fuse.h>
@@ -464,11 +465,21 @@ std::string FsObj::getTapeId()
 void FsObj::lock()
 
 {
+    FuseHandle *fh = (FuseHandle *) handle;
+    if ( flock(fh->fd, LOCK_EX) == -1 ) {
+        TRACE(Trace::error, errno);
+        MSG(LTFSDMF0032E, fh->fd);
+    }
 }
 
 void FsObj::unlock()
 
 {
+    FuseHandle *fh = (FuseHandle *) handle;
+    if ( flock(fh->fd, LOCK_UN) == -1 ) {
+        TRACE(Trace::error, errno);
+        MSG(LTFSDMF0033E, fh->fd);
+    }
 }
 
 long FsObj::read(long offset, unsigned long size, char *buffer)

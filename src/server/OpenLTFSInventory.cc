@@ -131,6 +131,7 @@ void OpenLTFSInventory::inventorize()
                         std::shared_ptr<std::list<unsigned long>>,
                         std::shared_ptr<bool>>(&Migration::preMigrate,
                         Const::MAX_PREMIG_THREADS, threadName.str());
+        drive->mtx = new std::mutex();
     }
 }
 

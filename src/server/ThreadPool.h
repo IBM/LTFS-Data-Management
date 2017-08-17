@@ -135,7 +135,7 @@ public:
                 last_thread->join();
                 delete (last_thread);
                 last_thread = nullptr;
-            } catch (std::exception& e) {
+            } catch (const std::exception& e) {
                 TRACE(Trace::error, e.what());
                 MSG(LTFSDMS0074E, e.what());
             }

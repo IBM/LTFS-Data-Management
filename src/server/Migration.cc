@@ -107,7 +107,7 @@ void Migration::addJob(std::string fileName)
             stmt.bind(2, pool);
             stmt.step();
             stmt.finalize();
-        } catch (std::exception& e) {
+        } catch (const std::exception& e) {
             TRACE(Trace::error, e.what());
             MSG(LTFSDMS0028E, fileName);
         }
@@ -161,8 +161,6 @@ void Migration::addRequest()
     swq.waitCompletion(reqNumber);
 }
 
-std::mutex writemtx;
-
 unsigned long Migration::preMigrate(std::string tapeId, std::string driveId,
         long secs, long nsecs, Migration::mig_info_t mig_info,
         std::shared_ptr<std::list<unsigned long>> inumList,
@@ -198,6 +196,8 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId,
 
         source.preparePremigration();
 
+        source.unlock();
+
         if (stat(mig_info.fileName.c_str(), &statbuf) == -1) {
             TRACE(Trace::error, errno);
             MSG(LTFSDMS0040E, mig_info.fileName);
@@ -212,7 +212,7 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId,
         }
 
         {
-            std::lock_guard<std::mutex> writelock(writemtx);
+            std::lock_guard<std::mutex> writelock(*inventory->getDrive(driveId)->mtx);
 
             if (inventory->getDrive(driveId)->getToUnblock()
                     != DataBase::NOOP) {
@@ -272,6 +272,7 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId,
         mrStatus.updateSuccess(mig_info.reqNumber, mig_info.fromState,
                 mig_info.toState);
 
+        source.lock();
         attr = source.getAttribute();
         memset(attr.tapeId[attr.copies], 0, Const::tapeIdLength + 1);
         strncpy(attr.tapeId[attr.copies], tapeId.c_str(), Const::tapeIdLength);
@@ -322,10 +323,14 @@ void Migration::stub(Migration::mig_info_t mig_info,
 
         source.lock();
         attr = source.getAttribute();
-        if (mig_info.numRepl == 0 || attr.copies == mig_info.numRepl) {
+        if ((source.getMigState() != FsObj::MIGRATED) &&  (mig_info.numRepl == 0 || attr.copies == mig_info.numRepl)) {
             source.prepareStubbing();
             source.stub();
             TRACE(Trace::full, mig_info.fileName);
+        }
+        else {
+            source.unlock();
+            return;
         }
         source.unlock();
 
@@ -472,7 +477,7 @@ Migration::req_return_t Migration::processFiles(int reqNumber, int numRepl,
     stmt.doall();
     TRACE(Trace::always, time(NULL) - steptime);
 
-    stmt(Migration::RESET_JOB_STATE) << fromState << reqNumber << state;
+    stmt(Migration::RESET_JOB_STATE) << fromState << reqNumber << state << tapeId;
     TRACE(Trace::normal, stmt.str());
     steptime = time(NULL);
     stmt.doall();
