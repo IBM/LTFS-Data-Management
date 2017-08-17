@@ -185,7 +185,7 @@ unsigned long SelRecall::recall(std::string fileName, std::string tapeId,
     return statbuf.st_size;
 }
 
-bool SelRecall::processFile(int reqNumber, std::string tapeId,
+bool SelRecall::processFiles(int reqNumber, std::string tapeId,
         FsObj::file_state toState, bool needsTape)
 
 {
@@ -308,10 +308,10 @@ bool needsTape)
     mrStatus.add(reqNumber);
 
     if (tgtState == LTFSDmProtocol::LTFSDmMigRequest::PREMIGRATED)
-        suspended = processFile(reqNumber, tapeId, FsObj::PREMIGRATED,
+        suspended = processFiles(reqNumber, tapeId, FsObj::PREMIGRATED,
                 needsTape);
     else
-        suspended = processFile(reqNumber, tapeId, FsObj::RESIDENT, needsTape);
+        suspended = processFiles(reqNumber, tapeId, FsObj::RESIDENT, needsTape);
 
     std::unique_lock<std::mutex> lock(Scheduler::mtx);
 

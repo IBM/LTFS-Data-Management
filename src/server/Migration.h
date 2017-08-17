@@ -48,7 +48,7 @@ public:
     static std::mutex pmigmtx;
 
 private:
-    static req_return_t processFile(int reqNumber, int numRepl, int replNum,
+    static req_return_t processFiles(int reqNumber, int numRepl, int replNum,
             std::string tapeId, FsObj::file_state fromState,
             FsObj::file_state toState);
 public:

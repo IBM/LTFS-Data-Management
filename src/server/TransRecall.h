@@ -30,6 +30,6 @@ public:
             std::string tapeId, FsObj::file_state state,
             FsObj::file_state toState);
 
-    static void processFile(int reqNum, std::string tapeId);
+    static void processFiles(int reqNum, std::string tapeId);
     static void execRequest(int reqNum, std::string tapeId);
 };
