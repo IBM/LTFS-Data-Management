@@ -8,7 +8,7 @@ OpenLTFSDrive::OpenLTFSDrive(ltfsadmin::Drive drive) :
 
 OpenLTFSDrive::~OpenLTFSDrive()
 {
-    delete(mtx);
+    delete (mtx);
 }
 
 void OpenLTFSDrive::update(std::shared_ptr<LTFSAdminSession> sess)

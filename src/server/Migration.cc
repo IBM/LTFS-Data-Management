@@ -2,8 +2,8 @@
 
 std::mutex Migration::pmigmtx;
 
-ThreadPool<int, int, int, int, std::string, std::string, bool>
-    Migration::swq(&Migration::execRequest, Const::MAX_STUBBING_THREADS, "stub2-wq");
+ThreadPool<int, int, int, int, std::string, std::string, bool> Migration::swq(
+        &Migration::execRequest, Const::MAX_STUBBING_THREADS, "stub2-wq");
 
 FsObj::file_state Migration::checkState(std::string fileName, FsObj *fso)
 
@@ -154,7 +154,8 @@ void Migration::addRequest()
         if (needsTape) {
             Scheduler::cond.notify_one();
         } else {
-            swq.enqueue(reqNumber, reqNumber, targetState, numReplica, replNum, pool, "", needsTape);
+            swq.enqueue(reqNumber, reqNumber, targetState, numReplica, replNum,
+                    pool, "", needsTape);
         }
     }
 
@@ -212,7 +213,8 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId,
         }
 
         {
-            std::lock_guard<std::mutex> writelock(*inventory->getDrive(driveId)->mtx);
+            std::lock_guard<std::mutex> writelock(
+                    *inventory->getDrive(driveId)->mtx);
 
             if (inventory->getDrive(driveId)->getToUnblock()
                     != DataBase::NOOP) {
@@ -323,12 +325,12 @@ void Migration::stub(Migration::mig_info_t mig_info,
 
         source.lock();
         attr = source.getAttribute();
-        if ((source.getMigState() != FsObj::MIGRATED) &&  (mig_info.numRepl == 0 || attr.copies == mig_info.numRepl)) {
+        if ((source.getMigState() != FsObj::MIGRATED)
+                && (mig_info.numRepl == 0 || attr.copies == mig_info.numRepl)) {
             source.prepareStubbing();
             source.stub();
             TRACE(Trace::full, mig_info.fileName);
-        }
-        else {
+        } else {
             source.unlock();
             return;
         }
@@ -477,7 +479,8 @@ Migration::req_return_t Migration::processFiles(int reqNumber, int numRepl,
     stmt.doall();
     TRACE(Trace::always, time(NULL) - steptime);
 
-    stmt(Migration::RESET_JOB_STATE) << fromState << reqNumber << state << tapeId;
+    stmt(Migration::RESET_JOB_STATE) << fromState << reqNumber << state
+            << tapeId;
     TRACE(Trace::normal, stmt.str());
     steptime = time(NULL);
     stmt.doall();

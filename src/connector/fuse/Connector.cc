@@ -466,7 +466,7 @@ void FsObj::lock()
 
 {
     FuseHandle *fh = (FuseHandle *) handle;
-    if ( flock(fh->fd, LOCK_EX) == -1 ) {
+    if (flock(fh->fd, LOCK_EX) == -1) {
         TRACE(Trace::error, errno);
         MSG(LTFSDMF0032E, fh->fd);
     }
@@ -476,7 +476,7 @@ void FsObj::unlock()
 
 {
     FuseHandle *fh = (FuseHandle *) handle;
-    if ( flock(fh->fd, LOCK_UN) == -1 ) {
+    if (flock(fh->fd, LOCK_UN) == -1) {
         TRACE(Trace::error, errno);
         MSG(LTFSDMF0033E, fh->fd);
     }
