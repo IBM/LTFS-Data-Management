@@ -162,6 +162,86 @@ void Migration::addRequest()
     swq.waitCompletion(reqNumber);
 }
 
+void Migration::createDir(std::string path)
+{
+    struct stat statbuf;
+    int retry = 3;
+
+    while (retry > 0) {
+        if (stat(path.c_str(), &statbuf) == -1) {
+            if ( errno == ENOENT) {
+                if (mkdir(path.c_str(), 0600) == -1) {
+                    if ( errno == EBUSY) {
+                        sleep(1);
+                        retry--;
+                        continue;
+                    }
+                    if ( errno == EEXIST)
+                        return;
+                    MSG(LTFSDMS0093E, path, errno);
+                    THROW(errno, errno);
+                }
+            } else {
+                MSG(LTFSDMS0094E, path, errno);
+                THROW(errno, errno);
+            }
+        } else if (!S_ISDIR(statbuf.st_mode)) {
+            MSG(LTFSDMS0095E, path);
+            THROW(Const::UNSET, statbuf.st_mode);
+        } else {
+            return;
+        }
+    }
+}
+
+void Migration::createLink(std::string tapeId, std::string origPath,
+        std::string dataPath)
+{
+    unsigned int pos = 0;
+    unsigned int next = 0;
+    std::stringstream link;
+    std::stringstream dataSubPath;
+    std::string relPath = "";
+    int retry = 3;
+
+    link << inventory->getMountPoint() << Const::DELIM << tapeId << origPath;
+
+    dataSubPath << inventory->getMountPoint() << Const::DELIM << tapeId
+            << Const::DELIM;
+    pos = dataSubPath.str().size() + 1;
+
+    while ((next = link.str().find('/', pos)) < link.str().size()) {
+        std::string subs = link.str().substr(0, next);
+        createDir(subs);
+        pos = next + 1;
+        relPath.append("../");
+    }
+
+    relPath.append(dataPath.substr(dataSubPath.str().size(), dataPath.size()));
+
+    while (retry > 0) {
+        if (symlink(relPath.c_str(), link.str().c_str()) == -1) {
+            if ( errno == EBUSY) {
+                sleep(1);
+                retry--;
+                continue;
+            }
+            MSG(LTFSDMS0096E, link.str(), errno);
+            THROW(errno, errno);
+        }
+        return;
+    }
+}
+
+void Migration::createDataDir(std::string tapeId)
+{
+    std::stringstream tapeDir;
+
+    tapeDir << inventory->getMountPoint() << Const::DELIM << tapeId
+            << Const::DELIM << Const::LTFSDM_DATA_DIR;
+    createDir(tapeDir.str());
+}
+
 unsigned long Migration::preMigrate(std::string tapeId, std::string driveId,
         long secs, long nsecs, Migration::mig_info_t mig_info,
         std::shared_ptr<std::list<unsigned long>> inumList,
@@ -184,6 +264,8 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId,
         TRACE(Trace::always, mig_info.fileName);
 
         tapeName = Scheduler::getTapeName(&source, tapeId);
+
+        createDataDir(tapeId);
 
         fd = open(tapeName.c_str(), O_RDWR | O_CREAT);
 
@@ -270,6 +352,8 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId,
             MSG(LTFSDMS0025E, Const::LTFS_ATTR, tapeName);
             THROW(Const::UNSET, mig_info.fileName, errno);
         }
+
+        createLink(tapeId, mig_info.fileName, tapeName);
 
         mrStatus.updateSuccess(mig_info.reqNumber, mig_info.fromState,
                 mig_info.toState);

@@ -13,7 +13,8 @@ std::string Scheduler::getTapeName(FsObj *diskFile, std::string tapeId)
 {
     std::stringstream tapeName;
 
-    tapeName << inventory->getMountPoint() << "/" << tapeId << "/"
+    tapeName << inventory->getMountPoint() << Const::DELIM << tapeId
+            << Const::DELIM << Const::LTFSDM_DATA_DIR << Const::DELIM
             << Const::LTFS_NAME << "." << diskFile->getFsId() << "."
             << diskFile->getIGen() << "." << diskFile->getINode();
 
@@ -26,7 +27,8 @@ std::string Scheduler::getTapeName(unsigned long long fsid, unsigned int igen,
 {
     std::stringstream tapeName;
 
-    tapeName << inventory->getMountPoint() << "/" << tapeId << "/"
+    tapeName << inventory->getMountPoint() << Const::DELIM << tapeId
+            << Const::DELIM << Const::LTFSDM_DATA_DIR << Const::DELIM
             << Const::LTFS_NAME << "." << fsid << "." << igen << "." << ino;
 
     return tapeName.str();

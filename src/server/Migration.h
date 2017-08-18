@@ -33,6 +33,11 @@ private:
 
     static ThreadPool<int, int, int, int, std::string, std::string, bool> swq;
 
+    static void createDir(std::string path);
+    static void createLink(std::string tapeId, std::string origPath,
+            std::string dataPath);
+    static void createDataDir(std::string tapeId);
+
 public:
     struct mig_info_t
     {

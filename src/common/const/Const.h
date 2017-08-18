@@ -6,6 +6,7 @@ const std::string SERVER_COMMAND = "ltfsdmd";
 const std::string OVERLAY_FS_COMMAND = "ltfsdmd.ofs";
 const int OUTPUT_LINE_SIZE = 1024;
 const std::string LTFSDM_TMP_DIR = "/var/run/ltfsdm";
+const std::string LTFSDM_DATA_DIR = ".ltfsdm";
 const std::string DELIM = "/";
 const std::string SERVER_LOCK_FILE = LTFSDM_TMP_DIR + DELIM + SERVER_COMMAND
         + ".lock";
