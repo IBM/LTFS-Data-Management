@@ -27,3 +27,6 @@ bin
 *.so
 src/common/Version.h
 .version
+.settings
+.cproject
+.project
