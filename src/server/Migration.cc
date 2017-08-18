@@ -165,7 +165,7 @@ void Migration::addRequest()
 void Migration::createDir(std::string path)
 {
     struct stat statbuf;
-    int retry = 3;
+    int retry = Const::LTFS_OPERATION_RETRY;
 
     while (retry > 0) {
         if (stat(path.c_str(), &statbuf) == -1) {
@@ -202,7 +202,7 @@ void Migration::createLink(std::string tapeId, std::string origPath,
     std::stringstream link;
     std::stringstream dataSubPath;
     std::string relPath = "";
-    int retry = 3;
+    int retry = Const::LTFS_OPERATION_RETRY;
 
     link << inventory->getMountPoint() << Const::DELIM << tapeId << origPath;
 
@@ -218,6 +218,8 @@ void Migration::createLink(std::string tapeId, std::string origPath,
     }
 
     relPath.append(dataPath.substr(dataSubPath.str().size(), dataPath.size()));
+
+    unlink(link.str().c_str());
 
     while (retry > 0) {
         if (symlink(relPath.c_str(), link.str().c_str()) == -1) {

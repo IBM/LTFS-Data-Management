@@ -32,6 +32,7 @@ const struct rlimit NOFILE_LIMIT = (struct rlimit ) { 1024 * 1024, 1024 * 1024 }
 const struct rlimit NPROC_LIMIT = (struct rlimit ) { 16 * 1024 * 1024, 16 * 1024
                 * 1024 };
 const std::string DMAPI_SESSION_NAME = "ltfsdm";
+const int LTFS_OPERATION_RETRY = 3;
 const std::string LTFS_NAME = "ltfsdm";
 const std::string LTFS_SYNC_ATTR = "user.ltfs.sync";
 const std::string LTFS_SYNC_VAL = "1";
