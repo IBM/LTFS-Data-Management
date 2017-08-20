@@ -40,8 +40,8 @@ void Message::init(std::string extension)
     O_RDWR | O_CREAT | O_APPEND | O_CLOEXEC | O_SYNC, 0644);
 
     if (fd == Const::UNSET) {
-        MSG(LTFSDMX0001E);
-        exit((int) Error::LTFSDM_GENERAL_ERROR);
+        MSG(LTFSDMX0003E, errno);
+        THROW(Const::UNSET, errno);
     }
 }
 
