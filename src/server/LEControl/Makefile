@@ -6,7 +6,7 @@ ARC_SRC_FILES := LEControl.cc
 ARC_SRC_FILES += StatusConv.cc
 
 CLEANUP_FILES :=
-BINARY := ltfstest
+BINARY := 
 POSTTARGET :=
 
 include $(RELPATH)/definitions.mk

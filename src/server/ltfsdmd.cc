@@ -53,14 +53,18 @@ int main(int argc, char **argv)
     pthread_sigmask(SIG_BLOCK, &set, NULL);
 
     try {
+        traceObject.setTrclevel(tl);
+    } catch (const std::exception& e) {
+        exit((int) Error::LTFSDM_GENERAL_ERROR);
+    }
+
+    try {
         LTFSDM::init();
     } catch (const std::exception& e) {
         TRACE(Trace::error, e.what());
         err = Error::LTFSDM_GENERAL_ERROR;
         goto end;
     }
-
-    traceObject.setTrclevel(tl);
 
     TRACE(Trace::always, getpid());
 

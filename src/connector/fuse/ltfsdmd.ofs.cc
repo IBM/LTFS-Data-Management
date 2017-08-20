@@ -1229,8 +1229,12 @@ int main(int argc, char **argv)
 
     MSG(LTFSDMF0031I);
 
-    traceObject.init(mp);
-    traceObject.setTrclevel(tl);
+    try {
+        traceObject.init(mp);
+        traceObject.setTrclevel(tl);
+    } catch (const std::exception& e) {
+        exit((int) Error::LTFSDM_GENERAL_ERROR);
+    }
 
     FuseFS::ltfsdmKey = LTFSDM::getkey();
 
