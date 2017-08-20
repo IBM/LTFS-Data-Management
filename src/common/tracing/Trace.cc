@@ -76,8 +76,6 @@ void Trace::init(std::string extension)
 void Trace::rotate()
 
 {
-    std::lock_guard<std::mutex> lock(mtx);
-
     if (lseek(fd, 0, SEEK_CUR) < 100 * 1024 * 1024)
         return;
 

@@ -94,6 +94,7 @@ public:
                 processParms(&stream, varlist, args ...);
                 stream << std::endl;
 
+                std::lock_guard<std::mutex> lock(mtx);
                 rotate();
                 if (write(fd, stream.str().c_str(), stream.str().size())
                         != stream.str().size())
