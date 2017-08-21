@@ -8,7 +8,7 @@ private:
     int reqNum;
     int numRepl;
     int replNum;
-    LTFSDmProtocol::LTFSDmMigRequest::State tgtState;
+    int tgtState;
     std::string tapeId;
     std::string pool;
     SubServer subs;

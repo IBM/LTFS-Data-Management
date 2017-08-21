@@ -7,7 +7,7 @@ private:
     int reqNumber;
     std::set<std::string> pools;
     int numReplica;
-    LTFSDmProtocol::LTFSDmMigRequest::State targetState;
+    int targetState;
     int jobnum;
     bool needsTape = false;
 
@@ -59,7 +59,7 @@ public:
 
     Migration(unsigned long _pid, long _reqNumber, std::set<std::string> _pools,
             int _numReplica,
-            LTFSDmProtocol::LTFSDmMigRequest::State _targetState) :
+            int _targetState) :
             pid(_pid), reqNumber(_reqNumber), pools(_pools), numReplica(
                     _numReplica), targetState(_targetState), jobnum(0)
     {

@@ -6,10 +6,10 @@ private:
     unsigned long pid;
     long reqNumber;
     std::set<std::string> needsTape;
-    LTFSDmProtocol::LTFSDmSelRecRequest::State targetState;
+    int targetState;
     static unsigned long recall(std::string fileName, std::string tapeId,
             FsObj::file_state state, FsObj::file_state toState);
-    static bool processFiles(int reqNumber, std::string tapeId,
+    bool processFiles(std::string tapeId,
             FsObj::file_state toState, bool needsTape);
 
     static const std::string ADD_JOB;
@@ -23,12 +23,11 @@ private:
     static const std::string UPDATE_REQUEST;
 public:
     SelRecall(unsigned long _pid, long _reqNumber,
-            LTFSDmProtocol::LTFSDmSelRecRequest::State _targetState) :
+            int _targetState) :
             pid(_pid), reqNumber(_reqNumber), targetState(_targetState)
     {
     }
     void addJob(std::string fileName);
     void addRequest();
-    static void execRequest(int reqNum, int tgtState, std::string tapeId,
-            bool needsTape);
+    void execRequest(std::string tapeId, bool needsTape);
 };

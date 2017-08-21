@@ -96,8 +96,9 @@ void SelRecall::addRequest()
             Scheduler::cond.notify_one();
         } else {
             thrdinfo << "SelRec(" << reqNumber << ")";
-            subs.enqueue(thrdinfo.str(), SelRecall::execRequest, reqNumber,
-                    targetState, tapeId, false);
+            subs.enqueue(thrdinfo.str(), &SelRecall::execRequest,
+                    SelRecall(getpid(), reqNumber, targetState),
+                    tapeId, false);
         }
     }
 
@@ -185,7 +186,7 @@ unsigned long SelRecall::recall(std::string fileName, std::string tapeId,
     return statbuf.st_size;
 }
 
-bool SelRecall::processFiles(int reqNumber, std::string tapeId,
+bool SelRecall::processFiles(std::string tapeId,
         FsObj::file_state toState, bool needsTape)
 
 {
@@ -298,8 +299,7 @@ bool SelRecall::processFiles(int reqNumber, std::string tapeId,
     return suspended;
 }
 
-void SelRecall::execRequest(int reqNumber, int tgtState, std::string tapeId,
-bool needsTape)
+void SelRecall::execRequest(std::string tapeId, bool needsTape)
 
 {
     SQLStatement stmt;
@@ -307,11 +307,11 @@ bool needsTape)
 
     mrStatus.add(reqNumber);
 
-    if (tgtState == LTFSDmProtocol::LTFSDmMigRequest::PREMIGRATED)
-        suspended = processFiles(reqNumber, tapeId, FsObj::PREMIGRATED,
+    if ( targetState == LTFSDmProtocol::LTFSDmSelRecRequest::PREMIGRATED)
+        suspended = processFiles(tapeId, FsObj::PREMIGRATED,
                 needsTape);
     else
-        suspended = processFiles(reqNumber, tapeId, FsObj::RESIDENT, needsTape);
+        suspended = processFiles(tapeId, FsObj::RESIDENT, needsTape);
 
     std::unique_lock<std::mutex> lock(Scheduler::mtx);
 

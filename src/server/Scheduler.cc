@@ -280,8 +280,9 @@ void Scheduler::run(long key)
                     updstmt.doall();
 
                     thrdinfo << "SelRec(" << reqNum << ")";
-                    subs.enqueue(thrdinfo.str(), SelRecall::execRequest, reqNum,
-                            tgtState, tapeId, true /* needsTape */);
+                    subs.enqueue(thrdinfo.str(), &SelRecall::execRequest,
+                            SelRecall(getpid(), reqNum, tgtState),
+                            tapeId, true /* needsTape */);
                     break;
                 case DataBase::TRARECALL:
                     updstmt(Scheduler::UPDATE_REC_REQUEST)
@@ -289,8 +290,8 @@ void Scheduler::run(long key)
                     updstmt.doall();
 
                     thrdinfo << "TraRec(" << reqNum << ")";
-                    subs.enqueue(thrdinfo.str(), TransRecall::execRequest,
-                            reqNum, tapeId);
+                    subs.enqueue(thrdinfo.str(), &TransRecall::execRequest,
+                            TransRecall(), reqNum, tapeId);
                     break;
                 default:
                     TRACE(Trace::error, op);
