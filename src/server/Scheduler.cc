@@ -6,34 +6,6 @@ std::mutex Scheduler::updmtx;
 std::condition_variable Scheduler::updcond;
 std::map<int, std::atomic<bool>> Scheduler::updReq;
 
-ThreadPool<Migration::mig_info_t, std::shared_ptr<std::list<unsigned long>>> *Scheduler::wqs;
-
-std::string Scheduler::getTapeName(FsObj *diskFile, std::string tapeId)
-
-{
-    std::stringstream tapeName;
-
-    tapeName << inventory->getMountPoint() << Const::DELIM << tapeId
-            << Const::DELIM << Const::LTFSDM_DATA_DIR << Const::DELIM
-            << Const::LTFS_NAME << "." << diskFile->getFsId() << "."
-            << diskFile->getIGen() << "." << diskFile->getINode();
-
-    return tapeName.str();
-}
-
-std::string Scheduler::getTapeName(unsigned long long fsid, unsigned int igen,
-        unsigned long long ino, std::string tapeId)
-
-{
-    std::stringstream tapeName;
-
-    tapeName << inventory->getMountPoint() << Const::DELIM << tapeId
-            << Const::DELIM << Const::LTFSDM_DATA_DIR << Const::DELIM
-            << Const::LTFS_NAME << "." << fsid << "." << igen << "." << ino;
-
-    return tapeName.str();
-}
-
 bool Scheduler::poolResAvail(unsigned long minFileSize)
 
 {
@@ -236,31 +208,6 @@ bool Scheduler::resAvail(unsigned long minFileSize)
         return tapeResAvail();
 }
 
-long Scheduler::getStartBlock(std::string tapeName)
-
-{
-    long size;
-    char startBlockStr[32];
-    long startBlock;
-
-    memset(startBlockStr, 0, sizeof(startBlockStr));
-
-    size = getxattr(tapeName.c_str(), Const::LTFS_START_BLOCK.c_str(),
-            startBlockStr, sizeof(startBlockStr));
-
-    if (size == -1) {
-        TRACE(Trace::error, tapeName.c_str(), errno);
-        return Const::UNSET;
-    }
-
-    startBlock = strtol(startBlockStr, NULL, 0);
-
-    if (startBlock == LONG_MIN || startBlock == LONG_MAX)
-        return Const::UNSET;
-    else
-        return startBlock;
-}
-
 unsigned long Scheduler::smallestMigJob(int reqNum, int replNum)
 
 {
@@ -322,9 +269,10 @@ void Scheduler::run(long key)
 
                     thrdinfo << "Mig(" << reqNum << "," << replNum << ","
                             << pool << ")";
-                    subs.enqueue(thrdinfo.str(), Migration::execRequest, reqNum,
-                            tgtState, numRepl, replNum, pool, tapeId,
-                            true /* needsTape */);
+
+                    subs.enqueue(thrdinfo.str(), &Migration::execRequest,
+                            Migration(getpid(), reqNum, { }, numRepl, tgtState),
+                            replNum, pool, tapeId, true /* needsTape */);
                     break;
                 case DataBase::SELRECALL:
                     updstmt(Scheduler::UPDATE_REC_REQUEST)

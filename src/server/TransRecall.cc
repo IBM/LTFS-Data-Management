@@ -35,8 +35,8 @@ void TransRecall::addRequest(Connector::rec_info_t recinfo, std::string tapeId,
 
         attr = fso.getAttribute();
 
-        tapeName = Scheduler::getTapeName(recinfo.fsid, recinfo.igen,
-                recinfo.ino, tapeId);
+        tapeName = Server::getTapeName(recinfo.fsid, recinfo.igen, recinfo.ino,
+                tapeId);
     } catch (const std::exception& e) {
         TRACE(Trace::error, e.what());
         if (filename.compare("NULL") != 0)
@@ -50,8 +50,7 @@ void TransRecall::addRequest(Connector::rec_info_t recinfo, std::string tapeId,
             << (recinfo.toresident ? FsObj::RESIDENT : FsObj::PREMIGRATED)
             << Const::UNSET << statbuf.st_size << (long long) recinfo.fsid
             << recinfo.igen << (long long) recinfo.ino << statbuf.st_mtime << 0
-            << time(NULL) << state << tapeId
-            << Scheduler::getStartBlock(tapeName)
+            << time(NULL) << state << tapeId << Server::getStartBlock(tapeName)
             << (std::intptr_t) recinfo.conn_info;
 
     TRACE(Trace::normal, stmt.str());
@@ -251,7 +250,7 @@ unsigned long TransRecall::recall(Connector::rec_info_t recinfo,
         if (state == FsObj::RESIDENT) {
             return 0;
         } else if (state == FsObj::MIGRATED) {
-            tapeName = Scheduler::getTapeName(recinfo.fsid, recinfo.igen,
+            tapeName = Server::getTapeName(recinfo.fsid, recinfo.igen,
                     recinfo.ino, tapeId);
             fd = open(tapeName.c_str(), O_RDWR);
 

@@ -4,12 +4,13 @@ class Migration: public FileOperation
 {
 private:
     unsigned long pid;
-    long reqNumber;
+    int reqNumber;
     std::set<std::string> pools;
     int numReplica;
     LTFSDmProtocol::LTFSDmMigRequest::State targetState;
     int jobnum;
     bool needsTape = false;
+
     struct req_return_t
     {
         bool remaining;
@@ -31,13 +32,10 @@ private:
     static const std::string UPDATE_REQUEST;
     static const std::string UPDATE_REQUEST_RESET_TAPE;
 
-    static ThreadPool<int, int, int, int, std::string, std::string, bool> swq;
+    static ThreadPool<Migration, int, std::string, std::string, bool> swq;
 
-    static void createDir(std::string path);
-    static void createLink(std::string tapeId, std::string origPath,
-            std::string dataPath);
-    static void createDataDir(std::string tapeId);
-
+    req_return_t processFiles(int replNum, std::string tapeId,
+            FsObj::file_state fromState, FsObj::file_state toState);
 public:
     struct mig_info_t
     {
@@ -52,11 +50,13 @@ public:
     };
     static std::mutex pmigmtx;
 
-private:
-    static req_return_t processFiles(int reqNumber, int numRepl, int replNum,
-            std::string tapeId, FsObj::file_state fromState,
-            FsObj::file_state toState);
-public:
+    static unsigned long preMigrate(std::string tapeId, std::string driveId,
+            long secs, long nsecs, mig_info_t miginfo,
+            std::shared_ptr<std::list<unsigned long>> inumList,
+            std::shared_ptr<bool>);
+    static void stub(mig_info_t mig_info,
+            std::shared_ptr<std::list<unsigned long>> inumList);
+
     Migration(unsigned long _pid, long _reqNumber, std::set<std::string> _pools,
             int _numReplica,
             LTFSDmProtocol::LTFSDmMigRequest::State _targetState) :
@@ -66,12 +66,6 @@ public:
     }
     void addJob(std::string fileName);
     void addRequest();
-    static unsigned long preMigrate(std::string tapeId, std::string driveId,
-            long secs, long nsecs, mig_info_t miginfo,
-            std::shared_ptr<std::list<unsigned long>> inumList,
-            std::shared_ptr<bool>);
-    static void stub(mig_info_t mig_info,
-            std::shared_ptr<std::list<unsigned long>> inumList);
-    static void execRequest(int reqNumber, int targetState, int numRepl,
-            int replNum, std::string pool, std::string tapeId, bool needsTape);
+    void execRequest(int replNum, std::string pool, std::string tapeId,
+            bool needsTape);
 };

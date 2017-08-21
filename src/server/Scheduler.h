@@ -8,7 +8,7 @@ private:
     int reqNum;
     int numRepl;
     int replNum;
-    int tgtState;
+    LTFSDmProtocol::LTFSDmMigRequest::State tgtState;
     std::string tapeId;
     std::string pool;
     SubServer subs;
@@ -30,13 +30,6 @@ public:
     static std::map<int, std::atomic<bool>> updReq;
     static std::map<std::string, std::atomic<bool>> suspend_map;
 
-    static ThreadPool<Migration::mig_info_t,
-            std::shared_ptr<std::list<unsigned long>>> *wqs;
-
-    static std::string getTapeName(FsObj *diskfile, std::string tapeId);
-    static std::string getTapeName(unsigned long long fsid, unsigned int igen,
-            unsigned long long ino, std::string tapeId);
-    static long getStartBlock(std::string tapeName);
     static void mount(std::string driveid, std::string cartridgeid)
     {
         inventory->mount(driveid, cartridgeid);
@@ -47,7 +40,8 @@ public:
     }
     Scheduler() :
             op(DataBase::NOOP), reqNum(Const::UNSET), numRepl(Const::UNSET), replNum(
-                    Const::UNSET), tgtState(0)
+                    Const::UNSET), tgtState(
+                    LTFSDmProtocol::LTFSDmMigRequest::MIGRATED)
     {
     }
     ~Scheduler()

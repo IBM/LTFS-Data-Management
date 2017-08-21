@@ -6,6 +6,141 @@ std::atomic<bool> Server::finishTerminate;
 std::mutex Server::termmtx;
 std::condition_variable Server::termcond;
 
+ThreadPool<Migration::mig_info_t, std::shared_ptr<std::list<unsigned long>>> *Server::wqs;
+
+std::string Server::getTapeName(FsObj *diskFile, std::string tapeId)
+
+{
+    std::stringstream tapeName;
+
+    tapeName << inventory->getMountPoint() << Const::DELIM << tapeId
+            << Const::DELIM << Const::LTFSDM_DATA_DIR << Const::DELIM
+            << Const::LTFS_NAME << "." << diskFile->getFsId() << "."
+            << diskFile->getIGen() << "." << diskFile->getINode();
+
+    return tapeName.str();
+}
+
+std::string Server::getTapeName(unsigned long long fsid, unsigned int igen,
+        unsigned long long ino, std::string tapeId)
+
+{
+    std::stringstream tapeName;
+
+    tapeName << inventory->getMountPoint() << Const::DELIM << tapeId
+            << Const::DELIM << Const::LTFSDM_DATA_DIR << Const::DELIM
+            << Const::LTFS_NAME << "." << fsid << "." << igen << "." << ino;
+
+    return tapeName.str();
+}
+
+long Server::getStartBlock(std::string tapeName)
+
+{
+    long size;
+    char startBlockStr[32];
+    long startBlock;
+
+    memset(startBlockStr, 0, sizeof(startBlockStr));
+
+    size = getxattr(tapeName.c_str(), Const::LTFS_START_BLOCK.c_str(),
+            startBlockStr, sizeof(startBlockStr));
+
+    if (size == -1) {
+        TRACE(Trace::error, tapeName.c_str(), errno);
+        return Const::UNSET;
+    }
+
+    startBlock = strtol(startBlockStr, NULL, 0);
+
+    if (startBlock == LONG_MIN || startBlock == LONG_MAX)
+        return Const::UNSET;
+    else
+        return startBlock;
+}
+
+void Server::createDir(std::string path)
+{
+    struct stat statbuf;
+    int retry = Const::LTFS_OPERATION_RETRY;
+
+    while (retry > 0) {
+        if (stat(path.c_str(), &statbuf) == -1) {
+            if ( errno == ENOENT) {
+                if (mkdir(path.c_str(), 0600) == -1) {
+                    if ( errno == EBUSY) {
+                        sleep(1);
+                        retry--;
+                        continue;
+                    }
+                    if ( errno == EEXIST)
+                        return;
+                    MSG(LTFSDMS0093E, path, errno);
+                    THROW(errno, errno);
+                }
+            } else {
+                MSG(LTFSDMS0094E, path, errno);
+                THROW(errno, errno);
+            }
+        } else if (!S_ISDIR(statbuf.st_mode)) {
+            MSG(LTFSDMS0095E, path);
+            THROW(Const::UNSET, statbuf.st_mode);
+        } else {
+            return;
+        }
+    }
+}
+
+void Server::createLink(std::string tapeId, std::string origPath,
+        std::string dataPath)
+{
+    unsigned int pos = 0;
+    unsigned int next = 0;
+    std::stringstream link;
+    std::stringstream dataSubPath;
+    std::string relPath = "";
+    int retry = Const::LTFS_OPERATION_RETRY;
+
+    link << inventory->getMountPoint() << Const::DELIM << tapeId << origPath;
+
+    dataSubPath << inventory->getMountPoint() << Const::DELIM << tapeId
+            << Const::DELIM;
+    pos = dataSubPath.str().size() + 1;
+
+    while ((next = link.str().find('/', pos)) < link.str().size()) {
+        std::string subs = link.str().substr(0, next);
+        createDir(subs);
+        pos = next + 1;
+        relPath.append("../");
+    }
+
+    relPath.append(dataPath.substr(dataSubPath.str().size(), dataPath.size()));
+
+    unlink(link.str().c_str());
+
+    while (retry > 0) {
+        if (symlink(relPath.c_str(), link.str().c_str()) == -1) {
+            if ( errno == EBUSY) {
+                sleep(1);
+                retry--;
+                continue;
+            }
+            MSG(LTFSDMS0096E, link.str(), errno);
+            THROW(errno, errno);
+        }
+        return;
+    }
+}
+
+void Server::createDataDir(std::string tapeId)
+{
+    std::stringstream tapeDir;
+
+    tapeDir << inventory->getMountPoint() << Const::DELIM << tapeId
+            << Const::DELIM << Const::LTFSDM_DATA_DIR;
+    createDir(tapeDir.str());
+}
+
 void Server::signalHandler(sigset_t set, long key)
 
 {
@@ -204,7 +339,7 @@ void Server::run(Connector *connector, sigset_t set)
     Server::forcedTerminate = false;
     Server::finishTerminate = false;
 
-    Scheduler::wqs = new ThreadPool<Migration::mig_info_t,
+    Server::wqs = new ThreadPool<Migration::mig_info_t,
             std::shared_ptr<std::list<unsigned long>>>(&Migration::stub,
             Const::MAX_STUBBING_THREADS, "stub1-wq");
 
@@ -220,7 +355,7 @@ void Server::run(Connector *connector, sigset_t set)
     TRACE(Trace::always, (bool) Server::terminate,
             (bool) Server::forcedTerminate, (bool) Server::finishTerminate);
 
-    delete (Scheduler::wqs);
+    delete (Server::wqs);
 
     MSG(LTFSDMS0088I);
 }

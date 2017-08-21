@@ -2,7 +2,7 @@
 
 std::mutex Migration::pmigmtx;
 
-ThreadPool<int, int, int, int, std::string, std::string, bool> Migration::swq(
+ThreadPool<Migration, int, std::string, std::string, bool> Migration::swq(
         &Migration::execRequest, Const::MAX_STUBBING_THREADS, "stub2-wq");
 
 FsObj::file_state Migration::checkState(std::string fileName, FsObj *fso)
@@ -154,94 +154,13 @@ void Migration::addRequest()
         if (needsTape) {
             Scheduler::cond.notify_one();
         } else {
-            swq.enqueue(reqNumber, reqNumber, targetState, numReplica, replNum,
-                    pool, "", needsTape);
+            swq.enqueue(reqNumber,
+                    Migration(getpid(), reqNumber, { }, numReplica,
+                            targetState), replNum, pool, "", needsTape);
         }
     }
 
     swq.waitCompletion(reqNumber);
-}
-
-void Migration::createDir(std::string path)
-{
-    struct stat statbuf;
-    int retry = Const::LTFS_OPERATION_RETRY;
-
-    while (retry > 0) {
-        if (stat(path.c_str(), &statbuf) == -1) {
-            if ( errno == ENOENT) {
-                if (mkdir(path.c_str(), 0600) == -1) {
-                    if ( errno == EBUSY) {
-                        sleep(1);
-                        retry--;
-                        continue;
-                    }
-                    if ( errno == EEXIST)
-                        return;
-                    MSG(LTFSDMS0093E, path, errno);
-                    THROW(errno, errno);
-                }
-            } else {
-                MSG(LTFSDMS0094E, path, errno);
-                THROW(errno, errno);
-            }
-        } else if (!S_ISDIR(statbuf.st_mode)) {
-            MSG(LTFSDMS0095E, path);
-            THROW(Const::UNSET, statbuf.st_mode);
-        } else {
-            return;
-        }
-    }
-}
-
-void Migration::createLink(std::string tapeId, std::string origPath,
-        std::string dataPath)
-{
-    unsigned int pos = 0;
-    unsigned int next = 0;
-    std::stringstream link;
-    std::stringstream dataSubPath;
-    std::string relPath = "";
-    int retry = Const::LTFS_OPERATION_RETRY;
-
-    link << inventory->getMountPoint() << Const::DELIM << tapeId << origPath;
-
-    dataSubPath << inventory->getMountPoint() << Const::DELIM << tapeId
-            << Const::DELIM;
-    pos = dataSubPath.str().size() + 1;
-
-    while ((next = link.str().find('/', pos)) < link.str().size()) {
-        std::string subs = link.str().substr(0, next);
-        createDir(subs);
-        pos = next + 1;
-        relPath.append("../");
-    }
-
-    relPath.append(dataPath.substr(dataSubPath.str().size(), dataPath.size()));
-
-    unlink(link.str().c_str());
-
-    while (retry > 0) {
-        if (symlink(relPath.c_str(), link.str().c_str()) == -1) {
-            if ( errno == EBUSY) {
-                sleep(1);
-                retry--;
-                continue;
-            }
-            MSG(LTFSDMS0096E, link.str(), errno);
-            THROW(errno, errno);
-        }
-        return;
-    }
-}
-
-void Migration::createDataDir(std::string tapeId)
-{
-    std::stringstream tapeDir;
-
-    tapeDir << inventory->getMountPoint() << Const::DELIM << tapeId
-            << Const::DELIM << Const::LTFSDM_DATA_DIR;
-    createDir(tapeDir.str());
 }
 
 unsigned long Migration::preMigrate(std::string tapeId, std::string driveId,
@@ -265,9 +184,9 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId,
 
         TRACE(Trace::always, mig_info.fileName);
 
-        tapeName = Scheduler::getTapeName(&source, tapeId);
+        tapeName = Server::getTapeName(&source, tapeId);
 
-        createDataDir(tapeId);
+        Server::createDataDir(tapeId);
 
         fd = open(tapeName.c_str(), O_RDWR | O_CREAT);
 
@@ -355,7 +274,7 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId,
             THROW(Const::UNSET, mig_info.fileName, errno);
         }
 
-        createLink(tapeId, mig_info.fileName, tapeName);
+        Server::createLink(tapeId, mig_info.fileName, tapeName);
 
         mrStatus.updateSuccess(mig_info.reqNumber, mig_info.fromState,
                 mig_info.toState);
@@ -443,9 +362,8 @@ void Migration::stub(Migration::mig_info_t mig_info,
                 mig_info.toState);
 }
 
-Migration::req_return_t Migration::processFiles(int reqNumber, int numRepl,
-        int replNum, std::string tapeId, FsObj::file_state fromState,
-        FsObj::file_state toState)
+Migration::req_return_t Migration::processFiles(int replNum, std::string tapeId,
+        FsObj::file_state fromState, FsObj::file_state toState)
 
 {
     SQLStatement stmt;
@@ -514,7 +432,7 @@ Migration::req_return_t Migration::processFiles(int reqNumber, int numRepl,
             break;
 
         try {
-            Migration::mig_info_t mig_info = { fileName, reqNumber, numRepl,
+            Migration::mig_info_t mig_info = { fileName, reqNumber, numReplica,
                     replNum, inum, "", fromState, toState };
 
             TRACE(Trace::always, fileName, reqNumber);
@@ -528,7 +446,7 @@ Migration::req_return_t Migration::processFiles(int reqNumber, int numRepl,
                 drive->wqp->enqueue(reqNumber, tapeId, drive->GetObjectID(),
                         secs, nsecs, mig_info, inumList, suspended);
             } else {
-                Scheduler::wqs->enqueue(reqNumber, mig_info, inumList);
+                Server::wqs->enqueue(reqNumber, mig_info, inumList);
             }
         } catch (const std::exception& e) {
             TRACE(Trace::error, e.what());
@@ -552,7 +470,7 @@ Migration::req_return_t Migration::processFiles(int reqNumber, int numRepl,
     if (toState == FsObj::PREMIGRATED) {
         drive->wqp->waitCompletion(reqNumber);
     } else {
-        Scheduler::wqs->waitCompletion(reqNumber);
+        Server::wqs->waitCompletion(reqNumber);
     }
 
     if (*suspended == true)
@@ -575,8 +493,8 @@ Migration::req_return_t Migration::processFiles(int reqNumber, int numRepl,
     return retval;
 }
 
-void Migration::execRequest(int reqNumber, int targetState, int numRepl,
-        int replNum, std::string pool, std::string tapeId, bool needsTape)
+void Migration::execRequest(int replNum, std::string pool, std::string tapeId,
+        bool needsTape)
 
 {
     TRACE(Trace::full, __PRETTY_FUNCTION__);
@@ -591,8 +509,8 @@ void Migration::execRequest(int reqNumber, int targetState, int numRepl,
     TRACE(Trace::always, reqNumber, needsTape);
 
     if (needsTape) {
-        retval = processFiles(reqNumber, numRepl, replNum, tapeId,
-                FsObj::RESIDENT, FsObj::PREMIGRATED);
+        retval = processFiles(replNum, tapeId, FsObj::RESIDENT,
+                FsObj::PREMIGRATED);
 
         tapePath << inventory->getMountPoint() << "/" << tapeId;
 
@@ -638,8 +556,7 @@ void Migration::execRequest(int reqNumber, int targetState, int numRepl,
     }
 
     if (!failed && targetState != LTFSDmProtocol::LTFSDmMigRequest::PREMIGRATED)
-        processFiles(reqNumber, numRepl, replNum, tapeId, FsObj::PREMIGRATED,
-                FsObj::MIGRATED);
+        processFiles(replNum, tapeId, FsObj::PREMIGRATED, FsObj::MIGRATED);
 
     std::unique_lock<std::mutex> updlock(Scheduler::updmtx);
 

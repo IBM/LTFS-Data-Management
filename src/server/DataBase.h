@@ -46,6 +46,7 @@ private:
 
     void getColumn(int *result, int column);
     void getColumn(unsigned int *result, int column);
+    void getColumn(LTFSDmProtocol::LTFSDmMigRequest::State *result, int column);
     void getColumn(DataBase::operation *result, int column);
     void getColumn(DataBase::req_state *result, int column);
     void getColumn(FsObj::file_state *result, int column);

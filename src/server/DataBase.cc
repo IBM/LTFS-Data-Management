@@ -169,6 +169,15 @@ void SQLStatement::getColumn(unsigned int *result, int column)
     *result = static_cast<unsigned int>(sqlite3_column_int(stmt, column));
 }
 
+void SQLStatement::getColumn(LTFSDmProtocol::LTFSDmMigRequest::State *result,
+        int column)
+
+{
+    *result =
+            static_cast<LTFSDmProtocol::LTFSDmMigRequest::State>(sqlite3_column_int(
+                    stmt, column));
+}
+
 void SQLStatement::getColumn(DataBase::operation *result, int column)
 
 {

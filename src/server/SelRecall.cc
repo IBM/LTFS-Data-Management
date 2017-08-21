@@ -30,14 +30,14 @@ void SelRecall::addJob(std::string fileName)
             needsTape.insert(attr.tapeId[0]);
         }
 
-        tapeName = Scheduler::getTapeName(&fso, attr.tapeId[0]);
+        tapeName = Server::getTapeName(&fso, attr.tapeId[0]);
 
         stmt(SelRecall::ADD_JOB) << DataBase::SELRECALL << fileName << reqNumber
                 << targetState << statbuf.st_size << (long long) fso.getFsId()
                 << fso.getIGen() << (long long) fso.getINode()
                 << statbuf.st_mtim.tv_sec << statbuf.st_mtim.tv_nsec
                 << time(NULL) << state << attr.tapeId[0]
-                << Scheduler::getStartBlock(tapeName);
+                << Server::getStartBlock(tapeName);
     } catch (const std::exception& e) {
         TRACE(Trace::error, e.what());
         stmt(SelRecall::ADD_JOB) << DataBase::SELRECALL << fileName << reqNumber
@@ -135,7 +135,7 @@ unsigned long SelRecall::recall(std::string fileName, std::string tapeId,
         if (state == FsObj::RESIDENT) {
             return 0;
         } else if (state == FsObj::MIGRATED) {
-            tapeName = Scheduler::getTapeName(&target, tapeId);
+            tapeName = Server::getTapeName(&target, tapeId);
             fd = open(tapeName.c_str(), O_RDWR);
 
             if (fd == -1) {
