@@ -315,9 +315,12 @@ void OpenLTFSInventory::poolAdd(std::string poolname, std::string cartridgeid)
     for (std::shared_ptr<OpenLTFSPool> pool : pools) {
         if (pool->getPoolName().compare(poolname) == 0) {
             cartridge = getCartridge(cartridgeid);
-            if (cartridge == nullptr)
-                THROW(Error::LTFSDM_TAPE_NOT_EXISTS);
+            if (cartridge == nullptr) {
+                MSG(LTFSDMS0077I, poolname);
+                return;
+            }
             pool->add(cartridge);
+            MSG(LTFSDMS0078I, cartridgeid, poolname);
             return;
         }
     }
