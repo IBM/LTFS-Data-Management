@@ -40,12 +40,12 @@ void mkTmpDir()
     }
 }
 
-void LTFSDM::init()
+void LTFSDM::init(std::string ident)
 
 {
     mkTmpDir();
-    messageObject.init();
-    traceObject.init();
+    messageObject.init(ident);
+    traceObject.init(ident);
 }
 
 std::vector<std::string> LTFSDM::getTapeIds()

@@ -84,7 +84,7 @@ void InfoJobsCommand::doCommand(int argc, char **argv)
             INFO(LTFSDMC0063I, operation, state, recnum, replnum, size, tapeid,
                     filename);
 
-    } while (recnum != Const::UNSET);
+    } while (!exitClient && recnum != Const::UNSET);
 
     return;
 }

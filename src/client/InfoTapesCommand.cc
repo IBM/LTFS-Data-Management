@@ -79,7 +79,7 @@ void InfoTapesCommand::doCommand(int argc, char **argv)
         if (id.compare("") != 0)
             INFO(LTFSDMC0067I, id, slot, totalcap, remaincap, status,
                     inprogress, pool, state);
-    } while (id.compare("") != 0);
+    } while (!exitClient && id.compare("") != 0);
 
     return;
 }

@@ -88,21 +88,24 @@ void LTFSDmComm::send(int fd)
     unsigned long rsize;
     char *buffer;
 
-    MessageSize = this->ByteSize();
+    if ( exitClient ) {
+        MessageSize = 0;
+        buffer = (char * ) malloc(sizeof(long));
+        memset(buffer, 0, sizeof(long));
+    }
+    else {
+        MessageSize = this->ByteSize();
 
-    buffer = (char *) malloc(MessageSize + sizeof(long));
-    memset(buffer, 0, MessageSize + sizeof(long));
-    memcpy(buffer, &MessageSize, sizeof(long));
-    if (this->SerializeToArray(buffer + sizeof(long), MessageSize) == false) {
-        TRACE(Trace::error, buffer);
-        THROW(Const::UNSET);
+        buffer = (char *) malloc(MessageSize + sizeof(long));
+        memset(buffer, 0, MessageSize + sizeof(long));
+        memcpy(buffer, &MessageSize, sizeof(long));
+        if (this->SerializeToArray(buffer + sizeof(long), MessageSize) == false) {
+            TRACE(Trace::error, buffer);
+            THROW(Const::UNSET);
+        }
     }
 
     TRACE(Trace::full, strlen(buffer), MessageSize);
-
-    if (exitClient) {
-        buffer[0] = 0;
-    }
 
     rsize = write(fd, buffer, MessageSize + sizeof(long));
 
@@ -110,6 +113,10 @@ void LTFSDmComm::send(int fd)
         free(buffer);
         TRACE(Trace::error, rsize, MessageSize, errno, sizeof(long));
         MSG(LTFSDMX0008E);
+        THROW(Const::UNSET);
+    }
+
+    if ( exitClient ) {
         THROW(Const::UNSET);
     }
 
@@ -148,6 +155,9 @@ void LTFSDmComm::recv(int fd)
         TRACE(Trace::error, rsize, sizeof(long));
         THROW(Const::UNSET);
     }
+
+    if ( MessageSize == 0 )
+        THROW(Const::UNSET);
 
     TRACE(Trace::full, MessageSize);
 

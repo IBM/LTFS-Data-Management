@@ -18,7 +18,7 @@ void MessageParser::getObjects(LTFSDmCommServer *command, long localReqNumber,
         } catch (const std::exception& e) {
             TRACE(Trace::error, e.what());
             MSG(LTFSDMS0006E);
-            return;
+            THROW(Const::UNSET);
         }
 
         if (!command->has_sendobjects()) {
@@ -201,8 +201,15 @@ void MessageParser::migrationMessage(long key, LTFSDmCommServer *command,
     }
 
     if (!error) {
-        getObjects(command, localReqNumber, pid, requestNumber,
-                dynamic_cast<FileOperation*>(mig));
+        try {
+            getObjects(command, localReqNumber, pid, requestNumber,
+                    dynamic_cast<FileOperation*>(mig));
+        } catch (const std::exception& e) {
+            SQLStatement stmt;
+            stmt(FileOperation::DELETE_JOBS) << requestNumber;
+            stmt.doall();
+            return;
+        }
         mig->addRequest();
         reqStatusMessage(key, command, dynamic_cast<FileOperation*>(mig));
     }
@@ -254,8 +261,15 @@ void MessageParser::selRecallMessage(long key, LTFSDmCommServer *command,
     }
 
     if (!error) {
-        getObjects(command, localReqNumber, pid, requestNumber,
-                dynamic_cast<FileOperation*>(srec));
+        try {
+            getObjects(command, localReqNumber, pid, requestNumber,
+                    dynamic_cast<FileOperation*>(srec));
+        } catch (const std::exception& e) {
+            SQLStatement stmt;
+            stmt(FileOperation::DELETE_JOBS) << requestNumber;
+            stmt.doall();
+            return;
+        }
         srec->addRequest();
         reqStatusMessage(key, command, dynamic_cast<FileOperation*>(srec));
     }
@@ -519,6 +533,8 @@ void MessageParser::infoRequestsMessage(long key, LTFSDmCommServer *command,
         } catch (const std::exception& e) {
             TRACE(Trace::error, e.what());
             MSG(LTFSDMS0007E);
+            stmt.finalize();
+            return;
         }
     }
     stmt.finalize();
@@ -590,6 +606,8 @@ void MessageParser::infoJobsMessage(long key, LTFSDmCommServer *command,
         } catch (const std::exception& e) {
             TRACE(Trace::error, e.what());
             MSG(LTFSDMS0007E);
+            stmt.finalize();
+            return;
         }
     }
     stmt.finalize();
@@ -644,6 +662,7 @@ void MessageParser::infoDrivesMessage(long key, LTFSDmCommServer *command)
             } catch (const std::exception& e) {
                 TRACE(Trace::error, e.what());
                 MSG(LTFSDMS0007E);
+                return;
             }
         }
     }
@@ -724,6 +743,7 @@ void MessageParser::infoTapesMessage(long key, LTFSDmCommServer *command)
             } catch (const std::exception& e) {
                 TRACE(Trace::error, e.what());
                 MSG(LTFSDMS0007E);
+                return;
             }
         }
     }
