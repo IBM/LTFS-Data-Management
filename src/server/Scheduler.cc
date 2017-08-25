@@ -267,7 +267,7 @@ void Scheduler::run(long key)
                             << pool;
                     updstmt.doall();
 
-                    thrdinfo << "Mig(" << reqNum << "," << replNum << ","
+                    thrdinfo << "M(" << reqNum << "," << replNum << ","
                             << pool << ")";
 
                     subs.enqueue(thrdinfo.str(), &Migration::execRequest,
@@ -279,7 +279,7 @@ void Scheduler::run(long key)
                             << DataBase::REQ_INPROGRESS << reqNum << tapeId;
                     updstmt.doall();
 
-                    thrdinfo << "SelRec(" << reqNum << ")";
+                    thrdinfo << "SR(" << reqNum << ")";
                     subs.enqueue(thrdinfo.str(), &SelRecall::execRequest,
                             SelRecall(getpid(), reqNum, tgtState),
                             tapeId, true /* needsTape */);
@@ -289,7 +289,7 @@ void Scheduler::run(long key)
                             << DataBase::REQ_INPROGRESS << reqNum << tapeId;
                     updstmt.doall();
 
-                    thrdinfo << "TraRec(" << reqNum << ")";
+                    thrdinfo << "TR(" << reqNum << ")";
                     subs.enqueue(thrdinfo.str(), &TransRecall::execRequest,
                             TransRecall(), reqNum, tapeId);
                     break;

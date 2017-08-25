@@ -95,7 +95,7 @@ void SelRecall::addRequest()
         if (needsTape.count(tapeId) > 0) {
             Scheduler::cond.notify_one();
         } else {
-            thrdinfo << "SelRec(" << reqNumber << ")";
+            thrdinfo << "SR(" << reqNumber << ")";
             subs.enqueue(thrdinfo.str(), &SelRecall::execRequest,
                     SelRecall(getpid(), reqNumber, targetState),
                     tapeId, false);
