@@ -206,7 +206,8 @@ void TransRecall::run(Connector *connector)
 
         TRACE(Trace::always, recinfo.ino, tapeId, reqmap[tapeId]);
 
-        wq.enqueue(Const::UNSET, TransRecall(), recinfo, tapeId, reqmap[tapeId]);
+        wq.enqueue(Const::UNSET, TransRecall(), recinfo, tapeId,
+                reqmap[tapeId]);
         /*
          subs.enqueue(thrdinfo.str(), TransRecall::addRequest, recinfo, tapeId,
          reqmap[tapeId]);
@@ -372,6 +373,8 @@ void TransRecall::execRequest(int reqNum, std::string tapeId)
 {
     SQLStatement stmt;
     int remaining = 0;
+
+    TRACE(Trace::always, reqNum, tapeId);
 
     processFiles(reqNum, tapeId);
 

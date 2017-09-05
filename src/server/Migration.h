@@ -58,8 +58,7 @@ public:
             std::shared_ptr<std::list<unsigned long>> inumList);
 
     Migration(unsigned long _pid, long _reqNumber, std::set<std::string> _pools,
-            int _numReplica,
-            int _targetState) :
+            int _numReplica, int _targetState) :
             pid(_pid), reqNumber(_reqNumber), pools(_pools), numReplica(
                     _numReplica), targetState(_targetState), jobnum(0)
     {

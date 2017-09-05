@@ -9,8 +9,8 @@ private:
     int targetState;
     static unsigned long recall(std::string fileName, std::string tapeId,
             FsObj::file_state state, FsObj::file_state toState);
-    bool processFiles(std::string tapeId,
-            FsObj::file_state toState, bool needsTape);
+    bool processFiles(std::string tapeId, FsObj::file_state toState,
+            bool needsTape);
 
     static const std::string ADD_JOB;
     static const std::string GET_TAPES;
@@ -22,8 +22,7 @@ private:
     static const std::string RESET_JOB_STATE;
     static const std::string UPDATE_REQUEST;
 public:
-    SelRecall(unsigned long _pid, long _reqNumber,
-            int _targetState) :
+    SelRecall(unsigned long _pid, long _reqNumber, int _targetState) :
             pid(_pid), reqNumber(_reqNumber), targetState(_targetState)
     {
     }

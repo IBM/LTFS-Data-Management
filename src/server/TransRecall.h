@@ -31,6 +31,5 @@ public:
             std::string tapeId, FsObj::file_state state,
             FsObj::file_state toState);
 
-
     void execRequest(int reqNum, std::string tapeId);
 };

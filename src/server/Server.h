@@ -31,5 +31,5 @@ public:
     }
     void initialize(bool dbUseMemory);
     void daemonize();
-    void run(Connector *connector, sigset_t set);
+    void run(sigset_t set);
 };

@@ -88,12 +88,11 @@ void LTFSDmComm::send(int fd)
     unsigned long rsize;
     char *buffer;
 
-    if ( exitClient ) {
+    if (exitClient) {
         MessageSize = 0;
-        buffer = (char * ) malloc(sizeof(long));
+        buffer = (char *) malloc(sizeof(long));
         memset(buffer, 0, sizeof(long));
-    }
-    else {
+    } else {
         MessageSize = this->ByteSize();
 
         buffer = (char *) malloc(MessageSize + sizeof(long));
@@ -116,7 +115,7 @@ void LTFSDmComm::send(int fd)
         THROW(Const::UNSET);
     }
 
-    if ( exitClient ) {
+    if (exitClient) {
         THROW(Const::UNSET);
     }
 
@@ -156,7 +155,7 @@ void LTFSDmComm::recv(int fd)
         THROW(Const::UNSET);
     }
 
-    if ( MessageSize == 0 )
+    if (MessageSize == 0)
         THROW(Const::UNSET);
 
     TRACE(Trace::full, MessageSize);

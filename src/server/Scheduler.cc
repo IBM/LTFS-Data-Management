@@ -267,8 +267,8 @@ void Scheduler::run(long key)
                             << pool;
                     updstmt.doall();
 
-                    thrdinfo << "M(" << reqNum << "," << replNum << ","
-                            << pool << ")";
+                    thrdinfo << "M(" << reqNum << "," << replNum << "," << pool
+                            << ")";
 
                     subs.enqueue(thrdinfo.str(), &Migration::execRequest,
                             Migration(getpid(), reqNum, { }, numRepl, tgtState),
@@ -281,8 +281,8 @@ void Scheduler::run(long key)
 
                     thrdinfo << "SR(" << reqNum << ")";
                     subs.enqueue(thrdinfo.str(), &SelRecall::execRequest,
-                            SelRecall(getpid(), reqNum, tgtState),
-                            tapeId, true /* needsTape */);
+                            SelRecall(getpid(), reqNum, tgtState), tapeId,
+                            true /* needsTape */);
                     break;
                 case DataBase::TRARECALL:
                     updstmt(Scheduler::UPDATE_REC_REQUEST)

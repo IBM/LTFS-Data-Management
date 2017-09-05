@@ -77,7 +77,7 @@ void InfoJobsCommand::doCommand(int argc, char **argv)
         std::string filename = infojobsresp.filename();
         recnum = infojobsresp.reqnumber();
         int replnum = infojobsresp.replnumber();
-        int size = infojobsresp.filesize();
+        unsigned long size = infojobsresp.filesize();
         std::string tapeid = infojobsresp.tapeid();
         std::string state = infojobsresp.state();
         if (recnum != Const::UNSET)

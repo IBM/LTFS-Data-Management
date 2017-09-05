@@ -327,17 +327,26 @@ void Server::daemonize()
     close(dev_null);
 }
 
-void Server::run(Connector *connector, sigset_t set)
+void Server::run(sigset_t set)
 
 {
     SubServer subs;
     Scheduler sched;
     Receiver recv;
     TransRecall trec;
+    Connector *connector = NULL;
 
     Server::terminate = false;
     Server::forcedTerminate = false;
     Server::finishTerminate = false;
+
+    try {
+        inventory = new OpenLTFSInventory();
+        connector = new Connector(true);
+    } catch (const std::exception& e) {
+        TRACE(Trace::error, e.what());
+        goto end;
+    }
 
     Server::wqs = new ThreadPool<Migration::mig_info_t,
             std::shared_ptr<std::list<unsigned long>>>(&Migration::stub,
@@ -357,5 +366,14 @@ void Server::run(Connector *connector, sigset_t set)
 
     delete (Server::wqs);
 
+    end:
+
+    if (inventory)
+        delete (inventory);
+
+    if (connector)
+        delete (connector);
+
     MSG(LTFSDMS0088I);
+
 }

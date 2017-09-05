@@ -221,8 +221,7 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId,
 
             if (inventory->getDrive(driveId)->getToUnblock()
                     != DataBase::NOOP) {
-                TRACE(Trace::full, mig_info.fileName);
-                source.remAttribute();
+                TRACE(Trace::always, mig_info.fileName, tapeId);
                 std::lock_guard<std::mutex> lock(Migration::pmigmtx);
                 *suspended = true;
                 THROW(Error::LTFSDM_OK);
@@ -336,6 +335,7 @@ void Migration::stub(Migration::mig_info_t mig_info,
             source.stub();
             TRACE(Trace::full, mig_info.fileName);
         } else {
+            TRACE(Trace::always, mig_info.fileName, source.getMigState());
             source.unlock();
             return;
         }
@@ -494,7 +494,7 @@ Migration::req_return_t Migration::processFiles(int replNum, std::string tapeId,
 }
 
 void Migration::execRequest(int replNum, std::string pool, std::string tapeId,
-        bool needsTape)
+bool needsTape)
 
 {
     TRACE(Trace::full, __PRETTY_FUNCTION__);
@@ -506,7 +506,7 @@ void Migration::execRequest(int replNum, std::string pool, std::string tapeId,
 
     mrStatus.add(reqNumber);
 
-    TRACE(Trace::always, reqNumber, needsTape);
+    TRACE(Trace::always, reqNumber, needsTape, tapeId);
 
     if (needsTape) {
         retval = processFiles(replNum, tapeId, FsObj::RESIDENT,

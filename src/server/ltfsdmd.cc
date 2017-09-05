@@ -12,8 +12,6 @@ int main(int argc, char **argv)
     bool dbUseMemory = false;
     Trace::traceLevel tl = Trace::error;
 
-    Connector *connector = NULL;
-
     opterr = 0;
 
     if (chdir("/") == -1) {
@@ -71,22 +69,16 @@ int main(int argc, char **argv)
 
         MSG(LTFSDMX0029I, OPENLTFS_VERSION);
 
-        inventory = new OpenLTFSInventory();
-        connector = new Connector(true);
-        ltfsdmd.run(connector, set);
+        ltfsdmd.run(set);
     } catch (const OpenLTFSException& e) {
         if (e.getError() != Error::LTFSDM_OK) {
             TRACE(Trace::error, e.what());
-            err = Const::UNSET;
+            err = Error::LTFSDM_GENERAL_ERROR;
         }
     } catch (const std::exception& e) {
         TRACE(Trace::error, e.what());
-        err = Const::UNSET;
+        err = Error::LTFSDM_GENERAL_ERROR;
     }
 
-    end: if (inventory)
-        delete (inventory);
-    if (connector)
-        delete (connector);
-    return (int) err;
+    end: return (int) err;
 }
