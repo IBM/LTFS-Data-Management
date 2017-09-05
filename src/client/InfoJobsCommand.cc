@@ -76,12 +76,12 @@ void InfoJobsCommand::doCommand(int argc, char **argv)
         std::string operation = infojobsresp.operation();
         std::string filename = infojobsresp.filename();
         recnum = infojobsresp.reqnumber();
-        int replnum = infojobsresp.replnumber();
+        std::string pool = infojobsresp.pool();
         unsigned long size = infojobsresp.filesize();
         std::string tapeid = infojobsresp.tapeid();
         std::string state = infojobsresp.state();
         if (recnum != Const::UNSET)
-            INFO(LTFSDMC0063I, operation, state, recnum, replnum, size, tapeid,
+            INFO(LTFSDMC0063I, operation, state, recnum, pool, tapeid, size,
                     filename);
 
     } while (!exitClient && recnum != Const::UNSET);

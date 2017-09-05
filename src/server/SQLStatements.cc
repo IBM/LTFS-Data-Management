@@ -46,10 +46,10 @@ const std::string Scheduler::SELECT_REQUEST =
                 " ORDER BY OPERATION,TIME_ADDED ASC";
 
 const std::string Scheduler::UPDATE_MIG_REQUEST =
-        "UPDATE REQUEST_QUEUE SET STATE=%1%"
-                " WHERE REQ_NUM=%2%"
-                " AND REPL_NUM=%3%"
-                " AND TAPE_POOL='%4%'";
+        "UPDATE REQUEST_QUEUE SET STATE=%1%,TAPE_ID='%2%'"
+                " WHERE REQ_NUM=%3%"
+                " AND REPL_NUM=%4%"
+                " AND TAPE_POOL='%5%'";
 
 const std::string Scheduler::UPDATE_REC_REQUEST =
         "UPDATE REQUEST_QUEUE SET STATE=%1%"
@@ -265,18 +265,20 @@ const std::string MessageParser::ALL_REQUESTS =
         "SELECT STATE FROM REQUEST_QUEUE";
 
 const std::string MessageParser::INFO_ALL_REQUESTS =
-        "SELECT OPERATION, REQ_NUM, TAPE_ID, TARGET_STATE, STATE FROM REQUEST_QUEUE";
+        "SELECT OPERATION, REQ_NUM, TAPE_ID, TARGET_STATE, STATE, TAPE_POOL"
+                " FROM REQUEST_QUEUE";
 
 const std::string MessageParser::INFO_ONE_REQUEST =
-        "SELECT OPERATION, REQ_NUM, TAPE_ID, TARGET_STATE, STATE FROM REQUEST_QUEUE"
+        "SELECT OPERATION, REQ_NUM, TAPE_ID, TARGET_STATE, STATE, TAPE_POOL"
+                " FROM REQUEST_QUEUE"
                 " WHERE REQ_NUM=%1%";
 
 const std::string MessageParser::INFO_ALL_JOBS =
-        "SELECT OPERATION, FILE_NAME, REQ_NUM, REPL_NUM,"
+        "SELECT OPERATION, FILE_NAME, REQ_NUM, TAPE_POOL,"
                 " FILE_SIZE, TAPE_ID, FILE_STATE FROM JOB_QUEUE";
 
 const std::string MessageParser::INFO_SEL_JOBS =
-        "SELECT OPERATION, FILE_NAME, REQ_NUM, REPL_NUM,"
+        "SELECT OPERATION, FILE_NAME, REQ_NUM, TAPE_POOL,"
                 " FILE_SIZE, TAPE_ID, FILE_STATE FROM JOB_QUEUE"
                 " WHERE REQ_NUM=%1%";
 

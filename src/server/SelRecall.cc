@@ -186,7 +186,7 @@ unsigned long SelRecall::recall(std::string fileName, std::string tapeId,
 }
 
 bool SelRecall::processFiles(std::string tapeId, FsObj::file_state toState,
-        bool needsTape)
+bool needsTape)
 
 {
     SQLStatement stmt;
@@ -246,6 +246,7 @@ bool SelRecall::processFiles(std::string tapeId, FsObj::file_state toState,
             continue;
 
         if (needsTape && drive->getToUnblock() == DataBase::TRARECALL) {
+            TRACE(Trace::always, tapeId);
             suspended = true;
             break;
         }

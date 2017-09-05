@@ -125,6 +125,7 @@ message LTFSDmInfoRequestsResp {
 	required bytes tapeid = 3;
 	required bytes targetstate = 4;
 	required bytes state = 5;
+	required bytes pool = 6;
 }
 
 message LTFSDmInfoJobsRequest {
@@ -136,7 +137,7 @@ message LTFSDmInfoJobsResp {
 	required bytes operation = 1;
 	required bytes filename = 2;
 	required int64 reqnumber = 3;
-	required int64 replnumber = 4;
+	required bytes pool = 4;
 	required int64 filesize = 5;
 	required bytes tapeid = 6;
 	required bytes state = 7;

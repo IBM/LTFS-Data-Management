@@ -501,6 +501,7 @@ void MessageParser::infoRequestsMessage(long key, LTFSDmCommServer *command,
     std::string tapeId;
     DataBase::req_state tgtstate;
     DataBase::req_state state;
+    std::string pool;
 
     TRACE(Trace::normal, keySent);
 
@@ -518,7 +519,7 @@ void MessageParser::infoRequestsMessage(long key, LTFSDmCommServer *command,
 
     stmt.prepare();
 
-    while (stmt.step(&op, &reqNum, &tapeId, &tgtstate, &state)) {
+    while (stmt.step(&op, &reqNum, &tapeId, &tgtstate, &state, &pool)) {
         LTFSDmProtocol::LTFSDmInfoRequestsResp *inforeqsresp =
                 command->mutable_inforequestsresp();
 
@@ -527,6 +528,7 @@ void MessageParser::infoRequestsMessage(long key, LTFSDmCommServer *command,
         inforeqsresp->set_tapeid(tapeId);
         inforeqsresp->set_targetstate(DataBase::reqStateStr(tgtstate));
         inforeqsresp->set_state(DataBase::reqStateStr(state));
+        inforeqsresp->set_pool(pool);
 
         try {
             command->send();
@@ -546,6 +548,7 @@ void MessageParser::infoRequestsMessage(long key, LTFSDmCommServer *command,
     inforeqsresp->set_tapeid("");
     inforeqsresp->set_targetstate("");
     inforeqsresp->set_state("");
+    inforeqsresp->set_pool("");
 
     try {
         command->send();
@@ -568,7 +571,7 @@ void MessageParser::infoJobsMessage(long key, LTFSDmCommServer *command,
     DataBase::operation op;
     std::string fileName;
     int reqNum;
-    int replNum;
+    std::string pool;
     unsigned long fileSize;
     std::string tapeId;
     FsObj::file_state state;
@@ -589,14 +592,14 @@ void MessageParser::infoJobsMessage(long key, LTFSDmCommServer *command,
 
     stmt.prepare();
 
-    while (stmt.step(&op, &fileName, &reqNum, &replNum, &fileSize, &state)) {
+    while (stmt.step(&op, &fileName, &reqNum, &pool, &fileSize, &tapeId, &state)) {
         LTFSDmProtocol::LTFSDmInfoJobsResp *infojobsresp =
                 command->mutable_infojobsresp();
 
         infojobsresp->set_operation(DataBase::opStr(op));
         infojobsresp->set_filename(fileName);
         infojobsresp->set_reqnumber(reqNum);
-        infojobsresp->set_replnumber(replNum);
+        infojobsresp->set_pool(pool);
         infojobsresp->set_filesize(fileSize);
         infojobsresp->set_tapeid(tapeId);
         infojobsresp->set_state(FsObj::migStateStr(state));
@@ -617,7 +620,7 @@ void MessageParser::infoJobsMessage(long key, LTFSDmCommServer *command,
     infojobsresp->set_operation("");
     infojobsresp->set_filename("");
     infojobsresp->set_reqnumber(Const::UNSET);
-    infojobsresp->set_replnumber(Const::UNSET);
+    infojobsresp->set_pool("");
     infojobsresp->set_filesize(Const::UNSET);
     infojobsresp->set_tapeid("");
     infojobsresp->set_state("");

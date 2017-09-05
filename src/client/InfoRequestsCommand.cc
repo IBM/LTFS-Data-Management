@@ -78,8 +78,9 @@ void InfoRequestsCommand::doCommand(int argc, char **argv)
         std::string tapeid = inforeqsresp.tapeid();
         std::string tstate = inforeqsresp.targetstate();
         std::string state = inforeqsresp.state();
+        std::string pool = inforeqsresp.pool();
         if (recnum != Const::UNSET)
-            INFO(LTFSDMC0061I, operation, recnum, tapeid, tstate, state);
+            INFO(LTFSDMC0061I, operation, state, recnum, pool, tapeid, tstate);
 
     } while (recnum != Const::UNSET);
 

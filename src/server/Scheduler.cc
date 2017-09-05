@@ -263,8 +263,8 @@ void Scheduler::run(long key)
             switch (op) {
                 case DataBase::MIGRATION:
                     updstmt(Scheduler::UPDATE_MIG_REQUEST)
-                            << DataBase::REQ_INPROGRESS << reqNum << replNum
-                            << pool;
+                            << DataBase::REQ_INPROGRESS << tapeId << reqNum
+                            << replNum << pool;
                     updstmt.doall();
 
                     thrdinfo << "M(" << reqNum << "," << replNum << "," << pool
