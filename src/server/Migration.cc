@@ -220,7 +220,7 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId,
                     *inventory->getDrive(driveId)->mtx);
 
             if (inventory->getDrive(driveId)->getToUnblock()
-                    != DataBase::NOOP) {
+                    < DataBase::MIGRATION) {
                 TRACE(Trace::always, mig_info.fileName, tapeId);
                 std::lock_guard<std::mutex> lock(Migration::pmigmtx);
                 *suspended = true;
@@ -438,7 +438,7 @@ Migration::req_return_t Migration::processFiles(int replNum, std::string tapeId,
             TRACE(Trace::always, fileName, reqNumber);
 
             if (toState == FsObj::PREMIGRATED) {
-                if (drive->getToUnblock() != DataBase::NOOP) {
+                if (drive->getToUnblock() < DataBase::MIGRATION) {
                     retval.suspended = true;
                     break;
                 }
@@ -462,9 +462,11 @@ Migration::req_return_t Migration::processFiles(int replNum, std::string tapeId,
         Scheduler::updReq[reqNumber] = true;
         Scheduler::updcond.notify_all();
     }
-    std::lock_guard<std::mutex> lock(Scheduler::updmtx);
-    Scheduler::updReq[reqNumber] = true;
-    Scheduler::updcond.notify_all();
+    {
+        std::lock_guard<std::mutex> lock(Scheduler::updmtx);
+        Scheduler::updReq[reqNumber] = true;
+        Scheduler::updcond.notify_all();
+    }
     stmt.finalize();
 
     if (toState == FsObj::PREMIGRATED) {

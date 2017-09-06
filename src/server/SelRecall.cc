@@ -278,6 +278,11 @@ bool needsTape)
         Scheduler::updReq[reqNumber] = true;
         Scheduler::updcond.notify_all();
     }
+    {
+        std::lock_guard<std::mutex> lock(Scheduler::updmtx);
+        Scheduler::updReq[reqNumber] = true;
+        Scheduler::updcond.notify_all();
+    }
     stmt.finalize();
 
     stmt(SelRecall::SET_JOB_SUCCESS) << toState << reqNumber << tapeId
