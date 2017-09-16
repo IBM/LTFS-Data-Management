@@ -357,7 +357,7 @@ void Migration::stub(Migration::mig_info_t mig_info,
         return;
     }
 
-    for (int i = 0; i < mig_info.numRepl; i++)
+    for (int i = 0; i < (mig_info.numRepl ? mig_info.numRepl : 1); i++)
         mrStatus.updateSuccess(mig_info.reqNumber, mig_info.fromState,
                 mig_info.toState);
 }
