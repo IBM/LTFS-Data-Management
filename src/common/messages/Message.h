@@ -6,6 +6,7 @@
 #include <sstream>
 #include <fstream>
 #include <iostream>
+#include <iomanip>
 #include <mutex>
 
 #include "boost/format.hpp"
@@ -50,7 +51,7 @@ private:
     void msgOut(msg_id msg, char *filename, int linenr, Args ... args)
 
     {
-        std::string fmtstr = msgname[msg] + "(%d): " + messages[msg];
+        std::string fmtstr = msgname[msg] + "(%04d): " + messages[msg];
         boost::format fmter(fmtstr);
         fmter.exceptions(boost::io::all_error_bits);
 
@@ -60,13 +61,14 @@ private:
             writeOut(fmter.str());
         } catch (const std::exception& e) {
             std::cerr << messages[LTFSDMX0005E] << " (" << msgname[msg] << ":"
-                    << filename << ":" << linenr << ")" << std::endl;
+                    << filename << ":" << std::setfill('0') << std::setw(4)
+                    << linenr << ")" << std::endl;
         }
     }
     template<typename ... Args>
     void msgLog(msg_id msg, char *filename, int linenr, Args ... args)
     {
-        std::string fmtstr = msgname[msg] + "(%d): " + messages[msg];
+        std::string fmtstr = msgname[msg] + "(%04d): " + messages[msg];
         boost::format fmter(fmtstr);
         fmter.exceptions(boost::io::all_error_bits);
 
@@ -76,7 +78,8 @@ private:
             writeLog(fmter.str());
         } catch (const std::exception& e) {
             std::cerr << messages[LTFSDMX0005E] << " (" << msgname[msg] << ":"
-                    << filename << ":" << linenr << ")" << std::endl;
+                    << filename << ":" << std::setfill('0') << std::setw(4)
+                    << linenr << ")" << std::endl;
         }
     }
 
@@ -120,7 +123,8 @@ public:
             writeOut(fmter.str());
         } catch (const std::exception& e) {
             std::cerr << messages[LTFSDMX0005E] << " (" << filename << ":"
-                    << linenr << ")" << std::endl;
+                    << std::setfill('0') << std::setw(4) << linenr << ")"
+                    << std::endl;
             exit((int) Error::LTFSDM_GENERAL_ERROR);
         }
     }

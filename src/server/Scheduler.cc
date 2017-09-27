@@ -112,8 +112,9 @@ bool Scheduler::tapeResAvail()
         for (std::shared_ptr<OpenLTFSDrive> drive : inventory->getDrives()) {
             if (drive->get_slot()
                     == inventory->getCartridge(tapeId)->get_slot()) {
-                TRACE(Trace::always, op, drive->getToUnblock(), drive->GetObjectID());
-                if ( op < drive->getToUnblock())
+                TRACE(Trace::always, op, drive->getToUnblock(),
+                        drive->GetObjectID());
+                if (op < drive->getToUnblock())
                     drive->setToUnblock(op);
                 found = true;
                 break;
@@ -192,7 +193,8 @@ bool Scheduler::tapeResAvail()
     // suspend an operation
     for (std::shared_ptr<OpenLTFSDrive> drive : inventory->getDrives()) {
         if (op < drive->getToUnblock()) {
-            TRACE(Trace::always, op, drive->getToUnblock(), drive->GetObjectID());
+            TRACE(Trace::always, op, drive->getToUnblock(),
+                    drive->GetObjectID());
             drive->setToUnblock(op);
             inventory->getCartridge(tapeId)->setRequested();
             break;

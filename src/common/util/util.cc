@@ -92,6 +92,36 @@ std::set<std::string> LTFSDM::getFs()
     return mountList;
 }
 
+std::string LTFSDM::getDev(std::string mountpt)
+
+{
+    std::string devName = " - ";
+    unsigned int buflen = 32 * 1024;
+    char buffer[32 * 1024];
+    struct mntent mntbuf;
+    FILE *MNTINFO;
+
+    MNTINFO = setmntent("/proc/mounts", "r");
+    if (!MNTINFO) {
+        THROW(errno, errno);
+    }
+
+    memset(buffer, 0, sizeof(buffer));
+
+    if (buffer == NULL)
+        THROW(Const::UNSET);
+
+    while (getmntent_r(MNTINFO, &mntbuf, buffer, buflen)) {
+        if (mountpt.compare(mntbuf.mnt_dir) == 0) {
+            devName = std::string(mntbuf.mnt_fsname);
+            break;
+        }
+    }
+    endmntent(MNTINFO);
+
+    return devName;
+}
+
 long LTFSDM::getkey()
 
 {

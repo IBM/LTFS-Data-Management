@@ -9,5 +9,6 @@ namespace LTFSDM {
 void init(std::string ident = "");
 std::vector<std::string> getTapeIds();
 std::set<std::string> getFs();
+std::string getDev(std::string mountpt);
 long getkey();
 }

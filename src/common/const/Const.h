@@ -48,9 +48,10 @@ const std::string DMAPI_TERMINATION_MESSAGE = "termination message";
 const std::string FAILED_TAPE_ID = "FAILED";
 const std::string OPEN_LTFS_EA = ".openltfs.";
 const std::string OPEN_LTFS_EA_MANAGED = "trusted.openltfs.ismanaged";
-const std::string OPEN_LTFS_EA_MOUNTPT = "trusted.openltfs.mountpt";
-const std::string OPEN_LTFS_EA_FSNAME = "trusted.openltfs.fsname";
 const std::string OPEN_LTFS_EA_MIGINFO_INT = "trusted.openltfs.miginfo.int";
 const std::string OPEN_LTFS_EA_MIGINFO_EXT = "trusted.openltfs.miginfo.ext";
-const std::string OPEN_LTFS_EA_FSINFO = "trusted.openltfs.fsinfo";
+const std::string OPEN_LTFS_CACHE_DIR = "/.cache";
+const std::string OPEN_LTFS_CACHE_MP = OPEN_LTFS_CACHE_DIR + "/...";
+const std::string OPEN_LTFS_IOCTL = OPEN_LTFS_CACHE_DIR + "/ioctl";
+const std::string TMP_DIR_TEMPLATE = "/tmp/ltfsdm.XXXXXX";
 }
