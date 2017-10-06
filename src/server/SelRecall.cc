@@ -124,7 +124,7 @@ unsigned long SelRecall::recall(std::string fileName, std::string tapeId,
 
         TRACE(Trace::always, fileName);
 
-        target.lock();
+        std::lock_guard<FsObj> fsolock(target);
 
         curstate = target.getMigState();
 
@@ -174,7 +174,6 @@ unsigned long SelRecall::recall(std::string fileName, std::string tapeId,
         target.finishRecall(toState);
         if (toState == FsObj::RESIDENT)
             target.remAttribute();
-        target.unlock();
     } catch (const std::exception& e) {
         if (fd != -1)
             close(fd);

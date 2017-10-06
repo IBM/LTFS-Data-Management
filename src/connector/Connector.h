@@ -105,6 +105,7 @@ public:
     unsigned long long getINode();
     std::string getTapeId();
     void lock();
+    bool try_lock();
     void unlock();
     long read(long offset, unsigned long size, char *buffer);
     long write(long offset, unsigned long size, char *buffer);

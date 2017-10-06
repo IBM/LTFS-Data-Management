@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/mount.h>
+#include <sys/file.h>
 #include <linux/fs.h>
 #include <dirent.h>
 #include <sys/time.h>
@@ -48,6 +49,7 @@ std::string FuseFS::command("");
 std::atomic<int> FuseFS::rootFd(Const::UNSET);
 std::atomic<int> FuseFS::ioctlFd(Const::UNSET);
 std::atomic<pid_t> FuseFS::mainpid(0);
+std::mutex FuseFS::lockmtx;
 
 struct openltfs_ctx
 {
@@ -76,6 +78,28 @@ const char *FuseFS::relPath(const char *path)
 
 }
 
+std::string FuseFS::lockPath(const char *path)
+
+{
+    struct fuse_context *fc = fuse_get_context();
+
+    std::stringstream lpath;
+    struct stat statbuf;
+
+    if (fstatat(FuseFS::rootFd, FuseFS::relPath(path), &statbuf,
+    AT_SYMLINK_NOFOLLOW) == -1) {
+        TRACE(Trace::error, path, errno);
+        return "";
+    }
+
+    lpath << ((openltfs_ctx *) fc->private_data)->mountpoint << "/.cache/locks/"
+            << statbuf.st_ino;
+
+    TRACE(Trace::always, lpath.str());
+
+    return lpath.str();
+}
+
 FuseFS::mig_info FuseFS::genMigInfoAt(int fd, FuseFS::mig_info::state_num state)
 
 {
@@ -86,6 +110,26 @@ FuseFS::mig_info FuseFS::genMigInfoAt(int fd, FuseFS::mig_info::state_num state)
     if (fstat(fd, &miginfo.statinfo)) {
         TRACE(Trace::error, errno);
         THROW(errno, errno, fd);
+    }
+
+    miginfo.state = state;
+
+    clock_gettime(CLOCK_REALTIME, &miginfo.changed);
+
+    return miginfo;
+}
+
+FuseFS::mig_info FuseFS::genMigInfo(std::string fileName,
+        FuseFS::mig_info::state_num state)
+
+{
+    FuseFS::mig_info miginfo;
+
+    memset(&miginfo, 0, sizeof(miginfo));
+
+    if (stat(fileName.c_str(), &miginfo.statinfo)) {
+        TRACE(Trace::error, errno);
+        THROW(errno, errno, fileName);
     }
 
     miginfo.state = state;
@@ -129,6 +173,40 @@ void FuseFS::setMigInfoAt(int fd, FuseFS::mig_info::state_num state)
     }
 }
 
+void FuseFS::setMigInfo(std::string fileName, FuseFS::mig_info::state_num state)
+
+{
+    ssize_t size;
+    FuseFS::mig_info miginfo_new;
+    FuseFS::mig_info miginfo;
+
+    TRACE(Trace::full, fileName, state);
+
+    memset(&miginfo, 0, sizeof(miginfo));
+
+    miginfo_new = genMigInfo(fileName, state);
+
+    if ((size = getxattr(fileName.c_str(),
+            Const::OPEN_LTFS_EA_MIGINFO_INT.c_str(), (void *) &miginfo,
+            sizeof(miginfo))) == -1) {
+        if ( errno != ENODATA) {
+            THROW(errno, errno, fileName);
+        }
+    } else if (size != sizeof(miginfo)) {
+        THROW(EIO, size, sizeof(miginfo), fileName);
+    }
+
+    if (miginfo.state != FuseFS::mig_info::state_num::NO_STATE) {
+        miginfo_new.statinfo.st_size = miginfo.statinfo.st_size;
+        miginfo_new.statinfo.st_atim = miginfo.statinfo.st_atim;
+        miginfo_new.statinfo.st_mtim = miginfo.statinfo.st_mtim;
+    }
+
+    if (setxattr(fileName.c_str(), Const::OPEN_LTFS_EA_MIGINFO_INT.c_str(),
+            (void *) &miginfo_new, sizeof(miginfo_new), 0) == -1) {
+        THROW(errno, errno, fileName);
+    }
+}
 int FuseFS::remMigInfoAt(int fd)
 
 {
@@ -271,7 +349,7 @@ int FuseFS::recall_file(FuseFS::ltfsdm_file_info *linfo, bool toresident)
 
     path = ((openltfs_ctx *) fc->private_data)->mountpoint;
     path.append(linfo->fusepath);
-    TRACE(Trace::always, path, statbuf.st_ino, toresident);
+    TRACE(Trace::always, path, statbuf.st_ino, toresident, fc->pid);
 
     if (Connector::recallEventSystemStopped == true)
         return -1;
@@ -376,13 +454,23 @@ int FuseFS::ltfsdm_getattr(const char *path, struct stat *statbuf)
         goto end;
     }
 
-    if (Const::OPEN_LTFS_IOCTL.compare(path) == 0) {
-        return (-1 * EACCES);
+    if (std::string(path).compare(0, 13, "/.cache/locks") == 0) {
+        if (std::string(path).size() == 13) {
+            statbuf->st_mode = S_IFDIR | S_IRWXU;
+            goto end;
+        } else if (path[13] == '/') {
+            statbuf->st_mode = S_IFREG | S_IRWXU;
+            goto end;
+        }
     }
 
     if (fstatat(FuseFS::rootFd, FuseFS::relPath(path), statbuf,
-            AT_SYMLINK_NOFOLLOW) == -1) {
-        return (-1 * errno);
+    AT_SYMLINK_NOFOLLOW) == -1) {
+        if (Const::OPEN_LTFS_IOCTL.compare(path) == 0) {
+            return (-1 * EACCES);
+        } else {
+            return (-1 * errno);
+        }
     } else {
         if ((fd = openat(FuseFS::rootFd, FuseFS::relPath(path), O_RDONLY))
                 == -1)
@@ -391,7 +479,10 @@ int FuseFS::ltfsdm_getattr(const char *path, struct stat *statbuf)
         if (FuseFS::needsRecovery(miginfo) == true)
             FuseFS::recoverState(path, miginfo.state);
         close(fd);
-        if (miginfo.state != FuseFS::mig_info::state_num::NO_STATE) {
+        if (FuseFS::procIsOpenLTFS(pid) == true
+                && miginfo.state == FuseFS::mig_info::state_num::STUBBING) { // work around to clean cache
+            TRACE(Trace::always, pid, path);
+        } else if (miginfo.state != FuseFS::mig_info::state_num::NO_STATE) {
             statbuf->st_size = miginfo.statinfo.st_size;
             statbuf->st_atim = miginfo.statinfo.st_atim;
             statbuf->st_mtim = miginfo.statinfo.st_mtim;
@@ -486,7 +577,7 @@ int FuseFS::ltfsdm_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 
         if (S_ISREG(statbuf.st_mode)) {
             if ((fd = openat(dirfd(dirinfo->dir), dirinfo->dentry->d_name,
-                    O_RDONLY)) == -1)
+            O_RDONLY)) == -1)
                 return (-1 * errno);
             miginfo = getMigInfoAt(fd);
             close(fd);
@@ -532,7 +623,7 @@ int FuseFS::ltfsdm_mknod(const char *path, mode_t mode, dev_t rdev)
     } else {
         fc = fuse_get_context();
         if (fchownat(FuseFS::rootFd, FuseFS::relPath(path), fc->uid, fc->gid,
-                AT_SYMLINK_NOFOLLOW) == -1)
+        AT_SYMLINK_NOFOLLOW) == -1)
             return (-1 * errno);
     }
     return 0;
@@ -548,7 +639,7 @@ int FuseFS::ltfsdm_mkdir(const char *path, mode_t mode)
     } else {
         fc = fuse_get_context();
         if (fchownat(FuseFS::rootFd, FuseFS::relPath(path), fc->uid, fc->gid,
-                AT_EMPTY_PATH | AT_SYMLINK_NOFOLLOW) == -1)
+        AT_EMPTY_PATH | AT_SYMLINK_NOFOLLOW) == -1)
             return (-1 * errno);
     }
     return 0;
@@ -614,7 +705,7 @@ int FuseFS::ltfsdm_chown(const char *path, uid_t uid, gid_t gid)
 
 {
     if (fchownat(FuseFS::rootFd, FuseFS::relPath(path), uid, gid,
-            AT_SYMLINK_NOFOLLOW) == -1)
+    AT_SYMLINK_NOFOLLOW) == -1)
         return (-1 * errno);
     else
         return 0;
@@ -625,7 +716,7 @@ int FuseFS::ltfsdm_truncate(const char *path, off_t size)
 {
     FuseFS::mig_info migInfo;
     ssize_t attrsize;
-    FuseFS::ltfsdm_file_info linfo = (FuseFS::ltfsdm_file_info ) { 0, "" };
+    FuseFS::ltfsdm_file_info linfo = (FuseFS::ltfsdm_file_info ) { 0, 0, "" };
 
     linfo.fusepath = path;
 
@@ -690,13 +781,25 @@ int FuseFS::ltfsdm_utimens(const char *path, const struct timespec times[2])
 int FuseFS::ltfsdm_open(const char *path, struct fuse_file_info *finfo)
 
 {
-    int fd = -1;
+    int fd = Const::UNSET;
+    int lfd = Const::UNSET;
     FuseFS::ltfsdm_file_info *linfo = NULL;
 
     if (FuseFS::rootFd == Const::UNSET
             && Const::OPEN_LTFS_IOCTL.compare(path) == 0) {
         linfo = new (FuseFS::ltfsdm_file_info);
         linfo->fd = Const::UNSET;
+        linfo->lfd = Const::UNSET;
+        linfo->fusepath = path;
+        finfo->fh = (unsigned long) linfo;
+        return 0;
+    }
+
+    if (std::string(path).compare(0, 14, "/.cache/locks/") == 0) {
+        TRACE(Trace::always, path);
+        linfo = new (FuseFS::ltfsdm_file_info);
+        linfo->fd = Const::UNSET;
+        linfo->lfd = Const::UNSET;
         linfo->fusepath = path;
         finfo->fh = (unsigned long) linfo;
         return 0;
@@ -709,7 +812,9 @@ int FuseFS::ltfsdm_open(const char *path, struct fuse_file_info *finfo)
     }
 
     linfo = new (FuseFS::ltfsdm_file_info);
+
     linfo->fd = fd;
+    linfo->lfd = lfd;
     linfo->fusepath = path;
 
     finfo->fh = (unsigned long) linfo;
@@ -730,31 +835,34 @@ int FuseFS::ltfsdm_ftruncate(const char *path, off_t size,
         return (-1 * EBADF);
     }
 
-    memset(&migInfo, 0, sizeof(FuseFS::mig_info));
+    if (FuseFS::procIsOpenLTFS(fuse_get_context()->pid) == false) {
+        memset(&migInfo, 0, sizeof(FuseFS::mig_info));
 
-    if ((attrsize = fgetxattr(linfo->fd,
-            Const::OPEN_LTFS_EA_MIGINFO_INT.c_str(), (void *) &migInfo,
-            sizeof(migInfo))) == -1) {
-        if ( errno != ENODATA) {
-            TRACE(Trace::error, fuse_get_context()->pid);
-            return (-1 * errno);
+        if ((attrsize = fgetxattr(linfo->fd,
+                Const::OPEN_LTFS_EA_MIGINFO_INT.c_str(), (void *) &migInfo,
+                sizeof(migInfo))) == -1) {
+            if ( errno != ENODATA) {
+                TRACE(Trace::error, fuse_get_context()->pid);
+                return (-1 * errno);
+            }
         }
-    }
 
-    if ((size > 0)
-            && ((migInfo.state == FuseFS::mig_info::state_num::MIGRATED)
-                    || (migInfo.state == FuseFS::mig_info::state_num::IN_RECALL))) {
-        TRACE(Trace::full, linfo->fd);
-        if (recall_file(linfo, true) == -1) {
-            return (-1 * EIO);
+        if ((size > 0)
+                && ((migInfo.state == FuseFS::mig_info::state_num::MIGRATED)
+                        || (migInfo.state
+                                == FuseFS::mig_info::state_num::IN_RECALL))) {
+            TRACE(Trace::full, linfo->fd);
+            if (recall_file(linfo, true) == -1) {
+                return (-1 * EIO);
+            }
+        } else if (attrsize != -1) {
+            if (fremovexattr(linfo->fd, Const::OPEN_LTFS_EA_MIGINFO_INT.c_str())
+                    == -1)
+                return (-1 * EIO);
+            if (fremovexattr(linfo->fd, Const::OPEN_LTFS_EA_MIGINFO_EXT.c_str())
+                    == -1)
+                return (-1 * EIO);
         }
-    } else if (attrsize != -1) {
-        if (fremovexattr(linfo->fd, Const::OPEN_LTFS_EA_MIGINFO_INT.c_str())
-                == -1)
-            return (-1 * EIO);
-        if (fremovexattr(linfo->fd, Const::OPEN_LTFS_EA_MIGINFO_EXT.c_str())
-                == -1)
-            return (-1 * EIO);
     }
 
     if (ftruncate(linfo->fd, size) == -1) {
@@ -762,49 +870,6 @@ int FuseFS::ltfsdm_ftruncate(const char *path, off_t size,
     }
 
     return 0;
-}
-
-int FuseFS::ltfsdm_read(const char *path, char *buffer, size_t size,
-        off_t offset, struct fuse_file_info *finfo)
-
-{
-    ssize_t rsize = -1;
-    FuseFS::mig_info migInfo;
-    ssize_t attrsize;
-    FuseFS::ltfsdm_file_info *linfo = (FuseFS::ltfsdm_file_info *) finfo->fh;
-
-    assert(path == NULL);
-
-    if (linfo == NULL) {
-        TRACE(Trace::error, fuse_get_context()->pid);
-        return (-1 * EBADF);
-    }
-
-    memset(&migInfo, 0, sizeof(FuseFS::mig_info));
-
-    if ((attrsize = fgetxattr(linfo->fd,
-            Const::OPEN_LTFS_EA_MIGINFO_INT.c_str(), (void *) &migInfo,
-            sizeof(migInfo))) == -1) {
-        if ( errno != ENODATA) {
-            TRACE(Trace::error, fuse_get_context()->pid);
-            return (-1 * errno);
-        }
-    }
-
-    if (migInfo.state == FuseFS::mig_info::state_num::MIGRATED
-            || migInfo.state == FuseFS::mig_info::state_num::IN_RECALL) {
-        TRACE(Trace::full, linfo->fd);
-        if (recall_file(linfo, false) == -1)
-            return (-1 * errno);
-    }
-
-    if ((rsize = pread(linfo->fd, buffer, size, offset)) == -1) {
-        TRACE(Trace::error, fuse_get_context()->pid);
-        return (-1 * errno);
-    } else {
-        TRACE(Trace::normal, fuse_get_context()->pid);
-        return rsize;
-    }
 }
 
 int FuseFS::ltfsdm_read_buf(const char *path, struct fuse_bufvec **bufferp,
@@ -825,11 +890,29 @@ int FuseFS::ltfsdm_read_buf(const char *path, struct fuse_bufvec **bufferp,
 
     memset(&migInfo, 0, sizeof(FuseFS::mig_info));
 
+    {
+        std::lock_guard<std::mutex> lock(FuseFS::lockmtx);
+        if ((linfo->lfd == Const::UNSET)
+                && (linfo->lfd = open(
+                        FuseFS::lockPath(linfo->fusepath.c_str()).c_str(),
+                        O_RDWR)) == -1) {
+            TRACE(Trace::error, path, errno);
+            return (-1 * errno);
+        }
+    }
+
+    if (flock(linfo->lfd, LOCK_EX) == -1)
+        return (-1 * errno);
+
+    TRACE(Trace::always, linfo->fd);
+
     if ((attrsize = fgetxattr(linfo->fd,
             Const::OPEN_LTFS_EA_MIGINFO_INT.c_str(), (void *) &migInfo,
             sizeof(migInfo))) == -1) {
         if ( errno != ENODATA) {
             TRACE(Trace::error, fuse_get_context()->pid, errno);
+            if (flock(linfo->lfd, LOCK_UN) == -1)
+                TRACE(Trace::error, errno, linfo->fd);
             return (-1 * errno);
         }
     }
@@ -839,9 +922,14 @@ int FuseFS::ltfsdm_read_buf(const char *path, struct fuse_bufvec **bufferp,
         TRACE(Trace::full, linfo->fd);
         if (recall_file(linfo, false) == -1) {
             *bufferp = NULL;
+            if (flock(linfo->lfd, LOCK_UN) == -1)
+                TRACE(Trace::error, errno, linfo->fd);
             return (-1 * EIO);
         }
     }
+
+    if (flock(linfo->lfd, LOCK_UN) == -1)
+        TRACE(Trace::error, errno, linfo->fd);
 
     if ((source = (fuse_bufvec*) malloc(sizeof(struct fuse_bufvec))) == NULL)
         return (-1 * errno);
@@ -853,58 +941,6 @@ int FuseFS::ltfsdm_read_buf(const char *path, struct fuse_bufvec **bufferp,
     *bufferp = source;
 
     return 0;
-}
-
-int FuseFS::ltfsdm_write(const char *path, const char *buf, size_t size,
-        off_t offset, struct fuse_file_info *finfo)
-
-{
-    ssize_t wsize;
-    FuseFS::mig_info migInfo;
-    ssize_t attrsize;
-    FuseFS::ltfsdm_file_info *linfo = (FuseFS::ltfsdm_file_info *) finfo->fh;
-
-    assert(path == NULL);
-
-    if (linfo == NULL)
-        return (-1 * EBADF);
-
-    memset(&migInfo, 0, sizeof(FuseFS::mig_info));
-
-    if ((attrsize = fgetxattr(linfo->fd,
-            Const::OPEN_LTFS_EA_MIGINFO_INT.c_str(), (void *) &migInfo,
-            sizeof(migInfo))) == -1) {
-        if ( errno != ENODATA) {
-            TRACE(Trace::error, errno);
-            return (-1 * errno);
-        }
-    }
-
-    if (migInfo.state == FuseFS::mig_info::state_num::MIGRATED
-            || migInfo.state == FuseFS::mig_info::state_num::IN_RECALL) {
-        TRACE(Trace::full, linfo->fd);
-        if (recall_file(linfo, true) == -1) {
-            return (-1 * EIO);
-        }
-    } else if (migInfo.state == FuseFS::mig_info::state_num::PREMIGRATED) {
-        if (fremovexattr(linfo->fd, Const::OPEN_LTFS_EA_MIGINFO_INT.c_str())
-                == -1) {
-            TRACE(Trace::error, errno);
-            return (-1 * EIO);
-        }
-        if (fremovexattr(linfo->fd, Const::OPEN_LTFS_EA_MIGINFO_EXT.c_str())
-                == -1) {
-            TRACE(Trace::error, errno);
-            return (-1 * EIO);
-        }
-    }
-
-    if ((wsize = pwrite(linfo->fd, buf, size, offset)) == -1) {
-        TRACE(Trace::error, errno);
-        return (-1 * errno);
-    } else {
-        return wsize;
-    }
 }
 
 int FuseFS::ltfsdm_write_buf(const char *path, struct fuse_bufvec *buf,
@@ -925,11 +961,27 @@ int FuseFS::ltfsdm_write_buf(const char *path, struct fuse_bufvec *buf,
 
     memset(&migInfo, 0, sizeof(FuseFS::mig_info));
 
+    {
+        std::lock_guard<std::mutex> lock(FuseFS::lockmtx);
+        if ((linfo->lfd == Const::UNSET)
+                && (linfo->lfd = open(
+                        FuseFS::lockPath(linfo->fusepath.c_str()).c_str(),
+                        O_RDWR)) == -1) {
+            TRACE(Trace::error, path, errno);
+            return (-1 * errno);
+        }
+    }
+
+    if (flock(linfo->lfd, LOCK_EX) == -1)
+        return (-1 * errno);
+
     if ((attrsize = fgetxattr(linfo->fd,
             Const::OPEN_LTFS_EA_MIGINFO_INT.c_str(), (void *) &migInfo,
             sizeof(migInfo))) == -1) {
         if ( errno != ENODATA) {
             TRACE(Trace::error, errno);
+            if (flock(linfo->lfd, LOCK_UN) == -1)
+                TRACE(Trace::error, errno, linfo->fd);
             return (-1 * errno);
         }
     }
@@ -938,20 +990,29 @@ int FuseFS::ltfsdm_write_buf(const char *path, struct fuse_bufvec *buf,
             || migInfo.state == FuseFS::mig_info::state_num::IN_RECALL) {
         TRACE(Trace::full, linfo->fd);
         if (recall_file(linfo, true) == -1) {
+            if (flock(linfo->lfd, LOCK_UN) == -1)
+                TRACE(Trace::error, errno, linfo->fd);
             return (-1 * EIO);
         }
     } else if (migInfo.state == FuseFS::mig_info::state_num::PREMIGRATED) {
         if (fremovexattr(linfo->fd, Const::OPEN_LTFS_EA_MIGINFO_INT.c_str())
                 == -1) {
             TRACE(Trace::error, errno);
+            if (flock(linfo->lfd, LOCK_UN) == -1)
+                TRACE(Trace::error, errno, linfo->fd);
             return (-1 * EIO);
         }
         if (fremovexattr(linfo->fd, Const::OPEN_LTFS_EA_MIGINFO_EXT.c_str())
                 == -1) {
             TRACE(Trace::error, errno);
+            if (flock(linfo->lfd, LOCK_UN) == -1)
+                TRACE(Trace::error, errno, linfo->fd);
             return (-1 * EIO);
         }
     }
+
+    if (flock(linfo->lfd, LOCK_UN) == -1)
+        TRACE(Trace::error, errno, linfo->fd);
 
     dest.buf[0].flags = (fuse_buf_flags) (FUSE_BUF_IS_FD | FUSE_BUF_FD_SEEK);
     dest.buf[0].fd = linfo->fd;
@@ -986,6 +1047,7 @@ int FuseFS::ltfsdm_release(const char *path, struct fuse_file_info *finfo)
 
 {
     FuseFS::ltfsdm_file_info *linfo = (FuseFS::ltfsdm_file_info *) finfo->fh;
+    bool failed = false;
 
     assert(path == NULL);
 
@@ -999,7 +1061,13 @@ int FuseFS::ltfsdm_release(const char *path, struct fuse_file_info *finfo)
         return 0;
     }
 
-    if (close(linfo->fd) == -1) {
+    if (linfo->fd != Const::UNSET && close(linfo->fd) == -1)
+        failed = true;
+
+    if (linfo->lfd != Const::UNSET && close(linfo->lfd) == -1)
+        failed = true;
+
+    if (failed == true) {
         delete (linfo);
         return (-1 * errno);
     } else {
@@ -1094,8 +1162,24 @@ int FuseFS::ltfsdm_getxattr(const char *path, const char *name, char *value,
         size_t size)
 
 {
+    struct fuse_context *fc = fuse_get_context();
+    FuseFS::FuseHandle fh;
     ssize_t attrsize;
     int fd;
+
+    if (Const::OPEN_LTFS_EA_FSINFO.compare(name) == 0) {
+        assert(size == sizeof(fh));
+        memset(&fh, 0, sizeof(fh));
+        strncpy(fh.mountpoint, ((openltfs_ctx *) fc->private_data)->mountpoint,
+        PATH_MAX - 1);
+        strncpy(fh.fusepath, relPath(path), PATH_MAX - 1);
+        strncpy(fh.lockpath, FuseFS::lockPath(path).c_str(),
+        PATH_MAX - 1);
+        fh.fd = Const::UNSET;
+        memcpy((void *) value, (void *) &fh, sizeof(fh));
+        TRACE(Trace::always, fh.fusepath, sizeof(fh));
+        return size;
+    }
 
     if (Const::OPEN_LTFS_CACHE_DIR.compare(path) == 0)
         return (-1 * ENODATA);
@@ -1179,6 +1263,8 @@ int FuseFS::ltfsdm_ioctl(const char *path, int cmd, void *arg,
                     ((openltfs_ctx *) fc->private_data)->mountpoint,
                     PATH_MAX - 1);
             strncpy(fh.fusepath, relPath(fi->fusepath.c_str()), PATH_MAX - 1);
+            strncpy(fh.lockpath, FuseFS::lockPath(fi->fusepath.c_str()).c_str(),
+            PATH_MAX - 1);
             fh.fd = Const::UNSET;
             memcpy((void *) data, (void *) &fh, sizeof(fh));
             TRACE(Trace::always, fh.fusepath, sizeof(fh));
@@ -1374,7 +1460,7 @@ void FuseFS::init(struct timespec starttime)
 
     MSG(LTFSDMF0036I, tmpdnm, mountpt + Const::OPEN_LTFS_CACHE_MP);
     if (mount(tmpdnm, (mountpt + Const::OPEN_LTFS_CACHE_MP).c_str(), "",
-            MS_BIND, "") == -1) {
+    MS_BIND, "") == -1) {
         MSG(LTFSDMF0037E, mountpt + Const::OPEN_LTFS_CACHE_MP, errno);
         THROW(Error::LTFSDM_GENERAL_ERROR);
     }
@@ -1396,7 +1482,7 @@ void FuseFS::init(struct timespec starttime)
 
     MSG(LTFSDMF0046I, mountpt + Const::OPEN_LTFS_CACHE_MP);
     if ((FuseFS::rootFd = open((mountpt + Const::OPEN_LTFS_CACHE_MP).c_str(),
-            O_RDONLY)) == -1) {
+    O_RDONLY)) == -1) {
         MSG(LTFSDMF0047E, errno);
         THROW(Error::LTFSDM_GENERAL_ERROR);
     }
@@ -1506,7 +1592,7 @@ int main(int argc, char **argv)
     ctx = (openltfs_ctx *) malloc(sizeof(struct openltfs_ctx));
     memset(ctx, 0, sizeof(struct openltfs_ctx));
     strncpy(ctx->sourcedir, (mountpt + Const::OPEN_LTFS_CACHE_MP).c_str(),
-            PATH_MAX - 1);
+    PATH_MAX - 1);
     strncpy(ctx->mountpoint, mountpt.c_str(), PATH_MAX - 1);
     ctx->starttime = starttime;
 
@@ -1516,7 +1602,7 @@ int main(int argc, char **argv)
     fuse_opt_add_arg(&fargs, argv[0]);
     fuse_opt_add_arg(&fargs, mountpt.c_str());
     options << "-ouse_ino,fsname=OpenLTFS:" << fsName
-            << ",nopath,default_permissions,allow_other,direct_io,max_background="
+            << ",nopath,default_permissions,allow_other,kernel_cache,max_background="
             << Const::MAX_FUSE_BACKGROUND;
     fuse_opt_add_arg(&fargs, options.str().c_str());
     fuse_opt_add_arg(&fargs, "-f");

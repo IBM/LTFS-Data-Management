@@ -239,7 +239,8 @@ unsigned long TransRecall::recall(Connector::rec_info_t recinfo,
 
         TRACE(Trace::always, recinfo.ino, recinfo.filename);
 
-        target.lock();
+        // already locked within the fuse layer - will not work with dmapi
+        // std::lock_guard<FsObj> fsolock(target);
 
         curstate = target.getMigState();
 
@@ -290,7 +291,6 @@ unsigned long TransRecall::recall(Connector::rec_info_t recinfo,
         target.finishRecall(toState);
         if (toState == FsObj::RESIDENT)
             target.remAttribute();
-        target.unlock();
     } catch (const std::exception& e) {
         TRACE(Trace::error, e.what());
         if (fd != -1)

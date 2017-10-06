@@ -46,13 +46,17 @@ public:
     {
         char fusepath[PATH_MAX];
         char mountpoint[PATH_MAX];
+        char lockpath[PATH_MAX];
         int fd;
+        int ffd;
+        int lockfd;
     };
 
 private:
     struct ltfsdm_file_info
     {
         int fd;
+        int lfd;
         std::string fusepath;
     };
 
@@ -77,6 +81,7 @@ private:
     } init_status;
 
     static const char *relPath(const char *path);
+    static std::string lockPath(const char *path);
     static bool needsRecovery(FuseFS::mig_info miginfo);
     static void recoverState(const char *path,
             FuseFS::mig_info::state_num state);
@@ -141,8 +146,10 @@ public:
     static std::atomic<long> ltfsdmKey;
     static std::string command;
     static std::atomic<int> rootFd;
+    static std::atomic<int> lockFd;
     static std::atomic<int> ioctlFd;
     static std::atomic<pid_t> mainpid;
+    static std::mutex lockmtx;
     enum
     {
         LTFSDM_FINFO = _IOR('l', 0, FuseFS::FuseHandle), LTFSDM_PREMOUNT = _IO(
@@ -152,7 +159,11 @@ public:
 
     static FuseFS::mig_info genMigInfoAt(int fd,
             FuseFS::mig_info::state_num state);
+    static FuseFS::mig_info genMigInfo(std::string fileName,
+            FuseFS::mig_info::state_num state);
     static void setMigInfoAt(int fd, FuseFS::mig_info::state_num state);
+    static void setMigInfo(std::string fileName,
+            FuseFS::mig_info::state_num state);
     static int remMigInfoAt(int fd);
     static FuseFS::mig_info getMigInfoAt(int fd);
     static struct fuse_operations init_operations();

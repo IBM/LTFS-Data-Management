@@ -196,11 +196,11 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId,
             THROW(Const::UNSET, tapeName, errno);
         }
 
-        source.lock();
+        std::unique_lock<FsObj> fsolock(source);
 
         source.preparePremigration();
 
-        source.unlock();
+        fsolock.unlock();
 
         if (stat(mig_info.fileName.c_str(), &statbuf) == -1) {
             TRACE(Trace::error, errno);
@@ -278,7 +278,7 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId,
         mrStatus.updateSuccess(mig_info.reqNumber, mig_info.fromState,
                 mig_info.toState);
 
-        source.lock();
+        fsolock.lock();
         attr = source.getAttribute();
         memset(attr.tapeId[attr.copies], 0, Const::tapeIdLength + 1);
         strncpy(attr.tapeId[attr.copies], tapeId.c_str(), Const::tapeIdLength);
@@ -286,7 +286,6 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId,
         source.addAttribute(attr);
         if (attr.copies == mig_info.numRepl)
             source.finishPremigration();
-        source.unlock();
 
         std::lock_guard<std::mutex> lock(Migration::pmigmtx);
         inumList->push_back(mig_info.inum);
@@ -327,7 +326,7 @@ void Migration::stub(Migration::mig_info_t mig_info,
 
         TRACE(Trace::always, mig_info.fileName);
 
-        source.lock();
+        std::lock_guard<FsObj> fsolock(source);
         attr = source.getAttribute();
         if ((source.getMigState() != FsObj::MIGRATED)
                 && (mig_info.numRepl == 0 || attr.copies == mig_info.numRepl)) {
@@ -336,10 +335,8 @@ void Migration::stub(Migration::mig_info_t mig_info,
             TRACE(Trace::full, mig_info.fileName);
         } else {
             TRACE(Trace::always, mig_info.fileName, source.getMigState());
-            source.unlock();
             return;
         }
-        source.unlock();
 
         std::lock_guard<std::mutex> lock(Migration::pmigmtx);
         inumList->push_back(mig_info.inum);
