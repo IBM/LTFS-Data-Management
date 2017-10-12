@@ -113,6 +113,7 @@ void TransRecall::run(Connector *connector)
     std::map<std::string, long> reqmap;
     std::set<std::string> fsList;
     std::set<std::string>::iterator it;
+    std::string tapeId;
 
     try {
         connector->initTransRecalls();
@@ -172,16 +173,18 @@ void TransRecall::run(Connector *connector)
             continue;
         }
 
-        FsObj fso(recinfo);
-
         // error case: managed region set but no attrs
         try {
+            FsObj fso(recinfo);
+
             if (fso.getMigState() == FsObj::RESIDENT) {
                 fso.finishRecall(FsObj::RESIDENT);
                 MSG(LTFSDMS0039I, recinfo.ino);
                 connector->respondRecallEvent(recinfo, true);
                 continue;
             }
+
+            tapeId = fso.getAttribute().tapeId[0];
         } catch (const OpenLTFSException& e) {
             TRACE(Trace::error, e.what());
             if (e.getError() == Error::LTFSDM_ATTR_FORMAT)
@@ -195,8 +198,6 @@ void TransRecall::run(Connector *connector)
             connector->respondRecallEvent(recinfo, false);
             continue;
         }
-
-        std::string tapeId = fso.getAttribute().tapeId[0];
 
         std::stringstream thrdinfo;
         thrdinfo << "TrRec(" << recinfo.ino << ")";
@@ -239,8 +240,7 @@ unsigned long TransRecall::recall(Connector::rec_info_t recinfo,
 
         TRACE(Trace::always, recinfo.ino, recinfo.filename);
 
-        // already locked within the fuse layer - will not work with dmapi
-        // std::lock_guard<FsObj> fsolock(target);
+        std::lock_guard<FsObj> fsolock(target);
 
         curstate = target.getMigState();
 

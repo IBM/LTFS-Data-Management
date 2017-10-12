@@ -47,6 +47,7 @@ namespace FuseConnector {
 std::mutex mtx;
 std::map<std::string, FuseFS*> managedFss;
 std::unique_lock<std::mutex> *trecall_lock;
+long ltfsdmKey;
 }
 ;
 
@@ -57,7 +58,7 @@ Connector::Connector(bool cleanup_) :
 
 {
     clock_gettime(CLOCK_REALTIME, &starttime);
-    FuseFS::ltfsdmKey = LTFSDM::getkey();
+    FuseConnector::ltfsdmKey = LTFSDM::getkey();
 }
 
 Connector::~Connector()
@@ -118,8 +119,8 @@ Connector::rec_info_t Connector::getEvents()
             recrequest.transrecrequest();
 
     key = request.key();
-    if (FuseFS::ltfsdmKey != key) {
-        TRACE(Trace::error, (long ) FuseFS::ltfsdmKey, key);
+    if (FuseConnector::ltfsdmKey != key) {
+        TRACE(Trace::error, (long ) FuseConnector::ltfsdmKey, key);
         recinfo = (rec_info_t ) { NULL, false, 0, 0, 0, "" };
         return recinfo;
     }
@@ -179,7 +180,7 @@ void Connector::terminate()
     LTFSDmProtocol::LTFSDmTransRecRequest *recrequest =
             commCommand.mutable_transrecrequest();
 
-    recrequest->set_key(FuseFS::ltfsdmKey);
+    recrequest->set_key(FuseConnector::ltfsdmKey);
     recrequest->set_toresident(false);
     recrequest->set_fsid(0);
     recrequest->set_igen(0);
@@ -195,52 +196,52 @@ void Connector::terminate()
 }
 
 /*FsObj::FsObj(std::string fileName) :
- handle(NULL), handleLength(0), isLocked(false), handleFree(true)
+        handle(NULL), handleLength(0), isLocked(false), handleFree(true)
 
- {
- FuseFS::FuseHandle *fh = new FuseFS::FuseHandle();
- int fd;
+{
+    FuseFS::FuseHandle *fh = new FuseFS::FuseHandle();
+    int fd;
 
- memset((void *) fh, 0, sizeof(FuseFS::FuseHandle));
+    memset((void *) fh, 0, sizeof(FuseFS::FuseHandle));
 
- fh->fd = Const::UNSET;
- fh->ffd = Const::UNSET;
+    fh->fd = Const::UNSET;
+    fh->ffd = Const::UNSET;
 
- if ((fd = open(fileName.c_str(), O_RDWR)) == -1) {
- if ( errno != EISDIR) {
- delete(fh);
- TRACE(Trace::error, errno);
- THROW(errno, fileName, errno);
- }
- strncpy(fh->mountpoint, fileName.c_str(), PATH_MAX - 1);
- fh->fd = Const::UNSET;
- goto end;
- } else {
- if (ioctl(fd, FuseFS::LTFSDM_FINFO, fh) == -1) {
- delete(fh);
- TRACE(Trace::error, errno);
- THROW(errno, fileName, errno);
- } else {
- auto search = FuseConnector::managedFss.find(fh->mountpoint);
- if (search == FuseConnector::managedFss.end()) {
- fh->fd = fd; // ltfsdm info files only operates on the ofs
- fh->ffd = Const::UNSET;
- } else {
- if ((fh->fd = openat(search->second->rootFd, fh->fusepath,
- O_RDWR)) == -1) {
- delete(fh);
- TRACE(Trace::error, errno);
- THROW(errno, fileName, errno);
- }
- fh->ffd = fd;
- }
- }
- }
- end:
+    if ((fd = open(fileName.c_str(), O_RDWR)) == -1) {
+        if ( errno != EISDIR) {
+            delete (fh);
+            TRACE(Trace::error, errno);
+            THROW(errno, fileName, errno);
+        }
+        strncpy(fh->mountpoint, fileName.c_str(), PATH_MAX - 1);
+        fh->fd = Const::UNSET;
+        goto end;
+    } else {
+        if (ioctl(fd, FuseFS::LTFSDM_FINFO, fh) == -1) {
+            delete (fh);
+            TRACE(Trace::error, errno);
+            THROW(errno, fileName, errno);
+        } else {
+            auto search = FuseConnector::managedFss.find(fh->mountpoint);
+            if (search == FuseConnector::managedFss.end()) {
+                fh->fd = fd; // ltfsdm info files only operates on the ofs
+                fh->ffd = Const::UNSET;
+            } else {
+                if ((fh->fd = openat(search->second->rootFd, fh->fusepath,
+                O_RDWR)) == -1) {
+                    delete (fh);
+                    TRACE(Trace::error, errno);
+                    THROW(errno, fileName, errno);
+                }
+                fh->ffd = fd;
+            }
+        }
+    }
+    end:
 
- handle = (void *) fh;
- handleLength = sizeof(FuseFS::FuseHandle);
- }*/
+    handle = (void *) fh;
+    handleLength = sizeof(FuseFS::FuseHandle);
+}*/
 
 FsObj::FsObj(std::string fileName) :
         handle(NULL), handleLength(0), isLocked(false), handleFree(true)
@@ -267,7 +268,7 @@ FsObj::FsObj(std::string fileName) :
                 THROW(errno, fileName, errno);
             }
         } else {
-            if ((fh->fd = openat(search->second->rootFd, fh->fusepath,
+            if ((fh->fd = openat(search->second->getRootFd(), fh->fusepath,
             O_RDWR)) == -1) {
                 delete (fh);
                 TRACE(Trace::error, errno);
@@ -615,24 +616,26 @@ void FsObj::prepareStubbing()
 
 /*void FsObj::stub()
 
- {
- FuseFS::FuseHandle *fh = (FuseFS::FuseHandle *) handle;
- struct stat statbuf;
+{
+    FuseFS::FuseHandle *fh = (FuseFS::FuseHandle *) handle;
+    struct stat statbuf;
 
- if (fstat(fh->fd, &statbuf) == -1) {
- TRACE(Trace::error, errno);
- THROW(errno, errno, fh->fusepath);
- }
+    if (fstat(fh->fd, &statbuf) == -1) {
+        TRACE(Trace::error, errno);
+        THROW(errno, errno, fh->fusepath);
+    }
 
- if (ftruncate(fh->ffd, 0) == -1) {
- TRACE(Trace::error, errno);
- MSG(LTFSDMF0016E, fh->fusepath);
- FuseFS::setMigInfoAt(fh->fd, FuseFS::mig_info::state_num::PREMIGRATED);
- THROW(errno, errno, fh->fusepath);
- }
+    if (ftruncate(fh->ffd, 0) == -1) {
+        TRACE(Trace::error, errno);
+        MSG(LTFSDMF0016E, fh->fusepath);
+        FuseFS::setMigInfoAt(fh->fd, FuseFS::mig_info::state_num::PREMIGRATED);
+        THROW(errno, errno, fh->fusepath);
+    }
 
- FuseFS::setMigInfoAt(fh->ffd, FuseFS::mig_info::state_num::MIGRATED);
- }*/
+    posix_fadvise(fh->ffd, 0, 0, POSIX_FADV_DONTNEED);
+
+    FuseFS::setMigInfoAt(fh->fd, FuseFS::mig_info::state_num::MIGRATED);
+}*/
 
 void FsObj::stub()
 
@@ -640,6 +643,7 @@ void FsObj::stub()
     FuseFS::FuseHandle *fh = (FuseFS::FuseHandle *) handle;
     struct stat statbuf;
     std::stringstream spath;
+    int fd;
 
     spath << fh->mountpoint << "/" << fh->fusepath;
 
@@ -655,8 +659,13 @@ void FsObj::stub()
         THROW(errno, errno, fh->fusepath);
     }
 
-    // specifying the fuse file name as a work around to clear the cache
-    FuseFS::setMigInfo(spath.str(), FuseFS::mig_info::state_num::MIGRATED);
+    if ( (fd = open(spath.str().c_str(), O_RDONLY)) != -1 ) {
+        posix_fadvise(fd, 0, 0, POSIX_FADV_DONTNEED);
+        close(fd);
+    }
+
+
+    FuseFS::setMigInfoAt(fh->fd, FuseFS::mig_info::state_num::MIGRATED);
 }
 
 FsObj::file_state FsObj::getMigState()
