@@ -30,6 +30,7 @@ void TransRecall::addRequest(Connector::rec_info_t recinfo, std::string tapeId,
 
         if (state == FsObj::RESIDENT) {
             MSG(LTFSDMS0031I, recinfo.ino);
+            Connector::respondRecallEvent(recinfo, true);
             return;
         }
 

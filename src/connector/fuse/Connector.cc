@@ -196,52 +196,52 @@ void Connector::terminate()
 }
 
 /*FsObj::FsObj(std::string fileName) :
-        handle(NULL), handleLength(0), isLocked(false), handleFree(true)
+ handle(NULL), handleLength(0), isLocked(false), handleFree(true)
 
-{
-    FuseFS::FuseHandle *fh = new FuseFS::FuseHandle();
-    int fd;
+ {
+ FuseFS::FuseHandle *fh = new FuseFS::FuseHandle();
+ int fd;
 
-    memset((void *) fh, 0, sizeof(FuseFS::FuseHandle));
+ memset((void *) fh, 0, sizeof(FuseFS::FuseHandle));
 
-    fh->fd = Const::UNSET;
-    fh->ffd = Const::UNSET;
+ fh->fd = Const::UNSET;
+ fh->ffd = Const::UNSET;
 
-    if ((fd = open(fileName.c_str(), O_RDWR)) == -1) {
-        if ( errno != EISDIR) {
-            delete (fh);
-            TRACE(Trace::error, errno);
-            THROW(errno, fileName, errno);
-        }
-        strncpy(fh->mountpoint, fileName.c_str(), PATH_MAX - 1);
-        fh->fd = Const::UNSET;
-        goto end;
-    } else {
-        if (ioctl(fd, FuseFS::LTFSDM_FINFO, fh) == -1) {
-            delete (fh);
-            TRACE(Trace::error, errno);
-            THROW(errno, fileName, errno);
-        } else {
-            auto search = FuseConnector::managedFss.find(fh->mountpoint);
-            if (search == FuseConnector::managedFss.end()) {
-                fh->fd = fd; // ltfsdm info files only operates on the ofs
-                fh->ffd = Const::UNSET;
-            } else {
-                if ((fh->fd = openat(search->second->rootFd, fh->fusepath,
-                O_RDWR)) == -1) {
-                    delete (fh);
-                    TRACE(Trace::error, errno);
-                    THROW(errno, fileName, errno);
-                }
-                fh->ffd = fd;
-            }
-        }
-    }
-    end:
+ if ((fd = open(fileName.c_str(), O_RDWR)) == -1) {
+ if ( errno != EISDIR) {
+ delete (fh);
+ TRACE(Trace::error, errno);
+ THROW(errno, fileName, errno);
+ }
+ strncpy(fh->mountpoint, fileName.c_str(), PATH_MAX - 1);
+ fh->fd = Const::UNSET;
+ goto end;
+ } else {
+ if (ioctl(fd, FuseFS::LTFSDM_FINFO, fh) == -1) {
+ delete (fh);
+ TRACE(Trace::error, errno);
+ THROW(errno, fileName, errno);
+ } else {
+ auto search = FuseConnector::managedFss.find(fh->mountpoint);
+ if (search == FuseConnector::managedFss.end()) {
+ fh->fd = fd; // ltfsdm info files only operates on the ofs
+ fh->ffd = Const::UNSET;
+ } else {
+ if ((fh->fd = openat(search->second->rootFd, fh->fusepath,
+ O_RDWR)) == -1) {
+ delete (fh);
+ TRACE(Trace::error, errno);
+ THROW(errno, fileName, errno);
+ }
+ fh->ffd = fd;
+ }
+ }
+ }
+ end:
 
-    handle = (void *) fh;
-    handleLength = sizeof(FuseFS::FuseHandle);
-}*/
+ handle = (void *) fh;
+ handleLength = sizeof(FuseFS::FuseHandle);
+ }*/
 
 FsObj::FsObj(std::string fileName) :
         handle(NULL), handleLength(0), isLocked(false), handleFree(true)
@@ -435,13 +435,17 @@ void FsObj::lock()
 {
     FuseFS::FuseHandle *fh = (FuseFS::FuseHandle *) handle;
 
-    fh->lockfd = open(fh->lockpath, O_RDWR);
-    if (fh->lockfd == -1) {
+    try {
+        fh->lock = new FuseLock(fh->lockpath, FuseLock::main,
+                FuseLock::lockexclusive);
+    } catch (std::exception& e) {
         TRACE(Trace::error, errno);
         THROW(errno, errno, fh->fusepath);
     }
 
-    if (flock(fh->lockfd, LOCK_EX) == -1) {
+    try {
+        fh->lock->lock();
+    } catch (std::exception& e) {
         TRACE(Trace::error, errno);
         MSG(LTFSDMF0032E, fh->fd);
         THROW(errno, errno, fh->fusepath);
@@ -453,33 +457,36 @@ bool FsObj::try_lock()
 {
     FuseFS::FuseHandle *fh = (FuseFS::FuseHandle *) handle;
 
-    fh->lockfd = open(fh->lockpath, O_RDWR);
-    if (fh->lockfd == -1) {
+    try {
+        fh->lock = new FuseLock(fh->lockpath, FuseLock::main,
+                FuseLock::lockexclusive);
+    } catch (std::exception& e) {
         TRACE(Trace::error, errno);
         THROW(errno, errno, fh->fusepath);
     }
 
-    if (flock(fh->lockfd, LOCK_EX | LOCK_NB) == -1) {
-        if ( errno == EWOULDBLOCK)
-            return false;
+    try {
+        return fh->lock->try_lock();
+    } catch (std::exception& e) {
         TRACE(Trace::error, errno);
         MSG(LTFSDMF0032E, fh->fd);
         THROW(errno, errno, fh->fusepath);
     }
-
-    return true;
 }
 
 void FsObj::unlock()
 
 {
     FuseFS::FuseHandle *fh = (FuseFS::FuseHandle *) handle;
-    if (flock(fh->lockfd, LOCK_UN) == -1) {
+
+    try {
+        fh->lock->unlock();
+    } catch (std::exception& e) {
         TRACE(Trace::error, errno);
         MSG(LTFSDMF0033E, fh->fd);
     }
 
-    close(fh->lockfd);
+    delete (fh->lock);
 }
 
 long FsObj::read(long offset, unsigned long size, char *buffer)
@@ -616,26 +623,26 @@ void FsObj::prepareStubbing()
 
 /*void FsObj::stub()
 
-{
-    FuseFS::FuseHandle *fh = (FuseFS::FuseHandle *) handle;
-    struct stat statbuf;
+ {
+ FuseFS::FuseHandle *fh = (FuseFS::FuseHandle *) handle;
+ struct stat statbuf;
 
-    if (fstat(fh->fd, &statbuf) == -1) {
-        TRACE(Trace::error, errno);
-        THROW(errno, errno, fh->fusepath);
-    }
+ if (fstat(fh->fd, &statbuf) == -1) {
+ TRACE(Trace::error, errno);
+ THROW(errno, errno, fh->fusepath);
+ }
 
-    if (ftruncate(fh->ffd, 0) == -1) {
-        TRACE(Trace::error, errno);
-        MSG(LTFSDMF0016E, fh->fusepath);
-        FuseFS::setMigInfoAt(fh->fd, FuseFS::mig_info::state_num::PREMIGRATED);
-        THROW(errno, errno, fh->fusepath);
-    }
+ if (ftruncate(fh->ffd, 0) == -1) {
+ TRACE(Trace::error, errno);
+ MSG(LTFSDMF0016E, fh->fusepath);
+ FuseFS::setMigInfoAt(fh->fd, FuseFS::mig_info::state_num::PREMIGRATED);
+ THROW(errno, errno, fh->fusepath);
+ }
 
-    posix_fadvise(fh->ffd, 0, 0, POSIX_FADV_DONTNEED);
+ posix_fadvise(fh->ffd, 0, 0, POSIX_FADV_DONTNEED);
 
-    FuseFS::setMigInfoAt(fh->fd, FuseFS::mig_info::state_num::MIGRATED);
-}*/
+ FuseFS::setMigInfoAt(fh->fd, FuseFS::mig_info::state_num::MIGRATED);
+ }*/
 
 void FsObj::stub()
 
@@ -659,11 +666,10 @@ void FsObj::stub()
         THROW(errno, errno, fh->fusepath);
     }
 
-    if ( (fd = open(spath.str().c_str(), O_RDONLY)) != -1 ) {
+    if ((fd = open(spath.str().c_str(), O_RDONLY)) != -1) {
         posix_fadvise(fd, 0, 0, POSIX_FADV_DONTNEED);
         close(fd);
     }
-
 
     FuseFS::setMigInfoAt(fh->fd, FuseFS::mig_info::state_num::MIGRATED);
 }

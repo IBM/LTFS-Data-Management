@@ -54,5 +54,6 @@ const std::string OPEN_LTFS_EA_FSINFO = "trusted.openltfs.fsinfo";
 const std::string OPEN_LTFS_CACHE_DIR = "/.cache";
 const std::string OPEN_LTFS_CACHE_MP = OPEN_LTFS_CACHE_DIR + "/...";
 const std::string OPEN_LTFS_IOCTL = OPEN_LTFS_CACHE_DIR + "/ioctl";
+const std::string OPEN_LTFS_LOCK_DIR = OPEN_LTFS_CACHE_DIR + "/locks";
 const std::string TMP_DIR_TEMPLATE = "/tmp/ltfsdm.XXXXXX";
 }
