@@ -85,12 +85,16 @@ void StopCommand::doCommand(int argc, char **argv)
         THROW(Error::LTFSDM_GENERAL_ERROR);
     }
 
+    INFO(LTFSDMC0034I);
+
     while (flock(lockfd, LOCK_EX | LOCK_NB) == -1) {
         if (exitClient)
             break;
-        INFO(LTFSDMC0034I);
+        INFO(LTFSDMC0103I);
         sleep(1);
     }
+
+    INFO(LTFSDMC0104I);
 
     if (flock(lockfd, LOCK_UN) == -1) {
         MSG(LTFSDMC0035E);
