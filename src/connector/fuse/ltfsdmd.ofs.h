@@ -97,6 +97,7 @@ private:
         int lfd;
         std::string fusepath;
         FuseLock *main_lock;
+        FuseLock *trec_lock;
     };
 
     struct ltfsdm_dir_info

@@ -842,6 +842,7 @@ int FuseFS::ltfsdm_open(const char *path, struct fuse_file_info *finfo)
         linfo->lfd = Const::UNSET;
         linfo->fusepath = path;
         linfo->main_lock = nullptr;
+        linfo->trec_lock = nullptr;
         finfo->fh = (unsigned long) linfo;
         return 0;
     }
@@ -854,6 +855,7 @@ int FuseFS::ltfsdm_open(const char *path, struct fuse_file_info *finfo)
         linfo->lfd = Const::UNSET;
         linfo->fusepath = path;
         linfo->main_lock = nullptr;
+        linfo->trec_lock = nullptr;
         finfo->fh = (unsigned long) linfo;
         return 0;
     }
@@ -870,9 +872,19 @@ int FuseFS::ltfsdm_open(const char *path, struct fuse_file_info *finfo)
     linfo->lfd = lfd;
     linfo->fusepath = path;
     linfo->main_lock = nullptr;
+    linfo->trec_lock = nullptr;
+
     try {
         linfo->main_lock = new FuseLock(FuseFS::lockPath(path), FuseLock::main,
                 FuseLock::lockshared);
+    } catch (const std::exception& e) {
+        TRACE(Trace::error, FuseFS::lockPath(path));
+        return (-1 * EACCES);
+    }
+
+    try {
+        linfo->trec_lock = new FuseLock(FuseFS::lockPath(path), FuseLock::fuse,
+                FuseLock::lockexclusive);
     } catch (const std::exception& e) {
         TRACE(Trace::error, FuseFS::lockPath(path));
         return (-1 * EACCES);
@@ -902,10 +914,7 @@ int FuseFS::ltfsdm_ftruncate(const char *path, off_t size,
         std::unique_lock<FuseLock> mainlock(*(linfo->main_lock));
 
         try {
-            FuseLock trec_lock(FuseFS::lockPath(linfo->fusepath),
-                    FuseLock::fuse, FuseLock::lockexclusive);
-
-            std::lock_guard<FuseLock> treclock(trec_lock);
+            std::lock_guard<FuseLock> treclock(*(linfo->trec_lock));
 
             if ((attrsize = fgetxattr(linfo->fd,
                     Const::OPEN_LTFS_EA_MIGINFO_INT.c_str(), (void *) &migInfo,
@@ -970,10 +979,7 @@ int FuseFS::ltfsdm_read_buf(const char *path, struct fuse_bufvec **bufferp,
     TRACE(Trace::always, linfo->fd);
 
     try {
-        FuseLock trec_lock(FuseFS::lockPath(linfo->fusepath), FuseLock::fuse,
-                FuseLock::lockexclusive);
-
-        std::lock_guard<FuseLock> treclock(trec_lock);
+        std::lock_guard<FuseLock> treclock(*(linfo->trec_lock));
 
         if ((attrsize = fgetxattr(linfo->fd,
                 Const::OPEN_LTFS_EA_MIGINFO_INT.c_str(), (void *) &migInfo,
@@ -1032,10 +1038,7 @@ int FuseFS::ltfsdm_write_buf(const char *path, struct fuse_bufvec *buf,
     std::unique_lock<FuseLock> mainlock(*(linfo->main_lock));
 
     try {
-        FuseLock trec_lock(FuseFS::lockPath(linfo->fusepath), FuseLock::fuse,
-                FuseLock::lockexclusive);
-
-        std::lock_guard<FuseLock> treclock(trec_lock);
+        std::lock_guard<FuseLock> treclock(*(linfo->trec_lock));
 
         if ((attrsize = fgetxattr(linfo->fd,
                 Const::OPEN_LTFS_EA_MIGINFO_INT.c_str(), (void *) &migInfo,
@@ -1120,6 +1123,9 @@ int FuseFS::ltfsdm_release(const char *path, struct fuse_file_info *finfo)
 
     if (linfo->main_lock != nullptr)
         delete (linfo->main_lock);
+
+    if (linfo->trec_lock != nullptr)
+        delete (linfo->trec_lock);
 
     if (linfo->fd != Const::UNSET && close(linfo->fd) == -1)
         failed = true;
