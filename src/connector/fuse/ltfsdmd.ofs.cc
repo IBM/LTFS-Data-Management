@@ -769,7 +769,6 @@ int FuseFS::ltfsdm_truncate(const char *path, off_t size)
                 FuseLock::lockexclusive);
 
         std::lock_guard<FuseLock> treclock(trec_lock);
-        mainlock.unlock();
 
         if ((attrsize = fgetxattr(linfo.fd,
                 Const::OPEN_LTFS_EA_MIGINFO_INT.c_str(), (void *) &migInfo,
@@ -786,10 +785,12 @@ int FuseFS::ltfsdm_truncate(const char *path, off_t size)
                         || (migInfo.state
                                 == FuseFS::mig_info::state_num::IN_RECALL))) {
             TRACE(Trace::full, path);
+            mainlock.unlock();
             if (recall_file(&linfo, true) == -1) {
                 close(linfo.fd);
                 return (-1 * EIO);
             }
+            mainlock.lock();
         } else if (attrsize != -1) {
             if (fremovexattr(linfo.fd, Const::OPEN_LTFS_EA_MIGINFO_INT.c_str())
                     == -1) {
@@ -802,7 +803,6 @@ int FuseFS::ltfsdm_truncate(const char *path, off_t size)
                 return (-1 * EIO);
             }
         }
-        mainlock.lock();
     } catch (const std::exception& e) {
         TRACE(Trace::error, e.what());
         return (-1 * EIO);
@@ -906,7 +906,6 @@ int FuseFS::ltfsdm_ftruncate(const char *path, off_t size,
                     FuseLock::fuse, FuseLock::lockexclusive);
 
             std::lock_guard<FuseLock> treclock(trec_lock);
-            mainlock.unlock();
 
             if ((attrsize = fgetxattr(linfo->fd,
                     Const::OPEN_LTFS_EA_MIGINFO_INT.c_str(), (void *) &migInfo,
@@ -922,9 +921,11 @@ int FuseFS::ltfsdm_ftruncate(const char *path, off_t size,
                             || (migInfo.state
                                     == FuseFS::mig_info::state_num::IN_RECALL))) {
                 TRACE(Trace::full, linfo->fd);
+                mainlock.unlock();
                 if (recall_file(linfo, true) == -1) {
                     return (-1 * EIO);
                 }
+                mainlock.lock();
             } else if (attrsize != -1) {
                 if (fremovexattr(linfo->fd,
                         Const::OPEN_LTFS_EA_MIGINFO_INT.c_str()) == -1)
@@ -973,7 +974,6 @@ int FuseFS::ltfsdm_read_buf(const char *path, struct fuse_bufvec **bufferp,
                 FuseLock::lockexclusive);
 
         std::lock_guard<FuseLock> treclock(trec_lock);
-        mainlock.unlock();
 
         if ((attrsize = fgetxattr(linfo->fd,
                 Const::OPEN_LTFS_EA_MIGINFO_INT.c_str(), (void *) &migInfo,
@@ -987,12 +987,13 @@ int FuseFS::ltfsdm_read_buf(const char *path, struct fuse_bufvec **bufferp,
         if (migInfo.state == FuseFS::mig_info::state_num::MIGRATED
                 || migInfo.state == FuseFS::mig_info::state_num::IN_RECALL) {
             TRACE(Trace::full, linfo->fd);
+            mainlock.unlock();
             if (recall_file(linfo, false) == -1) {
                 *bufferp = NULL;
                 return (-1 * EIO);
             }
+            mainlock.lock();
         }
-        mainlock.lock();
     } catch (const std::exception& e) {
         TRACE(Trace::error, FuseFS::lockPath(path));
         return (-1 * EACCES);
@@ -1035,7 +1036,6 @@ int FuseFS::ltfsdm_write_buf(const char *path, struct fuse_bufvec *buf,
                 FuseLock::lockexclusive);
 
         std::lock_guard<FuseLock> treclock(trec_lock);
-        mainlock.unlock();
 
         if ((attrsize = fgetxattr(linfo->fd,
                 Const::OPEN_LTFS_EA_MIGINFO_INT.c_str(), (void *) &migInfo,
@@ -1049,9 +1049,11 @@ int FuseFS::ltfsdm_write_buf(const char *path, struct fuse_bufvec *buf,
         if (migInfo.state == FuseFS::mig_info::state_num::MIGRATED
                 || migInfo.state == FuseFS::mig_info::state_num::IN_RECALL) {
             TRACE(Trace::full, linfo->fd);
+            mainlock.unlock();
             if (recall_file(linfo, true) == -1) {
                 return (-1 * EIO);
             }
+            mainlock.lock();
         } else if (migInfo.state == FuseFS::mig_info::state_num::PREMIGRATED) {
             if (fremovexattr(linfo->fd, Const::OPEN_LTFS_EA_MIGINFO_INT.c_str())
                     == -1) {
@@ -1064,7 +1066,6 @@ int FuseFS::ltfsdm_write_buf(const char *path, struct fuse_bufvec *buf,
                 return (-1 * EIO);
             }
         }
-        mainlock.lock();
     } catch (const std::exception& e) {
         TRACE(Trace::error, FuseFS::lockPath(path));
         return (-1 * EACCES);
