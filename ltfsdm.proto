@@ -220,10 +220,11 @@ message LTFSDmRetrieveResp {
 message LTFSDmTransRecRequest {
 	required int64 key = 1;
     required bool toresident = 2;
-    required int64 fsid = 3;
-    required int32 igen = 4;
-    required int64 ino = 5;
-    required bytes filename = 6;
+    required int64 fsidh = 3;
+    required int64 fsidl = 4;
+    required int32 igen = 5;
+    required int64 inum = 6;
+    required bytes filename = 7;
 }
 
 message LTFSDmTransRecResp {

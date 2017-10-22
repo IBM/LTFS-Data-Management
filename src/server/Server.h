@@ -17,8 +17,8 @@ public:
             std::shared_ptr<std::list<unsigned long>>> *wqs;
 
     static std::string getTapeName(FsObj *diskfile, std::string tapeId);
-    static std::string getTapeName(unsigned long long fsid, unsigned int igen,
-            unsigned long long ino, std::string tapeId);
+    static std::string getTapeName(unsigned long fsid_h, unsigned long fsid_l,
+            unsigned int igen, unsigned long ino, std::string tapeId);
     static long getStartBlock(std::string tapeName);
     static void createDir(std::string path);
     static void createLink(std::string tapeId, std::string origPath,

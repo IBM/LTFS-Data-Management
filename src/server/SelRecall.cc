@@ -8,6 +8,7 @@ void SelRecall::addJob(std::string fileName)
     std::string tapeName;
     int state;
     FsObj::mig_attr_t attr;
+    fuid_t fuid;
 
     try {
         FsObj fso(fileName);
@@ -32,9 +33,10 @@ void SelRecall::addJob(std::string fileName)
 
         tapeName = Server::getTapeName(&fso, attr.tapeId[0]);
 
+        fuid = fso.getfuid();
         stmt(SelRecall::ADD_JOB) << DataBase::SELRECALL << fileName << reqNumber
-                << targetState << statbuf.st_size << (long long) fso.getFsId()
-                << fso.getIGen() << (long long) fso.getINode()
+                << targetState << statbuf.st_size << fuid.fsid_h
+                << fuid.fsid_l << fuid.igen << fuid.inum
                 << statbuf.st_mtim.tv_sec << statbuf.st_mtim.tv_nsec
                 << time(NULL) << state << attr.tapeId[0]
                 << Server::getStartBlock(tapeName);

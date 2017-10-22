@@ -121,7 +121,7 @@ Connector::rec_info_t Connector::getEvents()
     key = request.key();
     if (FuseConnector::ltfsdmKey != key) {
         TRACE(Trace::error, (long ) FuseConnector::ltfsdmKey, key);
-        recinfo = (rec_info_t ) { NULL, false, 0, 0, 0, "" };
+        recinfo = (rec_info_t ) { NULL, false, (fuid_t) {0, 0, 0, 0}, "" };
         return recinfo;
     }
 
@@ -130,12 +130,14 @@ Connector::rec_info_t Connector::getEvents()
 
     recinfo.conn_info = conn_info;
     recinfo.toresident = request.toresident();
-    recinfo.fsid = request.fsid();
-    recinfo.igen = request.igen();
-    recinfo.ino = request.ino();
+    recinfo.fuid = (fuid_t) {
+            (unsigned long) request.fsidh(),
+            (unsigned long) request.fsidl(),
+            (unsigned int) request.igen(),
+            (unsigned long) request.inum()};
     recinfo.filename = request.filename();
 
-    TRACE(Trace::always, recinfo.filename, recinfo.ino, recinfo.toresident);
+    TRACE(Trace::always, recinfo.filename, recinfo.fuid.inum, recinfo.toresident);
 
     return recinfo;
 }
@@ -182,9 +184,10 @@ void Connector::terminate()
 
     recrequest->set_key(FuseConnector::ltfsdmKey);
     recrequest->set_toresident(false);
-    recrequest->set_fsid(0);
+    recrequest->set_fsidh(0);
+    recrequest->set_fsidl(0);
     recrequest->set_igen(0);
-    recrequest->set_ino(0);
+    recrequest->set_inum(0);
     recrequest->set_filename("");
 
     try {
@@ -244,7 +247,8 @@ void Connector::terminate()
  }*/
 
 FsObj::FsObj(std::string fileName) :
-        handle(NULL), handleLength(0), isLocked(false), handleFree(true)
+        handle(NULL), handleLength(0), isLocked(false),
+        handleFree(true)
 
 {
     FuseFS::FuseHandle *fh = new FuseFS::FuseHandle();
@@ -373,55 +377,28 @@ struct stat FsObj::stat()
     return statbuf;
 }
 
-unsigned long long FsObj::getFsId()
+fuid_t FsObj::getfuid()
 
 {
-    unsigned long long fsid = 0;
-    struct stat statbuf;
     FuseFS::FuseHandle *fh = (FuseFS::FuseHandle *) handle;
+    fuid_t fuid;
+    struct stat statbuf;
 
-    memset(&statbuf, 0, sizeof(statbuf));
+    fuid.fsid_h = fh->fsid_h;
+    fuid.fsid_l = fh->fsid_l;
+
+    if (ioctl(fh->fd, FS_IOC_GETVERSION, &fuid.igen) == -1) {
+        TRACE(Trace::error, errno);
+        THROW(errno, errno, fh->fusepath);
+    }
     if (fstat(fh->fd, &statbuf) == -1) {
         TRACE(Trace::error, errno);
         THROW(errno, errno, fh->fusepath);
     }
 
-    // TODO
-    fsid = statbuf.st_dev;
+    fuid.inum = statbuf.st_ino;
 
-    return fsid;
-}
-
-unsigned int FsObj::getIGen()
-
-{
-    unsigned int igen = 0;
-    FuseFS::FuseHandle *fh = (FuseFS::FuseHandle *) handle;
-
-    if (ioctl(fh->fd, FS_IOC_GETVERSION, &igen)) {
-        TRACE(Trace::error, errno);
-        THROW(errno, errno, fh->fusepath);
-    }
-
-    return igen;
-}
-
-unsigned long long FsObj::getINode()
-
-{
-    unsigned long long ino = 0;
-    struct stat statbuf;
-    FuseFS::FuseHandle *fh = (FuseFS::FuseHandle *) handle;
-
-    memset(&statbuf, 0, sizeof(statbuf));
-    if (fstat(fh->fd, &statbuf) == -1) {
-        TRACE(Trace::error, errno);
-        THROW(errno, errno, fh->fusepath);
-    }
-
-    ino = statbuf.st_ino;
-
-    return ino;
+    return fuid;
 }
 
 std::string FsObj::getTapeId()

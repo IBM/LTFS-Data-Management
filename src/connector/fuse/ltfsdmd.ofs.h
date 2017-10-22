@@ -1,30 +1,5 @@
 #pragma once
 
-struct fuid_t
-{
-    unsigned long long fsid;
-    unsigned int igen;
-    unsigned long long ino;
-    friend bool operator<(const fuid_t fuid1, const fuid_t fuid2)
-    {
-        return (fuid1.ino < fuid2.ino)
-                || ((fuid1.ino == fuid2.ino)
-                        && ((fuid1.igen < fuid2.igen)
-                                || ((fuid1.igen == fuid2.igen)
-                                        && ((fuid1.fsid < fuid2.fsid)))));
-    }
-
-    friend bool operator==(const fuid_t fuid1, const fuid_t fuid2)
-    {
-        return (fuid1.ino == fuid2.ino) && (fuid1.igen == fuid2.igen)
-                && (fuid1.fsid == fuid2.fsid);
-    }
-    friend bool operator!=(const fuid_t fuid1, const fuid_t fuid2)
-    {
-        return !(fuid1 == fuid2);
-    }
-};
-
 class FuseLock
 {
 public:
@@ -73,6 +48,8 @@ public:
         char fusepath[PATH_MAX];
         char mountpoint[PATH_MAX];
         char lockpath[PATH_MAX];
+        unsigned long fsid_h;
+        unsigned long fsid_l;
         int fd;
         int ffd;
         int ioctlfd;
@@ -86,9 +63,9 @@ public:
         LTFSDM_PREMOUNT = _IO('l', 1),
         LTFSDM_POSTMOUNT = _IO('l', 2),
         LTFSDM_STOP = _IO('l', 3),
-        LTFSDM_LOCK = _IOWR('l', 4, FuseFS::FuseHandle),
-        LTFSDM_TRYLOCK = _IOWR('l', 5, FuseFS::FuseHandle),
-        LTFSDM_UNLOCK = _IOW('l', 6, FuseFS::FuseHandle),
+        LTFSDM_LOCK = _IOWR('l', 4, FuseFS::FuseHandle),    // not used
+        LTFSDM_TRYLOCK = _IOWR('l', 5, FuseFS::FuseHandle), // not used
+        LTFSDM_UNLOCK = _IOW('l', 6, FuseFS::FuseHandle),   // not used
     };
 private:
     struct ltfsdm_file_info
@@ -116,6 +93,8 @@ private:
     int rootFd;
     std::atomic<int> ioctlFd;
     std::atomic<pid_t> mainpid;
+    const unsigned long fsid_h;
+    const unsigned long fsid_l;
 
     struct
     {
@@ -221,15 +200,15 @@ public:
 
     FuseFS(std::string _mountpt) :
             mountpt(_mountpt), srcdir(""), starttime( { 0, 0 }), thrd(nullptr), ltfsdmKey(
-                    0), rootFd(Const::UNSET), mainpid(0), init_status( { false,
+                    0), rootFd(Const::UNSET), mainpid(0), fsid_h(0), fsid_l(0), init_status( { false,
                     false, false, false, false })
     {
     }
     FuseFS(std::string _mountpt, std::string _srcdir,
-            struct timespec _starttime, long _ltfsdmKey, pid_t _mainpid) :
+            struct timespec _starttime, long _ltfsdmKey, pid_t _mainpid, unsigned long _fsid_h, unsigned long _fsid_l) :
             mountpt(_mountpt), srcdir(_srcdir), starttime(_starttime), thrd(
                     nullptr), ltfsdmKey(_ltfsdmKey), rootFd(Const::UNSET), mainpid(
-                    _mainpid), init_status(
+                    _mainpid), fsid_h(_fsid_h), fsid_l(_fsid_l), init_status(
                     { false, false, false, false, false })
     {
     }

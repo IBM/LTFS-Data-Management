@@ -42,26 +42,7 @@ struct conn_info_t
 	dm_token_t token;
 };
 
-typedef struct
-{
-	unsigned long long fsid;
-	unsigned int igen;
-	unsigned long long ino;
-} fuid_t;
-
-struct ltstr
-{
-	bool operator()(const fuid_t fuid1, const fuid_t fuid2) const
-	{
-		return (fuid1.ino < fuid2.ino)
-				|| ((fuid1.ino == fuid2.ino)
-						&& ((fuid1.igen < fuid2.igen)
-								|| ((fuid1.igen == fuid2.igen)
-										&& ((fuid1.fsid < fuid2.fsid)))));
-	}
-};
-
-std::map<fuid_t, int, ltstr> fuidMap;
+std::map<fuid_t, int> fuidMap;
 
 std::mutex mtx;
 
@@ -413,7 +394,7 @@ Connector::rec_info_t Connector::getEvents()
 	dm_token_t token;
 	int retries;
 
-	recinfo = (Connector::rec_info_t ) { 0, 0, 0, 0, 0, "" };
+	recinfo = (Connector::rec_info_t ) { 0, 0, (fuid_t) {0,0,0,0}, "" };
 
 	while (dm_get_events(dmapiSession, 1, DM_EV_WAIT, sizeof(eventBuf),
 			eventBuf, &rlen) == -1) {
@@ -442,8 +423,8 @@ Connector::rec_info_t Connector::getEvents()
 
 			if ((name1Len >= sizeof(nameBuf)) || (name2Len >= sizeof(sgName))) {
 				TRACE(Trace::error, name1Len, name2Len);
-				THROW(Const::UNSET, name1Len, sizeof(nameBuf,
-						name2Len, name2Len));
+				THROW(Const::UNSET, name1Len, sizeof(nameBuf),
+						name2Len, name2Len);
 			}
 
 			memcpy(nameBuf, name1P, name1Len);
@@ -523,17 +504,18 @@ Connector::rec_info_t Connector::getEvents()
 			recinfo.toresident = toresident;
 			recinfo.conn_info = new conn_info_t(token);
 
-			if (dm_handle_to_fsid(hand1P, hand1Len, &recinfo.fsid)) {
+			recinfo.fuid.fsid_h = 0;
+			if (dm_handle_to_fsid(hand1P, hand1Len, (dm_fsid_t *) &recinfo.fuid.fsid_l)) {
 				TRACE(Trace::error, errno);
 				THROW(Const::UNSET, errno);
 			}
 
-			if (dm_handle_to_igen(hand1P, hand1Len, &recinfo.igen)) {
+			if (dm_handle_to_igen(hand1P, hand1Len, &recinfo.fuid.igen)) {
 				TRACE(Trace::error, errno);
 				THROW(Const::UNSET, errno);
 			}
 
-			if (dm_handle_to_ino(hand1P, hand1Len, &recinfo.ino)) {
+			if (dm_handle_to_ino(hand1P, hand1Len, (dm_ino_t *) &recinfo.fuid.inum)) {
 				TRACE(Trace::error, errno);
 				THROW(Const::UNSET, errno);
 			}
@@ -573,7 +555,7 @@ void Connector::respondRecallEvent(rec_info_t recinfo, bool success)
 		}
 	}
 
-	TRACE(Trace::normal, recinfo.ino);
+	TRACE(Trace::normal, recinfo.fuid.inum);
 }
 
 void Connector::terminate()
@@ -590,7 +572,8 @@ void Connector::terminate()
 }
 
 FsObj::FsObj(std::string fileName) :
-		handle(NULL), handleLength(0), isLocked(false), handleFree(true)
+		handle(NULL), handleLength(0), isLocked(false),
+		handleFree(true)
 
 {
 	char *fname = (char *) fileName.c_str();
@@ -605,10 +588,10 @@ FsObj::FsObj(Connector::rec_info_t recinfo) :
 		handle(NULL), handleLength(0), isLocked(false), handleFree(true)
 
 {
-	if (dm_make_handle(&recinfo.fsid, &recinfo.ino, &recinfo.igen, &handle,
+	if (dm_make_handle((dm_fsid_t *) &recinfo.fuid.fsid_l, (dm_ino_t *) &recinfo.fuid.inum, &recinfo.fuid.igen, &handle,
 			&handleLength) != 0) {
 		TRACE(Trace::error, errno);
-		THROW(errno, recinfo.ino);
+		THROW(errno, recinfo.fuid.inum);
 	}
 }
 
@@ -659,8 +642,8 @@ void FsObj::manageFs(bool setDispo, struct timespec starttime,
 			sizeof(fs_attr_t), (void *) &attr) == -1) {
 		unlock();
 		TRACE(Trace::error, errno);
-		THROW(Error::LTFSDM_FS_ADD_ERROR, (unsigned long  handle,
-				errno, mountPoint));
+		THROW(Error::LTFSDM_FS_ADD_ERROR, (unsigned long)  handle,
+				errno, mountPoint);
 	}
 	unlock();
 
@@ -674,15 +657,15 @@ void FsObj::manageFs(bool setDispo, struct timespec starttime,
 			if (dm_handle_to_fshandle(handle, handleLength, &fsHandle,
 					&fsHandleLength) == -1) {
 				TRACE(Trace::error, handle, fsHandle, errno);
-				throw(EXCEPTION(Error::LTFSDM_FS_ADD_ERROR,
-						(unsigned long ) handle, errno, mountPoint));
+				THROW(Error::LTFSDM_FS_ADD_ERROR,
+						(unsigned long ) handle, errno, mountPoint);
 			}
 			if (dm_set_disp(dmapiSession, fsHandle, fsHandleLength, DM_NO_TOKEN,
 					&eventSet, DM_EVENT_MAX) == -1) {
 				dm_handle_free(fsHandle, fsHandleLength);
 				TRACE(Trace::error, errno);
-				throw(EXCEPTION(Error::LTFSDM_FS_ADD_ERROR,
-						(unsigned long ) handle, errno, mountPoint));
+				THROW(Error::LTFSDM_FS_ADD_ERROR,
+						(unsigned long ) handle, errno, mountPoint);
 			}
 		} catch (const OpenLTFSException& e) {
 			lock();
@@ -692,8 +675,8 @@ void FsObj::manageFs(bool setDispo, struct timespec starttime,
 					sizeof(fs_attr_t), (void *) &attr) == -1) {
 				unlock();
 				TRACE(Trace::error, e.getError());
-				throw(EXCEPTION(Error::LTFSDM_FS_ADD_ERROR,
-						(unsigned long ) handle, errno, mountPoint));
+				THROW(Error::LTFSDM_FS_ADD_ERROR,
+						(unsigned long ) handle, errno, mountPoint);
 			}
 			unlock();
 			THROW(Error::LTFSDM_FS_ADD_ERROR, (unsigned long)  handle,
@@ -737,59 +720,38 @@ struct stat FsObj::stat()
 	return statbuf;
 }
 
-unsigned long long FsObj::getFsId()
-
+fuid_t FsObj::getfuid()
 {
-	unsigned long long fsid;
+    fuid_t fuid;
 
 	if (handleLength == 0)
-		return 0;
+		return (fuid_t) {0,0,0,0};
 
-	if (dm_handle_to_fsid(handle, handleLength, &fsid)) {
+	fuid.fsid_h = 0;
+
+	if (dm_handle_to_fsid(handle, handleLength, (dm_fsid_t *) &fuid.fsid_l)) {
 		TRACE(Trace::error, errno);
 		THROW(errno, errno, (unsigned long ) handle);
 	}
 
-	return fsid;
-}
-
-unsigned int FsObj::getIGen()
-
-{
-	unsigned int igen;
-
-	if (handleLength == 0)
-		return 0;
-
-	if (dm_handle_to_igen(handle, handleLength, &igen)) {
+	if (dm_handle_to_igen(handle, handleLength, &fuid.igen)) {
 		TRACE(Trace::error, errno);
 		THROW(errno, errno, (unsigned long ) handle);
 	}
 
-	return igen;
-}
-
-unsigned long long FsObj::getINode()
-
-{
-	unsigned long long ino;
-
-	if (handleLength == 0)
-		return 0;
-
-	if (dm_handle_to_ino(handle, handleLength, &ino)) {
+	if (dm_handle_to_ino(handle, handleLength, (dm_ino_t *) &fuid.inum)) {
 		TRACE(Trace::error, errno);
-		THROW(errno, ino, (unsigned long ) handle);
+		THROW(errno, fuid.inum, (unsigned long ) handle);
 	}
 
-	return ino;
+	return fuid;
 }
 
 void FsObj::lock()
 
 {
 	int rc;
-	fuid_t fuid = (fuid_t ) { getFsId(), getIGen(), getINode() };
+	fuid_t fuid = getfuid();
 	std::stringstream sstream;
 
 	std::unique_lock < std::mutex > lock(mtx);
@@ -800,17 +762,17 @@ void FsObj::lock()
 
 		if (rc == -1) {
 			TRACE(Trace::error, errno);
-			THROW(errno, errno, (unsigned long ) handle, fuid.ino);
+			THROW(errno, errno, (unsigned long ) handle, fuid.inum);
 		}
 
 		fuidMap[fuid] = 1;
-		sstream << "new(" << fuidMap[fuid] << "): " << fuid.fsid << ", "
-				<< fuid.igen << ", " << fuid.ino;
+		sstream << "new(" << fuidMap[fuid] << "): " << fuid.fsid_l << ", "
+				<< fuid.igen << ", " << fuid.inum;
 		TRACE(Trace::full, sstream.str());
 	} else {
 		fuidMap[fuid]++;
-		sstream << "inc(" << fuidMap[fuid] << "): " << fuid.fsid << ", "
-				<< fuid.igen << ", " << fuid.ino;
+		sstream << "inc(" << fuidMap[fuid] << "): " << fuid.fsid_l << ", "
+				<< fuid.igen << ", " << fuid.inum;
 		TRACE(Trace::full, sstream.str());
 	}
 
@@ -821,19 +783,19 @@ void FsObj::unlock()
 
 {
 	int rc;
-	fuid_t fuid = (fuid_t ) { getFsId(), getIGen(), getINode() };
+	fuid_t fuid = getfuid();
 	std::stringstream sstream;
 
 	std::unique_lock < std::mutex > lock(mtx);
 
 	if (isLocked == false) {
 		TRACE(Trace::error, isLocked);
-		THROW(Const::UNSET, fuid.ino);
+		THROW(Const::UNSET, fuid.inum);
 	}
 
 	if (fuidMap.count(fuid) != 1) {
-		TRACE(Trace::error, fuidMap.count(fuid), fuid.fsid, fuid.igen,
-				fuid.ino);
+		TRACE(Trace::error, fuidMap.count(fuid), fuid.fsid_l, fuid.igen,
+				fuid.inum);
 	}
 
 	assert(fuidMap.count(fuid) == 1);
@@ -843,17 +805,17 @@ void FsObj::unlock()
 
 		if (rc == -1) {
 			TRACE(Trace::error, errno);
-			THROW(errno, errno, (unsigned long ) handle, fuid.ino);
+			THROW(errno, errno, (unsigned long ) handle, fuid.inum);
 		}
 
 		fuidMap.erase(fuid);
-		sstream << "rem(" << fuidMap.count(fuid) << "): " << fuid.fsid << ", "
-				<< fuid.igen << ", " << fuid.ino;
+		sstream << "rem(" << fuidMap.count(fuid) << "): " << fuid.fsid_l << ", "
+				<< fuid.igen << ", " << fuid.inum;
 		TRACE(Trace::full, sstream.str());
 	} else {
 		fuidMap[fuid]--;
-		sstream << "dec(" << fuidMap[fuid] << "): " << fuid.fsid << ", "
-				<< fuid.igen << ", " << fuid.ino;
+		sstream << "dec(" << fuidMap[fuid] << "): " << fuid.fsid_l << ", "
+				<< fuid.igen << ", " << fuid.inum;
 		TRACE(Trace::full, sstream.str());
 	}
 

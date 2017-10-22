@@ -66,6 +66,7 @@ void Migration::addJob(std::string fileName)
     struct stat statbuf;
     FsObj::file_state state;
     SQLStatement stmt;
+    fuid_t fuid;
 
     try {
         FsObj fso(fileName);
@@ -77,10 +78,11 @@ void Migration::addJob(std::string fileName)
         }
 
         state = checkState(fileName, &fso);
-
+        
+        fuid = fso.getfuid();
         stmt(Migration::ADD_JOB) << DataBase::MIGRATION << fileName << reqNumber
-                << targetState << statbuf.st_size << (long long) fso.getFsId()
-                << fso.getIGen() << (long long) fso.getINode()
+                << targetState << statbuf.st_size << fuid.fsid_h
+                << fuid.fsid_l << fuid.igen << fuid.inum
                 << statbuf.st_mtim.tv_sec << statbuf.st_mtim.tv_nsec
                 << time(NULL) << state;
     } catch (const std::exception& e) {

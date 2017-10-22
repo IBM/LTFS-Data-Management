@@ -18,6 +18,9 @@
 #include <assert.h>
 #include <errno.h>
 
+#include <blkid/blkid.h>
+#include <uuid/uuid.h>
+
 #define FUSE_USE_VERSION 26
 
 #include <fuse.h>
@@ -399,9 +402,10 @@ int FuseFS::recall_file(FuseFS::ltfsdm_file_info *linfo, bool toresident)
 
     recrequest->set_key(getffs()->ltfsdmKey);
     recrequest->set_toresident(toresident);
-    recrequest->set_fsid(statbuf.st_dev);
+    recrequest->set_fsidh(getffs()->fsid_h);
+    recrequest->set_fsidl(getffs()->fsid_l);
     recrequest->set_igen(igen);
-    recrequest->set_ino(statbuf.st_ino);
+    recrequest->set_inum(statbuf.st_ino);
     recrequest->set_filename(path);
 
     try {
@@ -1237,10 +1241,11 @@ int FuseFS::ltfsdm_getxattr(const char *path, const char *name, char *value,
         memset(&fh, 0, sizeof(fh));
         strncpy(fh.mountpoint, getffs()->mountpt.c_str(), PATH_MAX - 1);
         strncpy(fh.fusepath, relPath(path), PATH_MAX - 1);
-        strncpy(fh.lockpath, FuseFS::lockPath(path).c_str(),
-        PATH_MAX - 1);
+        strncpy(fh.lockpath, FuseFS::lockPath(path).c_str(), PATH_MAX - 1);
+        fh.fsid_h = getffs()->fsid_h;
+        fh.fsid_l = getffs()->fsid_l;
         fh.fd = Const::UNSET;
-        memcpy((void *) value, (void *) &fh, sizeof(fh));
+        *(FuseFS::FuseHandle *) value = fh;
         TRACE(Trace::always, fh.fusepath, sizeof(fh));
         return size;
     }
@@ -1589,11 +1594,15 @@ int main(int argc, char **argv)
     std::string fsName("");
     struct timespec starttime = { 0, 0 };
     pid_t mainpid;
+    blkid_cache cache;
+    char *uuidstr;
+    uuid_t uuid;
     Message::LogType logType;
     Trace::traceLevel tl;
     bool logTypeSet = false;
     bool traceLevelSet = false;
     int opt;
+    int rc;
     opterr = 0;
 
     const struct fuse_operations ltfsdm_operations = FuseFS::init_operations();
@@ -1663,8 +1672,29 @@ int main(int argc, char **argv)
         exit((int) Error::LTFSDM_GENERAL_ERROR);
     }
 
+    if ( (rc = blkid_get_cache(&cache, NULL)) != 0 ) {
+        TRACE(Trace::error, rc, errno);
+        MSG(LTFSDMF0055E);
+        exit((int) Error::LTFSDM_GENERAL_ERROR);
+    }
+
+    if ( (uuidstr = blkid_get_tag_value(cache, "UUID", fsName.c_str())) == NULL ) {
+        TRACE(Trace::error, errno);
+        MSG(LTFSDMF0055E);
+        exit((int) Error::LTFSDM_GENERAL_ERROR);
+    }
+
+    if ( (rc = uuid_parse(uuidstr, uuid)) != 0 ) {
+        TRACE(Trace::error, rc, errno);
+        MSG(LTFSDMF0055E);
+        exit((int) Error::LTFSDM_GENERAL_ERROR);
+    }
+
     FuseFS ffs(mountpt, mountpt + Const::OPEN_LTFS_CACHE_MP, starttime,
-            LTFSDM::getkey(), mainpid);
+            LTFSDM::getkey(), mainpid, be64toh(*(unsigned long *) &uuid[0]), be64toh(*(unsigned long *) &uuid[8]));
+
+    free(uuidstr);
+    blkid_put_cache(cache);
 
     MSG(LTFSDMF0001I, mountpt + Const::OPEN_LTFS_CACHE_MP, mountpt);
 

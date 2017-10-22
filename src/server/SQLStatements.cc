@@ -11,7 +11,8 @@ const std::string DataBase::CREATE_JOB_QUEUE =
                 " REPL_NUM INT,"
                 " TAPE_POOL VARCHAR,"
                 " FILE_SIZE BIGINT NOT NULL,"
-                " FS_ID BIGINT NOT NULL,"
+                " FS_ID_H BIGINT NOT NULL,"
+                " FS_ID_L BIGINT NOT NULL,"
                 " I_GEN INT NOT NULL,"
                 " I_NUM BIGINT NOT NULL,"
                 " MTIME_SEC BIGINT NOT NULL,"
@@ -22,7 +23,7 @@ const std::string DataBase::CREATE_JOB_QUEUE =
                 " START_BLOCK INT,"
                 " CONN_INFO BIGINT,"
                 " CONSTRAINT JOB_QUEUE_UNIQUE_FILE_NAME UNIQUE (FILE_NAME, REPL_NUM),"
-                " CONSTRAINT JOB_QUEUE_UNIQUE_UID UNIQUE (FS_ID, I_GEN, I_NUM, REPL_NUM))";
+                " CONSTRAINT JOB_QUEUE_UNIQUE_UID UNIQUE (FS_ID_H, FS_ID_L, I_GEN, I_NUM, REPL_NUM))";
 
 const std::string DataBase::CREATE_REQUEST_QUEUE =
         "CREATE TABLE REQUEST_QUEUE("
@@ -66,12 +67,12 @@ const std::string Scheduler::SMALLEST_MIG_JOB =
 
 const std::string Migration::ADD_JOB =
         "INSERT INTO JOB_QUEUE (OPERATION, FILE_NAME, REQ_NUM, TARGET_STATE, REPL_NUM, TAPE_POOL,"
-                " FILE_SIZE, FS_ID, I_GEN, I_NUM, MTIME_SEC, MTIME_NSEC, LAST_UPD, TAPE_ID, FILE_STATE)"
+                " FILE_SIZE, FS_ID_H, FS_ID_L, I_GEN, I_NUM, MTIME_SEC, MTIME_NSEC, LAST_UPD, TAPE_ID, FILE_STATE)"
                 " VALUES (" /* OPERATION */"%1%, " /* FILE_NAME */"'%2%', " /* REQ_NUM */"%3%, "
                 /* MIGRATION_STATE */"%4%, " /* REPL_NUM */"?, " /* TAPE_POOL */"?, "
-                /* FILE_SIZE */"%5%, " /* FS_ID */"%6%, " /* I_GEN */"%7%, " /* I_NUM */"%8%, "
-                /* MTIME_SEC */"%9%, " /* MTIME_NSEC */"%10%, " /* LAST_UPD */"%11%, "
-                /* TAPE_ID */"'', " /* FILE_STATE */"%12%)";
+                /* FILE_SIZE */"%5%, " /* FS_ID_H */"%6%, " /* FS_ID_L */"%7%, " /* I_GEN */"%8%,"
+                /* I_NUM */"%9%, "/* MTIME_SEC */"%10%, " /* MTIME_NSEC */"%11%, " /* LAST_UPD */"%12%, "
+                /* TAPE_ID */"'', " /* FILE_STATE */"%13%)";
 
 const std::string Migration::ADD_REQUEST =
         "INSERT INTO REQUEST_QUEUE (OPERATION, REQ_NUM, TARGET_STATE,"
@@ -145,12 +146,12 @@ const std::string Migration::UPDATE_REQUEST_RESET_TAPE =
 /* ======== SelRecall ======== */
 
 const std::string SelRecall::ADD_JOB =
-        "INSERT INTO JOB_QUEUE (OPERATION, FILE_NAME, REQ_NUM, TARGET_STATE, FILE_SIZE, FS_ID, I_GEN,"
+        "INSERT INTO JOB_QUEUE (OPERATION, FILE_NAME, REQ_NUM, TARGET_STATE, FILE_SIZE, FS_ID_H, FS_ID_L, I_GEN,"
                 " I_NUM, MTIME_SEC, MTIME_NSEC, LAST_UPD, FILE_STATE, TAPE_ID, START_BLOCK)"
                 " VALUES (" /* OPERATION */"%1%, " /* FILE_NAME */"'%2%', " /* REQ_NUM */"%3%, "
-                /* MIGRATION_STATE */"%4%, " /* FILE_SIZE */"%5%, " /* FS_ID */"%6%, "
-                /* I_GEN */"%7%, " /* I_NUM */"%8%, " /* MTIME_SEC */"%9%, " /* MTIME_NSEC */"%10%, "
-                /* LAST_UPD */"%11%, " /* FILE_STATE */"%12%, " /* TAPE_ID */"'%13%', " /* START_BLOCK */"%14%)";
+                /* MIGRATION_STATE */"%4%, " /* FILE_SIZE */"%5%, " /* FS_ID_H */"%6%, " /* FS_ID_L */"%7%, "
+                /* I_GEN */"%8%, " /* I_NUM */"%9%, " /* MTIME_SEC */"%10%, " /* MTIME_NSEC */"%11%, "
+                /* LAST_UPD */"%12%, " /* FILE_STATE */"%13%, " /* TAPE_ID */"'%14%', " /* START_BLOCK */"%15%)";
 
 const std::string SelRecall::GET_TAPES =
         "SELECT TAPE_ID FROM JOB_QUEUE WHERE REQ_NUM=%1%"
@@ -199,13 +200,13 @@ const std::string SelRecall::UPDATE_REQUEST =
 /* ======== TransRecall ======== */
 
 const std::string TransRecall::ADD_JOB =
-        "INSERT INTO JOB_QUEUE (OPERATION, FILE_NAME, REQ_NUM, TARGET_STATE, REPL_NUM, FILE_SIZE, FS_ID, I_GEN,"
+        "INSERT INTO JOB_QUEUE (OPERATION, FILE_NAME, REQ_NUM, TARGET_STATE, REPL_NUM, FILE_SIZE, FS_ID_H, FS_ID_L, I_GEN,"
                 " I_NUM, MTIME_SEC, MTIME_NSEC, LAST_UPD, FILE_STATE, TAPE_ID, START_BLOCK, CONN_INFO)"
                 " VALUES (" /* OPERATION */"%1%, " /* FILE_NAME */"%2%, " /* REQ_NUM */"%3%, "
-                /* TARGET_STATE */"%4%, " /* REPL_NUM */"%5%, " /* FILE_SIZE */"%6%, " /* FS_ID */"%7%, "
-                /* I_GEN */"%8%, " /* I_NUM */"%9%, " /* MTIME_SEC */"%10%, " /* MTIME_NSEC */"%11%, "
-                /* LAST_UPD */"%12%, " /* FILE_STATE */"%13%, " /* TAPE_ID */"'%14%', " /* START_BLOCK */"%15%, "
-                /* CONN_INFO */"%16%)";
+                /* TARGET_STATE */"%4%, " /* REPL_NUM */"%5%, " /* FILE_SIZE */"%6%, " /* FS_ID */"%7%, " /* FS_ID */"%8%, "
+                /* I_GEN */"%9%, " /* I_NUM */"%10%, " /* MTIME_SEC */"%11%, " /* MTIME_NSEC */"%12%, "
+                /* LAST_UPD */"%13%, " /* FILE_STATE */"%14%, " /* TAPE_ID */"'%15%', " /* START_BLOCK */"%16%, "
+                /* CONN_INFO */"%17%)";
 
 const std::string TransRecall::CHECK_REQUEST_EXISTS =
         "SELECT STATE FROM REQUEST_QUEUE WHERE REQ_NUM=%1%";
@@ -220,7 +221,7 @@ const std::string TransRecall::ADD_REQUEST =
                 /* TIME_ADDED */"%4%, " /* STATE */"%5%)";
 
 const std::string TransRecall::REMAINING_JOBS =
-        "SELECT FS_ID, I_GEN, I_NUM, FILE_NAME, CONN_INFO  FROM JOB_QUEUE"
+        "SELECT FS_ID_H, FS_ID_L, I_GEN, I_NUM, FILE_NAME, CONN_INFO  FROM JOB_QUEUE"
                 " WHERE OPERATION=%1%";
 
 const std::string TransRecall::SET_RECALLING =
@@ -230,7 +231,7 @@ const std::string TransRecall::SET_RECALLING =
                 " AND TAPE_ID='%4%'";
 
 const std::string TransRecall::SELECT_JOBS =
-        "SELECT FS_ID, I_GEN, I_NUM, FILE_NAME, FILE_STATE, TARGET_STATE, CONN_INFO  FROM JOB_QUEUE"
+        "SELECT FS_ID_H, FS_ID_L, I_GEN, I_NUM, FILE_NAME, FILE_STATE, TARGET_STATE, CONN_INFO  FROM JOB_QUEUE"
                 " WHERE REQ_NUM=%1%"
                 " AND (FILE_STATE=%2% OR FILE_STATE=%3%)"
                 " AND TAPE_ID='%4%' ORDER BY START_BLOCK";
