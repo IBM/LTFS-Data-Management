@@ -13,14 +13,17 @@ struct fuid_t
                         && ((fuid1.igen < fuid2.igen)
                                 || ((fuid1.igen == fuid2.igen)
                                         && ((fuid1.fsid_l < fuid2.fsid_l)
-                                                || ((fuid1.fsid_l == fuid2.fsid_l)
-                                                        && ((fuid1.fsid_h < fuid2.fsid_h)))))));
+                                                || ((fuid1.fsid_l
+                                                        == fuid2.fsid_l)
+                                                        && ((fuid1.fsid_h
+                                                                < fuid2.fsid_h)))))));
     }
 
     friend bool operator==(const fuid_t fuid1, const fuid_t fuid2)
     {
         return (fuid1.inum == fuid2.inum) && (fuid1.igen == fuid2.igen)
-                && (fuid1.fsid_l == fuid2.fsid_l) && (fuid1.fsid_h == fuid2.fsid_h);
+                && (fuid1.fsid_l == fuid2.fsid_l)
+                && (fuid1.fsid_h == fuid2.fsid_h);
     }
     friend bool operator!=(const fuid_t fuid1, const fuid_t fuid2)
     {
@@ -111,8 +114,8 @@ public:
         }
     }
     FsObj(void *_handle, unsigned long _handleLength) :
-            handle(_handle), handleLength(_handleLength), isLocked(false), handleFree(
-                    false)
+            handle(_handle), handleLength(_handleLength),
+            isLocked(false), handleFree(false)
     {
     }
     FsObj(std::string fileName);

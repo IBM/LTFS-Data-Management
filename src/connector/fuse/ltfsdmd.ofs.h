@@ -199,17 +199,17 @@ public:
     }
 
     FuseFS(std::string _mountpt) :
-            mountpt(_mountpt), srcdir(""), starttime( { 0, 0 }), thrd(nullptr), ltfsdmKey(
-                    0), rootFd(Const::UNSET), mainpid(0), fsid_h(0), fsid_l(0), init_status( { false,
-                    false, false, false, false })
+            mountpt(_mountpt), srcdir(""), starttime( { 0, 0 }), thrd(nullptr),
+            ltfsdmKey(0), rootFd(Const::UNSET), mainpid(0), fsid_h(0), fsid_l(0),
+            init_status( { false, false, false, false, false })
     {
     }
     FuseFS(std::string _mountpt, std::string _srcdir,
             struct timespec _starttime, long _ltfsdmKey, pid_t _mainpid, unsigned long _fsid_h, unsigned long _fsid_l) :
-            mountpt(_mountpt), srcdir(_srcdir), starttime(_starttime), thrd(
-                    nullptr), ltfsdmKey(_ltfsdmKey), rootFd(Const::UNSET), mainpid(
-                    _mainpid), fsid_h(_fsid_h), fsid_l(_fsid_l), init_status(
-                    { false, false, false, false, false })
+            mountpt(_mountpt), srcdir(_srcdir), starttime(_starttime),
+            thrd(nullptr), ltfsdmKey(_ltfsdmKey), rootFd(Const::UNSET),
+            mainpid(_mainpid), fsid_h(_fsid_h), fsid_l(_fsid_l),
+            init_status({ false, false, false, false, false })
     {
     }
     void init(struct timespec starttime);
