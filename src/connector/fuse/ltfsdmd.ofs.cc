@@ -490,6 +490,12 @@ int FuseFS::ltfsdm_getattr(const char *path, struct stat *statbuf)
         goto end;
     }
 
+    if (FuseFS::procIsOpenLTFS(pid) == true &&
+            std::string(Const::OPEN_LTFS_CACHE_DIR).compare(path) == 0) {
+        statbuf->st_mode = S_IFDIR | S_IRWXU;
+        goto end;
+    }
+
     if (std::string(path).compare(0, Const::OPEN_LTFS_LOCK_DIR.size(),
             Const::OPEN_LTFS_LOCK_DIR) == 0) {
         if (std::string(path).size() == Const::OPEN_LTFS_LOCK_DIR.size()) {
