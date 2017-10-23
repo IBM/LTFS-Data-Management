@@ -101,10 +101,13 @@ void StartCommand::startServer()
             success = true;
             break;
         } catch (const std::exception& e) {
+            INFO(LTFSDMC0103I);
             retry++;
             sleep(1);
         }
     }
+
+    INFO(LTFSDMC0104I);
 
     if (success == false) {
         MSG(LTFSDMC0096E);

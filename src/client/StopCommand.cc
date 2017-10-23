@@ -44,6 +44,8 @@ void StopCommand::doCommand(int argc, char **argv)
 
     TRACE(Trace::normal, requestNumber);
 
+    INFO(LTFSDMC0101I);
+
     do {
         LTFSDmProtocol::LTFSDmStopRequest *stopreq =
                 commCommand.mutable_stoprequest();
@@ -71,12 +73,14 @@ void StopCommand::doCommand(int argc, char **argv)
         finished = stopresp.success();
 
         if (!finished) {
-            MSG(LTFSDMC0101I);
+            INFO(LTFSDMC0103I);
             sleep(1);
         } else {
             break;
         }
     } while (true);
+
+    INFO(LTFSDMC0104I);
 
     if ((lockfd = open(Const::SERVER_LOCK_FILE.c_str(), O_RDWR | O_CREAT, 0600))
             == -1) {
@@ -84,7 +88,6 @@ void StopCommand::doCommand(int argc, char **argv)
         TRACE(Trace::error, Const::SERVER_LOCK_FILE, errno);
         THROW(Error::LTFSDM_GENERAL_ERROR);
     }
-
     INFO(LTFSDMC0034I);
 
     while (flock(lockfd, LOCK_EX | LOCK_NB) == -1) {
