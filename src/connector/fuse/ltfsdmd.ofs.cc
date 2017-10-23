@@ -1515,7 +1515,7 @@ void FuseFS::init(struct timespec starttime)
             (mountpt + Const::OPEN_LTFS_CACHE_MP), mountpt, stream.str());
 
     while (true) {
-        if ((fd = open((mountpt + Const::OPEN_LTFS_IOCTL).c_str(), O_RDONLY))
+        if ((fd = open((mountpt + Const::OPEN_LTFS_IOCTL).c_str(), O_RDONLY | O_CLOEXEC))
                 == -1) {
             if (count < 20) {
                 MSG(LTFSDMF0041I);
