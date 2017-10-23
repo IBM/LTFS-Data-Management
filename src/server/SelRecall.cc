@@ -113,6 +113,7 @@ unsigned long SelRecall::recall(std::string fileName, std::string tapeId,
 
 {
     struct stat statbuf;
+    struct stat statbuf_tape;
     std::string tapeName;
     char buffer[Const::READ_BUFFER_SIZE];
     long rsize;
@@ -148,6 +149,13 @@ unsigned long SelRecall::recall(std::string fileName, std::string tapeId,
 
             statbuf = target.stat();
 
+            if (fstat(fd, &statbuf_tape) == 0 &&
+                    statbuf_tape.st_size != statbuf.st_size) {
+                MSG(LTFSDMS0097W, fileName, statbuf.st_size, statbuf_tape.st_size);
+                statbuf.st_size = statbuf_tape.st_size;
+                toState = FsObj::RESIDENT;
+            }
+
             target.prepareRecall();
 
             while (offset < statbuf.st_size) {
@@ -155,6 +163,10 @@ unsigned long SelRecall::recall(std::string fileName, std::string tapeId,
                     THROW(Error::LTFSDM_OK);
 
                 rsize = read(fd, buffer, sizeof(buffer));
+                if (rsize == 0) {
+                    break;
+                }
+
                 if (rsize == -1) {
                     TRACE(Trace::error, errno);
                     MSG(LTFSDMS0023E, tapeName.c_str());
