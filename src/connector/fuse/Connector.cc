@@ -37,7 +37,8 @@
 #include "src/common/comm/LTFSDmComm.h"
 
 #include "src/connector/Connector.h"
-#include <src/connector/fuse/ltfsdmd.ofs.h>
+#include "src/connector/fuse/FuseLock.h"
+#include "src/connector/fuse/ltfsdmd.ofs.h"
 
 std::atomic<bool> Connector::connectorTerminate(false);
 std::atomic<bool> Connector::forcedTerminate(false);

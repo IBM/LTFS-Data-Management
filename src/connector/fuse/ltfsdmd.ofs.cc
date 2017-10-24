@@ -6,7 +6,6 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/mount.h>
-#include <sys/file.h>
 #include <linux/fs.h>
 #include <dirent.h>
 #include <sys/time.h>
@@ -46,66 +45,8 @@
 #include "src/common/comm/LTFSDmComm.h"
 
 #include "src/connector/Connector.h"
-#include "ltfsdmd.ofs.h"
-
-std::mutex FuseLock::mtx;
-
-FuseLock::FuseLock(std::string identifier, FuseLock::lockType _type,
-        FuseLock::lockOperation _operation) :
-        id(identifier), fd(Const::UNSET), type(_type), operation(_operation)
-
-{
-    id += '.';
-    id += type;
-
-    std::lock_guard<std::mutex> lock(FuseLock::mtx);
-
-    if ((fd = open(id.c_str(), O_RDONLY)) == -1) {
-        TRACE(Trace::error, id, errno);
-        THROW(errno, id, errno);
-    }
-}
-
-FuseLock::~FuseLock()
-
-{
-    if (fd != Const::UNSET)
-        close(fd);
-}
-
-void FuseLock::lock()
-
-{
-    if (flock(fd, (operation == FuseLock::lockshared ? LOCK_SH : LOCK_EX))
-            == -1) {
-        TRACE(Trace::error, id, errno);
-        THROW(errno, id, errno);
-    }
-}
-
-bool FuseLock::try_lock()
-
-{
-    if (flock(fd,
-            (operation == FuseLock::lockshared ? LOCK_SH : LOCK_EX) | LOCK_NB)
-            == -1) {
-        if ( errno == EWOULDBLOCK)
-            return false;
-        TRACE(Trace::error, id, errno);
-        THROW(errno, id, errno);
-    }
-
-    return true;
-}
-
-void FuseLock::unlock()
-
-{
-    if (flock(fd, LOCK_UN) == -1) {
-        TRACE(Trace::error, id, errno);
-        THROW(errno, id, errno);
-    }
-}
+#include "src/connector/fuse/FuseLock.h"
+#include "src/connector/fuse/ltfsdmd.ofs.h"
 
 const char *FuseFS::relPath(const char *path)
 

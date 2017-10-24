@@ -3,8 +3,8 @@ RELPATH = ../../..
 LDFLAGS := -lprotobuf -lfuse -lpthread -luuid -lblkid
 SHAREDLIB := lib$(notdir $(CURDIR))connector.so
 
-SO_SRC_FILES := Connector.cc ltfsdmd.ofs.cc
-ARC_SRC_FILES := Connector.cc ltfsdmd.ofs.cc
+SO_SRC_FILES := Connector.cc ltfsdmd.ofs.cc FuseLock.cc
+ARC_SRC_FILES := Connector.cc ltfsdmd.ofs.cc FuseLock.cc
 CLEANUP_FILES := $(SHAREDLIB) ltfsdmd.ofs
 BINARY := $(SHAREDLIB) ltfsdmd.ofs
 POSTTARGET :=
