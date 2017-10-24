@@ -61,13 +61,13 @@ std::string FuseFS::lockPath(std::string path)
     std::stringstream lpath;
     struct stat statbuf;
 
-    if (fstatat(getffs()->rootFd, FuseFS::relPath(path.c_str()), &statbuf,
+    if (fstatat(getshrd()->rootFd, FuseFS::relPath(path.c_str()), &statbuf,
     AT_SYMLINK_NOFOLLOW) == -1) {
         TRACE(Trace::error, path, errno);
         return "";
     }
 
-    lpath << getffs()->mountpt << Const::OPEN_LTFS_LOCK_DIR << "/"
+    lpath << getshrd()->mountpt << Const::OPEN_LTFS_LOCK_DIR << "/"
             << statbuf.st_ino;
 
     TRACE(Trace::always, lpath.str());
@@ -85,26 +85,6 @@ FuseFS::mig_info FuseFS::genMigInfoAt(int fd, FuseFS::mig_info::state_num state)
     if (fstat(fd, &miginfo.statinfo)) {
         TRACE(Trace::error, errno);
         THROW(errno, errno, fd);
-    }
-
-    miginfo.state = state;
-
-    clock_gettime(CLOCK_REALTIME, &miginfo.changed);
-
-    return miginfo;
-}
-
-FuseFS::mig_info FuseFS::genMigInfo(std::string fileName,
-        FuseFS::mig_info::state_num state)
-
-{
-    FuseFS::mig_info miginfo;
-
-    memset(&miginfo, 0, sizeof(miginfo));
-
-    if (stat(fileName.c_str(), &miginfo.statinfo)) {
-        TRACE(Trace::error, errno);
-        THROW(errno, errno, fileName);
     }
 
     miginfo.state = state;
@@ -148,40 +128,6 @@ void FuseFS::setMigInfoAt(int fd, FuseFS::mig_info::state_num state)
     }
 }
 
-void FuseFS::setMigInfo(std::string fileName, FuseFS::mig_info::state_num state)
-
-{
-    ssize_t size;
-    FuseFS::mig_info miginfo_new;
-    FuseFS::mig_info miginfo;
-
-    TRACE(Trace::full, fileName, state);
-
-    memset(&miginfo, 0, sizeof(miginfo));
-
-    miginfo_new = genMigInfo(fileName, state);
-
-    if ((size = getxattr(fileName.c_str(),
-            Const::OPEN_LTFS_EA_MIGINFO_INT.c_str(), (void *) &miginfo,
-            sizeof(miginfo))) == -1) {
-        if ( errno != ENODATA) {
-            THROW(errno, errno, fileName);
-        }
-    } else if (size != sizeof(miginfo)) {
-        THROW(EIO, size, sizeof(miginfo), fileName);
-    }
-
-    if (miginfo.state != FuseFS::mig_info::state_num::NO_STATE) {
-        miginfo_new.statinfo.st_size = miginfo.statinfo.st_size;
-        miginfo_new.statinfo.st_atim = miginfo.statinfo.st_atim;
-        miginfo_new.statinfo.st_mtim = miginfo.statinfo.st_mtim;
-    }
-
-    if (setxattr(fileName.c_str(), Const::OPEN_LTFS_EA_MIGINFO_INT.c_str(),
-            (void *) &miginfo_new, sizeof(miginfo_new), 0) == -1) {
-        THROW(errno, errno, fileName);
-    }
-}
 int FuseFS::remMigInfoAt(int fd)
 
 {
@@ -228,10 +174,10 @@ bool FuseFS::needsRecovery(FuseFS::mig_info miginfo)
             | (miginfo.state == FuseFS::mig_info::state_num::STUBBING)
             | (miginfo.state == FuseFS::mig_info::state_num::IN_RECALL)) {
 
-        if (getffs()->starttime.tv_sec < miginfo.changed.tv_sec)
+        if (getshrd()->starttime.tv_sec < miginfo.changed.tv_sec)
             return false;
-        else if ((getffs()->starttime.tv_sec == miginfo.changed.tv_sec)
-                && (getffs()->starttime.tv_nsec < miginfo.changed.tv_nsec))
+        else if ((getshrd()->starttime.tv_sec == miginfo.changed.tv_sec)
+                && (getshrd()->starttime.tv_nsec < miginfo.changed.tv_nsec))
             return false;
         else
             return true;
@@ -245,13 +191,13 @@ void FuseFS::recoverState(const char *path, FuseFS::mig_info::state_num state)
 {
     int fd;
 
-    if ((fd = openat(getffs()->rootFd, FuseFS::relPath(path), O_RDWR)) == -1) {
+    if ((fd = openat(getshrd()->rootFd, FuseFS::relPath(path), O_RDWR)) == -1) {
         TRACE(Trace::error, errno);
         MSG(LTFSDMF0010E, path);
         return;
     }
 
-    std::string fusepath = getffs()->mountpt + std::string(path);
+    std::string fusepath = getshrd()->mountpt + std::string(path);
 
     TRACE(Trace::error, fusepath, state);
 
@@ -315,7 +261,7 @@ int FuseFS::recall_file(FuseFS::ltfsdm_file_info *linfo, bool toresident)
         return (-1 * errno);
     }
 
-    path = getffs()->mountpt;
+    path = getshrd()->mountpt;
     path.append(linfo->fusepath);
     TRACE(Trace::always, path, statbuf.st_ino, toresident, fc->pid);
 
@@ -334,10 +280,10 @@ int FuseFS::recall_file(FuseFS::ltfsdm_file_info *linfo, bool toresident)
     LTFSDmProtocol::LTFSDmTransRecRequest *recrequest =
             recRequest.mutable_transrecrequest();
 
-    recrequest->set_key(getffs()->ltfsdmKey);
+    recrequest->set_key(getshrd()->ltfsdmKey);
     recrequest->set_toresident(toresident);
-    recrequest->set_fsidh(getffs()->fsid_h);
-    recrequest->set_fsidl(getffs()->fsid_l);
+    recrequest->set_fsidh(getshrd()->fsid_h);
+    recrequest->set_fsidl(getshrd()->fsid_l);
     recrequest->set_igen(igen);
     recrequest->set_inum(statbuf.st_ino);
     recrequest->set_filename(path);
@@ -373,7 +319,7 @@ bool FuseFS::procIsOpenLTFS(pid_t tid)
 {
     struct stat statbuf;
 
-    pid_t pids[] = { getffs()->mainpid, getpid() };
+    pid_t pids[] = { getshrd()->mainpid, getpid() };
 
     for (pid_t pid : pids) {
         std::stringstream spath;
@@ -397,11 +343,11 @@ int FuseFS::ltfsdm_getattr(const char *path, struct stat *statbuf)
 
     TRACE(Trace::always, pid, FuseFS::procIsOpenLTFS(pid), path);
 
-    while (getffs()->rootFd == Const::UNSET
+    while (getshrd()->rootFd == Const::UNSET
             && FuseFS::procIsOpenLTFS(pid) == false)
         sleep(1);
 
-    if (getffs()->rootFd == Const::UNSET && FuseFS::procIsOpenLTFS(pid) == true) {
+    if (getshrd()->rootFd == Const::UNSET && FuseFS::procIsOpenLTFS(pid) == true) {
         if (Const::OPEN_LTFS_IOCTL.compare(path) == 0) {
             statbuf->st_mode = S_IFREG | S_IRWXU;
             goto end;
@@ -416,7 +362,7 @@ int FuseFS::ltfsdm_getattr(const char *path, struct stat *statbuf)
     }
 
     if (std::string("/").compare(path) == 0) {
-        if (fstatat(getffs()->rootFd, ".", statbuf, AT_SYMLINK_NOFOLLOW)
+        if (fstatat(getshrd()->rootFd, ".", statbuf, AT_SYMLINK_NOFOLLOW)
                 == -1) {
             statbuf->st_mode = S_IFDIR | S_IRWXU;
             goto end;
@@ -443,7 +389,7 @@ int FuseFS::ltfsdm_getattr(const char *path, struct stat *statbuf)
         }
     }
 
-    if (fstatat(getffs()->rootFd, FuseFS::relPath(path), statbuf,
+    if (fstatat(getshrd()->rootFd, FuseFS::relPath(path), statbuf,
     AT_SYMLINK_NOFOLLOW) == -1) {
         if (Const::OPEN_LTFS_IOCTL.compare(path) == 0) {
             return (-1 * EACCES);
@@ -451,7 +397,7 @@ int FuseFS::ltfsdm_getattr(const char *path, struct stat *statbuf)
             return (-1 * errno);
         }
     } else {
-        if ((fd = openat(getffs()->rootFd, FuseFS::relPath(path), O_RDONLY))
+        if ((fd = openat(getshrd()->rootFd, FuseFS::relPath(path), O_RDONLY))
                 == -1)
             goto end;
         miginfo = getMigInfoAt(fd);
@@ -474,7 +420,7 @@ int FuseFS::ltfsdm_getattr(const char *path, struct stat *statbuf)
 int FuseFS::ltfsdm_access(const char *path, int mask)
 
 {
-    if (faccessat(getffs()->rootFd, FuseFS::relPath(path), mask, 0) == -1)
+    if (faccessat(getshrd()->rootFd, FuseFS::relPath(path), mask, 0) == -1)
         return (-1 * errno);
     else
         return 0;
@@ -485,7 +431,7 @@ int FuseFS::ltfsdm_readlink(const char *path, char *buffer, size_t size)
 {
     memset(buffer, 0, size);
 
-    if (readlinkat(getffs()->rootFd, FuseFS::relPath(path), buffer, size - 1)
+    if (readlinkat(getshrd()->rootFd, FuseFS::relPath(path), buffer, size - 1)
             == -1)
         return (-1 * errno);
     else
@@ -499,7 +445,7 @@ int FuseFS::ltfsdm_opendir(const char *path, struct fuse_file_info *finfo)
     DIR *dir = NULL;
     int fd;
 
-    if ((fd = openat(getffs()->rootFd, FuseFS::relPath(path), O_RDONLY)) == -1)
+    if ((fd = openat(getshrd()->rootFd, FuseFS::relPath(path), O_RDONLY)) == -1)
         return (-1 * errno);
 
     if ((dir = fdopendir(fd)) == 0) {
@@ -594,11 +540,11 @@ int FuseFS::ltfsdm_mknod(const char *path, mode_t mode, dev_t rdev)
 {
     struct fuse_context *fc = fuse_get_context();
 
-    if (mknodat(getffs()->rootFd, FuseFS::relPath(path), mode, rdev) == -1) {
+    if (mknodat(getshrd()->rootFd, FuseFS::relPath(path), mode, rdev) == -1) {
         return (-1 * errno);
     } else {
         fc = fuse_get_context();
-        if (fchownat(getffs()->rootFd, FuseFS::relPath(path), fc->uid, fc->gid,
+        if (fchownat(getshrd()->rootFd, FuseFS::relPath(path), fc->uid, fc->gid,
         AT_SYMLINK_NOFOLLOW) == -1)
             return (-1 * errno);
     }
@@ -610,11 +556,11 @@ int FuseFS::ltfsdm_mkdir(const char *path, mode_t mode)
 {
     struct fuse_context *fc = fuse_get_context();
 
-    if (mkdirat(getffs()->rootFd, FuseFS::relPath(path), mode) == -1) {
+    if (mkdirat(getshrd()->rootFd, FuseFS::relPath(path), mode) == -1) {
         return (-1 * errno);
     } else {
         fc = fuse_get_context();
-        if (fchownat(getffs()->rootFd, FuseFS::relPath(path), fc->uid, fc->gid,
+        if (fchownat(getshrd()->rootFd, FuseFS::relPath(path), fc->uid, fc->gid,
         AT_EMPTY_PATH | AT_SYMLINK_NOFOLLOW) == -1)
             return (-1 * errno);
     }
@@ -624,7 +570,7 @@ int FuseFS::ltfsdm_mkdir(const char *path, mode_t mode)
 int FuseFS::ltfsdm_unlink(const char *path)
 
 {
-    if (unlinkat(getffs()->rootFd, FuseFS::relPath(path), 0) == -1)
+    if (unlinkat(getshrd()->rootFd, FuseFS::relPath(path), 0) == -1)
         return (-1 * errno);
     else
         return 0;
@@ -633,7 +579,7 @@ int FuseFS::ltfsdm_unlink(const char *path)
 int FuseFS::ltfsdm_rmdir(const char *path)
 
 {
-    if (unlinkat(getffs()->rootFd, FuseFS::relPath(path), AT_REMOVEDIR) == -1)
+    if (unlinkat(getshrd()->rootFd, FuseFS::relPath(path), AT_REMOVEDIR) == -1)
         return (-1 * errno);
     else
         return 0;
@@ -642,7 +588,7 @@ int FuseFS::ltfsdm_rmdir(const char *path)
 int FuseFS::ltfsdm_symlink(const char *target, const char *linkpath)
 
 {
-    if (symlinkat(target, getffs()->rootFd, FuseFS::relPath(linkpath)) == -1)
+    if (symlinkat(target, getshrd()->rootFd, FuseFS::relPath(linkpath)) == -1)
         return (-1 * errno);
     else
         return 0;
@@ -651,7 +597,7 @@ int FuseFS::ltfsdm_symlink(const char *target, const char *linkpath)
 int FuseFS::ltfsdm_rename(const char *oldpath, const char *newpath)
 
 {
-    if (renameat(getffs()->rootFd, FuseFS::relPath(oldpath), getffs()->rootFd,
+    if (renameat(getshrd()->rootFd, FuseFS::relPath(oldpath), getshrd()->rootFd,
             FuseFS::relPath(newpath)) == -1)
         return (-1 * errno);
     else
@@ -661,7 +607,7 @@ int FuseFS::ltfsdm_rename(const char *oldpath, const char *newpath)
 int FuseFS::ltfsdm_link(const char *oldpath, const char *newpath)
 
 {
-    if (linkat(getffs()->rootFd, FuseFS::relPath(oldpath), getffs()->rootFd,
+    if (linkat(getshrd()->rootFd, FuseFS::relPath(oldpath), getshrd()->rootFd,
             FuseFS::relPath(newpath), AT_EMPTY_PATH) == -1)
         return (-1 * errno);
     else
@@ -671,7 +617,7 @@ int FuseFS::ltfsdm_link(const char *oldpath, const char *newpath)
 int FuseFS::ltfsdm_chmod(const char *path, mode_t mode)
 
 {
-    if (fchmodat(getffs()->rootFd, FuseFS::relPath(path), mode, 0) == -1)
+    if (fchmodat(getshrd()->rootFd, FuseFS::relPath(path), mode, 0) == -1)
         return (-1 * errno);
     else
         return 0;
@@ -680,7 +626,7 @@ int FuseFS::ltfsdm_chmod(const char *path, mode_t mode)
 int FuseFS::ltfsdm_chown(const char *path, uid_t uid, gid_t gid)
 
 {
-    if (fchownat(getffs()->rootFd, FuseFS::relPath(path), uid, gid,
+    if (fchownat(getshrd()->rootFd, FuseFS::relPath(path), uid, gid,
     AT_SYMLINK_NOFOLLOW) == -1)
         return (-1 * errno);
     else
@@ -696,7 +642,7 @@ int FuseFS::ltfsdm_truncate(const char *path, off_t size)
 
     linfo.fusepath = path;
 
-    if ((linfo.fd = openat(getffs()->rootFd, FuseFS::relPath(path), O_WRONLY))
+    if ((linfo.fd = openat(getshrd()->rootFd, FuseFS::relPath(path), O_WRONLY))
             == -1) {
         TRACE(Trace::error, errno);
         return (-1 * errno);
@@ -765,7 +711,7 @@ int FuseFS::ltfsdm_truncate(const char *path, off_t size)
 int FuseFS::ltfsdm_utimens(const char *path, const struct timespec times[2])
 
 {
-    if (utimensat(getffs()->rootFd, FuseFS::relPath(path), times,
+    if (utimensat(getshrd()->rootFd, FuseFS::relPath(path), times,
     AT_SYMLINK_NOFOLLOW) == -1)
         return (-1 * errno);
     else
@@ -779,7 +725,7 @@ int FuseFS::ltfsdm_open(const char *path, struct fuse_file_info *finfo)
     int lfd = Const::UNSET;
     FuseFS::ltfsdm_file_info *linfo = NULL;
 
-    if (getffs()->rootFd == Const::UNSET
+    if (getshrd()->rootFd == Const::UNSET
             && Const::OPEN_LTFS_IOCTL.compare(path) == 0) {
         linfo = new (FuseFS::ltfsdm_file_info);
         linfo->fd = Const::UNSET;
@@ -804,7 +750,7 @@ int FuseFS::ltfsdm_open(const char *path, struct fuse_file_info *finfo)
         return 0;
     }
 
-    if ((fd = openat(getffs()->rootFd, FuseFS::relPath(path), finfo->flags))
+    if ((fd = openat(getshrd()->rootFd, FuseFS::relPath(path), finfo->flags))
             == -1) {
         TRACE(Trace::error, fuse_get_context()->pid);
         return (-1 * errno);
@@ -1035,7 +981,7 @@ int FuseFS::ltfsdm_statfs(const char *path, struct statvfs *stbuf)
 {
     int fd;
 
-    if ((fd = openat(getffs()->rootFd, FuseFS::relPath(path), O_RDONLY)) == -1)
+    if ((fd = openat(getshrd()->rootFd, FuseFS::relPath(path), O_RDONLY)) == -1)
         return (-1 * errno);
 
     if (fstatvfs(fd, stbuf) == -1) {
@@ -1058,7 +1004,7 @@ int FuseFS::ltfsdm_release(const char *path, struct fuse_file_info *finfo)
     if (linfo == NULL)
         return (-1 * EBADF);
 
-    if (getffs()->rootFd == Const::UNSET
+    if (getshrd()->rootFd == Const::UNSET
             && Const::OPEN_LTFS_IOCTL.compare(linfo->fusepath) == 0) {
         TRACE(Trace::always, linfo->fusepath);
         delete (linfo);
@@ -1156,7 +1102,7 @@ int FuseFS::ltfsdm_setxattr(const char *path, const char *name,
                     != std::string::npos)
         return (-1 * EPERM);
 
-    if ((fd = openat(getffs()->rootFd, FuseFS::relPath(path), O_RDONLY)) == -1)
+    if ((fd = openat(getshrd()->rootFd, FuseFS::relPath(path), O_RDONLY)) == -1)
         return (-1 * errno);
 
     if (fsetxattr(fd, name, value, size, flags) == -1) {
@@ -1179,11 +1125,11 @@ int FuseFS::ltfsdm_getxattr(const char *path, const char *name, char *value,
     if (Const::OPEN_LTFS_EA_FSINFO.compare(name) == 0) {
         assert(size == sizeof(fh));
         memset(&fh, 0, sizeof(fh));
-        strncpy(fh.mountpoint, getffs()->mountpt.c_str(), PATH_MAX - 1);
+        strncpy(fh.mountpoint, getshrd()->mountpt.c_str(), PATH_MAX - 1);
         strncpy(fh.fusepath, relPath(path), PATH_MAX - 1);
         strncpy(fh.lockpath, FuseFS::lockPath(path).c_str(), PATH_MAX - 1);
-        fh.fsid_h = getffs()->fsid_h;
-        fh.fsid_l = getffs()->fsid_l;
+        fh.fsid_h = getshrd()->fsid_h;
+        fh.fsid_l = getshrd()->fsid_l;
         fh.fd = Const::UNSET;
         *(FuseFS::FuseHandle *) value = fh;
         TRACE(Trace::always, fh.fusepath, sizeof(fh));
@@ -1193,7 +1139,7 @@ int FuseFS::ltfsdm_getxattr(const char *path, const char *name, char *value,
     if (Const::OPEN_LTFS_CACHE_DIR.compare(path) == 0)
         return (-1 * ENODATA);
 
-    if ((fd = openat(getffs()->rootFd, FuseFS::relPath(path), O_RDONLY)) == -1)
+    if ((fd = openat(getshrd()->rootFd, FuseFS::relPath(path), O_RDONLY)) == -1)
         return (-1 * errno);
 
     if ((attrsize = fgetxattr(fd, name, value, size)) == -1) {
@@ -1213,7 +1159,7 @@ int FuseFS::ltfsdm_listxattr(const char *path, char *list, size_t size)
     ssize_t attrsize;
     int fd;
 
-    if ((fd = openat(getffs()->rootFd, FuseFS::relPath(path), O_RDONLY)) == -1)
+    if ((fd = openat(getshrd()->rootFd, FuseFS::relPath(path), O_RDONLY)) == -1)
         return (-1 * errno);
 
     if ((attrsize = flistxattr(fd, list, size)) == -1) {
@@ -1234,7 +1180,7 @@ int FuseFS::ltfsdm_removexattr(const char *path, const char *name)
             != std::string::npos)
         return (-1 * ENOTSUP);
 
-    if ((fd = openat(getffs()->rootFd, FuseFS::relPath(path), O_RDONLY)) == -1)
+    if ((fd = openat(getshrd()->rootFd, FuseFS::relPath(path), O_RDONLY)) == -1)
         return (-1 * errno);
 
     if (fremovexattr(fd, name) == -1) {
@@ -1267,7 +1213,7 @@ int FuseFS::ltfsdm_ioctl(const char *path, int cmd, void *arg,
             assert(_IOC_SIZE(cmd) == sizeof(fh));
 
             memset(&fh, 0, sizeof(fh));
-            strncpy(fh.mountpoint, getffs()->mountpt.c_str(), PATH_MAX - 1);
+            strncpy(fh.mountpoint, getshrd()->mountpt.c_str(), PATH_MAX - 1);
             strncpy(fh.fusepath, relPath(fi->fusepath.c_str()), PATH_MAX - 1);
             strncpy(fh.lockpath, FuseFS::lockPath(fi->fusepath.c_str()).c_str(),
             PATH_MAX - 1);
@@ -1278,14 +1224,14 @@ int FuseFS::ltfsdm_ioctl(const char *path, int cmd, void *arg,
         case FuseFS::LTFSDM_PREMOUNT:
             return 0;
         case FuseFS::LTFSDM_POSTMOUNT:
-            setRootFd(open(getffs()->srcdir.c_str(), O_RDONLY));
-            TRACE(Trace::always, getffs()->rootFd, errno);
-            if (getffs()->rootFd == -1)
+            setRootFd(open(getshrd()->srcdir.c_str(), O_RDONLY));
+            TRACE(Trace::always, getshrd()->rootFd, errno);
+            if (getshrd()->rootFd == -1)
                 return (-1 * errno);
             return 0;
         case FuseFS::LTFSDM_STOP:
-            if (getffs()->rootFd != Const::UNSET) {
-                close(getffs()->rootFd);
+            if (getshrd()->rootFd != Const::UNSET) {
+                close(getshrd()->rootFd);
                 setRootFd(Const::UNSET);
             }
             return 0;

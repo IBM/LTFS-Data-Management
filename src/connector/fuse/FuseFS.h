@@ -45,6 +45,18 @@ public:
         LTFSDM_TRYLOCK = _IOWR('l', 5, FuseFS::FuseHandle), // not used
         LTFSDM_UNLOCK = _IOW('l', 6, FuseFS::FuseHandle),   // not used
     };
+
+    struct shared_data {
+        int rootFd;
+        std::string mountpt;
+        struct timespec starttime;
+        long ltfsdmKey;
+        const unsigned long fsid_h;
+        const unsigned long fsid_l;
+        pid_t mainpid;
+        std::string srcdir;
+    };
+
 private:
     struct ltfsdm_file_info
     {
@@ -63,16 +75,10 @@ private:
     };
 
     std::string mountpt;
-    std::string srcdir;
-    struct timespec starttime;
     std::thread *thrd;
-    char tmpdir[PATH_MAX];
-    std::atomic<long> ltfsdmKey;
     int rootFd;
+    char tmpdir[PATH_MAX];
     std::atomic<int> ioctlFd;
-    std::atomic<pid_t> mainpid;
-    const unsigned long fsid_h;
-    const unsigned long fsid_l;
 
     struct
     {
@@ -83,13 +89,13 @@ private:
         bool ROOTFD_FUSE;
     } init_status;
 
-    static const FuseFS *getffs()
+    static const FuseFS::shared_data *getshrd()
     {
-        return ((FuseFS *) fuse_get_context()->private_data);
+        return ((FuseFS::shared_data *) fuse_get_context()->private_data);
     }
     static void setRootFd(int fd)
     {
-        ((FuseFS *) fuse_get_context()->private_data)->rootFd = fd;
+        ((FuseFS::shared_data *) fuse_get_context()->private_data)->rootFd = fd;
     }
 
     static const char *relPath(const char *path);
@@ -154,11 +160,7 @@ private:
 public:
     static FuseFS::mig_info genMigInfoAt(int fd,
             FuseFS::mig_info::state_num state);
-    static FuseFS::mig_info genMigInfo(std::string fileName,
-            FuseFS::mig_info::state_num state);
     static void setMigInfoAt(int fd, FuseFS::mig_info::state_num state);
-    static void setMigInfo(std::string fileName,
-            FuseFS::mig_info::state_num state);
     static int remMigInfoAt(int fd);
     static FuseFS::mig_info getMigInfoAt(int fd);
     static struct fuse_operations init_operations();
@@ -176,21 +178,14 @@ public:
         return ioctlFd;
     }
 
+    void init(struct timespec starttime);
+
     FuseFS(std::string _mountpt) :
-            mountpt(_mountpt), srcdir(""), starttime( { 0, 0 }), thrd(nullptr),
-            ltfsdmKey(0), rootFd(Const::UNSET), mainpid(0), fsid_h(0), fsid_l(0),
+            mountpt(_mountpt), thrd(nullptr), rootFd(Const::UNSET),
             init_status( { false, false, false, false, false })
     {
     }
-    FuseFS(std::string _mountpt, std::string _srcdir,
-            struct timespec _starttime, long _ltfsdmKey, pid_t _mainpid, unsigned long _fsid_h, unsigned long _fsid_l) :
-            mountpt(_mountpt), srcdir(_srcdir), starttime(_starttime),
-            thrd(nullptr), ltfsdmKey(_ltfsdmKey), rootFd(Const::UNSET),
-            mainpid(_mainpid), fsid_h(_fsid_h), fsid_l(_fsid_l),
-            init_status({ false, false, false, false, false })
-    {
-    }
-    void init(struct timespec starttime);
+
     ~FuseFS();
 };
 

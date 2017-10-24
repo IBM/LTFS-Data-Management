@@ -9,10 +9,12 @@
 #include <uuid/uuid.h>
 
 #include <string>
+#include <sstream>
 #include <thread>
 #include <vector>
 #include <set>
 
+#include "src/common/exception/OpenLTFSException.h"
 #include "src/common/util/util.h"
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
@@ -26,6 +28,37 @@
 #include "src/connector/fuse/FuseLock.h"
 #include "src/connector/fuse/FuseFS.h"
 
+void getUUID(std::string fsName, uuid_t *uuid)
+
+{
+    blkid_cache cache;
+    char *uuidstr;
+    int rc;
+
+    if ( (rc = blkid_get_cache(&cache, NULL)) != 0 ) {
+        TRACE(Trace::error, rc, errno);
+        MSG(LTFSDMF0055E);
+        THROW(errno, errno);
+    }
+
+    if ( (uuidstr = blkid_get_tag_value(cache, "UUID", fsName.c_str())) == NULL ) {
+        blkid_put_cache(cache);
+        TRACE(Trace::error, errno);
+        MSG(LTFSDMF0055E);
+        THROW(errno, errno);
+    }
+
+    if ( (rc = uuid_parse(uuidstr, *uuid)) != 0 ) {
+        blkid_put_cache(cache);
+        free(uuidstr);
+        TRACE(Trace::error, rc, errno);
+        MSG(LTFSDMF0055E);
+        THROW(errno, errno);
+    }
+
+    blkid_put_cache(cache);
+    free(uuidstr);
+}
 
 int main(int argc, char **argv)
 
@@ -34,15 +67,12 @@ int main(int argc, char **argv)
     std::string fsName("");
     struct timespec starttime = { 0, 0 };
     pid_t mainpid;
-    blkid_cache cache;
-    char *uuidstr;
     uuid_t uuid;
     Message::LogType logType;
     Trace::traceLevel tl;
     bool logTypeSet = false;
     bool traceLevelSet = false;
     int opt;
-    int rc;
     opterr = 0;
 
     const struct fuse_operations ltfsdm_operations = FuseFS::init_operations();
@@ -112,29 +142,12 @@ int main(int argc, char **argv)
         exit((int) Error::LTFSDM_GENERAL_ERROR);
     }
 
-    if ( (rc = blkid_get_cache(&cache, NULL)) != 0 ) {
-        TRACE(Trace::error, rc, errno);
-        MSG(LTFSDMF0055E);
+    try {
+        getUUID(fsName, &uuid);
+    }
+    catch ( const std::exception& e ) {
         exit((int) Error::LTFSDM_GENERAL_ERROR);
     }
-
-    if ( (uuidstr = blkid_get_tag_value(cache, "UUID", fsName.c_str())) == NULL ) {
-        TRACE(Trace::error, errno);
-        MSG(LTFSDMF0055E);
-        exit((int) Error::LTFSDM_GENERAL_ERROR);
-    }
-
-    if ( (rc = uuid_parse(uuidstr, uuid)) != 0 ) {
-        TRACE(Trace::error, rc, errno);
-        MSG(LTFSDMF0055E);
-        exit((int) Error::LTFSDM_GENERAL_ERROR);
-    }
-
-    FuseFS ffs(mountpt, mountpt + Const::OPEN_LTFS_CACHE_MP, starttime,
-            LTFSDM::getkey(), mainpid, be64toh(*(unsigned long *) &uuid[0]), be64toh(*(unsigned long *) &uuid[8]));
-
-    free(uuidstr);
-    blkid_put_cache(cache);
 
     MSG(LTFSDMF0001I, mountpt + Const::OPEN_LTFS_CACHE_MP, mountpt);
 
@@ -152,5 +165,16 @@ int main(int argc, char **argv)
 
     MSG(LTFSDMF0002I, mountpt.c_str());
 
-    return fuse_main(fargs.argc, fargs.argv, &ltfsdm_operations, (void * ) &ffs);
+    FuseFS::shared_data sd {
+        Const::UNSET,
+        mountpt,
+        starttime,
+        LTFSDM::getkey(),
+        be64toh(*(unsigned long *) &uuid[0]),
+        be64toh(*(unsigned long *) &uuid[8]),
+        mainpid,
+        mountpt + Const::OPEN_LTFS_CACHE_MP
+    };
+
+    return fuse_main(fargs.argc, fargs.argv, &ltfsdm_operations, (void * ) &sd);
 }
