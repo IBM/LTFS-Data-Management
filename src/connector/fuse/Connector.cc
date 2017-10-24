@@ -12,7 +12,6 @@
 #include <sys/file.h>
 #include <errno.h>
 
-#include <fuse.h>
 #include <string>
 #include <sstream>
 #include <atomic>
@@ -36,9 +35,10 @@
 #include "src/common/comm/ltfsdm.pb.h"
 #include "src/common/comm/LTFSDmComm.h"
 
-#include "src/connector/Connector.h"
 #include "src/connector/fuse/FuseLock.h"
-#include "src/connector/fuse/ltfsdmd.ofs.h"
+#include "src/connector/fuse/FuseFS.h"
+#include "src/connector/Connector.h"
+
 
 std::atomic<bool> Connector::connectorTerminate(false);
 std::atomic<bool> Connector::forcedTerminate(false);
