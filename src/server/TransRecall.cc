@@ -113,8 +113,6 @@ void TransRecall::run(Connector *connector)
             "trec-wq");
     Connector::rec_info_t recinfo;
     std::map<std::string, long> reqmap;
-    std::set<std::string> fsList;
-    std::set<std::string>::iterator it;
     std::string tapeId;
 
     try {
@@ -125,30 +123,32 @@ void TransRecall::run(Connector *connector)
         return;
     }
 
-    fsList = LTFSDM::getFs();
-
-    for (it = fsList.begin(); it != fsList.end(); ++it) {
-        try {
-            FsObj fileSystem(*it);
-            if (fileSystem.isFsManaged()) {
-                MSG(LTFSDMS0042I, *it);
-                fileSystem.manageFs(true, connector->getStartTime());
+    try {
+        for (FileSystems::fsinfo_t& fs : FileSystems::getAll()) {
+            try {
+                FsObj fileSystem(fs.target);
+                if (fileSystem.isFsManaged()) {
+                    MSG(LTFSDMS0042I, fs.target);
+                    fileSystem.manageFs(true, connector->getStartTime());
+                }
+            } catch (const OpenLTFSException& e) {
+                TRACE(Trace::error, e.what());
+                switch (e.getError()) {
+                    case Error::LTFSDM_FS_CHECK_ERROR:
+                        MSG(LTFSDMS0044E, fs.target);
+                        break;
+                    case Error::LTFSDM_FS_ADD_ERROR:
+                        MSG(LTFSDMS0045E, fs.target);
+                        break;
+                    default:
+                        MSG(LTFSDMS0045E, fs.target);
+                }
+            } catch (const std::exception& e) {
+                TRACE(Trace::error, e.what());
             }
-        } catch (const OpenLTFSException& e) {
-            TRACE(Trace::error, e.what());
-            switch (e.getError()) {
-                case Error::LTFSDM_FS_CHECK_ERROR:
-                    MSG(LTFSDMS0044E, *it);
-                    break;
-                case Error::LTFSDM_FS_ADD_ERROR:
-                    MSG(LTFSDMS0045E, *it);
-                    break;
-                default:
-                    MSG(LTFSDMS0045E, *it);
-            }
-        } catch (const std::exception& e) {
-            TRACE(Trace::error, e.what());
         }
+    } catch (const std::exception& e) {
+        MSG(LTFSDMS0079E, e.what());
     }
 
     while (Connector::connectorTerminate == false) {

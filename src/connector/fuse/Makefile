@@ -1,6 +1,6 @@
 RELPATH = ../../..
 
-LDFLAGS := -lprotobuf -lfuse -lpthread -luuid -lblkid
+LDFLAGS := -lprotobuf -lfuse -lpthread -luuid -lblkid -lmount
 SHAREDLIB := lib$(notdir $(CURDIR))connector.so
 
 SO_SRC_FILES := Connector.cc FuseLock.cc FuseFS.cc FsObj.cc FuseConnector.cc

@@ -1,6 +1,6 @@
 RELPATH = ../../..
 
-ARC_SRC_FILES := util.cc
+ARC_SRC_FILES := util.cc FileSystems.cc
 CLEANUP_FILES :=
 BINARYE :=
 POSTTARGET :=

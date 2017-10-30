@@ -11,6 +11,7 @@
 
 #include "src/common/exception/OpenLTFSException.h"
 #include "src/common/util/util.h"
+#include "src/common/util/FileSystems.h"
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
 #include "src/common/errors/errors.h"
@@ -47,7 +48,9 @@ void AddCommand::doCommand(int argc, char **argv)
 
     managedFs = pathName;
 
-    if (LTFSDM::getFs().count(managedFs) == 0) {
+    try {
+        FileSystems::fsinfo_t fs = FileSystems::getByTarget(managedFs);
+    } catch ( const std::exception& e ) {
         MSG(LTFSDMC0053E);
         THROW(Error::LTFSDM_GENERAL_ERROR);
     }

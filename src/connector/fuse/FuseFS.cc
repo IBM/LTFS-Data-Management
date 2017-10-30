@@ -29,6 +29,7 @@
 
 #include "src/common/exception/OpenLTFSException.h"
 #include "src/common/util/util.h"
+#include "src/common/util/FileSystems.h"
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
 #include "src/common/errors/errors.h"
@@ -1361,7 +1362,16 @@ void FuseFS::init(struct timespec starttime)
     char *tmpdnm;
     int fd = Const::UNSET;
     int count = 0;
-    std::string devName = LTFSDM::getDev(mountpt);
+    std::string devName;
+
+    try {
+      devName = FileSystems::getByTarget(mountpt).source;
+    }
+    catch ( const std::exception& e ) {
+        TRACE(Trace::error, e.what());
+        MSG(LTFSDMS0080E, mountpt);
+        THROW(Error::LTFSDM_GENERAL_ERROR);
+    }
 
     memset(exepath, 0, PATH_MAX);
     if (readlink("/proc/self/exe", exepath, PATH_MAX - 1) == -1) {
