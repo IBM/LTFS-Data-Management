@@ -77,8 +77,7 @@ private:
     std::string mountpt;
     std::thread *thrd;
     int rootFd;
-    char tmpdir[PATH_MAX];
-    std::atomic<int> ioctlFd;
+    int ioctlFd;
 
     struct
     {
@@ -179,7 +178,7 @@ public:
     void init(struct timespec starttime);
 
     FuseFS(std::string _mountpt) :
-            mountpt(_mountpt), thrd(nullptr), rootFd(Const::UNSET),
+            mountpt(_mountpt), thrd(nullptr), rootFd(Const::UNSET), ioctlFd(Const::UNSET),
             init_status( { false, false, false } )
     {
     }

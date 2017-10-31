@@ -1409,6 +1409,8 @@ void FuseFS::init(struct timespec starttime)
                 count++;
                 continue;
             }
+            thrd->join();
+            delete(thrd);
             MSG(LTFSDMF0040E, errno);
             THROW(Error::LTFSDM_GENERAL_ERROR);
         } else if (ioctl(fd, FuseFS::LTFSDM_PREMOUNT) != -1) {
@@ -1420,6 +1422,8 @@ void FuseFS::init(struct timespec starttime)
             count++;
         } else {
             close(fd);
+            thrd->join();
+            delete(thrd);
             MSG(LTFSDMF0040E, errno);
             THROW(Error::LTFSDM_GENERAL_ERROR);
         }
