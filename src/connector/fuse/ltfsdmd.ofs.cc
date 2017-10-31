@@ -125,6 +125,7 @@ int main(int argc, char **argv)
     }
 
     if (optind != 15) {
+        MSG(LTFSDMF0004E);
         return Error::LTFSDM_GENERAL_ERROR;
     }
 

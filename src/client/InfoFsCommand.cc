@@ -3,6 +3,8 @@
 #include <sys/stat.h>
 #include <sys/resource.h>
 #include <unistd.h>
+#include <libmount/libmount.h>
+#include <blkid/blkid.h>
 
 #include <string>
 #include <set>
@@ -49,7 +51,8 @@ void InfoFsCommand::doCommand(int argc, char **argv)
 
 
     try {
-        for (FileSystems::fsinfo_t& fs : FileSystems::getAll()) {
+        FileSystems fss;
+        for (FileSystems::fsinfo& fs : fss.getAll()) {
             try {
                 FsObj fileSystem(fs.target);
                 if (fileSystem.isFsManaged()) {

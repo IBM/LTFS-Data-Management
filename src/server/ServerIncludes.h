@@ -10,6 +10,8 @@
 #include <sys/xattr.h>
 #include <sys/resource.h>
 #include <sys/file.h>
+#include <libmount/libmount.h>
+#include <blkid/blkid.h>
 #include <errno.h>
 
 #include <string>

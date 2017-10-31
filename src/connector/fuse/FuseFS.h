@@ -82,8 +82,6 @@ private:
 
     struct
     {
-        bool TEMP_CREATED;
-        bool TEMP_MOUNTED;
         bool FUSE_STARTED;
         bool CACHE_MOUNTED;
         bool ROOTFD_FUSE;
@@ -182,7 +180,7 @@ public:
 
     FuseFS(std::string _mountpt) :
             mountpt(_mountpt), thrd(nullptr), rootFd(Const::UNSET),
-            init_status( { false, false, false, false, false })
+            init_status( { false, false, false } )
     {
     }
 

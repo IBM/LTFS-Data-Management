@@ -15,6 +15,8 @@
 #include <sys/ioctl.h>
 #include <sys/resource.h>
 #include <assert.h>
+#include <libmount/libmount.h>
+#include <blkid/blkid.h>
 #include <errno.h>
 
 #include <string>
@@ -1359,13 +1361,13 @@ void FuseFS::init(struct timespec starttime)
 {
     std::stringstream stream;
     char exepath[PATH_MAX];
-    char *tmpdnm;
     int fd = Const::UNSET;
     int count = 0;
-    std::string devName;
+    FileSystems fss;
+    FileSystems::fsinfo fs;
 
     try {
-      devName = FileSystems::getByTarget(mountpt).source;
+        fs = fss.getByTarget(mountpt);
     }
     catch ( const std::exception& e ) {
         TRACE(Trace::error, e.what());
@@ -1379,30 +1381,18 @@ void FuseFS::init(struct timespec starttime)
         THROW(Error::LTFSDM_GENERAL_ERROR);
     }
 
-    MSG(LTFSDMF0034I);
-    memset(tmpdir, 0, sizeof(tmpdir));
-    strncpy(tmpdir, Const::TMP_DIR_TEMPLATE.c_str(), PATH_MAX - 1);
-    if ((tmpdnm = mkdtemp(tmpdir)) == NULL) {
-        MSG(LTFSDMF0035E, errno);
-        THROW(Error::LTFSDM_GENERAL_ERROR);
-    }
-    init_status.TEMP_CREATED = true;
-
-    MSG(LTFSDMF0036I, mountpt.c_str(), tmpdnm);
-    if (mount(mountpt.c_str(), tmpdnm, "", MS_BIND, "") == -1) {
-        MSG(LTFSDMF0037E, tmpdnm, errno);
-        THROW(Error::LTFSDM_GENERAL_ERROR);
-    }
-    init_status.TEMP_MOUNTED = true;
-
     MSG(LTFSDMF0038I, mountpt);
-    if (umount(mountpt.c_str()) == -1) {
+
+    try {
+        fss.umount(mountpt, FileSystems::UMNT_NORMAL);
+    } catch (const std::exception& e ) {
+        TRACE(Trace::error, e.what());
         MSG(LTFSDMF0039E, mountpt);
         THROW(Error::LTFSDM_GENERAL_ERROR);
     }
 
     stream << dirname(exepath) << "/" << Const::OVERLAY_FS_COMMAND << " -m "
-            << mountpt << " -f " << devName << " -S " << starttime.tv_sec
+            << mountpt << " -f " << fs.source << " -S " << starttime.tv_sec
             << " -N " << starttime.tv_nsec << " -l "
             << messageObject.getLogType() << " -t " << traceObject.getTrclevel()
             << " -p " << getpid() << " 2>&1";
@@ -1438,27 +1428,16 @@ void FuseFS::init(struct timespec starttime)
     init_status.FUSE_STARTED = true;
     FuseFS::ioctlFd = fd;
 
-    MSG(LTFSDMF0036I, tmpdnm, mountpt + Const::OPEN_LTFS_CACHE_MP);
-    if (mount(tmpdnm, (mountpt + Const::OPEN_LTFS_CACHE_MP).c_str(), "",
-    MS_BIND, "") == -1) {
-        MSG(LTFSDMF0037E, mountpt + Const::OPEN_LTFS_CACHE_MP, errno);
+    MSG(LTFSDMF0036I, fs.source, mountpt + Const::OPEN_LTFS_CACHE_MP);
+
+    try {
+        fss.mount(fs.source, mountpt + Const::OPEN_LTFS_CACHE_MP, fs.options);
+    } catch(const std::exception &e) {
+        TRACE(Trace::error, e.what());
+        MSG(LTFSDMF0037E, fs.source, e.what());
         THROW(Error::LTFSDM_GENERAL_ERROR);
     }
     init_status.CACHE_MOUNTED = true;
-
-    MSG(LTFSDMF0042I, tmpdnm);
-    if (umount(tmpdnm) == -1) {
-        MSG(LTFSDMF0043E, errno);
-        THROW(Error::LTFSDM_GENERAL_ERROR);
-    }
-    init_status.TEMP_MOUNTED = false;
-
-    MSG(LTFSDMF0044I, tmpdnm);
-    if (rmdir(tmpdnm) == -1) {
-        MSG(LTFSDMF0045E, tmpdnm, errno);
-        THROW(Error::LTFSDM_GENERAL_ERROR);
-    }
-    init_status.TEMP_CREATED = false;
 
     MSG(LTFSDMF0046I, mountpt + Const::OPEN_LTFS_CACHE_MP);
     if ((rootFd = open((mountpt + Const::OPEN_LTFS_CACHE_MP).c_str(),
@@ -1475,8 +1454,10 @@ void FuseFS::init(struct timespec starttime)
     init_status.ROOTFD_FUSE = true;
 
     MSG(LTFSDMF0050I, mountpt);
-    if (umount2((mountpt + Const::OPEN_LTFS_CACHE_MP).c_str(), MNT_DETACH)
-            == -1) {
+    try {
+        fss.umount(mountpt + Const::OPEN_LTFS_CACHE_MP, FileSystems::UMNT_DETACHED);
+    } catch (const std::exception& e ) {
+        TRACE(Trace::error, e.what());
         MSG(LTFSDMF0051E, mountpt, errno);
         THROW(Error::LTFSDM_GENERAL_ERROR);
     }
@@ -1486,9 +1467,9 @@ void FuseFS::init(struct timespec starttime)
 FuseFS::~FuseFS()
 
 {
-    int rc = 0;
-
     try {
+        FileSystems fss;
+
         if (init_status.ROOTFD_FUSE == true) {
             if (ioctl(FuseFS::ioctlFd, FuseFS::LTFSDM_STOP) == -1)
                 MSG(LTFSDMF0052E, mountpt, errno);
@@ -1502,22 +1483,11 @@ FuseFS::~FuseFS()
 
         if (init_status.CACHE_MOUNTED) {
             MSG(LTFSDMF0054I, Const::OPEN_LTFS_CACHE_MP);
-            if (umount((mountpt + Const::OPEN_LTFS_CACHE_MP).c_str()) == -1) {
-                MSG(LTFSDMF0053E, mountpt + Const::OPEN_LTFS_CACHE_MP, errno);
-            }
-        }
-
-        if (init_status.TEMP_MOUNTED == true) {
-            MSG(LTFSDMF0042I, tmpdir);
-            if (umount(tmpdir) == -1) {
-                MSG(LTFSDMF0043E, errno);
-            }
-        }
-
-        if (init_status.TEMP_CREATED == true) {
-            MSG(LTFSDMF0044I, tmpdir);
-            if (rmdir(tmpdir) == -1) {
-                MSG(LTFSDMF0045E, tmpdir, errno);
+            try {
+                fss.umount(mountpt + Const::OPEN_LTFS_CACHE_MP, FileSystems::UMNT_NORMAL);
+            } catch (const std::exception& e) {
+                TRACE(Trace::error, e.what());
+                MSG(LTFSDMF0053E, mountpt + Const::OPEN_LTFS_CACHE_MP, e.what());
             }
         }
 
@@ -1528,15 +1498,18 @@ FuseFS::~FuseFS()
         MSG(LTFSDMF0007I);
         do {
             if (Connector::forcedTerminate)
-                rc = umount2(mountpt.c_str(), MNT_FORCE | MNT_DETACH);
-            else
-                rc = umount(mountpt.c_str());
-            if (rc == -1) {
-                if ( errno == EBUSY) {
-                    sleep(1);
-                    continue;
-                } else {
-                    umount2(mountpt.c_str(), MNT_FORCE | MNT_DETACH);
+                fss.umount(mountpt, FileSystems::UMNT_DETACHED_FORCED);
+            else {
+                try {
+                    fss.umount(mountpt, FileSystems::UMNT_NORMAL);
+                } catch (const OpenLTFSException& e) {
+                    if (e.getError() == Error::LTFSDM_FS_BUSY) {
+                        MSG(LTFSDMF0003I, mountpt);
+                        sleep(1);
+                        continue;
+                    } else {
+                        fss.umount(mountpt, FileSystems::UMNT_DETACHED_FORCED);
+                    }
                 }
             }
             break;

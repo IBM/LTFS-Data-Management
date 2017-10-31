@@ -1,6 +1,8 @@
 #include <fcntl.h>
 #include <sys/file.h>
 #include <sys/resource.h>
+#include <libmount/libmount.h>
+#include <blkid/blkid.h>
 
 #include <string>
 #include <set>
@@ -49,7 +51,8 @@ void AddCommand::doCommand(int argc, char **argv)
     managedFs = pathName;
 
     try {
-        FileSystems::fsinfo_t fs = FileSystems::getByTarget(managedFs);
+        FileSystems fss;
+        FileSystems::fsinfo fs = fss.getByTarget(managedFs);
     } catch ( const std::exception& e ) {
         MSG(LTFSDMC0053E);
         THROW(Error::LTFSDM_GENERAL_ERROR);

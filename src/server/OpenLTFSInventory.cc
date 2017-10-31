@@ -113,10 +113,10 @@ void OpenLTFSInventory::inventorize()
     }
 
     for (std::shared_ptr<OpenLTFSCartridge> c : cartridges) {
-        c->setState(OpenLTFSCartridge::UNMOUNTED);
+        c->setState(OpenLTFSCartridge::TAPE_UNMOUNTED);
         for (std::shared_ptr<OpenLTFSDrive> d : drives) {
             if (c->get_slot() == d->get_slot()) {
-                c->setState(OpenLTFSCartridge::MOUNTED);
+                c->setState(OpenLTFSCartridge::TAPE_MOUNTED);
                 break;
             }
         }
@@ -364,7 +364,7 @@ void OpenLTFSInventory::mount(std::string driveid, std::string cartridgeid)
     assert(cartridge != nullptr);
 
     assert(drive->isBusy() == true);
-    assert(cartridge->getState() == OpenLTFSCartridge::MOVING);
+    assert(cartridge->getState() == OpenLTFSCartridge::TAPE_MOVING);
 
     cartridge->Mount(driveid);
 
@@ -372,7 +372,7 @@ void OpenLTFSInventory::mount(std::string driveid, std::string cartridgeid)
         std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
 
         cartridge->update(sess);
-        cartridge->setState(OpenLTFSCartridge::MOUNTED);
+        cartridge->setState(OpenLTFSCartridge::TAPE_MOUNTED);
         TRACE(Trace::always, drive->GetObjectID());
         drive->setFree();
         drive->unsetUnmountReqNum();
@@ -397,7 +397,7 @@ void OpenLTFSInventory::unmount(std::string driveid, std::string cartridgeid)
     assert(cartridge != nullptr);
 
     assert(drive->isBusy() == true);
-    assert(cartridge->getState() == OpenLTFSCartridge::MOVING);
+    assert(cartridge->getState() == OpenLTFSCartridge::TAPE_MOVING);
     assert(drive->get_slot() == cartridge->get_slot());
 
     cartridge->Unmount();
@@ -406,7 +406,7 @@ void OpenLTFSInventory::unmount(std::string driveid, std::string cartridgeid)
         std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
 
         cartridge->update(sess);
-        cartridge->setState(OpenLTFSCartridge::UNMOUNTED);
+        cartridge->setState(OpenLTFSCartridge::TAPE_UNMOUNTED);
         TRACE(Trace::always, drive->GetObjectID());
         drive->setFree();
         drive->unsetUnmountReqNum();

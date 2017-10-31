@@ -717,22 +717,22 @@ void MessageParser::infoTapesMessage(long key, LTFSDmCommServer *command)
             infotapesresp->set_inprogress(c->getInProgress());
             infotapesresp->set_pool(c->getPool());
             switch (c->getState()) {
-                case OpenLTFSCartridge::INUSE:
+                case OpenLTFSCartridge::TAPE_INUSE:
                     state = messages[LTFSDMS0055I];
                     break;
-                case OpenLTFSCartridge::MOUNTED:
+                case OpenLTFSCartridge::TAPE_MOUNTED:
                     state = messages[LTFSDMS0056I];
                     break;
-                case OpenLTFSCartridge::MOVING:
+                case OpenLTFSCartridge::TAPE_MOVING:
                     state = messages[LTFSDMS0057I];
                     break;
-                case OpenLTFSCartridge::UNMOUNTED:
+                case OpenLTFSCartridge::TAPE_UNMOUNTED:
                     state = messages[LTFSDMS0058I];
                     break;
-                case OpenLTFSCartridge::INVALID:
+                case OpenLTFSCartridge::TAPE_INVALID:
                     state = messages[LTFSDMS0059I];
                     break;
-                case OpenLTFSCartridge::UNKNOWN:
+                case OpenLTFSCartridge::TAPE_UNKNOWN:
                     state = messages[LTFSDMS0060I];
                     break;
                 default:

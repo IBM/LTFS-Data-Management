@@ -336,7 +336,7 @@ void SelRecall::execRequest(std::string tapeId, bool needsTape)
 
     if (needsTape) {
         std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
-        inventory->getCartridge(tapeId)->setState(OpenLTFSCartridge::MOUNTED);
+        inventory->getCartridge(tapeId)->setState(OpenLTFSCartridge::TAPE_MOUNTED);
         bool found = false;
         for (std::shared_ptr<OpenLTFSDrive> d : inventory->getDrives()) {
             if (d->get_slot() == inventory->getCartridge(tapeId)->get_slot()) {
