@@ -17,7 +17,6 @@ private:
     bool first;
     struct libmnt_context *cxt; // = mnt_new_context();
     struct libmnt_table *tb;
-    struct libmnt_iter *itr;
     blkid_cache cache;
     fsinfo getContext(struct libmnt_fs *mntfs);
     void getTable();

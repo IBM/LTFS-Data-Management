@@ -15,7 +15,7 @@
 
 #include "FileSystems.h"
 
-FileSystems::FileSystems() : first(true), tb(NULL), itr(NULL)
+FileSystems::FileSystems() : first(true), tb(NULL)
 
 {
     int rc;
@@ -32,7 +32,6 @@ FileSystems::~FileSystems()
 
 {
     blkid_put_cache(cache);
-    mnt_free_iter(itr);
     mnt_free_context(cxt);
 }
 
@@ -46,14 +45,6 @@ void FileSystems::getTable()
         TRACE(Trace::error, rc, errno);
         THROW(errno, rc, errno);
     }
-
-    if ( (itr = mnt_new_iter(MNT_ITER_BACKWARD)) == NULL ) {
-        blkid_put_cache(cache);
-        mnt_free_context(cxt);
-        TRACE(Trace::error, errno);
-        THROW(errno, errno);
-    }
-
 }
 
 FileSystems::fsinfo FileSystems::getContext(struct libmnt_fs *mntfs)
@@ -101,13 +92,21 @@ std::vector<FileSystems::fsinfo> FileSystems::getAll()
     std::vector<FileSystems::fsinfo> fslist;
     fsinfo fs;
     struct libmnt_fs *mntfs;
+    struct libmnt_iter *itr;
 
     getTable();
+
+    if ( (itr = mnt_new_iter(MNT_ITER_BACKWARD)) == NULL ) {
+        TRACE(Trace::error, errno);
+        THROW(errno, errno);
+    }
+
 
     while ( mnt_table_next_fs(tb, itr, &mntfs) == 0) {
         try {
             fs = getContext(mntfs);
         } catch ( const std::exception& e ) {
+            mnt_free_iter(itr);
             TRACE(Trace::error, e.what());
             THROW(Error::LTFSDM_GENERAL_ERROR);
         }
@@ -119,6 +118,8 @@ std::vector<FileSystems::fsinfo> FileSystems::getAll()
             fslist.push_back(fs);
         }
     }
+
+    mnt_free_iter(itr);
 
     return fslist;
 }
