@@ -65,7 +65,7 @@ void Connector::initTransRecalls()
     } catch (const std::exception& e) {
         TRACE(Trace::error, e.what());
         MSG(LTFSDMF0026E);
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 }
 
@@ -87,7 +87,7 @@ Connector::rec_info_t Connector::getEvents()
         recrequest.recv();
     } catch (const std::exception& e) {
         MSG(LTFSDMF0019E, e.what(), errno);
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 
     const LTFSDmProtocol::LTFSDmTransRecRequest request =
@@ -151,7 +151,7 @@ void Connector::terminate()
         commCommand.connect();
     } catch (const std::exception& e) {
         MSG(LTFSDMF0020E, e.what(), errno);
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 
     LTFSDmProtocol::LTFSDmTransRecRequest *recrequest =
@@ -169,7 +169,7 @@ void Connector::terminate()
         commCommand.send();
     } catch (const std::exception& e) {
         MSG(LTFSDMF0024E);
-        THROW(Error::LTFSDM_GENERAL_ERROR, errno);
+        THROW(Error::GENERAL_ERROR, errno);
     }
 }
 

@@ -125,7 +125,7 @@ public:
             std::cerr << messages[LTFSDMX0005E] << " (" << filename << ":"
                     << std::setfill('0') << std::setw(4) << linenr << ")"
                     << std::endl;
-            exit((int) Error::LTFSDM_GENERAL_ERROR);
+            exit((int) Error::GENERAL_ERROR);
         }
     }
 };

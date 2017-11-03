@@ -5,7 +5,7 @@ int main(int argc, char **argv)
 
 {
     Server ltfsdmd;
-    int err = static_cast<int>(Error::LTFSDM_OK);
+    int err = static_cast<int>(Error::OK);
     bool detach = true;
     int opt;
     sigset_t set;
@@ -37,7 +37,7 @@ int main(int argc, char **argv)
                 break;
             default:
                 std::cerr << messages[LTFSDMC0013E] << std::endl;
-                err = static_cast<int>(Error::LTFSDM_GENERAL_ERROR);
+                err = static_cast<int>(Error::GENERAL_ERROR);
                 goto end;
         }
     }
@@ -53,7 +53,7 @@ int main(int argc, char **argv)
     try {
         LTFSDM::init();
     } catch (const std::exception& e) {
-        err = static_cast<int>(Error::LTFSDM_GENERAL_ERROR);
+        err = static_cast<int>(Error::GENERAL_ERROR);
         goto end;
     }
 
@@ -71,13 +71,13 @@ int main(int argc, char **argv)
 
         ltfsdmd.run(set);
     } catch (const OpenLTFSException& e) {
-        if (e.getError() != Error::LTFSDM_OK) {
+        if (e.getError() != Error::OK) {
             TRACE(Trace::error, e.what());
-            err = static_cast<int>(Error::LTFSDM_GENERAL_ERROR);
+            err = static_cast<int>(Error::GENERAL_ERROR);
         }
     } catch (const std::exception& e) {
         TRACE(Trace::error, e.what());
-        err = static_cast<int>(Error::LTFSDM_GENERAL_ERROR);
+        err = static_cast<int>(Error::GENERAL_ERROR);
     }
 
     end: return (int) err;

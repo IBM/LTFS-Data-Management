@@ -58,7 +58,7 @@ void DataBase::open(bool dbUseMemory)
     if (rc != SQLITE_OK) {
         TRACE(Trace::error, rc);
         errno = rc;
-        THROW(Error::LTFSDM_GENERAL_ERROR, uri, rc);
+        THROW(Error::GENERAL_ERROR, uri, rc);
     }
 
     rc = sqlite3_initialize();
@@ -66,7 +66,7 @@ void DataBase::open(bool dbUseMemory)
     if (rc != SQLITE_OK) {
         TRACE(Trace::error, rc);
         errno = rc;
-        THROW(Error::LTFSDM_GENERAL_ERROR, rc);
+        THROW(Error::GENERAL_ERROR, rc);
     }
 
     rc = sqlite3_open_v2(uri.c_str(), &db, SQLITE_OPEN_READWRITE |
@@ -76,7 +76,7 @@ void DataBase::open(bool dbUseMemory)
     if (rc != SQLITE_OK) {
         TRACE(Trace::error, rc, uri);
         errno = rc;
-        THROW(Error::LTFSDM_GENERAL_ERROR, uri, rc);
+        THROW(Error::GENERAL_ERROR, uri, rc);
     }
 
     rc = sqlite3_extended_result_codes(db, 1);
@@ -84,7 +84,7 @@ void DataBase::open(bool dbUseMemory)
     if (rc != SQLITE_OK) {
         TRACE(Trace::error, rc);
         errno = rc;
-        THROW(Error::LTFSDM_GENERAL_ERROR, rc);
+        THROW(Error::GENERAL_ERROR, rc);
     }
 
     dbNeedsClosed = true;
@@ -158,7 +158,7 @@ void SQLStatement::prepare()
     if (rc != SQLITE_OK) {
         TRACE(Trace::error, fmt.str(), rc);
         errno = rc;
-        THROW(Error::LTFSDM_GENERAL_ERROR, rc);
+        THROW(Error::GENERAL_ERROR, rc);
     }
 }
 
@@ -238,7 +238,7 @@ void SQLStatement::bind(int num, int value)
     if ((rc = sqlite3_bind_int(stmt, num, value)) != SQLITE_OK) {
         TRACE(Trace::error, rc);
         errno = rc;
-        THROW(Error::LTFSDM_GENERAL_ERROR, rc);
+        THROW(Error::GENERAL_ERROR, rc);
     }
 }
 
@@ -251,7 +251,7 @@ void SQLStatement::bind(int num, std::string value)
             != SQLITE_OK) {
         TRACE(Trace::error, rc);
         errno = rc;
-        THROW(Error::LTFSDM_GENERAL_ERROR, rc);
+        THROW(Error::GENERAL_ERROR, rc);
     }
 }
 
@@ -261,7 +261,7 @@ void SQLStatement::finalize()
     if (stmt_rc != SQLITE_ROW && stmt_rc != SQLITE_DONE) {
         TRACE(Trace::error, fmt.str(), stmt_rc);
         errno = stmt_rc;
-        THROW(Error::LTFSDM_GENERAL_ERROR, stmt_rc);
+        THROW(Error::GENERAL_ERROR, stmt_rc);
     }
 
     int rc = sqlite3_finalize(stmt);
@@ -269,7 +269,7 @@ void SQLStatement::finalize()
     if (rc != SQLITE_OK) {
         TRACE(Trace::error, fmt.str(), rc);
         errno = rc;
-        THROW(Error::LTFSDM_GENERAL_ERROR, rc);
+        THROW(Error::GENERAL_ERROR, rc);
     }
 }
 

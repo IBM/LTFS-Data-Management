@@ -46,7 +46,7 @@ void InfoFilesCommand::doCommand(int argc, char **argv)
 
     if (argc == 1) {
         INFO(LTFSDMC0018E);
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
 
     }
 

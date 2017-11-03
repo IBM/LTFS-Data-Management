@@ -30,7 +30,7 @@ void InfoPoolsCommand::doCommand(int argc, char **argv)
 
     if (argc != optind) {
         printUsage();
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 
     try {
@@ -49,7 +49,7 @@ void InfoPoolsCommand::doCommand(int argc, char **argv)
         commCommand.send();
     } catch (const std::exception& e) {
         MSG(LTFSDMC0027E);
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 
     INFO(LTFSDMC0088I);
@@ -61,7 +61,7 @@ void InfoPoolsCommand::doCommand(int argc, char **argv)
             commCommand.recv();
         } catch (const std::exception& e) {
             MSG(LTFSDMC0028E);
-            THROW(Error::LTFSDM_GENERAL_ERROR);
+            THROW(Error::GENERAL_ERROR);
         }
 
         const LTFSDmProtocol::LTFSDmInfoPoolsResp infopoolsresp =

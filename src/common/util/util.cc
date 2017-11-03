@@ -32,12 +32,12 @@ void mkTmpDir()
         if (mkdir(Const::LTFSDM_TMP_DIR.c_str(), 0700) != 0) {
             std::cerr << messages[LTFSDMX0006E] << Const::LTFSDM_TMP_DIR
                     << std::endl;
-            THROW(Error::LTFSDM_GENERAL_ERROR);
+            THROW(Error::GENERAL_ERROR);
         }
     } else if (!S_ISDIR(statbuf.st_mode)) {
         std::cerr << Const::LTFSDM_TMP_DIR << messages[LTFSDMX0007E]
                 << std::endl;
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 }
 
@@ -65,7 +65,7 @@ long LTFSDM::getkey()
     } catch (const std::exception& e) {
         TRACE(Trace::error, key);
         MSG(LTFSDMX0030E);
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 
     keyFile.close();

@@ -30,21 +30,21 @@ void PoolAddCommand::doCommand(int argc, char **argv)
 {
     if (argc <= 2) {
         printUsage();
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 
     processOptions(argc, argv);
 
     if (argc != optind) {
         printUsage();
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 
     try {
         connect();
     } catch (const std::exception& e) {
         MSG(LTFSDMC0026E);
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 
     LTFSDmProtocol::LTFSDmPoolAddRequest *pooladdreq =
@@ -59,7 +59,7 @@ void PoolAddCommand::doCommand(int argc, char **argv)
         commCommand.send();
     } catch (const std::exception& e) {
         MSG(LTFSDMC0027E);
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 
     for (unsigned int i = 0; i < tapeList.size(); i++) {
@@ -68,7 +68,7 @@ void PoolAddCommand::doCommand(int argc, char **argv)
             commCommand.recv();
         } catch (const std::exception& e) {
             MSG(LTFSDMC0028E);
-            THROW(Error::LTFSDM_GENERAL_ERROR);
+            THROW(Error::GENERAL_ERROR);
         }
 
         const LTFSDmProtocol::LTFSDmPoolResp poolresp = commCommand.poolresp();
@@ -76,16 +76,16 @@ void PoolAddCommand::doCommand(int argc, char **argv)
         std::string tapeid = poolresp.tapeid();
 
         switch (poolresp.response()) {
-            case static_cast<long>(Error::LTFSDM_OK):
+            case static_cast<long>(Error::OK):
                 INFO(LTFSDMC0083I, tapeid, poolNames);
                 break;
-            case static_cast<long>(Error::LTFSDM_POOL_NOT_EXISTS):
+            case static_cast<long>(Error::POOL_NOT_EXISTS):
                 MSG(LTFSDMX0025E, poolNames);
                 break;
-            case static_cast<long>(Error::LTFSDM_TAPE_NOT_EXISTS):
+            case static_cast<long>(Error::TAPE_NOT_EXISTS):
                 MSG(LTFSDMC0084E, tapeid);
                 break;
-            case static_cast<long>(Error::LTFSDM_TAPE_EXISTS_IN_POOL):
+            case static_cast<long>(Error::TAPE_EXISTS_IN_POOL):
                 MSG(LTFSDMX0021E, tapeid);
                 break;
             default:

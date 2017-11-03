@@ -3,6 +3,7 @@ COMMONDIRS += src/common/util
 COMMONDIRS += src/common/messages
 COMMONDIRS += src/common/tracing
 COMMONDIRS += src/common/comm
+COMMONDIRS += src/common/configuration
 
 CLIENTDIRS := src/client
 

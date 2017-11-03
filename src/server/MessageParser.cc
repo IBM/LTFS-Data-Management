@@ -18,7 +18,7 @@ void MessageParser::getObjects(LTFSDmCommServer *command, long localReqNumber,
         } catch (const std::exception& e) {
             TRACE(Trace::error, e.what());
             MSG(LTFSDMS0006E);
-            THROW(Error::LTFSDM_GENERAL_ERROR);
+            THROW(Error::GENERAL_ERROR);
         }
 
         if (!command->has_sendobjects()) {
@@ -146,7 +146,7 @@ void MessageParser::migrationMessage(long key, LTFSDmCommServer *command,
     long keySent = migreq.key();
     std::set<std::string> pools;
     std::string pool;
-    int error = static_cast<int>(Error::LTFSDM_OK);
+    int error = static_cast<int>(Error::OK);
     Migration *mig = nullptr;
 
     TRACE(Trace::normal, keySent);
@@ -167,7 +167,7 @@ void MessageParser::migrationMessage(long key, LTFSDmCommServer *command,
             while (std::getline(poolss, pool, ',')) {
                 std::shared_ptr<OpenLTFSPool> poolp = inventory->getPool(pool);
                 if (poolp == nullptr) {
-                    error = static_cast<int>(Error::LTFSDM_NOT_ALL_POOLS_EXIST);
+                    error = static_cast<int>(Error::NOT_ALL_POOLS_EXIST);
                     break;
                 }
                 if (pools.count(pool) == 0)
@@ -176,13 +176,13 @@ void MessageParser::migrationMessage(long key, LTFSDmCommServer *command,
         }
 
         if (!error && (pools.size() > 3)) {
-            error = static_cast<int>(Error::LTFSDM_WRONG_POOLNUM);
+            error = static_cast<int>(Error::WRONG_POOLNUM);
         }
 
         mig = new Migration(pid, requestNumber, pools, pools.size(),
                 migreq.state());
     } else {
-        error = static_cast<int>(Error::LTFSDM_TERMINATING);
+        error = static_cast<int>(Error::TERMINATING);
     }
 
     LTFSDmProtocol::LTFSDmMigRequestResp *migreqresp =
@@ -227,7 +227,7 @@ void MessageParser::selRecallMessage(long key, LTFSDmCommServer *command,
     long requestNumber;
     const LTFSDmProtocol::LTFSDmSelRecRequest recreq = command->selrecrequest();
     long keySent = recreq.key();
-    int error = static_cast<int>(Error::LTFSDM_OK);
+    int error = static_cast<int>(Error::OK);
     SelRecall *srec = nullptr;
 
     TRACE(Trace::normal, keySent);
@@ -243,7 +243,7 @@ void MessageParser::selRecallMessage(long key, LTFSDmCommServer *command,
     if (Server::terminate == false)
         srec = new SelRecall(pid, requestNumber, recreq.state());
     else
-        error = static_cast<int>(Error::LTFSDM_TERMINATING);
+        error = static_cast<int>(Error::TERMINATING);
 
     LTFSDmProtocol::LTFSDmSelRecRequestResp *recreqresp =
             command->mutable_selrecrequestresp();
@@ -461,10 +461,10 @@ void MessageParser::addMessage(long key, LTFSDmCommServer *command,
         response = LTFSDmProtocol::LTFSDmAddResp::FAILED;
         TRACE(Trace::error, e.what());
         switch (e.getError()) {
-            case Error::LTFSDM_FS_CHECK_ERROR:
+            case Error::FS_CHECK_ERROR:
                 MSG(LTFSDMS0044E, managedFs);
                 break;
-            case Error::LTFSDM_FS_ADD_ERROR:
+            case Error::FS_ADD_ERROR:
                 MSG(LTFSDMS0045E, managedFs);
                 break;
             default:
@@ -779,7 +779,7 @@ void MessageParser::poolCreateMessage(long key, LTFSDmCommServer *command)
             command->poolcreaterequest();
     long keySent = poolcreate.key();
     std::string poolName;
-    int response = static_cast<int>(Error::LTFSDM_OK);
+    int response = static_cast<int>(Error::OK);
 
     TRACE(Trace::normal, keySent);
 
@@ -798,7 +798,7 @@ void MessageParser::poolCreateMessage(long key, LTFSDmCommServer *command)
         } catch (const OpenLTFSException& e) {
             response = static_cast<int>(e.getError());
         } catch (const std::exception& e) {
-            response = static_cast<int>(Error::LTFSDM_GENERAL_ERROR);
+            response = static_cast<int>(Error::GENERAL_ERROR);
         }
     }
 
@@ -822,7 +822,7 @@ void MessageParser::poolDeleteMessage(long key, LTFSDmCommServer *command)
             command->pooldeleterequest();
     long keySent = pooldelete.key();
     std::string poolName;
-    int response = static_cast<int>(Error::LTFSDM_OK);
+    int response = static_cast<int>(Error::OK);
 
     TRACE(Trace::normal, keySent);
 
@@ -841,7 +841,7 @@ void MessageParser::poolDeleteMessage(long key, LTFSDmCommServer *command)
         } catch (const OpenLTFSException& e) {
             response = static_cast<int>(e.getError());
         } catch (const std::exception& e) {
-            response = static_cast<int>(Error::LTFSDM_GENERAL_ERROR);
+            response = static_cast<int>(Error::GENERAL_ERROR);
         }
     }
 
@@ -881,7 +881,7 @@ void MessageParser::poolAddMessage(long key, LTFSDmCommServer *command)
         tapeids.push_back(pooladd.tapeid(i));
 
     for (std::string tapeid : tapeids) {
-        response = static_cast<int>(Error::LTFSDM_OK);
+        response = static_cast<int>(Error::OK);
 
         {
             std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
@@ -891,7 +891,7 @@ void MessageParser::poolAddMessage(long key, LTFSDmCommServer *command)
             } catch (const OpenLTFSException& e) {
                 response = static_cast<int>(e.getError());
             } catch (const std::exception& e) {
-                response = static_cast<int>(Error::LTFSDM_GENERAL_ERROR);
+                response = static_cast<int>(Error::GENERAL_ERROR);
             }
         }
 
@@ -933,7 +933,7 @@ void MessageParser::poolRemoveMessage(long key, LTFSDmCommServer *command)
         tapeids.push_back(poolremove.tapeid(i));
 
     for (std::string tapeid : tapeids) {
-        response = static_cast<int>(Error::LTFSDM_OK);
+        response = static_cast<int>(Error::OK);
 
         {
             std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
@@ -943,7 +943,7 @@ void MessageParser::poolRemoveMessage(long key, LTFSDmCommServer *command)
             } catch (const OpenLTFSException& e) {
                 response = static_cast<int>(e.getError());
             } catch (const std::exception& e) {
-                response = static_cast<int>(Error::LTFSDM_GENERAL_ERROR);
+                response = static_cast<int>(Error::GENERAL_ERROR);
             }
         }
 
@@ -1034,7 +1034,7 @@ void MessageParser::retrieveMessage(long key, LTFSDmCommServer *command)
     const LTFSDmProtocol::LTFSDmRetrieveRequest retrievereq =
             command->retrieverequest();
     long keySent = retrievereq.key();
-    int error = static_cast<int>(Error::LTFSDM_OK);
+    int error = static_cast<int>(Error::OK);
 
     TRACE(Trace::normal, keySent);
 
@@ -1048,7 +1048,7 @@ void MessageParser::retrieveMessage(long key, LTFSDmCommServer *command)
     } catch (const OpenLTFSException& e) {
         error = static_cast<int>(e.getError());
     } catch (const std::exception& e) {
-        error = static_cast<int>(Error::LTFSDM_GENERAL_ERROR);
+        error = static_cast<int>(Error::GENERAL_ERROR);
     }
 
     LTFSDmProtocol::LTFSDmRetrieveResp *retrieveresp =

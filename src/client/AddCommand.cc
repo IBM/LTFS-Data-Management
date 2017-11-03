@@ -36,7 +36,7 @@ void AddCommand::doCommand(int argc, char **argv)
 
     if (argc == 1) {
         printUsage();
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 
     processOptions(argc, argv);
@@ -45,7 +45,7 @@ void AddCommand::doCommand(int argc, char **argv)
 
     if (pathName == NULL) {
         MSG(LTFSDMC0053E);
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 
     managedFs = pathName;
@@ -55,19 +55,19 @@ void AddCommand::doCommand(int argc, char **argv)
         FileSystems::fsinfo fs = fss.getByTarget(managedFs);
     } catch ( const std::exception& e ) {
         MSG(LTFSDMC0053E);
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 
     if (argc != optind + 1) {
         printUsage();
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 
     try {
         connect();
     } catch (const std::exception& e) {
         MSG(LTFSDMC0026E);
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 
     TRACE(Trace::normal, requestNumber);
@@ -83,21 +83,21 @@ void AddCommand::doCommand(int argc, char **argv)
         commCommand.send();
     } catch (const std::exception& e) {
         MSG(LTFSDMC0027E);
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 
     try {
         commCommand.recv();
     } catch (const std::exception& e) {
         MSG(LTFSDMC0028E);
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 
     const LTFSDmProtocol::LTFSDmAddResp addresp = commCommand.addresp();
 
     if (addresp.response() == LTFSDmProtocol::LTFSDmAddResp::FAILED) {
         MSG(LTFSDMC0055E, managedFs);
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     } else if (addresp.response()
             == LTFSDmProtocol::LTFSDmAddResp::ALREADY_ADDED) {
         MSG(LTFSDMC0054I, managedFs);

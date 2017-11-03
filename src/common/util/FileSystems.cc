@@ -24,7 +24,7 @@ FileSystems::FileSystems() : first(true), tb(NULL)
 
     if ( (rc = blkid_get_cache(&cache, NULL)) != 0 ) {
         TRACE(Trace::error, rc, errno);
-        THROW(Error::LTFSDM_GENERAL_ERROR, rc, errno);
+        THROW(Error::GENERAL_ERROR, rc, errno);
     }
 }
 
@@ -43,7 +43,7 @@ void FileSystems::getTable()
     if ( (rc = mnt_context_get_mtab(cxt, &tb)) != 0 ) {
         blkid_put_cache(cache);
         TRACE(Trace::error, rc, errno);
-        THROW(Error::LTFSDM_GENERAL_ERROR, rc, errno);
+        THROW(Error::GENERAL_ERROR, rc, errno);
     }
 }
 
@@ -55,22 +55,22 @@ FileSystems::fsinfo FileSystems::getContext(struct libmnt_fs *mntfs)
     char *uuid;
 
     if ( (str = mnt_fs_get_source(mntfs)) == NULL )
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     else
         fs.source = str;
 
     if ( (str = mnt_fs_get_target(mntfs)) == NULL )
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     else
         fs.target = str;
 
     if ( (str = mnt_fs_get_fstype(mntfs)) == NULL )
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     else
         fs.fstype = str;
 
     if ( (str = mnt_fs_get_options(mntfs)) == NULL )
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     else
         fs.options = str;
 
@@ -98,7 +98,7 @@ std::vector<FileSystems::fsinfo> FileSystems::getAll()
 
     if ( (itr = mnt_new_iter(MNT_ITER_BACKWARD)) == NULL ) {
         TRACE(Trace::error, errno);
-        THROW(Error::LTFSDM_GENERAL_ERROR, errno);
+        THROW(Error::GENERAL_ERROR, errno);
     }
 
 
@@ -108,7 +108,7 @@ std::vector<FileSystems::fsinfo> FileSystems::getAll()
         } catch ( const std::exception& e ) {
             mnt_free_iter(itr);
             TRACE(Trace::error, e.what());
-            THROW(Error::LTFSDM_GENERAL_ERROR);
+            THROW(Error::GENERAL_ERROR);
         }
 
         if ( fs.fstype.compare("xfs") == 0
@@ -134,14 +134,14 @@ FileSystems::fsinfo FileSystems::getByTarget(std::string target)
 
     if ( (mntfs = mnt_table_find_target(tb, target.c_str(), MNT_ITER_BACKWARD)) == NULL ) {
         TRACE(Trace::error, target);
-        THROW(Error::LTFSDM_GENERAL_ERROR, target);
+        THROW(Error::GENERAL_ERROR, target);
     }
 
     try {
         fs = getContext(mntfs);
     } catch ( const std::exception& e ) {
         TRACE(Trace::error, e.what());
-        THROW(Error::LTFSDM_GENERAL_ERROR, target);
+        THROW(Error::GENERAL_ERROR, target);
     }
 
     return fs;
@@ -154,24 +154,24 @@ void FileSystems::mount(std::string source, std::string target, std::string opti
 
     if ( (rc =  mnt_reset_context(cxt)) != 0 ) {
         TRACE(Trace::error, target, rc);
-        THROW(Error::LTFSDM_GENERAL_ERROR, target, rc);
+        THROW(Error::GENERAL_ERROR, target, rc);
     }
 
     getTable();
 
     if ( (rc =  mnt_context_set_source(cxt, source.c_str())) != 0 ) {
         TRACE(Trace::error, target, rc);
-        THROW(Error::LTFSDM_GENERAL_ERROR, target, rc);
+        THROW(Error::GENERAL_ERROR, target, rc);
     }
 
     if ( (rc =  mnt_context_set_target(cxt, target.c_str())) != 0 ) {
         TRACE(Trace::error, target, rc);
-        THROW(Error::LTFSDM_GENERAL_ERROR, target, rc);
+        THROW(Error::GENERAL_ERROR, target, rc);
     }
 
     if ( (rc =  mnt_context_set_options(cxt, options.c_str())) != 0 ) {
         TRACE(Trace::error, target, rc);
-        THROW(Error::LTFSDM_GENERAL_ERROR, target, rc);
+        THROW(Error::GENERAL_ERROR, target, rc);
     }
 
     if ( mnt_context_mount(cxt) == 0 )
@@ -179,7 +179,7 @@ void FileSystems::mount(std::string source, std::string target, std::string opti
 
     if ( (rc = mnt_context_get_status(cxt)) != 1 ) {
         TRACE(Trace::error, target, rc, mnt_context_get_syscall_errno(cxt));
-        THROW(Error::LTFSDM_GENERAL_ERROR, target, rc);
+        THROW(Error::GENERAL_ERROR, target, rc);
     }
 }
 
@@ -193,20 +193,20 @@ void FileSystems::umount(std::string target, umountflag flag)
 
     if ( (rc =  mnt_reset_context(cxt)) != 0 ) {
         TRACE(Trace::error, target, rc);
-        THROW(Error::LTFSDM_GENERAL_ERROR, target, rc);
+        THROW(Error::GENERAL_ERROR, target, rc);
     }
 
     getTable();
 
     if ( (mntfs = mnt_table_find_target(tb, target.c_str(), MNT_ITER_BACKWARD)) == NULL ) {
         TRACE(Trace::error, target);
-        THROW(Error::LTFSDM_GENERAL_ERROR, target);
+        THROW(Error::GENERAL_ERROR, target);
     }
 
     if ( first == false ) {
         if ( (rc =  mnt_reset_context(cxt)) != 0 ) {
             TRACE(Trace::error, target);
-            THROW(Error::LTFSDM_GENERAL_ERROR, target);
+            THROW(Error::GENERAL_ERROR, target);
         }
     }
     else {
@@ -216,20 +216,20 @@ void FileSystems::umount(std::string target, umountflag flag)
     if ( flag == FileSystems::UMNT_DETACHED || flag == FileSystems::UMNT_DETACHED_FORCED) {
         if ( (rc = mnt_context_enable_lazy(cxt, TRUE)) != 0 ) {
             TRACE(Trace::error, target, rc);
-            THROW(Error::LTFSDM_GENERAL_ERROR, target, rc);
+            THROW(Error::GENERAL_ERROR, target, rc);
         }
     }
 
     if ( flag == FileSystems::UMNT_FORCED || flag == FileSystems::UMNT_DETACHED_FORCED) {
         if ( (rc = mnt_context_enable_force(cxt, TRUE)) != 0 ) {
             TRACE(Trace::error, target, rc);
-            THROW(Error::LTFSDM_GENERAL_ERROR, target, rc);
+            THROW(Error::GENERAL_ERROR, target, rc);
         }
     }
 
     if ( (rc = mnt_context_set_fs(cxt, mntfs)) != 0 ) {
         TRACE(Trace::error, target, rc);
-        THROW(Error::LTFSDM_GENERAL_ERROR, target, rc);
+        THROW(Error::GENERAL_ERROR, target, rc);
     }
 
     if ( mnt_context_umount(cxt) == 0 )
@@ -239,8 +239,8 @@ void FileSystems::umount(std::string target, umountflag flag)
         err = mnt_context_get_syscall_errno(cxt);
         TRACE(Trace::error, target, rc, err);
         if ( err == EBUSY)
-            THROW(Error::LTFSDM_FS_BUSY, target, rc);
+            THROW(Error::FS_BUSY, target, rc);
         else
-            THROW(Error::LTFSDM_GENERAL_ERROR, target, rc);
+            THROW(Error::GENERAL_ERROR, target, rc);
     }
 }

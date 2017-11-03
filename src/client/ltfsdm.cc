@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
 {
     OpenLTFSCommand *openLTFSCommand = NULL;
     std::string command;
-    int rc = static_cast<int>(Error::LTFSDM_OK);
+    int rc = static_cast<int>(Error::OK);
     sigset_t set;
 
     sigemptyset(&set);
@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
     try {
         LTFSDM::init();
     } catch (const std::exception& e) {
-        rc = static_cast<int>(Error::LTFSDM_GENERAL_ERROR);
+        rc = static_cast<int>(Error::GENERAL_ERROR);
         goto cleanup;
     }
 
@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
     if (argc < 2) {
         openLTFSCommand = dynamic_cast<OpenLTFSCommand*>(new HelpCommand());
         openLTFSCommand->doCommand(argc, argv);
-        rc = static_cast<int>(Error::LTFSDM_GENERAL_ERROR);
+        rc = static_cast<int>(Error::GENERAL_ERROR);
         goto cleanup;
     }
 
@@ -116,7 +116,7 @@ int main(int argc, char *argv[])
         if (argc < 3) {
             MSG(LTFSDMC0011E);
             InfoCommand().printUsage();
-            rc = static_cast<int>(Error::LTFSDM_GENERAL_ERROR);
+            rc = static_cast<int>(Error::GENERAL_ERROR);
             goto cleanup;
         }
         argc--;
@@ -147,14 +147,14 @@ int main(int argc, char *argv[])
         } else {
             MSG(LTFSDMC0012E, command.c_str());
             openLTFSCommand = dynamic_cast<OpenLTFSCommand*>(new HelpCommand());
-            rc = static_cast<int>(Error::LTFSDM_GENERAL_ERROR);
+            rc = static_cast<int>(Error::GENERAL_ERROR);
             goto cleanup;
         }
     } else if (PoolCommand().compare(command)) {
         if (argc < 3) {
             MSG(LTFSDMC0074E);
             PoolCommand().printUsage();
-            rc = static_cast<int>(Error::LTFSDM_GENERAL_ERROR);
+            rc = static_cast<int>(Error::GENERAL_ERROR);
             goto cleanup;
         }
         argc--;
@@ -176,13 +176,13 @@ int main(int argc, char *argv[])
         } else {
             MSG(LTFSDMC0012E, command.c_str());
             openLTFSCommand = dynamic_cast<OpenLTFSCommand*>(new HelpCommand());
-            rc = static_cast<int>(Error::LTFSDM_GENERAL_ERROR);
+            rc = static_cast<int>(Error::GENERAL_ERROR);
             goto cleanup;
         }
     } else {
         MSG(LTFSDMC0005E, command.c_str());
         openLTFSCommand = dynamic_cast<OpenLTFSCommand*>(new HelpCommand());
-        rc = static_cast<int>(Error::LTFSDM_GENERAL_ERROR);
+        rc = static_cast<int>(Error::GENERAL_ERROR);
         goto cleanup;
     }
 

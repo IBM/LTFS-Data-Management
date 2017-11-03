@@ -90,7 +90,7 @@ FsObj::FsObj(std::string fileName) :
         if ( errno != ENODATA) {
             delete (fh);
             TRACE(Trace::error, errno);
-            THROW(Error::LTFSDM_GENERAL_ERROR, fileName, errno);
+            THROW(Error::GENERAL_ERROR, fileName, errno);
         }
         strncpy(fh->mountpoint, fileName.c_str(), PATH_MAX - 1);
         fh->fd = Const::UNSET;
@@ -101,14 +101,14 @@ FsObj::FsObj(std::string fileName) :
             if ((fh->fd = open(fileName.c_str(), O_RDONLY)) == -1) {
                 delete (fh);
                 TRACE(Trace::error, errno);
-                THROW(Error::LTFSDM_GENERAL_ERROR, fileName, errno);
+                THROW(Error::GENERAL_ERROR, fileName, errno);
             }
         } else {
             if ((fh->fd = openat(search->second->getRootFd(), fh->fusepath,
             O_RDWR)) == -1) {
                 delete (fh);
                 TRACE(Trace::error, errno);
-                THROW(Error::LTFSDM_GENERAL_ERROR, fileName, errno);
+                THROW(Error::GENERAL_ERROR, fileName, errno);
             }
         }
     }
@@ -174,7 +174,7 @@ void FsObj::manageFs(bool setDispo, struct timespec starttime,
     } catch (const std::exception& e) {
         TRACE(Trace::error, e.what());
         delete (FS);
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 
     std::unique_lock<std::mutex> lock(FuseConnector::mtx);
@@ -202,7 +202,7 @@ struct stat FsObj::stat()
         memset(&statbuf, 0, sizeof(statbuf));
         if (fstat(fh->fd, &statbuf) == -1) {
             TRACE(Trace::error, errno);
-            THROW(Error::LTFSDM_GENERAL_ERROR, errno, fh->fusepath);
+            THROW(Error::GENERAL_ERROR, errno, fh->fusepath);
         }
     }
 
@@ -221,11 +221,11 @@ fuid_t FsObj::getfuid()
 
     if (ioctl(fh->fd, FS_IOC_GETVERSION, &fuid.igen) == -1) {
         TRACE(Trace::error, errno);
-        THROW(Error::LTFSDM_GENERAL_ERROR, errno, fh->fusepath);
+        THROW(Error::GENERAL_ERROR, errno, fh->fusepath);
     }
     if (fstat(fh->fd, &statbuf) == -1) {
         TRACE(Trace::error, errno);
-        THROW(Error::LTFSDM_GENERAL_ERROR, errno, fh->fusepath);
+        THROW(Error::GENERAL_ERROR, errno, fh->fusepath);
     }
 
     fuid.inum = statbuf.st_ino;
@@ -249,7 +249,7 @@ void FsObj::lock()
                 FuseLock::lockexclusive);
     } catch (std::exception& e) {
         TRACE(Trace::error, errno);
-        THROW(Error::LTFSDM_GENERAL_ERROR, errno, fh->fusepath);
+        THROW(Error::GENERAL_ERROR, errno, fh->fusepath);
     }
 
     try {
@@ -257,7 +257,7 @@ void FsObj::lock()
     } catch (std::exception& e) {
         TRACE(Trace::error, errno);
         MSG(LTFSDMF0032E, fh->fd);
-        THROW(Error::LTFSDM_GENERAL_ERROR, errno, fh->fusepath);
+        THROW(Error::GENERAL_ERROR, errno, fh->fusepath);
     }
 }
 
@@ -271,7 +271,7 @@ bool FsObj::try_lock()
                 FuseLock::lockexclusive);
     } catch (std::exception& e) {
         TRACE(Trace::error, errno);
-        THROW(Error::LTFSDM_GENERAL_ERROR, errno, fh->fusepath);
+        THROW(Error::GENERAL_ERROR, errno, fh->fusepath);
     }
 
     try {
@@ -279,7 +279,7 @@ bool FsObj::try_lock()
     } catch (std::exception& e) {
         TRACE(Trace::error, errno);
         MSG(LTFSDMF0032E, fh->fd);
-        THROW(Error::LTFSDM_GENERAL_ERROR, errno, fh->fusepath);
+        THROW(Error::GENERAL_ERROR, errno, fh->fusepath);
     }
 }
 
@@ -307,7 +307,7 @@ long FsObj::read(long offset, unsigned long size, char *buffer)
 
     if (rsize == -1) {
         TRACE(Trace::error, errno);
-        THROW(Error::LTFSDM_GENERAL_ERROR, errno, fh->fusepath);
+        THROW(Error::GENERAL_ERROR, errno, fh->fusepath);
     }
 
     return rsize;
@@ -322,7 +322,7 @@ long FsObj::write(long offset, unsigned long size, char *buffer)
 
     if (wsize == -1) {
         TRACE(Trace::error, errno);
-        THROW(Error::LTFSDM_GENERAL_ERROR, errno, fh->fusepath);
+        THROW(Error::GENERAL_ERROR, errno, fh->fusepath);
     }
 
     return wsize;
@@ -336,7 +336,7 @@ void FsObj::addAttribute(mig_attr_t value)
     if (fsetxattr(fh->fd, Const::OPEN_LTFS_EA_MIGINFO_EXT.c_str(),
             (void *) &value, sizeof(value), 0) == -1) {
         TRACE(Trace::error, errno);
-        THROW(Error::LTFSDM_GENERAL_ERROR, errno, fh->fusepath);
+        THROW(Error::GENERAL_ERROR, errno, fh->fusepath);
     }
 }
 
@@ -349,14 +349,14 @@ void FsObj::remAttribute()
         TRACE(Trace::error, errno);
         MSG(LTFSDMF0018W, Const::OPEN_LTFS_EA_MIGINFO_EXT);
         if ( errno != ENODATA)
-            THROW(Error::LTFSDM_GENERAL_ERROR, errno, fh->fusepath);
+            THROW(Error::GENERAL_ERROR, errno, fh->fusepath);
     }
 
     if (fremovexattr(fh->fd, Const::OPEN_LTFS_EA_MIGINFO_INT.c_str()) == -1) {
         TRACE(Trace::error, errno);
         MSG(LTFSDMF0018W, Const::OPEN_LTFS_EA_MIGINFO_INT);
         if ( errno != ENODATA)
-            THROW(Error::LTFSDM_GENERAL_ERROR, errno, fh->fusepath);
+            THROW(Error::GENERAL_ERROR, errno, fh->fusepath);
     }
 }
 
@@ -371,7 +371,7 @@ FsObj::mig_attr_t FsObj::getAttribute()
             (void *) &value, sizeof(value)) == -1) {
         if ( errno != ENODATA) {
             TRACE(Trace::error, errno);
-            THROW(Error::LTFSDM_GENERAL_ERROR, errno, fh->fusepath);
+            THROW(Error::GENERAL_ERROR, errno, fh->fusepath);
         }
     }
 
@@ -465,14 +465,14 @@ void FsObj::stub()
 
     if (fstat(fh->fd, &statbuf) == -1) {
         TRACE(Trace::error, errno);
-        THROW(Error::LTFSDM_GENERAL_ERROR, errno, fh->fusepath);
+        THROW(Error::GENERAL_ERROR, errno, fh->fusepath);
     }
 
     if (ftruncate(fh->fd, 0) == -1) {
         TRACE(Trace::error, errno);
         MSG(LTFSDMF0016E, fh->fusepath);
         FuseFS::setMigInfoAt(fh->fd, FuseFS::mig_info::state_num::PREMIGRATED);
-        THROW(Error::LTFSDM_GENERAL_ERROR, errno, fh->fusepath);
+        THROW(Error::GENERAL_ERROR, errno, fh->fusepath);
     }
 
     if ((fd = open(spath.str().c_str(), O_RDONLY)) != -1) {

@@ -69,7 +69,7 @@ void Trace::init(std::string extension)
 
     if (fd == Const::UNSET) {
         MSG(LTFSDMX0001E, errno);
-        THROW(Error::LTFSDM_GENERAL_ERROR, errno);
+        THROW(Error::GENERAL_ERROR, errno);
     }
 }
 
@@ -84,15 +84,15 @@ void Trace::rotate()
 
     if (unlink((fileName + ".2").c_str()) == -1 && errno != ENOENT) {
         MSG(LTFSDMX0031E, errno);
-        THROW(Error::LTFSDM_GENERAL_ERROR, errno);
+        THROW(Error::GENERAL_ERROR, errno);
     } else if (rename((fileName + ".1").c_str(), (fileName + ".2").c_str())
             == -1 && errno != ENOENT) {
         MSG(LTFSDMX0031E, errno);
-        THROW(Error::LTFSDM_GENERAL_ERROR, errno);
+        THROW(Error::GENERAL_ERROR, errno);
     } else if (rename(fileName.c_str(), (fileName + ".1").c_str())
             == -1&& errno != ENOENT) {
         MSG(LTFSDMX0031E, errno);
-        THROW(Error::LTFSDM_GENERAL_ERROR, errno);
+        THROW(Error::GENERAL_ERROR, errno);
     }
 
     init("");

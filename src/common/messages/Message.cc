@@ -41,7 +41,7 @@ void Message::init(std::string extension)
 
     if (fd == Const::UNSET) {
         MSG(LTFSDMX0003E, errno);
-        THROW(Error::LTFSDM_GENERAL_ERROR, errno);
+        THROW(Error::GENERAL_ERROR, errno);
     }
 }
 
@@ -58,6 +58,6 @@ void Message::writeLog(std::string msgstr)
 {
     if (write(fd, msgstr.c_str(), msgstr.size()) != (long) msgstr.size()) {
         std::cerr << messages[LTFSDMX0004E];
-        exit((int) Error::LTFSDM_GENERAL_ERROR);
+        exit((int) Error::GENERAL_ERROR);
     }
 }

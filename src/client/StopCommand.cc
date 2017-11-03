@@ -32,14 +32,14 @@ void StopCommand::doCommand(int argc, char **argv)
 
     if (argc > 2) {
         printUsage();
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 
     try {
         connect();
     } catch (const std::exception& e) {
         MSG(LTFSDMC0026E);
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 
     TRACE(Trace::normal, requestNumber);
@@ -58,14 +58,14 @@ void StopCommand::doCommand(int argc, char **argv)
             commCommand.send();
         } catch (const std::exception& e) {
             MSG(LTFSDMC0027E);
-            THROW(Error::LTFSDM_GENERAL_ERROR);
+            THROW(Error::GENERAL_ERROR);
         }
 
         try {
             commCommand.recv();
         } catch (const std::exception& e) {
             MSG(LTFSDMC0028E);
-            THROW(Error::LTFSDM_GENERAL_ERROR);
+            THROW(Error::GENERAL_ERROR);
         }
 
         const LTFSDmProtocol::LTFSDmStopResp stopresp = commCommand.stopresp();
@@ -86,7 +86,7 @@ void StopCommand::doCommand(int argc, char **argv)
             == -1) {
         MSG(LTFSDMC0033E);
         TRACE(Trace::error, Const::SERVER_LOCK_FILE, errno);
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
     INFO(LTFSDMC0034I);
 

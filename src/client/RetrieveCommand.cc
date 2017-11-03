@@ -27,7 +27,7 @@ void RetrieveCommand::doCommand(int argc, char **argv)
 
     if (argc > 1) {
         printUsage();
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 
     try {
@@ -45,27 +45,27 @@ void RetrieveCommand::doCommand(int argc, char **argv)
         commCommand.send();
     } catch (const std::exception& e) {
         MSG(LTFSDMC0027E);
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 
     try {
         commCommand.recv();
     } catch (const std::exception& e) {
         MSG(LTFSDMC0028E);
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 
     const LTFSDmProtocol::LTFSDmRetrieveResp retrieveresp =
             commCommand.retrieveresp();
 
     switch (retrieveresp.error()) {
-        case static_cast<long>(Error::LTFSDM_DRIVE_BUSY):
+        case static_cast<long>(Error::DRIVE_BUSY):
             MSG(LTFSDMC0095I);
             break;
-        case static_cast<long>(Error::LTFSDM_OK):
+        case static_cast<long>(Error::OK):
             break;
         default:
             MSG(LTFSDMC0094E);
-            THROW(Error::LTFSDM_GENERAL_ERROR);
+            THROW(Error::GENERAL_ERROR);
     }
 }

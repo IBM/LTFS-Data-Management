@@ -87,7 +87,7 @@ FuseFS::mig_info FuseFS::genMigInfoAt(int fd, FuseFS::mig_info::state_num state)
 
     if (fstat(fd, &miginfo.statinfo)) {
         TRACE(Trace::error, errno);
-        THROW(Error::LTFSDM_GENERAL_ERROR, errno, fd);
+        THROW(Error::GENERAL_ERROR, errno, fd);
     }
 
     miginfo.state = state;
@@ -113,11 +113,11 @@ void FuseFS::setMigInfoAt(int fd, FuseFS::mig_info::state_num state)
     if ((size = fgetxattr(fd, Const::OPEN_LTFS_EA_MIGINFO_INT.c_str(),
             (void *) &miginfo, sizeof(miginfo))) == -1) {
         if ( errno != ENODATA) {
-            THROW(Error::LTFSDM_GENERAL_ERROR, errno, fd);
+            THROW(Error::GENERAL_ERROR, errno, fd);
         }
     } else if (size != sizeof(miginfo)) {
         errno = EIO;
-        THROW(Error::LTFSDM_GENERAL_ERROR, size, sizeof(miginfo), fd);
+        THROW(Error::GENERAL_ERROR, size, sizeof(miginfo), fd);
     }
 
     if (miginfo.state != FuseFS::mig_info::state_num::NO_STATE) {
@@ -128,7 +128,7 @@ void FuseFS::setMigInfoAt(int fd, FuseFS::mig_info::state_num state)
 
     if (fsetxattr(fd, Const::OPEN_LTFS_EA_MIGINFO_INT.c_str(),
             (void *) &miginfo_new, sizeof(miginfo_new), 0) == -1) {
-        THROW(Error::LTFSDM_GENERAL_ERROR, errno, fd);
+        THROW(Error::GENERAL_ERROR, errno, fd);
     }
 }
 
@@ -167,7 +167,7 @@ FuseFS::mig_info FuseFS::getMigInfoAt(int fd)
 
     if (size != sizeof(miginfo)) {
         errno = EIO;
-        THROW(Error::LTFSDM_GENERAL_ERROR, size, sizeof(miginfo), fd);
+        THROW(Error::GENERAL_ERROR, size, sizeof(miginfo), fd);
     }
 
     return miginfo;
@@ -1399,13 +1399,13 @@ void FuseFS::init(struct timespec starttime)
     catch ( const std::exception& e ) {
         TRACE(Trace::error, e.what());
         MSG(LTFSDMS0080E, mountpt);
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 
     memset(exepath, 0, PATH_MAX);
     if (readlink("/proc/self/exe", exepath, PATH_MAX - 1) == -1) {
         MSG(LTFSDMC0021E);
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 
     MSG(LTFSDMF0038I, mountpt);
@@ -1415,7 +1415,7 @@ void FuseFS::init(struct timespec starttime)
     } catch (const std::exception& e ) {
         TRACE(Trace::error, e.what());
         MSG(LTFSDMF0039E, mountpt);
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 
     stream << dirname(exepath) << "/" << Const::OVERLAY_FS_COMMAND << " -m "
@@ -1439,7 +1439,7 @@ void FuseFS::init(struct timespec starttime)
             thrd->join();
             delete(thrd);
             MSG(LTFSDMF0040E, errno);
-            THROW(Error::LTFSDM_GENERAL_ERROR);
+            THROW(Error::GENERAL_ERROR);
         } else if (ioctl(fd, FuseFS::LTFSDM_PREMOUNT) != -1) {
             break;
         } else if (count < 20) {
@@ -1452,7 +1452,7 @@ void FuseFS::init(struct timespec starttime)
             thrd->join();
             delete(thrd);
             MSG(LTFSDMF0040E, errno);
-            THROW(Error::LTFSDM_GENERAL_ERROR);
+            THROW(Error::GENERAL_ERROR);
         }
     }
 
@@ -1466,7 +1466,7 @@ void FuseFS::init(struct timespec starttime)
     } catch(const std::exception &e) {
         TRACE(Trace::error, e.what());
         MSG(LTFSDMF0037E, fs.source, e.what());
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
     init_status.CACHE_MOUNTED = true;
 
@@ -1474,13 +1474,13 @@ void FuseFS::init(struct timespec starttime)
     if ((rootFd = open((mountpt + Const::OPEN_LTFS_CACHE_MP).c_str(),
     O_RDONLY)) == -1) {
         MSG(LTFSDMF0047E, errno);
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 
     MSG(LTFSDMF0048I, mountpt);
     if (ioctl(fd, FuseFS::LTFSDM_POSTMOUNT) == -1) {
         MSG(LTFSDMF0049E, errno);
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
     init_status.ROOTFD_FUSE = true;
 
@@ -1490,7 +1490,7 @@ void FuseFS::init(struct timespec starttime)
     } catch (const std::exception& e ) {
         TRACE(Trace::error, e.what());
         MSG(LTFSDMF0051E, mountpt, errno);
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
     init_status.CACHE_MOUNTED = false;
 }
@@ -1534,7 +1534,7 @@ FuseFS::~FuseFS()
                 try {
                     fss.umount(mountpt, FileSystems::UMNT_NORMAL);
                 } catch (const OpenLTFSException& e) {
-                    if (e.getError() == Error::LTFSDM_FS_BUSY) {
+                    if (e.getError() == Error::FS_BUSY) {
                         MSG(LTFSDMF0003I, mountpt);
                         sleep(1);
                         continue;

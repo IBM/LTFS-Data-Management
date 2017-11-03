@@ -38,14 +38,14 @@ void getUUID(std::string fsName, uuid_t *uuid)
     if ( (rc = blkid_get_cache(&cache, NULL)) != 0 ) {
         TRACE(Trace::error, rc, errno);
         MSG(LTFSDMF0055E);
-        THROW(Error::LTFSDM_GENERAL_ERROR, errno);
+        THROW(Error::GENERAL_ERROR, errno);
     }
 
     if ( (uuidstr = blkid_get_tag_value(cache, "UUID", fsName.c_str())) == NULL ) {
         blkid_put_cache(cache);
         TRACE(Trace::error, errno);
         MSG(LTFSDMF0055E);
-        THROW(Error::LTFSDM_GENERAL_ERROR, errno);
+        THROW(Error::GENERAL_ERROR, errno);
     }
 
     if ( (rc = uuid_parse(uuidstr, *uuid)) != 0 ) {
@@ -53,7 +53,7 @@ void getUUID(std::string fsName, uuid_t *uuid)
         free(uuidstr);
         TRACE(Trace::error, rc, errno);
         MSG(LTFSDMF0055E);
-        THROW(Error::LTFSDM_GENERAL_ERROR, errno);
+        THROW(Error::GENERAL_ERROR, errno);
     }
 
     blkid_put_cache(cache);
@@ -83,50 +83,50 @@ int main(int argc, char **argv)
         switch (opt) {
             case 'm':
                 if (mountpt.compare("") != 0)
-                    return static_cast<int>(Error::LTFSDM_GENERAL_ERROR);
+                    return static_cast<int>(Error::GENERAL_ERROR);
                 mountpt = optarg;
                 break;
             case 'f':
                 if (fsName.compare("") != 0)
-                    return static_cast<int>(Error::LTFSDM_GENERAL_ERROR);
+                    return static_cast<int>(Error::GENERAL_ERROR);
                 fsName = optarg;
                 break;
             case 'S':
                 if (starttime.tv_sec != 0)
-                    return static_cast<int>(Error::LTFSDM_GENERAL_ERROR);
+                    return static_cast<int>(Error::GENERAL_ERROR);
                 starttime.tv_sec = std::stol(optarg, nullptr);
                 break;
             case 'N':
                 if (starttime.tv_nsec != 0)
-                    return static_cast<int>(Error::LTFSDM_GENERAL_ERROR);
+                    return static_cast<int>(Error::GENERAL_ERROR);
                 starttime.tv_nsec = std::stol(optarg, nullptr);
                 break;
             case 'l':
                 if (logTypeSet)
-                    return static_cast<int>(Error::LTFSDM_GENERAL_ERROR);
+                    return static_cast<int>(Error::GENERAL_ERROR);
                 logType = static_cast<Message::LogType>(std::stoi(optarg,
                         nullptr));
                 logTypeSet = true;
                 break;
             case 't':
                 if (traceLevelSet)
-                    return static_cast<int>(Error::LTFSDM_GENERAL_ERROR);
+                    return static_cast<int>(Error::GENERAL_ERROR);
                 tl = static_cast<Trace::traceLevel>(std::stoi(optarg, nullptr));
                 traceLevelSet = true;
                 break;
             case 'p':
                 if (mainpid)
-                    return static_cast<int>(Error::LTFSDM_GENERAL_ERROR);
+                    return static_cast<int>(Error::GENERAL_ERROR);
                 mainpid = static_cast<pid_t>(std::stoi(optarg, nullptr));
                 break;
             default:
-                return static_cast<int>(Error::LTFSDM_GENERAL_ERROR);
+                return static_cast<int>(Error::GENERAL_ERROR);
         }
     }
 
     if (optind != 15) {
         MSG(LTFSDMF0004E);
-        return static_cast<int>(Error::LTFSDM_GENERAL_ERROR);
+        return static_cast<int>(Error::GENERAL_ERROR);
     }
 
     std::string mp = mountpt;
@@ -140,14 +140,14 @@ int main(int argc, char **argv)
         traceObject.init(mp);
         traceObject.setTrclevel(tl);
     } catch (const std::exception& e) {
-        exit((int) Error::LTFSDM_GENERAL_ERROR);
+        exit((int) Error::GENERAL_ERROR);
     }
 
     try {
         getUUID(fsName, &uuid);
     }
     catch ( const std::exception& e ) {
-        exit((int) Error::LTFSDM_GENERAL_ERROR);
+        exit((int) Error::GENERAL_ERROR);
     }
 
     MSG(LTFSDMF0001I, mountpt + Const::OPEN_LTFS_CACHE_MP, mountpt);

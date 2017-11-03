@@ -144,7 +144,7 @@ unsigned long SelRecall::recall(std::string fileName, std::string tapeId,
             if (fd == -1) {
                 TRACE(Trace::error, errno);
                 MSG(LTFSDMS0021E, tapeName.c_str());
-                THROW(Error::LTFSDM_GENERAL_ERROR, tapeName, errno);
+                THROW(Error::GENERAL_ERROR, tapeName, errno);
             }
 
             statbuf = target.stat();
@@ -160,7 +160,7 @@ unsigned long SelRecall::recall(std::string fileName, std::string tapeId,
 
             while (offset < statbuf.st_size) {
                 if (Server::forcedTerminate)
-                    THROW(Error::LTFSDM_OK);
+                    THROW(Error::OK);
 
                 rsize = read(fd, buffer, sizeof(buffer));
                 if (rsize == 0) {
@@ -170,14 +170,14 @@ unsigned long SelRecall::recall(std::string fileName, std::string tapeId,
                 if (rsize == -1) {
                     TRACE(Trace::error, errno);
                     MSG(LTFSDMS0023E, tapeName.c_str());
-                    THROW(Error::LTFSDM_GENERAL_ERROR, fileName, errno);
+                    THROW(Error::GENERAL_ERROR, fileName, errno);
                 }
                 wsize = target.write(offset, (unsigned long) rsize, buffer);
                 if (wsize != rsize) {
                     TRACE(Trace::error, errno, wsize, rsize);
                     MSG(LTFSDMS0027E, fileName.c_str());
                     close(fd);
-                    THROW(Error::LTFSDM_GENERAL_ERROR, fileName, wsize, rsize);
+                    THROW(Error::GENERAL_ERROR, fileName, wsize, rsize);
                 }
                 offset += rsize;
             }
@@ -192,7 +192,7 @@ unsigned long SelRecall::recall(std::string fileName, std::string tapeId,
         if (fd != -1)
             close(fd);
         TRACE(Trace::error, e.what());
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 
     return statbuf.st_size;
@@ -267,7 +267,7 @@ bool needsTape)
         try {
             if ((state == FsObj::MIGRATED) && (needsTape == false)) {
                 MSG(LTFSDMS0047E, fileName);
-                THROW(Error::LTFSDM_GENERAL_ERROR, fileName);
+                THROW(Error::GENERAL_ERROR, fileName);
             }
             recall(fileName, tapeId, state, toState);
             inumList.push_back(inum);

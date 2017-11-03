@@ -45,7 +45,7 @@ void StartCommand::determineServerPath()
     memset(exepath, 0, PATH_MAX);
     if (readlink("/proc/self/exe", exepath, PATH_MAX - 1) == -1) {
         MSG(LTFSDMC0021E);
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 
     serverPath << dirname(exepath) << "/" << Const::SERVER_COMMAND;
@@ -67,7 +67,7 @@ void StartCommand::startServer()
     if (stat(serverPath.str().c_str(), &statbuf) == -1) {
         MSG(LTFSDMC0021E);
         TRACE(Trace::error, serverPath.str(), errno);
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 
     MSG(LTFSDMC0099I);
@@ -77,7 +77,7 @@ void StartCommand::startServer()
     if (!ltfsdmd) {
         MSG(LTFSDMC0022E);
         TRACE(Trace::error, errno);
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 
     while (fgets(line, sizeof(line), ltfsdmd)) {
@@ -89,7 +89,7 @@ void StartCommand::startServer()
     if (!WIFEXITED(ret) || WEXITSTATUS(ret)) {
         MSG(LTFSDMC0022E);
         TRACE(Trace::error, ret, WIFEXITED(ret), WEXITSTATUS(ret));
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 
     sleep(1);
@@ -123,14 +123,14 @@ void StartCommand::startServer()
         commCommand.send();
     } catch (const std::exception& e) {
         MSG(LTFSDMC0027E);
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 
     try {
         commCommand.recv();
     } catch (const std::exception& e) {
         MSG(LTFSDMC0098E);
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 
     const LTFSDmProtocol::LTFSDmStatusResp statusresp =
@@ -141,7 +141,7 @@ void StartCommand::startServer()
         MSG(LTFSDMC0097I, pid);
     } else {
         MSG(LTFSDMC0098E);
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 
 }
@@ -151,7 +151,7 @@ void StartCommand::doCommand(int argc, char **argv)
 {
     if (argc > 1) {
         printUsage();
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 
     determineServerPath();

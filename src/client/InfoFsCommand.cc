@@ -46,7 +46,7 @@ void InfoFsCommand::doCommand(int argc, char **argv)
 
     if (argc > 1) {
         printUsage();
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 
 
@@ -59,17 +59,17 @@ void InfoFsCommand::doCommand(int argc, char **argv)
                     INFO(LTFSDMC0057I, fs.target);
                 }
             } catch (const OpenLTFSException& e) {
-                if (e.getError() == Error::LTFSDM_FS_CHECK_ERROR) {
+                if (e.getError() == Error::FS_CHECK_ERROR) {
                         MSG(LTFSDMC0058E, fs.target);
                         break;
                 }
             } catch (const std::exception& e) {
                 TRACE(Trace::error, e.what());
-                THROW(Error::LTFSDM_GENERAL_ERROR);
+                THROW(Error::GENERAL_ERROR);
             }
         }
     } catch (const std::exception& e) {
         TRACE(Trace::error, e.what());
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 }
