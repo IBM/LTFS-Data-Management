@@ -7,10 +7,10 @@
 #include <sstream>
 #include <vector>
 
+#include "src/common/errors/errors.h"
 #include "src/common/exception/OpenLTFSException.h"
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
-#include "src/common/errors/errors.h"
 #include "src/common/const/Const.h"
 
 #include "FileSystems.h"
@@ -24,7 +24,7 @@ FileSystems::FileSystems() : first(true), tb(NULL)
 
     if ( (rc = blkid_get_cache(&cache, NULL)) != 0 ) {
         TRACE(Trace::error, rc, errno);
-        THROW(errno, rc, errno);
+        THROW(Error::LTFSDM_GENERAL_ERROR, rc, errno);
     }
 }
 
@@ -43,7 +43,7 @@ void FileSystems::getTable()
     if ( (rc = mnt_context_get_mtab(cxt, &tb)) != 0 ) {
         blkid_put_cache(cache);
         TRACE(Trace::error, rc, errno);
-        THROW(errno, rc, errno);
+        THROW(Error::LTFSDM_GENERAL_ERROR, rc, errno);
     }
 }
 
@@ -98,7 +98,7 @@ std::vector<FileSystems::fsinfo> FileSystems::getAll()
 
     if ( (itr = mnt_new_iter(MNT_ITER_BACKWARD)) == NULL ) {
         TRACE(Trace::error, errno);
-        THROW(errno, errno);
+        THROW(Error::LTFSDM_GENERAL_ERROR, errno);
     }
 
 

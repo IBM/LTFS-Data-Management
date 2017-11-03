@@ -6,10 +6,10 @@
 #include <list>
 #include <exception>
 
+#include "src/common/errors/errors.h"
 #include "src/common/exception/OpenLTFSException.h"
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
-#include "src/common/errors/errors.h"
 
 #include "src/common/comm/ltfsdm.pb.h"
 #include "src/common/comm/LTFSDmComm.h"
@@ -62,7 +62,7 @@ void MigrationCommand::talkToBackend(std::stringstream *parmList)
             commCommand.migrequestresp();
 
     switch (migreqresp.error()) {
-        case Error::LTFSDM_OK:
+        case static_cast<long>(Error::LTFSDM_OK):
             if (getpid() != migreqresp.pid()) {
                 MSG(LTFSDMC0036E);
                 TRACE(Trace::error, getpid(), migreqresp.pid());
@@ -74,15 +74,15 @@ void MigrationCommand::talkToBackend(std::stringstream *parmList)
                 THROW(Error::LTFSDM_GENERAL_ERROR);
             }
             break;
-        case Error::LTFSDM_WRONG_POOLNUM:
+        case static_cast<long>(Error::LTFSDM_WRONG_POOLNUM):
             MSG(LTFSDMS0063E);
             THROW(Error::LTFSDM_GENERAL_ERROR);
             break;
-        case Error::LTFSDM_NOT_ALL_POOLS_EXIST:
+        case static_cast<long>(Error::LTFSDM_NOT_ALL_POOLS_EXIST):
             MSG(LTFSDMS0064E);
             THROW(Error::LTFSDM_GENERAL_ERROR);
             break;
-        case Error::LTFSDM_TERMINATING:
+        case static_cast<long>(Error::LTFSDM_TERMINATING):
             MSG(LTFSDMC0101I);
             THROW(Error::LTFSDM_GENERAL_ERROR);
             break;

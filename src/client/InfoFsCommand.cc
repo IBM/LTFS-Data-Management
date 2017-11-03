@@ -13,12 +13,12 @@
 #include <sstream>
 #include <exception>
 
+#include "src/common/errors/errors.h"
 #include "src/common/exception/OpenLTFSException.h"
 #include "src/common/util/util.h"
 #include "src/common/util/FileSystems.h"
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
-#include "src/common/errors/errors.h"
 
 #include "src/common/comm/ltfsdm.pb.h"
 #include "src/common/comm/LTFSDmComm.h"
@@ -59,8 +59,7 @@ void InfoFsCommand::doCommand(int argc, char **argv)
                     INFO(LTFSDMC0057I, fs.target);
                 }
             } catch (const OpenLTFSException& e) {
-                switch (e.getError()) {
-                    case Error::LTFSDM_FS_CHECK_ERROR:
+                if (e.getError() == Error::LTFSDM_FS_CHECK_ERROR) {
                         MSG(LTFSDMC0058E, fs.target);
                         break;
                 }

@@ -6,6 +6,7 @@
 #include <dirent.h>
 #include <mntent.h>
 #include <sys/resource.h>
+#include <errno.h>
 
 #include <string>
 #include <fstream>
@@ -14,10 +15,10 @@
 #include <sstream>
 #include <exception>
 
+#include "src/common/errors/errors.h"
 #include "src/common/exception/OpenLTFSException.h"
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
-#include "src/common/errors/errors.h"
 #include "src/common/const/Const.h"
 
 #include "util.h"
@@ -31,12 +32,12 @@ void mkTmpDir()
         if (mkdir(Const::LTFSDM_TMP_DIR.c_str(), 0700) != 0) {
             std::cerr << messages[LTFSDMX0006E] << Const::LTFSDM_TMP_DIR
                     << std::endl;
-            THROW(Const::UNSET);
+            THROW(Error::LTFSDM_GENERAL_ERROR);
         }
     } else if (!S_ISDIR(statbuf.st_mode)) {
         std::cerr << Const::LTFSDM_TMP_DIR << messages[LTFSDMX0007E]
                 << std::endl;
-        THROW(Const::UNSET);
+        THROW(Error::LTFSDM_GENERAL_ERROR);
     }
 }
 

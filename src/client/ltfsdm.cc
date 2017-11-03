@@ -8,11 +8,11 @@
 #include <thread>
 #include <exception>
 
+#include "src/common/errors/errors.h"
 #include "src/common/exception/OpenLTFSException.h"
 #include "src/common/util/util.h"
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
-#include "src/common/errors/errors.h"
 
 #include "src/common/comm/ltfsdm.pb.h"
 #include "src/common/comm/LTFSDmComm.h"
@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
 {
     OpenLTFSCommand *openLTFSCommand = NULL;
     std::string command;
-    int rc = Error::LTFSDM_OK;
+    int rc = static_cast<int>(Error::LTFSDM_OK);
     sigset_t set;
 
     sigemptyset(&set);
@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
     try {
         LTFSDM::init();
     } catch (const std::exception& e) {
-        rc = Error::LTFSDM_GENERAL_ERROR;
+        rc = static_cast<int>(Error::LTFSDM_GENERAL_ERROR);
         goto cleanup;
     }
 
@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
     if (argc < 2) {
         openLTFSCommand = dynamic_cast<OpenLTFSCommand*>(new HelpCommand());
         openLTFSCommand->doCommand(argc, argv);
-        rc = Error::LTFSDM_GENERAL_ERROR;
+        rc = static_cast<int>(Error::LTFSDM_GENERAL_ERROR);
         goto cleanup;
     }
 
@@ -116,7 +116,7 @@ int main(int argc, char *argv[])
         if (argc < 3) {
             MSG(LTFSDMC0011E);
             InfoCommand().printUsage();
-            rc = Error::LTFSDM_GENERAL_ERROR;
+            rc = static_cast<int>(Error::LTFSDM_GENERAL_ERROR);
             goto cleanup;
         }
         argc--;
@@ -147,14 +147,14 @@ int main(int argc, char *argv[])
         } else {
             MSG(LTFSDMC0012E, command.c_str());
             openLTFSCommand = dynamic_cast<OpenLTFSCommand*>(new HelpCommand());
-            rc = Error::LTFSDM_GENERAL_ERROR;
+            rc = static_cast<int>(Error::LTFSDM_GENERAL_ERROR);
             goto cleanup;
         }
     } else if (PoolCommand().compare(command)) {
         if (argc < 3) {
             MSG(LTFSDMC0074E);
             PoolCommand().printUsage();
-            rc = Error::LTFSDM_GENERAL_ERROR;
+            rc = static_cast<int>(Error::LTFSDM_GENERAL_ERROR);
             goto cleanup;
         }
         argc--;
@@ -176,13 +176,13 @@ int main(int argc, char *argv[])
         } else {
             MSG(LTFSDMC0012E, command.c_str());
             openLTFSCommand = dynamic_cast<OpenLTFSCommand*>(new HelpCommand());
-            rc = Error::LTFSDM_GENERAL_ERROR;
+            rc = static_cast<int>(Error::LTFSDM_GENERAL_ERROR);
             goto cleanup;
         }
     } else {
         MSG(LTFSDMC0005E, command.c_str());
         openLTFSCommand = dynamic_cast<OpenLTFSCommand*>(new HelpCommand());
-        rc = Error::LTFSDM_GENERAL_ERROR;
+        rc = static_cast<int>(Error::LTFSDM_GENERAL_ERROR);
         goto cleanup;
     }
 
@@ -198,7 +198,7 @@ int main(int argc, char *argv[])
     try {
         openLTFSCommand->doCommand(argc, argv);
     } catch (const OpenLTFSException& e) {
-        rc = e.getError();
+        rc = static_cast<int>(e.getError());
     } catch (const std::exception& e) {
     }
 

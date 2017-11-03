@@ -433,18 +433,18 @@ int LEControl::SyncCartridge(std::shared_ptr<Cartridge> cartridge)
 }
 
 const std::unordered_map<std::string, int> LEControl::format_errors_ = {
-	{ std::string("LTFSI1136E"), -Error::LTFSDM_ALREADY_FORMATTED },
-	{ std::string("LTFSI1125E"), -Error::LTFSDM_WRITE_PROTECTED },
-	{ std::string("LTFSI1079E"), -Error::LTFSDM_TAPE_STATE_ERR },
-	{ std::string("LTFSI1080E"), -Error::LTFSDM_TAPE_STATE_ERR },
-	{ std::string("LTFSI1081E"), -Error::LTFSDM_TAPE_STATE_ERR },
-	{ std::string("LTFSI1082E"), -Error::LTFSDM_INACCESSIBLE },
-	{ std::string("LTFSI1083E"), -Error::LTFSDM_TAPE_STATE_ERR },
-	{ std::string("LTFSI1084E"), -Error::LTFSDM_TAPE_STATE_ERR },
-	{ std::string("LTFSI1085E"), -Error::LTFSDM_TAPE_STATE_ERR },
-	{ std::string("LTFSI1086E"), -Error::LTFSDM_TAPE_STATE_ERR },
-	{ std::string("LTFSI1087E"), -Error::LTFSDM_TAPE_STATE_ERR },
-	{ std::string("LTFSI1088E"), -Error::LTFSDM_TAPE_STATE_ERR }};
+	{ std::string("LTFSI1136E"), -static_cast<int>(Error::LTFSDM_ALREADY_FORMATTED) },
+	{ std::string("LTFSI1125E"), -static_cast<int>(Error::LTFSDM_WRITE_PROTECTED) },
+	{ std::string("LTFSI1079E"), -static_cast<int>(Error::LTFSDM_TAPE_STATE_ERR) },
+	{ std::string("LTFSI1080E"), -static_cast<int>(Error::LTFSDM_TAPE_STATE_ERR) },
+	{ std::string("LTFSI1081E"), -static_cast<int>(Error::LTFSDM_TAPE_STATE_ERR) },
+	{ std::string("LTFSI1082E"), -static_cast<int>(Error::LTFSDM_INACCESSIBLE) },
+	{ std::string("LTFSI1083E"), -static_cast<int>(Error::LTFSDM_TAPE_STATE_ERR) },
+	{ std::string("LTFSI1084E"), -static_cast<int>(Error::LTFSDM_TAPE_STATE_ERR) },
+	{ std::string("LTFSI1085E"), -static_cast<int>(Error::LTFSDM_TAPE_STATE_ERR) },
+	{ std::string("LTFSI1086E"), -static_cast<int>(Error::LTFSDM_TAPE_STATE_ERR) },
+	{ std::string("LTFSI1087E"), -static_cast<int>(Error::LTFSDM_TAPE_STATE_ERR) },
+	{ std::string("LTFSI1088E"), -static_cast<int>(Error::LTFSDM_TAPE_STATE_ERR) }};
 
 
 int LEControl::FormatCartridge(std::shared_ptr<Cartridge> cartridge, std::string drive_serial, uint8_t density_code, bool force)
@@ -480,7 +480,7 @@ int LEControl::FormatCartridge(std::shared_ptr<Cartridge> cartridge, std::string
 			rc = cartridge->Format(drive_serial, actual_density, force);
 			MSG(LTFSDML0725I, type.c_str(), drive_serial.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd());
 		} catch (AdminLibException& e) {
-			int err = Error::LTFSDM_GENERAL_ERROR;
+			int err = static_cast<int>(Error::LTFSDM_GENERAL_ERROR);
 			std::unordered_map<std::string, int>::const_iterator it;
 			std::string msg_oob = e.GetOOBError();
 

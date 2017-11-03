@@ -193,7 +193,7 @@ void TransRecall::run(Connector *connector)
             if (e.getError() == Error::LTFSDM_ATTR_FORMAT)
                 MSG(LTFSDMS0037W, recinfo.fuid.inum);
             else
-                MSG(LTFSDMS0038W, recinfo.fuid.inum, e.getError());
+                MSG(LTFSDMS0038W, recinfo.fuid.inum, e.getErrno());
             connector->respondRecallEvent(recinfo, false);
             continue;
         } catch (const std::exception& e) {
@@ -262,7 +262,7 @@ unsigned long TransRecall::recall(Connector::rec_info_t recinfo,
             if (fd == -1) {
                 TRACE(Trace::error, errno);
                 MSG(LTFSDMS0021E, tapeName.c_str());
-                THROW(Const::UNSET, tapeName, errno);
+                THROW(Error::LTFSDM_GENERAL_ERROR, tapeName, errno);
             }
 
             statbuf = target.stat();
@@ -281,7 +281,7 @@ unsigned long TransRecall::recall(Connector::rec_info_t recinfo,
 
             while (offset < statbuf.st_size) {
                 if (Server::forcedTerminate)
-                    THROW(Const::UNSET, tapeName);
+                    THROW(Error::LTFSDM_GENERAL_ERROR, tapeName);
 
                 rsize = read(fd, buffer, sizeof(buffer));
                 if (rsize == 0) {
@@ -290,14 +290,14 @@ unsigned long TransRecall::recall(Connector::rec_info_t recinfo,
                 if (rsize == -1) {
                     TRACE(Trace::error, errno);
                     MSG(LTFSDMS0023E, tapeName.c_str());
-                    THROW(Const::UNSET, tapeName, errno);
+                    THROW(Error::LTFSDM_GENERAL_ERROR, tapeName, errno);
                 }
                 wsize = target.write(offset, (unsigned long) rsize, buffer);
                 if (wsize != rsize) {
                     TRACE(Trace::error, errno, wsize, rsize);
                     MSG(LTFSDMS0033E, recinfo.fuid.inum);
                     close(fd);
-                    THROW(Const::UNSET, recinfo.fuid.inum, wsize, rsize);
+                    THROW(Error::LTFSDM_GENERAL_ERROR, recinfo.fuid.inum, wsize, rsize);
                 }
                 offset += rsize;
             }
@@ -312,7 +312,7 @@ unsigned long TransRecall::recall(Connector::rec_info_t recinfo,
         TRACE(Trace::error, e.what());
         if (fd != -1)
             close(fd);
-        THROW(Const::UNSET);
+        THROW(Error::LTFSDM_GENERAL_ERROR);
     }
 
     return statbuf.st_size;

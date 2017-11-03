@@ -195,7 +195,7 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId,
         if (fd == -1) {
             TRACE(Trace::error, errno);
             MSG(LTFSDMS0021E, tapeName.c_str());
-            THROW(Const::UNSET, tapeName, errno);
+            THROW(Error::LTFSDM_GENERAL_ERROR, tapeName, errno);
         }
 
         std::unique_lock<FsObj> fsolock(source);
@@ -207,14 +207,14 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId,
         if (stat(mig_info.fileName.c_str(), &statbuf) == -1) {
             TRACE(Trace::error, errno);
             MSG(LTFSDMS0040E, mig_info.fileName);
-            THROW(Const::UNSET, mig_info.fileName, errno);
+            THROW(Error::LTFSDM_GENERAL_ERROR, mig_info.fileName, errno);
         }
         if (statbuf.st_mtim.tv_sec != secs
                 || statbuf.st_mtim.tv_nsec != nsecs) {
             TRACE(Trace::error, statbuf.st_mtim.tv_sec, secs,
                     statbuf.st_mtim.tv_nsec, nsecs);
             MSG(LTFSDMS0041W, mig_info.fileName);
-            THROW(Const::UNSET, mig_info.fileName);
+            THROW(Error::LTFSDM_GENERAL_ERROR, mig_info.fileName);
         }
 
         {
@@ -240,7 +240,7 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId,
                 if (rsize == -1) {
                     TRACE(Trace::error, errno);
                     MSG(LTFSDMS0023E, mig_info.fileName);
-                    THROW(errno, errno, mig_info.fileName);
+                    THROW(Error::LTFSDM_GENERAL_ERROR, errno, mig_info.fileName);
                 }
 
                 wsize = write(fd, buffer, rsize);
@@ -248,14 +248,14 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId,
                 if (wsize != rsize) {
                     TRACE(Trace::error, errno, wsize, rsize);
                     MSG(LTFSDMS0022E, tapeName.c_str());
-                    THROW(Const::UNSET, mig_info.fileName, wsize, rsize);
+                    THROW(Error::LTFSDM_GENERAL_ERROR, mig_info.fileName, wsize, rsize);
                 }
 
                 offset += rsize;
                 if (stat(mig_info.fileName.c_str(), &statbuf_changed) == -1) {
                     TRACE(Trace::error, errno);
                     MSG(LTFSDMS0040E, mig_info.fileName);
-                    THROW(Const::UNSET, mig_info.fileName, errno);
+                    THROW(Error::LTFSDM_GENERAL_ERROR, mig_info.fileName, errno);
                 }
 
                 if (statbuf_changed.st_mtim.tv_sec != secs
@@ -263,7 +263,7 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId,
                     TRACE(Trace::error, statbuf_changed.st_mtim.tv_sec, secs,
                             statbuf_changed.st_mtim.tv_nsec, nsecs);
                     MSG(LTFSDMS0041W, mig_info.fileName);
-                    THROW(Const::UNSET, mig_info.fileName);
+                    THROW(Error::LTFSDM_GENERAL_ERROR, mig_info.fileName);
                 }
             }
         }
@@ -272,7 +272,7 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId,
                 mig_info.fileName.length(), 0) == -1) {
             TRACE(Trace::error, errno);
             MSG(LTFSDMS0025E, Const::LTFS_ATTR, tapeName);
-            THROW(Const::UNSET, mig_info.fileName, errno);
+            THROW(Error::LTFSDM_GENERAL_ERROR, mig_info.fileName, errno);
         }
 
         Server::createLink(tapeId, mig_info.fileName, tapeName);

@@ -6,10 +6,10 @@
 #include <sstream>
 #include <exception>
 
+#include "src/common/errors/errors.h"
 #include "src/common/exception/OpenLTFSException.h"
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
-#include "src/common/errors/errors.h"
 
 #include "src/common/comm/ltfsdm.pb.h"
 #include "src/common/comm/LTFSDmComm.h"
@@ -62,7 +62,7 @@ void RecallCommand::talkToBackend(std::stringstream *parmList)
             commCommand.selrecrequestresp();
 
     switch (recreqresp.error()) {
-        case Error::LTFSDM_OK:
+        case static_cast<long>(Error::LTFSDM_OK):
             if (getpid() != recreqresp.pid()) {
                 MSG(LTFSDMC0036E);
                 TRACE(Trace::error, getpid(), recreqresp.pid());
@@ -74,7 +74,7 @@ void RecallCommand::talkToBackend(std::stringstream *parmList)
                 THROW(Error::LTFSDM_GENERAL_ERROR);
             }
             break;
-        case Error::LTFSDM_TERMINATING:
+        case static_cast<long>(Error::LTFSDM_TERMINATING):
             MSG(LTFSDMC0101I);
             THROW(Error::LTFSDM_GENERAL_ERROR);
             break;

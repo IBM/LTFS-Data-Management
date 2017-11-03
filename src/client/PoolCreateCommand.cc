@@ -10,11 +10,11 @@
 #include <sstream>
 #include <exception>
 
+#include "src/common/errors/errors.h"
 #include "src/common/exception/OpenLTFSException.h"
 #include "src/common/util/util.h"
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
-#include "src/common/errors/errors.h"
 
 #include "src/common/comm/ltfsdm.pb.h"
 #include "src/common/comm/LTFSDmComm.h"
@@ -80,10 +80,10 @@ void PoolCreateCommand::doCommand(int argc, char **argv)
     const LTFSDmProtocol::LTFSDmPoolResp poolresp = commCommand.poolresp();
 
     switch (poolresp.response()) {
-        case Error::LTFSDM_OK:
+        case static_cast<long>(Error::LTFSDM_OK):
             INFO(LTFSDMC0079I, poolNames);
             break;
-        case Error::LTFSDM_POOL_EXISTS:
+        case static_cast<long>(Error::LTFSDM_POOL_EXISTS):
             MSG(LTFSDMX0023E, poolNames);
             break;
         default:

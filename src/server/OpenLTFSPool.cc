@@ -7,7 +7,7 @@ OpenLTFSPool::OpenLTFSPool(std::string _poolName)
 
     if (_poolName.compare("") == 0) {
         MSG(LTFSDMX0020E);
-        THROW(Const::UNSET, _poolName);
+        THROW(Error::LTFSDM_GENERAL_ERROR, _poolName);
     }
 
     poolName = _poolName;

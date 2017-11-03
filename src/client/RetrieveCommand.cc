@@ -5,10 +5,10 @@
 #include <sstream>
 #include <exception>
 
+#include "src/common/errors/errors.h"
 #include "src/common/exception/OpenLTFSException.h"
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
-#include "src/common/errors/errors.h"
 
 #include "src/common/comm/ltfsdm.pb.h"
 #include "src/common/comm/LTFSDmComm.h"
@@ -59,10 +59,10 @@ void RetrieveCommand::doCommand(int argc, char **argv)
             commCommand.retrieveresp();
 
     switch (retrieveresp.error()) {
-        case Error::LTFSDM_DRIVE_BUSY:
+        case static_cast<long>(Error::LTFSDM_DRIVE_BUSY):
             MSG(LTFSDMC0095I);
             break;
-        case Error::LTFSDM_OK:
+        case static_cast<long>(Error::LTFSDM_OK):
             break;
         default:
             MSG(LTFSDMC0094E);

@@ -9,9 +9,9 @@
 #include <string>
 #include <mutex>
 
+#include "src/common/errors/errors.h"
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
-#include "src/common/errors/errors.h"
 #include "src/common/const/Const.h"
 
 #include "src/connector/fuse/FuseLock.h"
@@ -30,7 +30,7 @@ FuseLock::FuseLock(std::string identifier, FuseLock::lockType _type,
 
     if ((fd = open(id.c_str(), O_RDONLY)) == -1) {
         TRACE(Trace::error, id, errno);
-        THROW(errno, id, errno);
+        THROW(Error::LTFSDM_GENERAL_ERROR, id, errno);
     }
 }
 
@@ -47,7 +47,7 @@ void FuseLock::lock()
     if (flock(fd, (operation == FuseLock::lockshared ? LOCK_SH : LOCK_EX))
             == -1) {
         TRACE(Trace::error, id, errno);
-        THROW(errno, id, errno);
+        THROW(Error::LTFSDM_GENERAL_ERROR, id, errno);
     }
 }
 
@@ -60,7 +60,7 @@ bool FuseLock::try_lock()
         if ( errno == EWOULDBLOCK)
             return false;
         TRACE(Trace::error, id, errno);
-        THROW(errno, id, errno);
+        THROW(Error::LTFSDM_GENERAL_ERROR, id, errno);
     }
 
     return true;
@@ -71,6 +71,6 @@ void FuseLock::unlock()
 {
     if (flock(fd, LOCK_UN) == -1) {
         TRACE(Trace::error, id, errno);
-        THROW(errno, id, errno);
+        THROW(Error::LTFSDM_GENERAL_ERROR, id, errno);
     }
 }

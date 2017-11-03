@@ -56,7 +56,7 @@ void OpenLTFSInventory::inventorize()
     if (rc == -1 || drvs.size() == 0) {
         MSG(LTFSDMS0051E);
         LEControl::Disconnect(sess);
-        THROW(Const::UNSET);
+        THROW(Error::LTFSDM_GENERAL_ERROR);
     }
 
     for (std::shared_ptr<Drive> i : drvs) {
@@ -70,7 +70,7 @@ void OpenLTFSInventory::inventorize()
     if (rc == -1 || crts.size() == 0) {
         MSG(LTFSDMS0053E);
         LEControl::Disconnect(sess);
-        THROW(Const::UNSET);
+        THROW(Error::LTFSDM_GENERAL_ERROR);
     }
 
     for (std::shared_ptr<Cartridge> c : crts) {
@@ -108,7 +108,7 @@ void OpenLTFSInventory::inventorize()
         } catch (const std::exception& e) {
             TRACE(Trace::error, e.what());
             MSG(LTFSDMS0061E, poolName);
-            THROW(Const::UNSET);
+            THROW(Error::LTFSDM_GENERAL_ERROR);
         }
     }
 
@@ -147,12 +147,12 @@ OpenLTFSInventory::OpenLTFSInventory()
     } catch (const std::exception& e) {
         TRACE(Trace::error, e.what());
         MSG(LTFSDMS0072E);
-        THROW(Const::UNSET);
+        THROW(Error::LTFSDM_GENERAL_ERROR);
     }
 
     if (sess == nullptr) {
         MSG(LTFSDMS0072E);
-        THROW(Const::UNSET);
+        THROW(Error::LTFSDM_GENERAL_ERROR);
     }
 
     try {
@@ -160,7 +160,7 @@ OpenLTFSInventory::OpenLTFSInventory()
     } catch (const std::exception& e) {
         TRACE(Trace::error, e.what());
         MSG(LTFSDMS0072E);
-        THROW(Const::UNSET);
+        THROW(Error::LTFSDM_GENERAL_ERROR);
     }
 
     try {
@@ -168,19 +168,19 @@ OpenLTFSInventory::OpenLTFSInventory()
     } catch (const std::exception& e) {
         TRACE(Trace::error, e.what());
         MSG(LTFSDMS0072E);
-        THROW(Const::UNSET);
+        THROW(Error::LTFSDM_GENERAL_ERROR);
     }
 
     TRACE(Trace::always, mountPoint);
 
     if (stat(mountPoint.c_str(), &statbuf) == -1) {
         MSG(LTFSDMS0072E);
-        THROW(Const::UNSET, errno);
+        THROW(Error::LTFSDM_GENERAL_ERROR, errno);
     }
 
     if (nodeInfo == nullptr) {
         MSG(LTFSDMS0072E);
-        THROW(Const::UNSET);
+        THROW(Error::LTFSDM_GENERAL_ERROR);
     }
 
     try {
@@ -189,7 +189,7 @@ OpenLTFSInventory::OpenLTFSInventory()
     } catch (const std::exception& e) {
         TRACE(Trace::error, e.what());
         LEControl::Disconnect(sess);
-        THROW(Const::UNSET);
+        THROW(Error::LTFSDM_GENERAL_ERROR);
     }
 }
 

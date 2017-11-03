@@ -9,11 +9,11 @@
 #include <sstream>
 #include <exception>
 
+#include "src/common/errors/errors.h"
 #include "src/common/exception/OpenLTFSException.h"
 #include "src/common/util/util.h"
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
-#include "src/common/errors/errors.h"
 
 #include "src/common/comm/ltfsdm.pb.h"
 #include "src/common/comm/LTFSDmComm.h"
@@ -76,16 +76,16 @@ void PoolAddCommand::doCommand(int argc, char **argv)
         std::string tapeid = poolresp.tapeid();
 
         switch (poolresp.response()) {
-            case Error::LTFSDM_OK:
+            case static_cast<long>(Error::LTFSDM_OK):
                 INFO(LTFSDMC0083I, tapeid, poolNames);
                 break;
-            case Error::LTFSDM_POOL_NOT_EXISTS:
+            case static_cast<long>(Error::LTFSDM_POOL_NOT_EXISTS):
                 MSG(LTFSDMX0025E, poolNames);
                 break;
-            case Error::LTFSDM_TAPE_NOT_EXISTS:
+            case static_cast<long>(Error::LTFSDM_TAPE_NOT_EXISTS):
                 MSG(LTFSDMC0084E, tapeid);
                 break;
-            case Error::LTFSDM_TAPE_EXISTS_IN_POOL:
+            case static_cast<long>(Error::LTFSDM_TAPE_EXISTS_IN_POOL):
                 MSG(LTFSDMX0021E, tapeid);
                 break;
             default:

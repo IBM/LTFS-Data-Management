@@ -29,12 +29,12 @@
 #include <mutex>
 #include <exception>
 
+#include "src/common/errors/errors.h"
 #include "src/common/exception/OpenLTFSException.h"
 #include "src/common/util/util.h"
 #include "src/common/util/FileSystems.h"
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
-#include "src/common/errors/errors.h"
 #include "src/common/const/Const.h"
 
 #include "src/common/comm/ltfsdm.pb.h"
@@ -87,7 +87,7 @@ FuseFS::mig_info FuseFS::genMigInfoAt(int fd, FuseFS::mig_info::state_num state)
 
     if (fstat(fd, &miginfo.statinfo)) {
         TRACE(Trace::error, errno);
-        THROW(errno, errno, fd);
+        THROW(Error::LTFSDM_GENERAL_ERROR, errno, fd);
     }
 
     miginfo.state = state;
@@ -113,10 +113,11 @@ void FuseFS::setMigInfoAt(int fd, FuseFS::mig_info::state_num state)
     if ((size = fgetxattr(fd, Const::OPEN_LTFS_EA_MIGINFO_INT.c_str(),
             (void *) &miginfo, sizeof(miginfo))) == -1) {
         if ( errno != ENODATA) {
-            THROW(errno, errno, fd);
+            THROW(Error::LTFSDM_GENERAL_ERROR, errno, fd);
         }
     } else if (size != sizeof(miginfo)) {
-        THROW(EIO, size, sizeof(miginfo), fd);
+        errno = EIO;
+        THROW(Error::LTFSDM_GENERAL_ERROR, size, sizeof(miginfo), fd);
     }
 
     if (miginfo.state != FuseFS::mig_info::state_num::NO_STATE) {
@@ -127,7 +128,7 @@ void FuseFS::setMigInfoAt(int fd, FuseFS::mig_info::state_num state)
 
     if (fsetxattr(fd, Const::OPEN_LTFS_EA_MIGINFO_INT.c_str(),
             (void *) &miginfo_new, sizeof(miginfo_new), 0) == -1) {
-        THROW(errno, errno, fd);
+        THROW(Error::LTFSDM_GENERAL_ERROR, errno, fd);
     }
 }
 
@@ -164,8 +165,10 @@ FuseFS::mig_info FuseFS::getMigInfoAt(int fd)
         return miginfo;
     }
 
-    if (size != sizeof(miginfo))
-        THROW(EIO, size, sizeof(miginfo), fd);
+    if (size != sizeof(miginfo)) {
+        errno = EIO;
+        THROW(Error::LTFSDM_GENERAL_ERROR, size, sizeof(miginfo), fd);
+    }
 
     return miginfo;
 }
@@ -222,17 +225,29 @@ void FuseFS::recoverState(const char *path, FuseFS::mig_info::state_num state)
             break;
         case FuseFS::mig_info::state_num::STUBBING:
             MSG(LTFSDMF0014W, fusepath);
-            FuseFS::setMigInfoAt(fd, FuseFS::mig_info::state_num::MIGRATED);
+            try {
+                FuseFS::setMigInfoAt(fd, FuseFS::mig_info::state_num::MIGRATED);
+            } catch (const std::exception& e) {
+                MSG(LTFSDMF0056E, fusepath);
+            }
             if (ftruncate(fd, 0) == -1) {
                 TRACE(Trace::error, errno);
                 MSG(LTFSDMF0016E, fusepath);
-                FuseFS::setMigInfoAt(fd,
-                        FuseFS::mig_info::state_num::PREMIGRATED);
+                try {
+                    FuseFS::setMigInfoAt(fd,
+                            FuseFS::mig_info::state_num::PREMIGRATED);
+                } catch (const std::exception& e) {
+                    MSG(LTFSDMF0056E, fusepath);
+                }
             }
             break;
         case FuseFS::mig_info::state_num::IN_RECALL:
             MSG(LTFSDMF0015W, fusepath);
-            FuseFS::setMigInfoAt(fd, FuseFS::mig_info::state_num::MIGRATED);
+            try {
+                FuseFS::setMigInfoAt(fd, FuseFS::mig_info::state_num::MIGRATED);
+            } catch(const std::exception& e) {
+                MSG(LTFSDMF0056E, fusepath);
+            }
             if (ftruncate(fd, 0) == -1) {
                 TRACE(Trace::error, errno);
                 MSG(LTFSDMF0016E, fusepath);
@@ -403,7 +418,13 @@ int FuseFS::ltfsdm_getattr(const char *path, struct stat *statbuf)
         if ((fd = openat(getshrd()->rootFd, FuseFS::relPath(path), O_RDONLY))
                 == -1)
             goto end;
-        miginfo = getMigInfoAt(fd);
+        try {
+            miginfo = getMigInfoAt(fd);
+        } catch(const std::exception& e) {
+            MSG(LTFSDMF0057E, path);
+            close(fd);
+            goto end;
+        }
         if (FuseFS::needsRecovery(miginfo) == true)
             FuseFS::recoverState(path, miginfo.state);
         close(fd);
@@ -504,7 +525,13 @@ int FuseFS::ltfsdm_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
             if ((fd = openat(dirfd(dirinfo->dir), dirinfo->dentry->d_name,
             O_RDONLY)) == -1)
                 return (-1 * errno);
-            miginfo = getMigInfoAt(fd);
+            try {
+                miginfo = getMigInfoAt(fd);
+            } catch (const std::exception& e) {
+                MSG(LTFSDMF0057E, path);
+                close(fd);
+                return (-1 * EIO);
+            }
             close(fd);
             if (miginfo.state != FuseFS::mig_info::state_num::NO_STATE
                     && miginfo.state

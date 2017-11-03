@@ -9,11 +9,11 @@
 #include <sstream>
 #include <exception>
 
+#include "src/common/errors/errors.h"
 #include "src/common/exception/OpenLTFSException.h"
 #include "src/common/util/util.h"
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
-#include "src/common/errors/errors.h"
 
 #include "src/common/comm/ltfsdm.pb.h"
 #include "src/common/comm/LTFSDmComm.h"
@@ -69,13 +69,13 @@ void PoolDeleteCommand::doCommand(int argc, char **argv)
     const LTFSDmProtocol::LTFSDmPoolResp poolresp = commCommand.poolresp();
 
     switch (poolresp.response()) {
-        case Error::LTFSDM_OK:
+        case static_cast<long>(Error::LTFSDM_OK):
             INFO(LTFSDMC0082I, poolNames);
             break;
-        case Error::LTFSDM_POOL_NOT_EXISTS:
+        case static_cast<long>(Error::LTFSDM_POOL_NOT_EXISTS):
             MSG(LTFSDMX0025E, poolNames);
             break;
-        case Error::LTFSDM_POOL_NOT_EMPTY:
+        case static_cast<long>(Error::LTFSDM_POOL_NOT_EMPTY):
             MSG(LTFSDMX0024E, poolNames);
             break;
         default:

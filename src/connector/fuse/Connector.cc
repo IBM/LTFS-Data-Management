@@ -6,11 +6,11 @@
 #include <vector>
 #include <thread>
 
+#include "src/common/errors/errors.h"
 #include "src/common/exception/OpenLTFSException.h"
 #include "src/common/util/util.h"
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
-#include "src/common/errors/errors.h"
 #include "src/common/const/Const.h"
 
 #include "src/common/comm/ltfsdm.pb.h"
@@ -65,7 +65,7 @@ void Connector::initTransRecalls()
     } catch (const std::exception& e) {
         TRACE(Trace::error, e.what());
         MSG(LTFSDMF0026E);
-        THROW(Const::UNSET);
+        THROW(Error::LTFSDM_GENERAL_ERROR);
     }
 }
 
@@ -169,7 +169,7 @@ void Connector::terminate()
         commCommand.send();
     } catch (const std::exception& e) {
         MSG(LTFSDMF0024E);
-        THROW(errno, errno);
+        THROW(Error::LTFSDM_GENERAL_ERROR, errno);
     }
 }
 

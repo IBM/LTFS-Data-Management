@@ -2,7 +2,7 @@ RELPATH = ../../..
 
 ARC_SRC_FILES := util.cc FileSystems.cc
 CLEANUP_FILES :=
-BINARYE :=
+BINARY :=
 POSTTARGET :=
 
 include $(RELPATH)/definitions.mk

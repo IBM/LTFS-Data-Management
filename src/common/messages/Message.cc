@@ -41,7 +41,7 @@ void Message::init(std::string extension)
 
     if (fd == Const::UNSET) {
         MSG(LTFSDMX0003E, errno);
-        THROW(Const::UNSET, errno);
+        THROW(Error::LTFSDM_GENERAL_ERROR, errno);
     }
 }
 
