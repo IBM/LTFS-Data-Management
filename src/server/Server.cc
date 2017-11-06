@@ -5,6 +5,7 @@ std::atomic<bool> Server::forcedTerminate;
 std::atomic<bool> Server::finishTerminate;
 std::mutex Server::termmtx;
 std::condition_variable Server::termcond;
+Configuration Server::conf;
 
 ThreadPool<Migration::mig_info_t, std::shared_ptr<std::list<unsigned long>>> *Server::wqs;
 
@@ -343,8 +344,15 @@ void Server::run(sigset_t set)
     Server::finishTerminate = false;
 
     try {
+        Server::conf.read();
+    } catch (const std::exception& e) {
+        MSG(LTFSDMS0090E);
+        goto end;
+    }
+
+    try {
         inventory = new OpenLTFSInventory();
-        connector = new Connector(true);
+        connector = new Connector(true, &Server::conf);
     } catch (const std::exception& e) {
         TRACE(Trace::error, e.what());
         goto end;

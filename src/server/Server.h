@@ -13,6 +13,8 @@ public:
     static std::atomic<bool> forcedTerminate;
     static std::atomic<bool> finishTerminate;
 
+    static Configuration conf;
+
     static ThreadPool<Migration::mig_info_t,
             std::shared_ptr<std::list<unsigned long>>> *wqs;
 

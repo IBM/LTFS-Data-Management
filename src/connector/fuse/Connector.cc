@@ -1,7 +1,11 @@
 #include <linux/fs.h>
 #include <dirent.h>
 #include <sys/resource.h>
+#include <libmount/libmount.h>
+#include <blkid/blkid.h>
+
 #include <sstream>
+#include <map>
 #include <set>
 #include <vector>
 #include <thread>
@@ -9,9 +13,11 @@
 #include "src/common/errors/errors.h"
 #include "src/common/exception/OpenLTFSException.h"
 #include "src/common/util/util.h"
+#include "src/common/util/FileSystems.h"
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
 #include "src/common/const/Const.h"
+#include "src/common/configuration/Configuration.h"
 
 #include "src/common/comm/ltfsdm.pb.h"
 #include "src/common/comm/LTFSDmComm.h"
@@ -25,15 +31,17 @@
 std::atomic<bool> Connector::connectorTerminate(false);
 std::atomic<bool> Connector::forcedTerminate(false);
 std::atomic<bool> Connector::recallEventSystemStopped(false);
+Configuration *Connector::conf = nullptr;
 
 LTFSDmCommServer recrequest(Const::RECALL_SOCKET_FILE);
 
-Connector::Connector(bool cleanup_) :
-        cleanup(cleanup_)
+Connector::Connector(bool _cleanup, Configuration *_conf) :
+        cleanup(_cleanup)
 
 {
     clock_gettime(CLOCK_REALTIME, &starttime);
     FuseConnector::ltfsdmKey = LTFSDM::getkey();
+    conf = _conf;
 }
 
 Connector::~Connector()

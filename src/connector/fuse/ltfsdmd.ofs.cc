@@ -12,14 +12,17 @@
 #include <sstream>
 #include <thread>
 #include <vector>
+#include <map>
 #include <set>
 
 #include "src/common/errors/errors.h"
 #include "src/common/exception/OpenLTFSException.h"
 #include "src/common/util/util.h"
+#include "src/common/util/FileSystems.h"
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
 #include "src/common/const/Const.h"
+#include "src/common/configuration/Configuration.h"
 
 #include "src/common/comm/ltfsdm.pb.h"
 #include "src/common/comm/LTFSDmComm.h"

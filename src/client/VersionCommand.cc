@@ -5,7 +5,6 @@
 #include <unistd.h>
 
 #include <string>
-#include <set>
 #include <vector>
 #include <list>
 #include <sstream>
@@ -20,8 +19,6 @@
 #include "src/common/Version.h"
 #include "src/common/comm/ltfsdm.pb.h"
 #include "src/common/comm/LTFSDmComm.h"
-
-#include "src/connector/Connector.h"
 
 #include "OpenLTFSCommand.h"
 #include "VersionCommand.h"
@@ -38,10 +35,6 @@ void VersionCommand::talkToBackend(std::stringstream *parmList)
 
 void VersionCommand::doCommand(int argc, char **argv)
 {
-    std::set<std::string> fsList;
-    std::set<std::string>::iterator it;
-    Connector connector(false);
-
     processOptions(argc, argv);
 
     if (argc > 1) {

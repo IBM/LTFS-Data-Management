@@ -47,8 +47,9 @@ public:
     static std::atomic<bool> connectorTerminate;
     static std::atomic<bool> forcedTerminate;
     static std::atomic<bool> recallEventSystemStopped;
+    static Configuration *conf;
 
-    Connector(bool cleanup_);
+    Connector(bool _cleanup, Configuration *_conf = nullptr);
     ~Connector();
     struct timespec getStartTime()
     {

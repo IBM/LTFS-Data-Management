@@ -125,24 +125,24 @@ void TransRecall::run(Connector *connector)
 
     try {
         FileSystems fss;
-        for (FileSystems::fsinfo& fs : fss.getAll()) {
+        for (std::string fs : Server::conf.getFss()) {
             try {
-                FsObj fileSystem(fs.target);
+                FsObj fileSystem(fs);
                 if (fileSystem.isFsManaged()) {
-                    MSG(LTFSDMS0042I, fs.target);
+                    MSG(LTFSDMS0042I, fs);
                     fileSystem.manageFs(true, connector->getStartTime());
                 }
             } catch (const OpenLTFSException& e) {
                 TRACE(Trace::error, e.what());
                 switch (e.getError()) {
                     case Error::FS_CHECK_ERROR:
-                        MSG(LTFSDMS0044E, fs.target);
+                        MSG(LTFSDMS0044E, fs);
                         break;
                     case Error::FS_ADD_ERROR:
-                        MSG(LTFSDMS0045E, fs.target);
+                        MSG(LTFSDMS0045E, fs);
                         break;
                     default:
-                        MSG(LTFSDMS0045E, fs.target);
+                        MSG(LTFSDMS0045E, fs);
                 }
             } catch (const std::exception& e) {
                 TRACE(Trace::error, e.what());

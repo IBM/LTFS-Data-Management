@@ -148,6 +148,8 @@ void MessageParser::migrationMessage(long key, LTFSDmCommServer *command,
     std::string pool;
     int error = static_cast<int>(Error::OK);
     Migration *mig = nullptr;
+    std::set<std::string> allpools;
+
 
     TRACE(Trace::normal, keySent);
 
@@ -165,8 +167,8 @@ void MessageParser::migrationMessage(long key, LTFSDmCommServer *command,
         {
             std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
             while (std::getline(poolss, pool, ',')) {
-                std::shared_ptr<OpenLTFSPool> poolp = inventory->getPool(pool);
-                if (poolp == nullptr) {
+                allpools = Server::conf.getPools();
+                if ( allpools.find(pool) == allpools.end( )) {
                     error = static_cast<int>(Error::NOT_ALL_POOLS_EXIST);
                     break;
                 }
@@ -794,7 +796,6 @@ void MessageParser::poolCreateMessage(long key, LTFSDmCommServer *command)
         std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
         try {
             inventory->poolCreate(poolName);
-            inventory->writePools();
         } catch (const OpenLTFSException& e) {
             response = static_cast<int>(e.getError());
         } catch (const std::exception& e) {
@@ -837,7 +838,6 @@ void MessageParser::poolDeleteMessage(long key, LTFSDmCommServer *command)
         std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
         try {
             inventory->poolDelete(poolName);
-            inventory->writePools();
         } catch (const OpenLTFSException& e) {
             response = static_cast<int>(e.getError());
         } catch (const std::exception& e) {
@@ -887,7 +887,6 @@ void MessageParser::poolAddMessage(long key, LTFSDmCommServer *command)
             std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
             try {
                 inventory->poolAdd(poolName, tapeid);
-                inventory->writePools();
             } catch (const OpenLTFSException& e) {
                 response = static_cast<int>(e.getError());
             } catch (const std::exception& e) {
@@ -939,7 +938,6 @@ void MessageParser::poolRemoveMessage(long key, LTFSDmCommServer *command)
             std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
             try {
                 inventory->poolRemove(poolName, tapeid);
-                inventory->writePools();
             } catch (const OpenLTFSException& e) {
                 response = static_cast<int>(e.getError());
             } catch (const std::exception& e) {
@@ -968,6 +966,7 @@ void MessageParser::infoPoolsMessage(long key, LTFSDmCommServer *command)
     const LTFSDmProtocol::LTFSDmInfoPoolsRequest infopools =
             command->infopoolsrequest();
     long keySent = infopools.key();
+    std::shared_ptr<OpenLTFSCartridge> c;
     std::string state;
 
     TRACE(Trace::normal, keySent);
@@ -979,7 +978,7 @@ void MessageParser::infoPoolsMessage(long key, LTFSDmCommServer *command)
 
     {
         std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
-        for (std::shared_ptr<OpenLTFSPool> pool : inventory->getPools()) {
+        for ( std::string poolname : Server::conf.getPools( )) {
             int numCartridges = 0;
             unsigned long total = 0;
             unsigned long free = 0;
@@ -988,14 +987,20 @@ void MessageParser::infoPoolsMessage(long key, LTFSDmCommServer *command)
             LTFSDmProtocol::LTFSDmInfoPoolsResp *infopoolsresp =
                     command->mutable_infopoolsresp();
 
-            for (std::shared_ptr<OpenLTFSCartridge> c : pool->getCartridges()) {
-                numCartridges++;
-                total += c->get_total_cap();
-                free += c->get_remaining_cap();
+            for (std::string cartridgeid : Server::conf.getPool(poolname)) {
+                if ( (c = inventory->getCartridge(cartridgeid)) == nullptr ) {
+                    MSG(LTFSDMX0034E, cartridgeid);
+                    Server::conf.poolRemove(poolname, cartridgeid);
+                }
+                else {
+                    numCartridges++;
+                    total += c->get_total_cap();
+                    free += c->get_remaining_cap();
+                }
                 // unref?
             }
 
-            infopoolsresp->set_poolname(pool->getPoolName());
+            infopoolsresp->set_poolname(poolname);
             infopoolsresp->set_total(total);
             infopoolsresp->set_free(free);
             infopoolsresp->set_unref(unref);

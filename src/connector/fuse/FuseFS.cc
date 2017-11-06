@@ -22,6 +22,7 @@
 #include <string>
 #include <sstream>
 #include <set>
+#include <map>
 #include <vector>
 #include <atomic>
 #include <condition_variable>
@@ -36,6 +37,7 @@
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
 #include "src/common/const/Const.h"
+#include "src/common/configuration/Configuration.h"
 
 #include "src/common/comm/ltfsdm.pb.h"
 #include "src/common/comm/LTFSDmComm.h"
@@ -1392,15 +1394,10 @@ void FuseFS::init(struct timespec starttime)
     int count = 0;
     FileSystems fss;
     FileSystems::fsinfo fs;
+    bool alreadyManaged = false;
 
-    try {
-        fs = fss.getByTarget(mountpt);
-    }
-    catch ( const std::exception& e ) {
-        TRACE(Trace::error, e.what());
-        MSG(LTFSDMS0080E, mountpt);
+    if ( Connector::conf == nullptr)
         THROW(Error::GENERAL_ERROR);
-    }
 
     memset(exepath, 0, PATH_MAX);
     if (readlink("/proc/self/exe", exepath, PATH_MAX - 1) == -1) {
@@ -1408,14 +1405,30 @@ void FuseFS::init(struct timespec starttime)
         THROW(Error::GENERAL_ERROR);
     }
 
-    MSG(LTFSDMF0038I, mountpt);
+    FsObj target(mountpt);
 
-    try {
-        fss.umount(mountpt, FileSystems::UMNT_NORMAL);
-    } catch (const std::exception& e ) {
-        TRACE(Trace::error, e.what());
-        MSG(LTFSDMF0039E, mountpt);
-        THROW(Error::GENERAL_ERROR);
+    if (target.isFsManaged()) {
+        alreadyManaged = true;
+        fs = Connector::conf->getFs(mountpt);
+    }
+    else {
+        try {
+            fs = fss.getByTarget(mountpt);
+        } catch (const std::exception& e) {
+            TRACE(Trace::error, e.what());
+            MSG(LTFSDMS0080E, mountpt);
+            THROW(Error::GENERAL_ERROR);
+        }
+
+        MSG(LTFSDMF0038I, mountpt);
+
+        try {
+            fss.umount(mountpt, FileSystems::UMNT_NORMAL);
+        } catch (const std::exception& e) {
+            TRACE(Trace::error, e.what());
+            MSG(LTFSDMF0039E, mountpt);
+            THROW(Error::GENERAL_ERROR);
+        }
     }
 
     stream << dirname(exepath) << "/" << Const::OVERLAY_FS_COMMAND << " -m "
@@ -1493,6 +1506,9 @@ void FuseFS::init(struct timespec starttime)
         THROW(Error::GENERAL_ERROR);
     }
     init_status.CACHE_MOUNTED = false;
+
+    if ( alreadyManaged == false )
+        Connector::conf->addFs(fs);
 }
 
 FuseFS::~FuseFS()

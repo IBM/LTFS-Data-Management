@@ -8,19 +8,24 @@
 #include <sys/ioctl.h>
 #include <linux/fs.h>
 #include <string.h>
+#include <libmount/libmount.h>
+#include <blkid/blkid.h>
 
 #include <string>
 #include <sstream>
 #include <set>
+#include <map>
 #include <vector>
 #include <thread>
 
 #include "src/common/errors/errors.h"
 #include "src/common/exception/OpenLTFSException.h"
 #include "src/common/util/util.h"
+#include "src/common/util/FileSystems.h"
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
 #include "src/common/const/Const.h"
+#include "src/common/configuration/Configuration.h"
 
 #include "src/common/comm/ltfsdm.pb.h"
 #include "src/common/comm/LTFSDmComm.h"
@@ -145,17 +150,19 @@ FsObj::~FsObj()
 bool FsObj::isFsManaged()
 
 {
-    int val;
     FuseFS::FuseHandle *fh = (FuseFS::FuseHandle *) handle;
     std::unique_lock<std::mutex> lock(FuseConnector::mtx);
+    std::set<std::string> fss;
 
-    if (getxattr(fh->mountpoint, Const::OPEN_LTFS_EA_MANAGED.c_str(), &val,
-            sizeof(val)) == -1) {
-        TRACE(Trace::always, fh->mountpoint);
+    if ( Connector::conf == nullptr )
         return false;
-    }
 
-    return (val == 1);
+    fss = Connector::conf->getFss();
+
+    if ( fss.find(fh->mountpoint) == fss.end() )
+        return false;
+    else
+        return true;
 }
 
 void FsObj::manageFs(bool setDispo, struct timespec starttime,

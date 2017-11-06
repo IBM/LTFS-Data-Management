@@ -36,10 +36,8 @@ FsObj::file_state Migration::checkState(std::string fileName, FsObj *fso)
                 for (std::string pool : pools) {
                     std::lock_guard<std::recursive_mutex> lock(
                             OpenLTFSInventory::mtx);
-                    std::list<std::shared_ptr<OpenLTFSCartridge>> carts =
-                            inventory->getPool(pool)->getCartridges();
-                    for (std::shared_ptr<OpenLTFSCartridge> cart : carts) {
-                        if (cart->GetObjectID().compare(attr.tapeId[i]) == 0) {
+                    for (std::string cart : Server::conf.getPool(pool)) {
+                        if ( cart.compare(attr.tapeId[i]) == 0) {
                             tapeFound = true;
                             break;
                         }

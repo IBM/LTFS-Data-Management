@@ -7,6 +7,7 @@
 #include <blkid/blkid.h>
 
 #include <string>
+#include <map>
 #include <set>
 #include <vector>
 #include <list>
@@ -19,6 +20,7 @@
 #include "src/common/util/FileSystems.h"
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
+#include "src/common/configuration/Configuration.h"
 
 #include "src/common/comm/ltfsdm.pb.h"
 #include "src/common/comm/LTFSDmComm.h"
