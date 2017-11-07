@@ -96,6 +96,8 @@ private:
         ((FuseFS::shared_data *) fuse_get_context()->private_data)->rootFd = fd;
     }
 
+    std::string mask(std::string s);
+
     static const char *relPath(const char *path);
     static std::string lockPath(std::string path);
     static bool needsRecovery(FuseFS::mig_info miginfo);

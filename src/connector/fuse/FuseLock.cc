@@ -28,7 +28,7 @@ FuseLock::FuseLock(std::string identifier, FuseLock::lockType _type,
 
     std::lock_guard<std::mutex> lock(FuseLock::mtx);
 
-    if ((fd = open(id.c_str(), O_RDONLY)) == -1) {
+    if ((fd = open(id.c_str(), O_RDONLY | O_CLOEXEC)) == -1) {
         TRACE(Trace::error, id, errno);
         THROW(Error::GENERAL_ERROR, id, errno);
     }

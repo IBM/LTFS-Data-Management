@@ -102,7 +102,7 @@ FsObj::FsObj(std::string fileName) :
         auto search = FuseConnector::managedFss.find(fh->mountpoint);
         if (search == FuseConnector::managedFss.end()) {
             // ltfsdm info files only operates on the ofs
-            if ((fh->fd = open(fileName.c_str(), O_RDONLY)) == -1) {
+            if ((fh->fd = open(fileName.c_str(), O_RDONLY | O_CLOEXEC)) == -1) {
                 delete (fh);
                 TRACE(Trace::error, errno);
                 THROW(Error::GENERAL_ERROR, fileName, errno);
@@ -481,7 +481,7 @@ void FsObj::stub()
         THROW(Error::GENERAL_ERROR, errno, fh->fusepath);
     }
 
-    if ((fd = open(spath.str().c_str(), O_RDONLY)) != -1) {
+    if ((fd = open(spath.str().c_str(), O_RDONLY | O_CLOEXEC)) != -1) {
         posix_fadvise(fd, 0, 0, POSIX_FADV_DONTNEED);
         close(fd);
     }

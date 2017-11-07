@@ -1363,26 +1363,85 @@ struct fuse_operations FuseFS::init_operations()
     return ops;
 }
 
+
 void FuseFS::execute(std::string sourcedir, std::string mountpt,
         std::string command)
 
 {
-    int ret;
-
     pthread_setname_np(pthread_self(), "ltfsdmd.ofs");
+    int ret;
+    char c;
+    std::string line;
+    FILE *cmd;
 
-    ret = system(command.c_str());
-
-    if (!WIFEXITED(ret) || WEXITSTATUS(ret)) {
-        TRACE(Trace::error, ret, WIFEXITED(ret), WEXITSTATUS(ret));
-        MSG(LTFSDMF0023E, sourcedir, WEXITSTATUS(ret));
-        umount2(mountpt.c_str(), MNT_FORCE | MNT_DETACH);
-        kill(getpid(), SIGTERM);
-    } else if (Connector::connectorTerminate == false) {
-        MSG(LTFSDMF0030I, sourcedir);
-        umount2(mountpt.c_str(), MNT_FORCE | MNT_DETACH);
-        kill(getpid(), SIGTERM);
+    if ((cmd = popen(command.c_str(), "re")) == NULL) {
+        MSG(LTFSDMF0058E, mountpt);
+        return;
     }
+
+    while (!feof(cmd)) {
+        if ((c=fgetc(cmd)) != 0) {
+            if (c == 0012) {
+                MSG(LTFSDMF0060I, mountpt, line);
+                line.clear();
+            }
+            else {
+                if ( c != EOF)
+                    line+=c;
+            }
+        }
+    }
+
+    if (line.size() > 0)
+        MSG(LTFSDMF0060I, mountpt, line);
+
+    ret = pclose(cmd);
+
+    try {
+        FileSystems fss;
+
+        if (!WIFEXITED(ret) || WEXITSTATUS(ret)) {
+            TRACE(Trace::error, ret, WIFEXITED(ret), WEXITSTATUS(ret));
+            MSG(LTFSDMF0023E, sourcedir, WEXITSTATUS(ret));
+            fss.umount(mountpt, FileSystems::UMNT_DETACHED_FORCED);
+        } else if (Connector::connectorTerminate == false) {
+            MSG(LTFSDMF0030I, sourcedir);
+            fss.umount(mountpt, FileSystems::UMNT_DETACHED_FORCED);
+        }
+    } catch(const std::exception& e) {
+        TRACE(Trace::error, e.what());
+    }
+}
+
+std::string FuseFS::mask(std::string s)
+
+{
+    std::string masked;
+
+    for (char c : s) {
+        switch (c) {
+            case '\\':
+            case '\"':
+            case '\'':
+            case ' ':
+            case '`':
+            case '&':
+            case '(':
+            case ')':
+            case '*':
+            case ';':
+            case '<':
+            case '>':
+            case '?':
+            case '$':
+            case '|':
+                masked+='\\';
+            default:
+                masked+=c;
+        }
+    }
+
+    return masked;
 }
 
 void FuseFS::init(struct timespec starttime)
@@ -1430,8 +1489,8 @@ void FuseFS::init(struct timespec starttime)
         }
     }
 
-    stream << dirname(exepath) << "/" << Const::OVERLAY_FS_COMMAND << " -m "
-            << mountpt << " -f " << fs.source << " -S " << starttime.tv_sec
+    stream << mask(dirname(exepath)) << "/" << Const::OVERLAY_FS_COMMAND << " -m "
+            << mask(mountpt) << " -f " << mask(fs.source) << " -S " << starttime.tv_sec
             << " -N " << starttime.tv_nsec << " -l "
             << messageObject.getLogType() << " -t " << traceObject.getTrclevel()
             << " -p " << getpid() << " 2>&1";
@@ -1484,7 +1543,7 @@ void FuseFS::init(struct timespec starttime)
 
     MSG(LTFSDMF0046I, mountpt + Const::OPEN_LTFS_CACHE_MP);
     if ((rootFd = open((mountpt + Const::OPEN_LTFS_CACHE_MP).c_str(),
-    O_RDONLY)) == -1) {
+    O_RDONLY | O_CLOEXEC)) == -1) {
         MSG(LTFSDMF0047E, errno);
         THROW(Error::GENERAL_ERROR);
     }

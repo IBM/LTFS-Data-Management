@@ -128,7 +128,7 @@ void Configuration::read()
         } else if (token.compare("fsys:") == 0) {
             if (!std::getline(liness, token, ' '))
                 THROW(Error::CONFIG_FORMAT_ERROR);
-            fsName = token;
+            fsName = decode(token);
             if (!std::getline(liness, token, ' '))
                 THROW(Error::CONFIG_FORMAT_ERROR);
             finfo.source = token;
