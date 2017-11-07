@@ -33,7 +33,12 @@ private:
 public:
     enum state_t
     {
-        TAPE_INUSE, TAPE_MOUNTED, TAPE_MOVING, TAPE_UNMOUNTED, TAPE_INVALID, TAPE_UNKNOWN
+        TAPE_INUSE,
+        TAPE_MOUNTED,
+        TAPE_MOVING,
+        TAPE_UNMOUNTED,
+        TAPE_INVALID,
+        TAPE_UNKNOWN
     } state;
     OpenLTFSCartridge(ltfsadmin::Cartridge cartridge) :
             ltfsadmin::Cartridge(cartridge), inProgress(0), pool(""), requested(

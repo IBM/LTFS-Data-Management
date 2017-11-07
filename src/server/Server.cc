@@ -17,22 +17,22 @@ std::string Server::getTapeName(FsObj *diskFile, std::string tapeId)
 
     tapeName << inventory->getMountPoint() << Const::DELIM << tapeId
             << Const::DELIM << Const::LTFSDM_DATA_DIR << Const::DELIM
-            << Const::LTFS_NAME << "." << fuid.fsid_h << "."
-            << fuid.fsid_l << "." << fuid.igen  << "." << fuid.inum;
+            << Const::LTFS_NAME << "." << fuid.fsid_h << "." << fuid.fsid_l
+            << "." << fuid.igen << "." << fuid.inum;
 
     return tapeName.str();
 }
 
-std::string Server::getTapeName(unsigned long fsid_h, unsigned long fsid_l, unsigned int igen,
-        unsigned long ino, std::string tapeId)
+std::string Server::getTapeName(unsigned long fsid_h, unsigned long fsid_l,
+        unsigned int igen, unsigned long ino, std::string tapeId)
 
 {
     std::stringstream tapeName;
 
     tapeName << inventory->getMountPoint() << Const::DELIM << tapeId
             << Const::DELIM << Const::LTFSDM_DATA_DIR << Const::DELIM
-            << Const::LTFS_NAME << "." << fsid_h << "." << fsid_l << "."
-            << igen << "." << ino;
+            << Const::LTFS_NAME << "." << fsid_h << "." << fsid_l << "." << igen
+            << "." << ino;
 
     return tapeName.str();
 }

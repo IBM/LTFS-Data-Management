@@ -60,14 +60,14 @@ void OpenLTFSInventory::inventorize()
             [] (const std::shared_ptr<Cartridge> c1, const std::shared_ptr<Cartridge> c2)
             {   return (c1->GetObjectID().compare(c2->GetObjectID()) < 0);});
 
-    for ( std::string poolname : Server::conf.getPools() ) {
-        for ( std::string cartridgeid : Server::conf.getPool(poolname) ) {
-            if ( getCartridge(cartridgeid) == nullptr ) {
+    for (std::string poolname : Server::conf.getPools()) {
+        for (std::string cartridgeid : Server::conf.getPool(poolname)) {
+            if (getCartridge(cartridgeid) == nullptr) {
                 MSG(LTFSDMS0091W, cartridgeid, poolname);
                 Server::conf.poolRemove(poolname, cartridgeid);
-            }
-            else {
-                if ( getCartridge(cartridgeid)->getPool().compare(poolname) != 0 ) {
+            } else {
+                if (getCartridge(cartridgeid)->getPool().compare(poolname)
+                        != 0) {
                     MSG(LTFSDMS0078I, cartridgeid, poolname);
                     getCartridge(cartridgeid)->setPool(poolname);
                 }
@@ -236,12 +236,10 @@ void OpenLTFSInventory::poolDelete(std::string poolname)
         if (e.getError() == Error::CONFIG_POOL_NOT_EMPTY) {
             MSG(LTFSDMX0024E, poolname);
             THROW(Error::POOL_NOT_EMPTY);
-        }
-        else if (e.getError() == Error::CONFIG_POOL_NOT_EXISTS) {
+        } else if (e.getError() == Error::CONFIG_POOL_NOT_EXISTS) {
             MSG(LTFSDMX0025E, poolname);
             THROW(Error::POOL_NOT_EXISTS);
-        }
-        else {
+        } else {
             MSG(LTFSDMX0033E, poolname);
             THROW(Error::GENERAL_ERROR);
         }
@@ -255,12 +253,12 @@ void OpenLTFSInventory::poolAdd(std::string poolname, std::string cartridgeid)
 
     std::shared_ptr<OpenLTFSCartridge> cartridge;
 
-    if ( (cartridge = getCartridge(cartridgeid)) == nullptr ) {
+    if ((cartridge = getCartridge(cartridgeid)) == nullptr) {
         MSG(LTFSDMX0034E, cartridgeid);
         THROW(Error::TAPE_NOT_EXISTS);
     }
 
-    if ( cartridge->getPool().compare("") != 0 ) {
+    if (cartridge->getPool().compare("") != 0) {
         MSG(LTFSDMX0021E, cartridgeid);
         THROW(Error::TAPE_EXISTS_IN_POOL);
     }
@@ -271,12 +269,10 @@ void OpenLTFSInventory::poolAdd(std::string poolname, std::string cartridgeid)
         if (e.getError() == Error::CONFIG_POOL_NOT_EXISTS) {
             MSG(LTFSDMX0025E, poolname);
             THROW(Error::POOL_NOT_EXISTS);
-        }
-        else if (e.getError() == Error::CONFIG_TAPE_EXISTS) {
+        } else if (e.getError() == Error::CONFIG_TAPE_EXISTS) {
             MSG(LTFSDMX0021E, cartridgeid);
             THROW(Error::TAPE_EXISTS_IN_POOL);
-        }
-        else {
+        } else {
             MSG(LTFSDMX0035E, cartridgeid, poolname);
             THROW(Error::GENERAL_ERROR);
         }
@@ -293,12 +289,12 @@ void OpenLTFSInventory::poolRemove(std::string poolname,
 
     std::shared_ptr<OpenLTFSCartridge> cartridge;
 
-    if ( (cartridge = getCartridge(cartridgeid)) == nullptr ) {
+    if ((cartridge = getCartridge(cartridgeid)) == nullptr) {
         MSG(LTFSDMX0034E, cartridgeid);
         THROW(Error::TAPE_NOT_EXISTS);
     }
 
-    if ( cartridge->getPool().compare(poolname) != 0 ) {
+    if (cartridge->getPool().compare(poolname) != 0) {
         MSG(LTFSDMX0021E, cartridgeid);
         THROW(Error::TAPE_NOT_EXISTS_IN_POOL);
     }
@@ -309,12 +305,10 @@ void OpenLTFSInventory::poolRemove(std::string poolname,
         if (e.getError() == Error::CONFIG_POOL_NOT_EXISTS) {
             MSG(LTFSDMX0025E, poolname);
             THROW(Error::POOL_NOT_EXISTS);
-        }
-        else if (e.getError() == Error::CONFIG_TAPE_NOT_EXISTS) {
+        } else if (e.getError() == Error::CONFIG_TAPE_NOT_EXISTS) {
             MSG(LTFSDMX0022E, cartridgeid, poolname);
             THROW(Error::TAPE_NOT_EXISTS);
-        }
-        else {
+        } else {
             MSG(LTFSDMX0036E, cartridgeid, poolname);
             THROW(Error::GENERAL_ERROR);
         }

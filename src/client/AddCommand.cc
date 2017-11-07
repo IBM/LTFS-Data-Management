@@ -53,7 +53,7 @@ void AddCommand::doCommand(int argc, char **argv)
     try {
         FileSystems fss;
         FileSystems::fsinfo fs = fss.getByTarget(managedFs);
-    } catch ( const std::exception& e ) {
+    } catch (const std::exception& e) {
         MSG(LTFSDMC0053E);
         THROW(Error::GENERAL_ERROR);
     }

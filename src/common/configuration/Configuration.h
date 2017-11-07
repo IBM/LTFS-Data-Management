@@ -1,8 +1,10 @@
 #pragma once
 
-class Configuration {
+class Configuration
+{
 private:
-    struct fsinfo {
+    struct fsinfo
+    {
         std::string source;
         std::string fstype;
         std::string uuid;

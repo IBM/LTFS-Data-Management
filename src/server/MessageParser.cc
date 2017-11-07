@@ -150,7 +150,6 @@ void MessageParser::migrationMessage(long key, LTFSDmCommServer *command,
     Migration *mig = nullptr;
     std::set<std::string> allpools;
 
-
     TRACE(Trace::normal, keySent);
 
     if (key != keySent) {
@@ -168,7 +167,7 @@ void MessageParser::migrationMessage(long key, LTFSDmCommServer *command,
             std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
             while (std::getline(poolss, pool, ',')) {
                 allpools = Server::conf.getPools();
-                if ( allpools.find(pool) == allpools.end( )) {
+                if (allpools.find(pool) == allpools.end()) {
                     error = static_cast<int>(Error::NOT_ALL_POOLS_EXIST);
                     break;
                 }
@@ -978,7 +977,7 @@ void MessageParser::infoPoolsMessage(long key, LTFSDmCommServer *command)
 
     {
         std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
-        for ( std::string poolname : Server::conf.getPools( )) {
+        for (std::string poolname : Server::conf.getPools()) {
             int numCartridges = 0;
             unsigned long total = 0;
             unsigned long free = 0;
@@ -988,11 +987,10 @@ void MessageParser::infoPoolsMessage(long key, LTFSDmCommServer *command)
                     command->mutable_infopoolsresp();
 
             for (std::string cartridgeid : Server::conf.getPool(poolname)) {
-                if ( (c = inventory->getCartridge(cartridgeid)) == nullptr ) {
+                if ((c = inventory->getCartridge(cartridgeid)) == nullptr) {
                     MSG(LTFSDMX0034E, cartridgeid);
                     Server::conf.poolRemove(poolname, cartridgeid);
-                }
-                else {
+                } else {
                     numCartridges++;
                     total += c->get_total_cap();
                     free += c->get_remaining_cap();

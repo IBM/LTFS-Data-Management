@@ -4,9 +4,11 @@
 #define TRUE 1
 #endif
 
-class FileSystems {
+class FileSystems
+{
 public:
-    struct fsinfo {
+    struct fsinfo
+    {
         std::string source;
         std::string target;
         std::string fstype;
@@ -21,11 +23,9 @@ private:
     fsinfo getContext(struct libmnt_fs *mntfs);
     void getTable();
 public:
-    enum umountflag {
-        UMNT_NORMAL,
-        UMNT_DETACHED,
-        UMNT_FORCED,
-        UMNT_DETACHED_FORCED,
+    enum umountflag
+    {
+        UMNT_NORMAL, UMNT_DETACHED, UMNT_FORCED, UMNT_DETACHED_FORCED,
     };
     FileSystems();
     ~FileSystems();

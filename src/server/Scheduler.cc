@@ -15,8 +15,8 @@ bool Scheduler::poolResAvail(unsigned long minFileSize)
 
     assert(pool.compare("") != 0);
 
-    for ( std::string cartname : Server::conf.getPool(pool)) {
-        if ( (cart = inventory->getCartridge(cartname)) == nullptr ) {
+    for (std::string cartname : Server::conf.getPool(pool)) {
+        if ((cart = inventory->getCartridge(cartname)) == nullptr) {
             MSG(LTFSDMX0034E, cartname);
             Server::conf.poolRemove(pool, cartname);
         }
@@ -58,8 +58,8 @@ bool Scheduler::poolResAvail(unsigned long minFileSize)
             }
         }
         if (found == false) {
-            for ( std::string cartname : Server::conf.getPool(pool)) {
-                if ( (cart = inventory->getCartridge(cartname)) == nullptr ) {
+            for (std::string cartname : Server::conf.getPool(pool)) {
+                if ((cart = inventory->getCartridge(cartname)) == nullptr) {
                     MSG(LTFSDMX0034E, cartname);
                     Server::conf.poolRemove(pool, cartname);
                 }

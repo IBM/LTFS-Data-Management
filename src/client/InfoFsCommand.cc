@@ -51,7 +51,6 @@ void InfoFsCommand::doCommand(int argc, char **argv)
         THROW(Error::GENERAL_ERROR);
     }
 
-
     try {
         FileSystems fss;
         for (FileSystems::fsinfo& fs : fss.getAll()) {
@@ -62,8 +61,8 @@ void InfoFsCommand::doCommand(int argc, char **argv)
                 }
             } catch (const OpenLTFSException& e) {
                 if (e.getError() == Error::FS_CHECK_ERROR) {
-                        MSG(LTFSDMC0058E, fs.target);
-                        break;
+                    MSG(LTFSDMC0058E, fs.target);
+                    break;
                 }
             } catch (const std::exception& e) {
                 TRACE(Trace::error, e.what());

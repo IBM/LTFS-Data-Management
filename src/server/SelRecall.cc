@@ -35,11 +35,10 @@ void SelRecall::addJob(std::string fileName)
 
         fuid = fso.getfuid();
         stmt(SelRecall::ADD_JOB) << DataBase::SELRECALL << fileName << reqNumber
-                << targetState << statbuf.st_size << fuid.fsid_h
-                << fuid.fsid_l << fuid.igen << fuid.inum
-                << statbuf.st_mtim.tv_sec << statbuf.st_mtim.tv_nsec
-                << time(NULL) << state << attr.tapeId[0]
-                << Server::getStartBlock(tapeName);
+                << targetState << statbuf.st_size << fuid.fsid_h << fuid.fsid_l
+                << fuid.igen << fuid.inum << statbuf.st_mtim.tv_sec
+                << statbuf.st_mtim.tv_nsec << time(NULL) << state
+                << attr.tapeId[0] << Server::getStartBlock(tapeName);
     } catch (const std::exception& e) {
         TRACE(Trace::error, e.what());
         stmt(SelRecall::ADD_JOB) << DataBase::SELRECALL << fileName << reqNumber
@@ -149,9 +148,10 @@ unsigned long SelRecall::recall(std::string fileName, std::string tapeId,
 
             statbuf = target.stat();
 
-            if (fstat(fd, &statbuf_tape) == 0 &&
-                    statbuf_tape.st_size != statbuf.st_size) {
-                MSG(LTFSDMS0097W, fileName, statbuf.st_size, statbuf_tape.st_size);
+            if (fstat(fd, &statbuf_tape) == 0
+                    && statbuf_tape.st_size != statbuf.st_size) {
+                MSG(LTFSDMS0097W, fileName, statbuf.st_size,
+                        statbuf_tape.st_size);
                 statbuf.st_size = statbuf_tape.st_size;
                 toState = FsObj::RESIDENT;
             }
@@ -336,7 +336,8 @@ void SelRecall::execRequest(std::string tapeId, bool needsTape)
 
     if (needsTape) {
         std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
-        inventory->getCartridge(tapeId)->setState(OpenLTFSCartridge::TAPE_MOUNTED);
+        inventory->getCartridge(tapeId)->setState(
+                OpenLTFSCartridge::TAPE_MOUNTED);
         bool found = false;
         for (std::shared_ptr<OpenLTFSDrive> d : inventory->getDrives()) {
             if (d->get_slot() == inventory->getCartridge(tapeId)->get_slot()) {

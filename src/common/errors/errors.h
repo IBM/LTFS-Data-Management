@@ -1,6 +1,7 @@
 #pragma once
 
-enum class Error {
+enum class Error
+{
     GENERAL_ERROR = -1,
     OK = 0,
     COMM_ERROR = 1001,
@@ -35,5 +36,4 @@ enum class Error {
     TAPE_STATE_ERR = 1052,
     INACCESSIBLE = 1054,
 };
-
 

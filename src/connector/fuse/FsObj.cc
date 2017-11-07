@@ -84,8 +84,7 @@
  }*/
 
 FsObj::FsObj(std::string fileName) :
-        handle(NULL), handleLength(0), isLocked(false),
-        handleFree(true)
+        handle(NULL), handleLength(0), isLocked(false), handleFree(true)
 
 {
     FuseFS::FuseHandle *fh = new FuseFS::FuseHandle();
@@ -154,12 +153,12 @@ bool FsObj::isFsManaged()
     std::unique_lock<std::mutex> lock(FuseConnector::mtx);
     std::set<std::string> fss;
 
-    if ( Connector::conf == nullptr )
+    if (Connector::conf == nullptr)
         return false;
 
     fss = Connector::conf->getFss();
 
-    if ( fss.find(fh->mountpoint) == fss.end() )
+    if (fss.find(fh->mountpoint) == fss.end())
         return false;
     else
         return true;

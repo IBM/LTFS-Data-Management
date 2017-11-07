@@ -25,19 +25,19 @@ std::string Configuration::encode(std::string s)
 {
     std::string enc;
 
-    for(char c : s) {
-        switch(c) {
+    for (char c : s) {
+        switch (c) {
             case 0040:
-                enc+="\\0040";
+                enc += "\\0040";
                 break;
             case 0134:
-                enc+="\\0134";
+                enc += "\\0134";
                 break;
             case 0012:
-                enc+="\\0012";
+                enc += "\\0012";
                 break;
             default:
-                enc+=c;
+                enc += c;
         }
     }
 
@@ -50,13 +50,11 @@ std::string Configuration::decode(std::string s)
     unsigned long pos = s.size();
 
     while ((pos = s.rfind("\\", pos)) != std::string::npos) {
-        if ( s.compare(pos, 5, "\\0040") == 0 ) {
+        if (s.compare(pos, 5, "\\0040") == 0) {
             s.replace(pos, 5, std::string(1, 0040));
-        }
-        else if ( s.compare(pos, 5, "\\0134") == 0 ) {
+        } else if (s.compare(pos, 5, "\\0134") == 0) {
             s.replace(pos, 5, std::string(1, 0134));
-        }
-        else if ( s.compare(pos, 5, "\\0012") == 0 ) {
+        } else if (s.compare(pos, 5, "\\0012") == 0) {
             s.replace(pos, 5, std::string(1, 0012));
         } else {
             THROW(Error::CONFIG_FORMAT_ERROR);
@@ -86,16 +84,14 @@ void Configuration::write()
         }
 
         for (std::pair<std::string, fsinfo> fs : fslist) {
-            conffiletmp
-            << "fsys: " << encode(fs.first)
-            << " " << fs.second.source
-            << " " << fs.second.fstype
-            << " " << fs.second.options
-            << " " << fs.second.uuid << std::endl;
+            conffiletmp << "fsys: " << encode(fs.first) << " "
+                    << fs.second.source << " " << fs.second.fstype << " "
+                    << fs.second.options << " " << fs.second.uuid << std::endl;
         }
     }
 
-    if (rename((Const::TMP_CONFIG_FILE).c_str(), (Const::CONFIG_FILE).c_str()) == -1)
+    if (rename((Const::TMP_CONFIG_FILE).c_str(), (Const::CONFIG_FILE).c_str())
+            == -1)
         MSG(LTFSDMS0062E);
 }
 
@@ -116,7 +112,7 @@ void Configuration::read()
         std::istringstream liness(line);
         std::string token;
 
-        if ( line[0] == '#')
+        if (line[0] == '#')
             continue;
 
         if (!std::getline(liness, token, ' '))
@@ -126,11 +122,10 @@ void Configuration::read()
             if (!std::getline(liness, token, ' '))
                 THROW(Error::CONFIG_FORMAT_ERROR);
             poolName = decode(token);
-            while(std::getline(liness, token, ' '))
+            while (std::getline(liness, token, ' '))
                 stgplisttmp[poolName].insert(token);
 
-        }
-        else if (token.compare("fsys:") == 0) {
+        } else if (token.compare("fsys:") == 0) {
             if (!std::getline(liness, token, ' '))
                 THROW(Error::CONFIG_FORMAT_ERROR);
             fsName = token;
@@ -149,8 +144,7 @@ void Configuration::read()
             if (std::getline(liness, token, ' '))
                 THROW(Error::CONFIG_FORMAT_ERROR);
             fslisttmp[fsName] = finfo;
-        }
-        else {
+        } else {
             THROW(Error::CONFIG_FORMAT_ERROR);
         }
     }
@@ -164,7 +158,7 @@ void Configuration::poolCreate(std::string poolName)
 {
     std::lock_guard<std::recursive_mutex> lock(mtx);
 
-    if ( stgplist.find(poolName) != stgplist.end() )
+    if (stgplist.find(poolName) != stgplist.end())
         THROW(Error::CONFIG_POOL_EXISTS);
 
     stgplist[poolName] = {};
@@ -179,10 +173,10 @@ void Configuration::poolDelete(std::string poolName)
 
     std::lock_guard<std::recursive_mutex> lock(mtx);
 
-    if ( (it = stgplist.find(poolName)) == stgplist.end() )
+    if ((it = stgplist.find(poolName)) == stgplist.end())
         THROW(Error::CONFIG_POOL_NOT_EXISTS);
 
-    if ( stgplist[poolName].size() != 0 )
+    if (stgplist[poolName].size() != 0)
         THROW(Error::CONFIG_POOL_NOT_EMPTY);
 
     stgplist.erase(it);
@@ -197,11 +191,11 @@ void Configuration::poolAdd(std::string poolName, std::string tapeId)
 
     std::lock_guard<std::recursive_mutex> lock(mtx);
 
-    if ( (it = stgplist.find(poolName)) == stgplist.end() )
+    if ((it = stgplist.find(poolName)) == stgplist.end())
         THROW(Error::CONFIG_POOL_NOT_EXISTS);
 
-    for ( std::pair<std::string, std::set<std::string>> pool : stgplist )
-        if ( pool.second.find(tapeId) != pool.second.end() )
+    for (std::pair<std::string, std::set<std::string>> pool : stgplist)
+        if (pool.second.find(tapeId) != pool.second.end())
             THROW(Error::CONFIG_TAPE_EXISTS);
 
     (*it).second.insert(tapeId);
@@ -217,10 +211,10 @@ void Configuration::poolRemove(std::string poolName, std::string tapeId)
 
     std::lock_guard<std::recursive_mutex> lock(mtx);
 
-    if ( (itp = stgplist.find(poolName)) == stgplist.end() )
+    if ((itp = stgplist.find(poolName)) == stgplist.end())
         THROW(Error::CONFIG_POOL_NOT_EXISTS);
 
-    if ( (itt = (*itp).second.find(tapeId)) == (*itp).second.end() )
+    if ((itt = (*itp).second.find(tapeId)) == (*itp).second.end())
         THROW(Error::CONFIG_TAPE_NOT_EXISTS);
 
     (*itp).second.erase(itt);
@@ -235,7 +229,7 @@ std::set<std::string> Configuration::getPool(std::string poolName)
 
     std::lock_guard<std::recursive_mutex> lock(mtx);
 
-    if ( (it = stgplist.find(poolName)) == stgplist.end() )
+    if ((it = stgplist.find(poolName)) == stgplist.end())
         THROW(Error::CONFIG_POOL_NOT_EXISTS);
 
     return it->second;
@@ -248,7 +242,7 @@ std::set<std::string> Configuration::getPools()
 
     std::lock_guard<std::recursive_mutex> lock(mtx);
 
-    for ( std::pair<std::string, std::set<std::string>> pool : stgplist)
+    for (std::pair<std::string, std::set<std::string>> pool : stgplist)
         poolnames.insert(pool.first);
 
     return poolnames;
@@ -259,13 +253,13 @@ void Configuration::addFs(FileSystems::fsinfo newfs)
 {
     std::lock_guard<std::recursive_mutex> lock(mtx);
 
-    if ( fslist.find(newfs.target) != fslist.end() )
+    if (fslist.find(newfs.target) != fslist.end())
         THROW(Error::CONFIG_TARGET_EXISTS);
 
     for (std::pair<std::string, fsinfo> fs : fslist) {
-        if ( fs.second.source.compare(newfs.source) == 0 )
+        if (fs.second.source.compare(newfs.source) == 0)
             THROW(Error::CONFIG_SOURCE_EXISTS);
-        if ( fs.second.uuid.compare(newfs.uuid) == 0 )
+        if (fs.second.uuid.compare(newfs.uuid) == 0)
             THROW(Error::CONFIG_UUID_EXISTS);
     }
 
@@ -285,7 +279,7 @@ FileSystems::fsinfo Configuration::getFs(std::string target)
 
     std::lock_guard<std::recursive_mutex> lock(mtx);
 
-    if ( (it = fslist.find(target)) == fslist.end() )
+    if ((it = fslist.find(target)) == fslist.end())
         THROW(Error::CONFIG_TARGET_NOT_EXISTS);
 
     fs.source = it->second.source;
@@ -303,7 +297,7 @@ std::set<std::string> Configuration::getFss()
 
     std::lock_guard<std::recursive_mutex> lock(mtx);
 
-    for ( std::pair<std::string, fsinfo> fs : fslist)
+    for (std::pair<std::string, fsinfo> fs : fslist)
         fss.insert(fs.first);
 
     return fss;

@@ -41,7 +41,8 @@ public:
     {
     }
 
-    static exception_info_t processArgs(const char *filename, int line, Error error)
+    static exception_info_t processArgs(const char *filename, int line,
+            Error error)
     {
         std::stringstream info;
         exception_info_t exception_info;

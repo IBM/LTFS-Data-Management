@@ -37,7 +37,7 @@ FsObj::file_state Migration::checkState(std::string fileName, FsObj *fso)
                     std::lock_guard<std::recursive_mutex> lock(
                             OpenLTFSInventory::mtx);
                     for (std::string cart : Server::conf.getPool(pool)) {
-                        if ( cart.compare(attr.tapeId[i]) == 0) {
+                        if (cart.compare(attr.tapeId[i]) == 0) {
                             tapeFound = true;
                             break;
                         }
@@ -76,13 +76,12 @@ void Migration::addJob(std::string fileName)
         }
 
         state = checkState(fileName, &fso);
-        
+
         fuid = fso.getfuid();
         stmt(Migration::ADD_JOB) << DataBase::MIGRATION << fileName << reqNumber
-                << targetState << statbuf.st_size << fuid.fsid_h
-                << fuid.fsid_l << fuid.igen << fuid.inum
-                << statbuf.st_mtim.tv_sec << statbuf.st_mtim.tv_nsec
-                << time(NULL) << state;
+                << targetState << statbuf.st_size << fuid.fsid_h << fuid.fsid_l
+                << fuid.igen << fuid.inum << statbuf.st_mtim.tv_sec
+                << statbuf.st_mtim.tv_nsec << time(NULL) << state;
     } catch (const std::exception& e) {
         TRACE(Trace::error, e.what());
         stmt(Migration::ADD_JOB) << DataBase::MIGRATION << fileName << reqNumber
@@ -246,7 +245,8 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId,
                 if (wsize != rsize) {
                     TRACE(Trace::error, errno, wsize, rsize);
                     MSG(LTFSDMS0022E, tapeName.c_str());
-                    THROW(Error::GENERAL_ERROR, mig_info.fileName, wsize, rsize);
+                    THROW(Error::GENERAL_ERROR, mig_info.fileName, wsize,
+                            rsize);
                 }
 
                 offset += rsize;
@@ -539,7 +539,8 @@ bool needsTape)
         inventory->update(inventory->getCartridge(tapeId));
 
         std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
-        inventory->getCartridge(tapeId)->setState(OpenLTFSCartridge::TAPE_MOUNTED);
+        inventory->getCartridge(tapeId)->setState(
+                OpenLTFSCartridge::TAPE_MOUNTED);
         bool found = false;
         for (std::shared_ptr<OpenLTFSDrive> d : inventory->getDrives()) {
             if (d->get_slot() == inventory->getCartridge(tapeId)->get_slot()) {

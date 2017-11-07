@@ -247,7 +247,7 @@ void FuseFS::recoverState(const char *path, FuseFS::mig_info::state_num state)
             MSG(LTFSDMF0015W, fusepath);
             try {
                 FuseFS::setMigInfoAt(fd, FuseFS::mig_info::state_num::MIGRATED);
-            } catch(const std::exception& e) {
+            } catch (const std::exception& e) {
                 MSG(LTFSDMF0056E, fusepath);
             }
             if (ftruncate(fd, 0) == -1) {
@@ -390,8 +390,8 @@ int FuseFS::ltfsdm_getattr(const char *path, struct stat *statbuf)
         goto end;
     }
 
-    if (FuseFS::procIsOpenLTFS(pid) == true &&
-            std::string(Const::OPEN_LTFS_CACHE_DIR).compare(path) == 0) {
+    if (FuseFS::procIsOpenLTFS(pid) == true
+            && std::string(Const::OPEN_LTFS_CACHE_DIR).compare(path) == 0) {
         statbuf->st_mode = S_IFDIR | S_IRWXU;
         goto end;
     }
@@ -422,7 +422,7 @@ int FuseFS::ltfsdm_getattr(const char *path, struct stat *statbuf)
             goto end;
         try {
             miginfo = getMigInfoAt(fd);
-        } catch(const std::exception& e) {
+        } catch (const std::exception& e) {
             MSG(LTFSDMF0057E, path);
             close(fd);
             goto end;
@@ -1396,7 +1396,7 @@ void FuseFS::init(struct timespec starttime)
     FileSystems::fsinfo fs;
     bool alreadyManaged = false;
 
-    if ( Connector::conf == nullptr)
+    if (Connector::conf == nullptr)
         THROW(Error::GENERAL_ERROR);
 
     memset(exepath, 0, PATH_MAX);
@@ -1410,8 +1410,7 @@ void FuseFS::init(struct timespec starttime)
     if (target.isFsManaged()) {
         alreadyManaged = true;
         fs = Connector::conf->getFs(mountpt);
-    }
-    else {
+    } else {
         try {
             fs = fss.getByTarget(mountpt);
         } catch (const std::exception& e) {
@@ -1441,8 +1440,8 @@ void FuseFS::init(struct timespec starttime)
             (mountpt + Const::OPEN_LTFS_CACHE_MP), mountpt, stream.str());
 
     while (true) {
-        if ((fd = open((mountpt + Const::OPEN_LTFS_IOCTL).c_str(), O_RDONLY | O_CLOEXEC))
-                == -1) {
+        if ((fd = open((mountpt + Const::OPEN_LTFS_IOCTL).c_str(),
+                O_RDONLY | O_CLOEXEC)) == -1) {
             if (count < 20) {
                 MSG(LTFSDMF0041I);
                 sleep(1);
@@ -1450,7 +1449,7 @@ void FuseFS::init(struct timespec starttime)
                 continue;
             }
             thrd->join();
-            delete(thrd);
+            delete (thrd);
             MSG(LTFSDMF0040E, errno);
             THROW(Error::GENERAL_ERROR);
         } else if (ioctl(fd, FuseFS::LTFSDM_PREMOUNT) != -1) {
@@ -1463,7 +1462,7 @@ void FuseFS::init(struct timespec starttime)
         } else {
             close(fd);
             thrd->join();
-            delete(thrd);
+            delete (thrd);
             MSG(LTFSDMF0040E, errno);
             THROW(Error::GENERAL_ERROR);
         }
@@ -1476,7 +1475,7 @@ void FuseFS::init(struct timespec starttime)
 
     try {
         fss.mount(fs.source, mountpt + Const::OPEN_LTFS_CACHE_MP, fs.options);
-    } catch(const std::exception &e) {
+    } catch (const std::exception &e) {
         TRACE(Trace::error, e.what());
         MSG(LTFSDMF0037E, fs.source, e.what());
         THROW(Error::GENERAL_ERROR);
@@ -1499,15 +1498,16 @@ void FuseFS::init(struct timespec starttime)
 
     MSG(LTFSDMF0050I, mountpt);
     try {
-        fss.umount(mountpt + Const::OPEN_LTFS_CACHE_MP, FileSystems::UMNT_DETACHED);
-    } catch (const std::exception& e ) {
+        fss.umount(mountpt + Const::OPEN_LTFS_CACHE_MP,
+                FileSystems::UMNT_DETACHED);
+    } catch (const std::exception& e) {
         TRACE(Trace::error, e.what());
         MSG(LTFSDMF0051E, mountpt, errno);
         THROW(Error::GENERAL_ERROR);
     }
     init_status.CACHE_MOUNTED = false;
 
-    if ( alreadyManaged == false )
+    if (alreadyManaged == false)
         Connector::conf->addFs(fs);
 }
 
@@ -1531,10 +1531,12 @@ FuseFS::~FuseFS()
         if (init_status.CACHE_MOUNTED) {
             MSG(LTFSDMF0054I, Const::OPEN_LTFS_CACHE_MP);
             try {
-                fss.umount(mountpt + Const::OPEN_LTFS_CACHE_MP, FileSystems::UMNT_NORMAL);
+                fss.umount(mountpt + Const::OPEN_LTFS_CACHE_MP,
+                        FileSystems::UMNT_NORMAL);
             } catch (const std::exception& e) {
                 TRACE(Trace::error, e.what());
-                MSG(LTFSDMF0053E, mountpt + Const::OPEN_LTFS_CACHE_MP, e.what());
+                MSG(LTFSDMF0053E, mountpt + Const::OPEN_LTFS_CACHE_MP,
+                        e.what());
             }
         }
 

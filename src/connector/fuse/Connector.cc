@@ -27,7 +27,6 @@
 #include "src/connector/fuse/FuseConnector.h"
 #include "src/connector/Connector.h"
 
-
 std::atomic<bool> Connector::connectorTerminate(false);
 std::atomic<bool> Connector::forcedTerminate(false);
 std::atomic<bool> Connector::recallEventSystemStopped(false);
@@ -104,7 +103,7 @@ Connector::rec_info_t Connector::getEvents()
     key = request.key();
     if (FuseConnector::ltfsdmKey != key) {
         TRACE(Trace::error, (long ) FuseConnector::ltfsdmKey, key);
-        recinfo = (rec_info_t ) { NULL, false, (fuid_t) {0, 0, 0, 0}, "" };
+        recinfo = (rec_info_t ) { NULL, false, (fuid_t ) { 0, 0, 0, 0 }, "" };
         return recinfo;
     }
 
@@ -113,14 +112,14 @@ Connector::rec_info_t Connector::getEvents()
 
     recinfo.conn_info = conn_info;
     recinfo.toresident = request.toresident();
-    recinfo.fuid = (fuid_t) {
-            (unsigned long) request.fsidh(),
-            (unsigned long) request.fsidl(),
-            (unsigned int) request.igen(),
-            (unsigned long) request.inum()};
+    recinfo.fuid = (fuid_t ) { (unsigned long) request.fsidh(),
+                    (unsigned long) request.fsidl(),
+                    (unsigned int) request.igen(),
+                    (unsigned long) request.inum() };
     recinfo.filename = request.filename();
 
-    TRACE(Trace::always, recinfo.filename, recinfo.fuid.inum, recinfo.toresident);
+    TRACE(Trace::always, recinfo.filename, recinfo.fuid.inum,
+            recinfo.toresident);
 
     return recinfo;
 }

@@ -46,7 +46,8 @@ public:
         LTFSDM_UNLOCK = _IOW('l', 6, FuseFS::FuseHandle),   // not used
     };
 
-    struct shared_data {
+    struct shared_data
+    {
         int rootFd;
         std::string mountpt;
         struct timespec starttime;
@@ -178,8 +179,8 @@ public:
     void init(struct timespec starttime);
 
     FuseFS(std::string _mountpt) :
-            mountpt(_mountpt), thrd(nullptr), rootFd(Const::UNSET), ioctlFd(Const::UNSET),
-            init_status( { false, false, false } )
+            mountpt(_mountpt), thrd(nullptr), rootFd(Const::UNSET), ioctlFd(
+                    Const::UNSET), init_status( { false, false, false })
     {
     }
 
