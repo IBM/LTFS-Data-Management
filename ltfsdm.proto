@@ -101,8 +101,6 @@ message LTFSDmAddRequest {
 	required uint64 key = 1;
 	required int64 reqNumber = 2;
 	required bytes managedFs = 3;
-	required bytes mountPoint = 4;
-	required bytes fsName = 5;
 }
 
 message LTFSDmAddResp {

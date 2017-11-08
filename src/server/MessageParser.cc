@@ -435,8 +435,6 @@ void MessageParser::addMessage(long key, LTFSDmCommServer *command,
     const LTFSDmProtocol::LTFSDmAddRequest addreq = command->addrequest();
     long keySent = addreq.key();
     std::string managedFs = addreq.managedfs();
-    std::string mountPoint = addreq.mountpoint();
-    std::string fsName = addreq.fsname();
     LTFSDmProtocol::LTFSDmAddResp_AddResp response =
             LTFSDmProtocol::LTFSDmAddResp::SUCCESS;
 
@@ -455,8 +453,7 @@ void MessageParser::addMessage(long key, LTFSDmCommServer *command,
             response = LTFSDmProtocol::LTFSDmAddResp::ALREADY_ADDED;
         } else {
             MSG(LTFSDMS0042I, managedFs);
-            fileSystem.manageFs(true, connector->getStartTime(), mountPoint,
-                    fsName);
+            fileSystem.manageFs(true, connector->getStartTime());
         }
     } catch (const OpenLTFSException& e) {
         response = LTFSDmProtocol::LTFSDmAddResp::FAILED;

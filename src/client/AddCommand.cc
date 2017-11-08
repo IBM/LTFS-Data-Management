@@ -76,8 +76,6 @@ void AddCommand::doCommand(int argc, char **argv)
     addreq->set_key(key);
     addreq->set_reqnumber(requestNumber);
     addreq->set_managedfs(managedFs);
-    addreq->set_mountpoint(mountPoint);
-    addreq->set_fsname(fsName);
 
     try {
         commCommand.send();

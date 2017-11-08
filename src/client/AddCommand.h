@@ -9,7 +9,7 @@ private:
     }
 public:
     AddCommand() :
-            OpenLTFSCommand("add", ":+m:N:")
+            OpenLTFSCommand("add", ":+")
     {
     }
     ~AddCommand()

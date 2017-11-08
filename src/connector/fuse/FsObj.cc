@@ -164,8 +164,7 @@ bool FsObj::isFsManaged()
         return true;
 }
 
-void FsObj::manageFs(bool setDispo, struct timespec starttime,
-        std::string mountPoint, std::string fsName)
+void FsObj::manageFs(bool setDispo, struct timespec starttime)
 
 {
     FuseFS::FuseHandle *fh = (FuseFS::FuseHandle *) handle;

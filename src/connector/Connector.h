@@ -123,12 +123,7 @@ public:
     FsObj(Connector::rec_info_t recinfo);
     ~FsObj();
     bool isFsManaged();
-    void manageFs(bool setDispo, struct timespec starttime)
-    {
-        manageFs(setDispo, starttime, "", "");
-    }
-    void manageFs(bool setDispo, struct timespec starttime,
-            std::string mountPoint, std::string fsName);
+    void manageFs(bool setDispo, struct timespec starttime);
     struct stat stat();
     fuid_t getfuid();
     std::string getTapeId();
