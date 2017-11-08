@@ -1,14 +1,14 @@
 RELPATH = ../../..
 
-LDFLAGS := -lprotobuf -lfuse -lpthread 
+LDFLAGS := -lprotobuf -lfuse -lpthread -luuid -lblkid -lmount
 SHAREDLIB := lib$(notdir $(CURDIR))connector.so
 
-SO_SRC_FILES := Connector.cc ltfsdmd.ofs.cc
-ARC_SRC_FILES := Connector.cc ltfsdmd.ofs.cc
+SO_SRC_FILES := Connector.cc FuseLock.cc FuseFS.cc FsObj.cc FuseConnector.cc
+ARC_SRC_FILES := Connector.cc FuseLock.cc FuseFS.cc FsObj.cc FuseConnector.cc
 CLEANUP_FILES := $(SHAREDLIB) ltfsdmd.ofs
 BINARY := $(SHAREDLIB) ltfsdmd.ofs
 POSTTARGET :=
 
-ARCHIVES := $(RELPATH)/lib/common.a $(RELPATH)/lib/connector.a
+ARCHIVES := $(RELPATH)/lib/connector.a $(RELPATH)/lib/common.a
 
 include $(RELPATH)/definitions.mk

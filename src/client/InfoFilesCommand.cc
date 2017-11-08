@@ -3,16 +3,21 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <sys/resource.h>
+#include <blkid/blkid.h>
 
 #include <string>
 #include <list>
+#include <map>
+#include <set>
 #include <sstream>
 #include <exception>
 
+#include "src/common/errors/errors.h"
 #include "src/common/exception/OpenLTFSException.h"
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
-#include "src/common/errors/errors.h"
+#include "src/common/util/FileSystems.h"
+#include "src/common/configuration/Configuration.h"
 
 #include "src/common/comm/ltfsdm.pb.h"
 #include "src/common/comm/LTFSDmComm.h"
@@ -46,7 +51,7 @@ void InfoFilesCommand::doCommand(int argc, char **argv)
 
     if (argc == 1) {
         INFO(LTFSDMC0018E);
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
 
     }
 

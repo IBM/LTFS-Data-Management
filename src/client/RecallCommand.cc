@@ -6,10 +6,10 @@
 #include <sstream>
 #include <exception>
 
+#include "src/common/errors/errors.h"
 #include "src/common/exception/OpenLTFSException.h"
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
-#include "src/common/errors/errors.h"
 
 #include "src/common/comm/ltfsdm.pb.h"
 #include "src/common/comm/LTFSDmComm.h"
@@ -48,39 +48,39 @@ void RecallCommand::talkToBackend(std::stringstream *parmList)
         commCommand.send();
     } catch (const std::exception& e) {
         MSG(LTFSDMC0027E);
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 
     try {
         commCommand.recv();
     } catch (const std::exception& e) {
         MSG(LTFSDMC0028E);
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 
     const LTFSDmProtocol::LTFSDmSelRecRequestResp recreqresp =
             commCommand.selrecrequestresp();
 
     switch (recreqresp.error()) {
-        case Error::LTFSDM_OK:
+        case static_cast<long>(Error::OK):
             if (getpid() != recreqresp.pid()) {
                 MSG(LTFSDMC0036E);
                 TRACE(Trace::error, getpid(), recreqresp.pid());
-                THROW(Error::LTFSDM_GENERAL_ERROR);
+                THROW(Error::GENERAL_ERROR);
             }
             if (requestNumber != recreqresp.reqnumber()) {
                 MSG(LTFSDMC0037E);
                 TRACE(Trace::error, requestNumber, recreqresp.reqnumber());
-                THROW(Error::LTFSDM_GENERAL_ERROR);
+                THROW(Error::GENERAL_ERROR);
             }
             break;
-        case Error::LTFSDM_TERMINATING:
+        case static_cast<long>(Error::TERMINATING):
             MSG(LTFSDMC0101I);
-            THROW(Error::LTFSDM_GENERAL_ERROR);
+            THROW(Error::GENERAL_ERROR);
             break;
         default:
             MSG(LTFSDMC0029E);
-            THROW(Error::LTFSDM_GENERAL_ERROR);
+            THROW(Error::GENERAL_ERROR);
     }
 
     sendObjects(parmList);
@@ -94,7 +94,7 @@ void RecallCommand::doCommand(int argc, char **argv)
 
     if (argc == 1) {
         INFO(LTFSDMC0018E);
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
 
     }
 
@@ -104,7 +104,7 @@ void RecallCommand::doCommand(int argc, char **argv)
         checkOptions(argc, argv);
     } catch (const std::exception& e) {
         printUsage();
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 
     TRACE(Trace::normal, argc, optind);

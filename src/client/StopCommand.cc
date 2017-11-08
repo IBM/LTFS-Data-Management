@@ -7,10 +7,10 @@
 #include <sstream>
 #include <exception>
 
+#include "src/common/errors/errors.h"
 #include "src/common/exception/OpenLTFSException.h"
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
-#include "src/common/errors/errors.h"
 
 #include "src/common/comm/ltfsdm.pb.h"
 #include "src/common/comm/LTFSDmComm.h"
@@ -32,17 +32,19 @@ void StopCommand::doCommand(int argc, char **argv)
 
     if (argc > 2) {
         printUsage();
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 
     try {
         connect();
     } catch (const std::exception& e) {
         MSG(LTFSDMC0026E);
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 
     TRACE(Trace::normal, requestNumber);
+
+    INFO(LTFSDMC0101I);
 
     do {
         LTFSDmProtocol::LTFSDmStopRequest *stopreq =
@@ -56,14 +58,14 @@ void StopCommand::doCommand(int argc, char **argv)
             commCommand.send();
         } catch (const std::exception& e) {
             MSG(LTFSDMC0027E);
-            THROW(Error::LTFSDM_GENERAL_ERROR);
+            THROW(Error::GENERAL_ERROR);
         }
 
         try {
             commCommand.recv();
         } catch (const std::exception& e) {
             MSG(LTFSDMC0028E);
-            THROW(Error::LTFSDM_GENERAL_ERROR);
+            THROW(Error::GENERAL_ERROR);
         }
 
         const LTFSDmProtocol::LTFSDmStopResp stopresp = commCommand.stopresp();
@@ -71,26 +73,31 @@ void StopCommand::doCommand(int argc, char **argv)
         finished = stopresp.success();
 
         if (!finished) {
-            MSG(LTFSDMC0101I);
+            INFO(LTFSDMC0103I);
             sleep(1);
         } else {
             break;
         }
     } while (true);
 
+    INFO(LTFSDMC0104I);
+
     if ((lockfd = open(Const::SERVER_LOCK_FILE.c_str(), O_RDWR | O_CREAT, 0600))
             == -1) {
         MSG(LTFSDMC0033E);
         TRACE(Trace::error, Const::SERVER_LOCK_FILE, errno);
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
+    INFO(LTFSDMC0034I);
 
     while (flock(lockfd, LOCK_EX | LOCK_NB) == -1) {
         if (exitClient)
             break;
-        INFO(LTFSDMC0034I);
+        INFO(LTFSDMC0103I);
         sleep(1);
     }
+
+    INFO(LTFSDMC0104I);
 
     if (flock(lockfd, LOCK_UN) == -1) {
         MSG(LTFSDMC0035E);

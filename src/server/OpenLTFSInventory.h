@@ -33,11 +33,16 @@ private:
 public:
     enum state_t
     {
-        INUSE, MOUNTED, MOVING, UNMOUNTED, INVALID, UNKNOWN
+        TAPE_INUSE,
+        TAPE_MOUNTED,
+        TAPE_MOVING,
+        TAPE_UNMOUNTED,
+        TAPE_INVALID,
+        TAPE_UNKNOWN
     } state;
     OpenLTFSCartridge(ltfsadmin::Cartridge cartridge) :
             ltfsadmin::Cartridge(cartridge), inProgress(0), pool(""), requested(
-                    false), state(OpenLTFSCartridge::UNKNOWN)
+                    false), state(OpenLTFSCartridge::TAPE_UNKNOWN)
     {
     }
     void update(std::shared_ptr<LTFSAdminSession> sess);
@@ -52,25 +57,11 @@ public:
     void unsetRequested();
 };
 
-class OpenLTFSPool
-{
-private:
-    std::string poolName;
-    std::list<std::shared_ptr<OpenLTFSCartridge>> cartridges;
-public:
-    OpenLTFSPool(std::string _poolName);
-    std::string getPoolName();
-    void add(std::shared_ptr<OpenLTFSCartridge> cartridge);
-    void remove(std::shared_ptr<OpenLTFSCartridge> cartridge);
-    std::list<std::shared_ptr<OpenLTFSCartridge>> getCartridges();
-};
-
 class OpenLTFSInventory
 {
 private:
     std::list<std::shared_ptr<OpenLTFSDrive>> drives;
     std::list<std::shared_ptr<OpenLTFSCartridge>> cartridges;
-    std::list<std::shared_ptr<OpenLTFSPool>> pools;
     std::shared_ptr<ltfsadmin::LTFSAdminSession> sess;
     std::string mountPoint;
 public:
@@ -79,15 +70,12 @@ public:
 
     static std::recursive_mutex mtx;
 
-    void writePools();
     void inventorize();
 
     std::list<std::shared_ptr<OpenLTFSDrive>> getDrives();
     std::shared_ptr<OpenLTFSDrive> getDrive(std::string driveid);
     std::list<std::shared_ptr<OpenLTFSCartridge>> getCartridges();
     std::shared_ptr<OpenLTFSCartridge> getCartridge(std::string cartridgeid);
-    std::list<std::shared_ptr<OpenLTFSPool>> getPools();
-    std::shared_ptr<OpenLTFSPool> getPool(std::string poolname);
 
     void update(std::shared_ptr<OpenLTFSDrive>);
     void update(std::shared_ptr<OpenLTFSCartridge>);

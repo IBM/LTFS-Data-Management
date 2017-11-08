@@ -23,7 +23,8 @@ private:
 
     struct exception_info_t
     {
-        int error;
+        int errnum;
+        Error error;
         std::string infostr;
     };
 
@@ -40,13 +41,27 @@ public:
     {
     }
 
-    template<typename ... Args>
     static exception_info_t processArgs(const char *filename, int line,
-            int error, Args ... args)
+            Error error)
     {
         std::stringstream info;
         exception_info_t exception_info;
 
+        exception_info.errnum = errno;
+        exception_info.error = error;
+        info << filename << ":" << line;
+
+        return exception_info;
+    }
+
+    template<typename ... Args>
+    static exception_info_t processArgs(const char *filename, int line,
+            Error error, Args ... args)
+    {
+        std::stringstream info;
+        exception_info_t exception_info;
+
+        exception_info.errnum = errno;
         exception_info.error = error;
         info << filename << ":" << line;
         addInfo(info, args ...);
@@ -55,9 +70,14 @@ public:
         return exception_info;
     }
 
-    const int getError() const
+    const Error getError() const
     {
         return exception_info.error;
+    }
+
+    const int getErrno() const
+    {
+        return exception_info.errnum;
     }
 
     const char* what() const noexcept {

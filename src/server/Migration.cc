@@ -36,10 +36,8 @@ FsObj::file_state Migration::checkState(std::string fileName, FsObj *fso)
                 for (std::string pool : pools) {
                     std::lock_guard<std::recursive_mutex> lock(
                             OpenLTFSInventory::mtx);
-                    std::list<std::shared_ptr<OpenLTFSCartridge>> carts =
-                            inventory->getPool(pool)->getCartridges();
-                    for (std::shared_ptr<OpenLTFSCartridge> cart : carts) {
-                        if (cart->GetObjectID().compare(attr.tapeId[i]) == 0) {
+                    for (std::string cart : Server::conf.getPool(pool)) {
+                        if (cart.compare(attr.tapeId[i]) == 0) {
                             tapeFound = true;
                             break;
                         }
@@ -66,6 +64,7 @@ void Migration::addJob(std::string fileName)
     struct stat statbuf;
     FsObj::file_state state;
     SQLStatement stmt;
+    fuid_t fuid;
 
     try {
         FsObj fso(fileName);
@@ -78,11 +77,11 @@ void Migration::addJob(std::string fileName)
 
         state = checkState(fileName, &fso);
 
+        fuid = fso.getfuid();
         stmt(Migration::ADD_JOB) << DataBase::MIGRATION << fileName << reqNumber
-                << targetState << statbuf.st_size << (long long) fso.getFsId()
-                << fso.getIGen() << (long long) fso.getINode()
-                << statbuf.st_mtim.tv_sec << statbuf.st_mtim.tv_nsec
-                << time(NULL) << state;
+                << targetState << statbuf.st_size << fuid.fsid_h << fuid.fsid_l
+                << fuid.igen << fuid.inum << statbuf.st_mtim.tv_sec
+                << statbuf.st_mtim.tv_nsec << time(NULL) << state;
     } catch (const std::exception& e) {
         TRACE(Trace::error, e.what());
         stmt(Migration::ADD_JOB) << DataBase::MIGRATION << fileName << reqNumber
@@ -188,31 +187,31 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId,
 
         Server::createDataDir(tapeId);
 
-        fd = open(tapeName.c_str(), O_RDWR | O_CREAT);
+        fd = open(tapeName.c_str(), O_RDWR | O_CREAT | O_TRUNC | O_CLOEXEC);
 
         if (fd == -1) {
             TRACE(Trace::error, errno);
             MSG(LTFSDMS0021E, tapeName.c_str());
-            THROW(Const::UNSET, tapeName, errno);
+            THROW(Error::GENERAL_ERROR, tapeName, errno);
         }
 
-        source.lock();
+        std::unique_lock<FsObj> fsolock(source);
 
         source.preparePremigration();
 
-        source.unlock();
+        fsolock.unlock();
 
         if (stat(mig_info.fileName.c_str(), &statbuf) == -1) {
             TRACE(Trace::error, errno);
             MSG(LTFSDMS0040E, mig_info.fileName);
-            THROW(Const::UNSET, mig_info.fileName, errno);
+            THROW(Error::GENERAL_ERROR, mig_info.fileName, errno);
         }
         if (statbuf.st_mtim.tv_sec != secs
                 || statbuf.st_mtim.tv_nsec != nsecs) {
             TRACE(Trace::error, statbuf.st_mtim.tv_sec, secs,
                     statbuf.st_mtim.tv_nsec, nsecs);
             MSG(LTFSDMS0041W, mig_info.fileName);
-            THROW(Const::UNSET, mig_info.fileName);
+            THROW(Error::GENERAL_ERROR, mig_info.fileName);
         }
 
         {
@@ -224,12 +223,12 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId,
                 TRACE(Trace::always, mig_info.fileName, tapeId);
                 std::lock_guard<std::mutex> lock(Migration::pmigmtx);
                 *suspended = true;
-                THROW(Error::LTFSDM_OK);
+                THROW(Error::OK);
             }
 
             while (offset < statbuf.st_size) {
                 if (Server::forcedTerminate)
-                    THROW(Error::LTFSDM_OK);
+                    THROW(Error::OK);
 
                 rsize = source.read(offset,
                         statbuf.st_size - offset > Const::READ_BUFFER_SIZE ?
@@ -238,7 +237,7 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId,
                 if (rsize == -1) {
                     TRACE(Trace::error, errno);
                     MSG(LTFSDMS0023E, mig_info.fileName);
-                    THROW(errno, errno, mig_info.fileName);
+                    THROW(Error::GENERAL_ERROR, errno, mig_info.fileName);
                 }
 
                 wsize = write(fd, buffer, rsize);
@@ -246,14 +245,15 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId,
                 if (wsize != rsize) {
                     TRACE(Trace::error, errno, wsize, rsize);
                     MSG(LTFSDMS0022E, tapeName.c_str());
-                    THROW(Const::UNSET, mig_info.fileName, wsize, rsize);
+                    THROW(Error::GENERAL_ERROR, mig_info.fileName, wsize,
+                            rsize);
                 }
 
                 offset += rsize;
                 if (stat(mig_info.fileName.c_str(), &statbuf_changed) == -1) {
                     TRACE(Trace::error, errno);
                     MSG(LTFSDMS0040E, mig_info.fileName);
-                    THROW(Const::UNSET, mig_info.fileName, errno);
+                    THROW(Error::GENERAL_ERROR, mig_info.fileName, errno);
                 }
 
                 if (statbuf_changed.st_mtim.tv_sec != secs
@@ -261,7 +261,7 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId,
                     TRACE(Trace::error, statbuf_changed.st_mtim.tv_sec, secs,
                             statbuf_changed.st_mtim.tv_nsec, nsecs);
                     MSG(LTFSDMS0041W, mig_info.fileName);
-                    THROW(Const::UNSET, mig_info.fileName);
+                    THROW(Error::GENERAL_ERROR, mig_info.fileName);
                 }
             }
         }
@@ -270,7 +270,7 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId,
                 mig_info.fileName.length(), 0) == -1) {
             TRACE(Trace::error, errno);
             MSG(LTFSDMS0025E, Const::LTFS_ATTR, tapeName);
-            THROW(Const::UNSET, mig_info.fileName, errno);
+            THROW(Error::GENERAL_ERROR, mig_info.fileName, errno);
         }
 
         Server::createLink(tapeId, mig_info.fileName, tapeName);
@@ -278,7 +278,7 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId,
         mrStatus.updateSuccess(mig_info.reqNumber, mig_info.fromState,
                 mig_info.toState);
 
-        source.lock();
+        fsolock.lock();
         attr = source.getAttribute();
         memset(attr.tapeId[attr.copies], 0, Const::tapeIdLength + 1);
         strncpy(attr.tapeId[attr.copies], tapeId.c_str(), Const::tapeIdLength);
@@ -286,13 +286,12 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId,
         source.addAttribute(attr);
         if (attr.copies == mig_info.numRepl)
             source.finishPremigration();
-        source.unlock();
 
         std::lock_guard<std::mutex> lock(Migration::pmigmtx);
         inumList->push_back(mig_info.inum);
     } catch (const OpenLTFSException& e) {
         TRACE(Trace::error, e.what());
-        if (e.getError() != Error::LTFSDM_OK)
+        if (e.getError() != Error::OK)
             failed = true;
     } catch (const std::exception& e) {
         TRACE(Trace::error, e.what());
@@ -327,7 +326,7 @@ void Migration::stub(Migration::mig_info_t mig_info,
 
         TRACE(Trace::always, mig_info.fileName);
 
-        source.lock();
+        std::lock_guard<FsObj> fsolock(source);
         attr = source.getAttribute();
         if ((source.getMigState() != FsObj::MIGRATED)
                 && (mig_info.numRepl == 0 || attr.copies == mig_info.numRepl)) {
@@ -336,10 +335,8 @@ void Migration::stub(Migration::mig_info_t mig_info,
             TRACE(Trace::full, mig_info.fileName);
         } else {
             TRACE(Trace::always, mig_info.fileName, source.getMigState());
-            source.unlock();
             return;
         }
-        source.unlock();
 
         std::lock_guard<std::mutex> lock(Migration::pmigmtx);
         inumList->push_back(mig_info.inum);
@@ -542,7 +539,8 @@ bool needsTape)
         inventory->update(inventory->getCartridge(tapeId));
 
         std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
-        inventory->getCartridge(tapeId)->setState(OpenLTFSCartridge::MOUNTED);
+        inventory->getCartridge(tapeId)->setState(
+                OpenLTFSCartridge::TAPE_MOUNTED);
         bool found = false;
         for (std::shared_ptr<OpenLTFSDrive> d : inventory->getDrives()) {
             if (d->get_slot() == inventory->getCartridge(tapeId)->get_slot()) {

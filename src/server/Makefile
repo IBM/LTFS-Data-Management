@@ -17,7 +17,6 @@ ARC_SRC_FILES += Status.cc
 ARC_SRC_FILES += OpenLTFSDrive.cc
 ARC_SRC_FILES += OpenLTFSCartridge.cc
 ARC_SRC_FILES += OpenLTFSInventory.cc
-ARC_SRC_FILES += OpenLTFSPool.cc
 
 CLEANUP_FILES := ltfsdmd
 BINARY := ltfsdmd

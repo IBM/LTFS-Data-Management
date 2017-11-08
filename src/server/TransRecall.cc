@@ -22,35 +22,37 @@ void TransRecall::addRequest(Connector::rec_info_t recinfo, std::string tapeId,
         statbuf = fso.stat();
 
         if (!S_ISREG(statbuf.st_mode)) {
-            MSG(LTFSDMS0032E, recinfo.ino);
+            MSG(LTFSDMS0032E, recinfo.fuid.inum);
             return;
         }
 
         state = fso.getMigState();
 
         if (state == FsObj::RESIDENT) {
-            MSG(LTFSDMS0031I, recinfo.ino);
+            MSG(LTFSDMS0031I, recinfo.fuid.inum);
+            Connector::respondRecallEvent(recinfo, true);
             return;
         }
 
         attr = fso.getAttribute();
 
-        tapeName = Server::getTapeName(recinfo.fsid, recinfo.igen, recinfo.ino,
-                tapeId);
+        tapeName = Server::getTapeName(recinfo.fuid.fsid_h, recinfo.fuid.fsid_l,
+                recinfo.fuid.igen, recinfo.fuid.inum, tapeId);
     } catch (const std::exception& e) {
         TRACE(Trace::error, e.what());
         if (filename.compare("NULL") != 0)
             MSG(LTFSDMS0073E, filename);
         else
-            MSG(LTFSDMS0032E, recinfo.ino);
+            MSG(LTFSDMS0032E, recinfo.fuid.inum);
     }
 
     stmt(TransRecall::ADD_JOB) << DataBase::TRARECALL << filename.c_str()
             << reqNum
             << (recinfo.toresident ? FsObj::RESIDENT : FsObj::PREMIGRATED)
-            << Const::UNSET << statbuf.st_size << (long long) recinfo.fsid
-            << recinfo.igen << (long long) recinfo.ino << statbuf.st_mtime << 0
-            << time(NULL) << state << tapeId << Server::getStartBlock(tapeName)
+            << Const::UNSET << statbuf.st_size << recinfo.fuid.fsid_h
+            << recinfo.fuid.fsid_l << recinfo.fuid.igen << recinfo.fuid.inum
+            << statbuf.st_mtime << 0 << time(NULL) << state << tapeId
+            << Server::getStartBlock(tapeName)
             << (std::intptr_t) recinfo.conn_info;
 
     TRACE(Trace::normal, stmt.str());
@@ -60,7 +62,7 @@ void TransRecall::addRequest(Connector::rec_info_t recinfo, std::string tapeId,
     if (filename.compare("NULL") != 0)
         TRACE(Trace::always, filename);
     else
-        TRACE(Trace::always, recinfo.ino);
+        TRACE(Trace::always, recinfo.fuid.inum);
 
     TRACE(Trace::always, tapeId);
 
@@ -95,9 +97,10 @@ void TransRecall::cleanupEvents()
             << DataBase::TRARECALL;
     TRACE(Trace::normal, stmt.str());
     stmt.prepare();
-    while (stmt.step(&recinfo.fsid, &recinfo.igen, &recinfo.ino,
-            &recinfo.filename, (std::intptr_t *) &recinfo.conn_info)) {
-        TRACE(Trace::always, recinfo.filename, recinfo.ino);
+    while (stmt.step(&recinfo.fuid.fsid_h, &recinfo.fuid.fsid_l,
+            &recinfo.fuid.igen, &recinfo.fuid.inum, &recinfo.filename,
+            (std::intptr_t *) &recinfo.conn_info)) {
+        TRACE(Trace::always, recinfo.filename, recinfo.fuid.inum);
         Connector::respondRecallEvent(recinfo, false);
     }
     stmt.finalize();
@@ -111,8 +114,7 @@ void TransRecall::run(Connector *connector)
             "trec-wq");
     Connector::rec_info_t recinfo;
     std::map<std::string, long> reqmap;
-    std::set<std::string> fsList;
-    std::set<std::string>::iterator it;
+    std::string tapeId;
 
     try {
         connector->initTransRecalls();
@@ -122,30 +124,33 @@ void TransRecall::run(Connector *connector)
         return;
     }
 
-    fsList = LTFSDM::getFs();
-
-    for (it = fsList.begin(); it != fsList.end(); ++it) {
-        try {
-            FsObj fileSystem(*it);
-            if (fileSystem.isFsManaged()) {
-                MSG(LTFSDMS0042I, *it);
-                fileSystem.manageFs(true, connector->getStartTime());
+    try {
+        FileSystems fss;
+        for (std::string fs : Server::conf.getFss()) {
+            try {
+                FsObj fileSystem(fs);
+                if (fileSystem.isFsManaged()) {
+                    MSG(LTFSDMS0042I, fs);
+                    fileSystem.manageFs(true, connector->getStartTime());
+                }
+            } catch (const OpenLTFSException& e) {
+                TRACE(Trace::error, e.what());
+                switch (e.getError()) {
+                    case Error::FS_CHECK_ERROR:
+                        MSG(LTFSDMS0044E, fs);
+                        break;
+                    case Error::FS_ADD_ERROR:
+                        MSG(LTFSDMS0045E, fs);
+                        break;
+                    default:
+                        MSG(LTFSDMS0045E, fs);
+                }
+            } catch (const std::exception& e) {
+                TRACE(Trace::error, e.what());
             }
-        } catch (const OpenLTFSException& e) {
-            TRACE(Trace::error, e.what());
-            switch (e.getError()) {
-                case Error::LTFSDM_FS_CHECK_ERROR:
-                    MSG(LTFSDMS0044E, *it);
-                    break;
-                case Error::LTFSDM_FS_ADD_ERROR:
-                    MSG(LTFSDMS0045E, *it);
-                    break;
-                default:
-                    MSG(LTFSDMS0045E, *it);
-            }
-        } catch (const std::exception& e) {
-            TRACE(Trace::error, e.what());
         }
+    } catch (const std::exception& e) {
+        MSG(LTFSDMS0079E, e.what());
     }
 
     while (Connector::connectorTerminate == false) {
@@ -157,7 +162,7 @@ void TransRecall::run(Connector *connector)
 
         // is sent for termination
         if (recinfo.conn_info == NULL) {
-            TRACE(Trace::always, recinfo.ino);
+            TRACE(Trace::always, recinfo.fuid.inum);
             continue;
         }
 
@@ -167,27 +172,29 @@ void TransRecall::run(Connector *connector)
             continue;
         }
 
-        if (recinfo.ino == 0) {
-            TRACE(Trace::always, recinfo.ino);
+        if (recinfo.fuid.inum == 0) {
+            TRACE(Trace::always, recinfo.fuid.inum);
             continue;
         }
 
-        FsObj fso(recinfo);
-
         // error case: managed region set but no attrs
         try {
+            FsObj fso(recinfo);
+
             if (fso.getMigState() == FsObj::RESIDENT) {
                 fso.finishRecall(FsObj::RESIDENT);
-                MSG(LTFSDMS0039I, recinfo.ino);
+                MSG(LTFSDMS0039I, recinfo.fuid.inum);
                 connector->respondRecallEvent(recinfo, true);
                 continue;
             }
+
+            tapeId = fso.getAttribute().tapeId[0];
         } catch (const OpenLTFSException& e) {
             TRACE(Trace::error, e.what());
-            if (e.getError() == Error::LTFSDM_ATTR_FORMAT)
-                MSG(LTFSDMS0037W, recinfo.ino);
+            if (e.getError() == Error::ATTR_FORMAT)
+                MSG(LTFSDMS0037W, recinfo.fuid.inum);
             else
-                MSG(LTFSDMS0038W, recinfo.ino, e.getError());
+                MSG(LTFSDMS0038W, recinfo.fuid.inum, e.getErrno());
             connector->respondRecallEvent(recinfo, false);
             continue;
         } catch (const std::exception& e) {
@@ -196,15 +203,13 @@ void TransRecall::run(Connector *connector)
             continue;
         }
 
-        std::string tapeId = fso.getAttribute().tapeId[0];
-
         std::stringstream thrdinfo;
-        thrdinfo << "TrRec(" << recinfo.ino << ")";
+        thrdinfo << "TrRec(" << recinfo.fuid.inum << ")";
 
         if (reqmap.count(tapeId) == 0)
             reqmap[tapeId] = ++globalReqNumber;
 
-        TRACE(Trace::always, recinfo.ino, tapeId, reqmap[tapeId]);
+        TRACE(Trace::always, recinfo.fuid.inum, tapeId, reqmap[tapeId]);
 
         wq.enqueue(Const::UNSET, TransRecall(), recinfo, tapeId,
                 reqmap[tapeId]);
@@ -226,6 +231,7 @@ unsigned long TransRecall::recall(Connector::rec_info_t recinfo,
 
 {
     struct stat statbuf;
+    struct stat statbuf_tape;
     std::string tapeName;
     char buffer[Const::READ_BUFFER_SIZE];
     long rsize;
@@ -237,49 +243,66 @@ unsigned long TransRecall::recall(Connector::rec_info_t recinfo,
     try {
         FsObj target(recinfo);
 
-        TRACE(Trace::always, recinfo.ino, recinfo.filename);
+        TRACE(Trace::always, recinfo.fuid.inum, recinfo.filename);
 
-        target.lock();
+        std::lock_guard<FsObj> fsolock(target);
 
         curstate = target.getMigState();
 
         if (curstate != state) {
-            MSG(LTFSDMS0034I, recinfo.ino);
+            MSG(LTFSDMS0034I, recinfo.fuid.inum);
             state = curstate;
         }
         if (state == FsObj::RESIDENT) {
             return 0;
         } else if (state == FsObj::MIGRATED) {
-            tapeName = Server::getTapeName(recinfo.fsid, recinfo.igen,
-                    recinfo.ino, tapeId);
-            fd = open(tapeName.c_str(), O_RDWR);
+            tapeName = Server::getTapeName(recinfo.fuid.fsid_h,
+                    recinfo.fuid.fsid_l, recinfo.fuid.igen, recinfo.fuid.inum,
+                    tapeId);
+            fd = open(tapeName.c_str(), O_RDWR | O_CLOEXEC);
 
             if (fd == -1) {
                 TRACE(Trace::error, errno);
                 MSG(LTFSDMS0021E, tapeName.c_str());
-                THROW(Const::UNSET, tapeName, errno);
+                THROW(Error::GENERAL_ERROR, tapeName, errno);
             }
 
             statbuf = target.stat();
+
+            if (fstat(fd, &statbuf_tape) == 0
+                    && statbuf_tape.st_size != statbuf.st_size) {
+                if (recinfo.filename.size() != 0)
+                    MSG(LTFSDMS0097W, recinfo.filename, statbuf.st_size,
+                            statbuf_tape.st_size);
+                else
+                    MSG(LTFSDMS0098W, recinfo.fuid.inum, statbuf.st_size,
+                            statbuf_tape.st_size);
+                statbuf.st_size = statbuf_tape.st_size;
+                toState = FsObj::RESIDENT;
+            }
 
             target.prepareRecall();
 
             while (offset < statbuf.st_size) {
                 if (Server::forcedTerminate)
-                    THROW(Const::UNSET, tapeName);
+                    THROW(Error::GENERAL_ERROR, tapeName);
 
                 rsize = read(fd, buffer, sizeof(buffer));
+                if (rsize == 0) {
+                    break;
+                }
                 if (rsize == -1) {
                     TRACE(Trace::error, errno);
                     MSG(LTFSDMS0023E, tapeName.c_str());
-                    THROW(Const::UNSET, tapeName, errno);
+                    THROW(Error::GENERAL_ERROR, tapeName, errno);
                 }
                 wsize = target.write(offset, (unsigned long) rsize, buffer);
                 if (wsize != rsize) {
                     TRACE(Trace::error, errno, wsize, rsize);
-                    MSG(LTFSDMS0033E, recinfo.ino);
+                    MSG(LTFSDMS0033E, recinfo.fuid.inum);
                     close(fd);
-                    THROW(Const::UNSET, recinfo.ino, wsize, rsize);
+                    THROW(Error::GENERAL_ERROR, recinfo.fuid.inum, wsize,
+                            rsize);
                 }
                 offset += rsize;
             }
@@ -290,12 +313,11 @@ unsigned long TransRecall::recall(Connector::rec_info_t recinfo,
         target.finishRecall(toState);
         if (toState == FsObj::RESIDENT)
             target.remAttribute();
-        target.unlock();
     } catch (const std::exception& e) {
         TRACE(Trace::error, e.what());
         if (fd != -1)
             close(fd);
-        THROW(Const::UNSET);
+        THROW(Error::GENERAL_ERROR);
     }
 
     return statbuf.st_size;
@@ -330,9 +352,9 @@ void TransRecall::processFiles(int reqNum, std::string tapeId)
             << FsObj::RECALLING_PREMIG << tapeId;
     TRACE(Trace::normal, stmt.str());
     stmt.prepare();
-    while (stmt.step(&recinfo.fsid, &recinfo.igen, &recinfo.ino,
-            &recinfo.filename, &state, &toState,
-            (std::intptr_t *) &recinfo.conn_info)) {
+    while (stmt.step(&recinfo.fuid.fsid_h, &recinfo.fuid.fsid_l,
+            &recinfo.fuid.igen, &recinfo.fuid.inum, &recinfo.filename, &state,
+            &toState, (std::intptr_t *) &recinfo.conn_info)) {
         numFiles++;
 
         if (state == FsObj::RECALLING_MIG)
@@ -343,7 +365,8 @@ void TransRecall::processFiles(int reqNum, std::string tapeId)
         if (toState == FsObj::RESIDENT)
             recinfo.toresident = true;
 
-        TRACE(Trace::always, recinfo.filename, recinfo.ino, state, toState);
+        TRACE(Trace::always, recinfo.filename, recinfo.fuid.inum, state,
+                toState);
 
         try {
             recall(recinfo, tapeId, state, toState);
@@ -383,7 +406,8 @@ void TransRecall::execRequest(int reqNum, std::string tapeId)
     {
         std::lock_guard<std::recursive_mutex> inventorylock(
                 OpenLTFSInventory::mtx);
-        inventory->getCartridge(tapeId)->setState(OpenLTFSCartridge::MOUNTED);
+        inventory->getCartridge(tapeId)->setState(
+                OpenLTFSCartridge::TAPE_MOUNTED);
         bool found = false;
         for (std::shared_ptr<OpenLTFSDrive> d : inventory->getDrives()) {
             if (d->get_slot() == inventory->getCartridge(tapeId)->get_slot()) {

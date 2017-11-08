@@ -1,5 +1,36 @@
 #pragma once
 
+struct fuid_t
+{
+    unsigned long fsid_h;
+    unsigned long fsid_l;
+    unsigned int igen;
+    unsigned long inum;
+    friend bool operator<(const fuid_t fuid1, const fuid_t fuid2)
+    {
+        return (fuid1.inum < fuid2.inum)
+                || ((fuid1.inum == fuid2.inum)
+                        && ((fuid1.igen < fuid2.igen)
+                                || ((fuid1.igen == fuid2.igen)
+                                        && ((fuid1.fsid_l < fuid2.fsid_l)
+                                                || ((fuid1.fsid_l
+                                                        == fuid2.fsid_l)
+                                                        && ((fuid1.fsid_h
+                                                                < fuid2.fsid_h)))))));
+    }
+
+    friend bool operator==(const fuid_t fuid1, const fuid_t fuid2)
+    {
+        return (fuid1.inum == fuid2.inum) && (fuid1.igen == fuid2.igen)
+                && (fuid1.fsid_l == fuid2.fsid_l)
+                && (fuid1.fsid_h == fuid2.fsid_h);
+    }
+    friend bool operator!=(const fuid_t fuid1, const fuid_t fuid2)
+    {
+        return !(fuid1 == fuid2);
+    }
+};
+
 class Connector
 {
 private:
@@ -10,16 +41,15 @@ public:
     {
         struct conn_info_t *conn_info;
         bool toresident;
-        unsigned long long fsid;
-        unsigned int igen;
-        unsigned long long ino;
+        fuid_t fuid;
         std::string filename;
     };
     static std::atomic<bool> connectorTerminate;
     static std::atomic<bool> forcedTerminate;
     static std::atomic<bool> recallEventSystemStopped;
+    static Configuration *conf;
 
-    Connector(bool cleanup_);
+    Connector(bool _cleanup, Configuration *_conf = nullptr);
     ~Connector();
     struct timespec getStartTime()
     {
@@ -85,8 +115,8 @@ public:
         }
     }
     FsObj(void *_handle, unsigned long _handleLength) :
-            handle(_handle), handleLength(_handleLength), isLocked(false), handleFree(
-                    false)
+            handle(_handle), handleLength(_handleLength),
+            isLocked(false), handleFree(false)
     {
     }
     FsObj(std::string fileName);
@@ -100,11 +130,10 @@ public:
     void manageFs(bool setDispo, struct timespec starttime,
             std::string mountPoint, std::string fsName);
     struct stat stat();
-    unsigned long long getFsId();
-    unsigned int getIGen();
-    unsigned long long getINode();
+    fuid_t getfuid();
     std::string getTapeId();
     void lock();
+    bool try_lock();
     void unlock();
     long read(long offset, unsigned long size, char *buffer);
     long write(long offset, unsigned long size, char *buffer);

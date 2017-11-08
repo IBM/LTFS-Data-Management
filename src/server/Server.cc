@@ -5,6 +5,7 @@ std::atomic<bool> Server::forcedTerminate;
 std::atomic<bool> Server::finishTerminate;
 std::mutex Server::termmtx;
 std::condition_variable Server::termcond;
+Configuration Server::conf;
 
 ThreadPool<Migration::mig_info_t, std::shared_ptr<std::list<unsigned long>>> *Server::wqs;
 
@@ -12,24 +13,26 @@ std::string Server::getTapeName(FsObj *diskFile, std::string tapeId)
 
 {
     std::stringstream tapeName;
+    fuid_t fuid = diskFile->getfuid();
 
     tapeName << inventory->getMountPoint() << Const::DELIM << tapeId
             << Const::DELIM << Const::LTFSDM_DATA_DIR << Const::DELIM
-            << Const::LTFS_NAME << "." << diskFile->getFsId() << "."
-            << diskFile->getIGen() << "." << diskFile->getINode();
+            << Const::LTFS_NAME << "." << fuid.fsid_h << "." << fuid.fsid_l
+            << "." << fuid.igen << "." << fuid.inum;
 
     return tapeName.str();
 }
 
-std::string Server::getTapeName(unsigned long long fsid, unsigned int igen,
-        unsigned long long ino, std::string tapeId)
+std::string Server::getTapeName(unsigned long fsid_h, unsigned long fsid_l,
+        unsigned int igen, unsigned long ino, std::string tapeId)
 
 {
     std::stringstream tapeName;
 
     tapeName << inventory->getMountPoint() << Const::DELIM << tapeId
             << Const::DELIM << Const::LTFSDM_DATA_DIR << Const::DELIM
-            << Const::LTFS_NAME << "." << fsid << "." << igen << "." << ino;
+            << Const::LTFS_NAME << "." << fsid_h << "." << fsid_l << "." << igen
+            << "." << ino;
 
     return tapeName.str();
 }
@@ -76,15 +79,15 @@ void Server::createDir(std::string path)
                     if ( errno == EEXIST)
                         return;
                     MSG(LTFSDMS0093E, path, errno);
-                    THROW(errno, errno);
+                    THROW(Error::GENERAL_ERROR, errno);
                 }
             } else {
                 MSG(LTFSDMS0094E, path, errno);
-                THROW(errno, errno);
+                THROW(Error::GENERAL_ERROR, errno);
             }
         } else if (!S_ISDIR(statbuf.st_mode)) {
             MSG(LTFSDMS0095E, path);
-            THROW(Const::UNSET, statbuf.st_mode);
+            THROW(Error::GENERAL_ERROR, statbuf.st_mode);
         } else {
             return;
         }
@@ -126,7 +129,7 @@ void Server::createLink(std::string tapeId, std::string origPath,
                 continue;
             }
             MSG(LTFSDMS0096E, link.str(), errno);
-            THROW(errno, errno);
+            THROW(Error::GENERAL_ERROR, errno);
         }
         return;
     }
@@ -223,18 +226,18 @@ void Server::lockServer()
             == -1) {
         MSG(LTFSDMS0001E);
         TRACE(Trace::error, Const::SERVER_LOCK_FILE, errno);
-        THROW(Const::UNSET, errno);
+        THROW(Error::GENERAL_ERROR, errno);
     }
 
     if (flock(lockfd, LOCK_EX | LOCK_NB) == -1) {
         TRACE(Trace::error, errno);
         if ( errno == EWOULDBLOCK) {
             MSG(LTFSDMS0002I);
-            THROW(Const::UNSET, errno);
+            THROW(Error::GENERAL_ERROR, errno);
         } else {
             MSG(LTFSDMS0001E);
             TRACE(Trace::error, errno);
-            THROW(Const::UNSET, errno);
+            THROW(Error::GENERAL_ERROR, errno);
         }
     }
 }
@@ -251,7 +254,7 @@ void Server::writeKey()
     } catch (const std::exception& e) {
         TRACE(Trace::error, e.what());
         MSG(LTFSDMS0003E);
-        THROW(Const::UNSET);
+        THROW(Error::GENERAL_ERROR);
     }
 
     srandom(time(NULL));
@@ -266,12 +269,12 @@ void Server::initialize(bool dbUseMemory)
 {
     if (setrlimit(RLIMIT_NOFILE, &Const::NOFILE_LIMIT) == -1) {
         MSG(LTFSDMS0046E);
-        THROW(errno, errno);
+        THROW(Error::GENERAL_ERROR, errno);
     }
 
     if (setrlimit(RLIMIT_NPROC, &Const::NPROC_LIMIT) == -1) {
         MSG(LTFSDMS0046E);
-        THROW(errno, errno);
+        THROW(Error::GENERAL_ERROR, errno);
     }
 
     lockServer();
@@ -287,7 +290,7 @@ void Server::initialize(bool dbUseMemory)
     } catch (const std::exception& e) {
         TRACE(Trace::error, e.what());
         MSG(LTFSDMS0014E);
-        THROW(Const::UNSET);
+        THROW(Error::GENERAL_ERROR);
     }
 }
 
@@ -303,13 +306,13 @@ void Server::daemonize()
     }
 
     if (pid > 0) {
-        THROW(Error::LTFSDM_OK);
+        THROW(Error::OK);
     }
 
     sid = setsid();
     if (sid < 0) {
         MSG(LTFSDMS0012E);
-        THROW(Const::UNSET, sid);
+        THROW(Error::GENERAL_ERROR, sid);
     }
 
     TRACE(Trace::always, getpid());
@@ -319,7 +322,7 @@ void Server::daemonize()
     /* redirect stdout to log file */
     if ((dev_null = open("/dev/null", O_RDWR)) == -1) {
         MSG(LTFSDMS0013E);
-        THROW(errno, errno);
+        THROW(Error::GENERAL_ERROR, errno);
     }
     dup2(dev_null, STDIN_FILENO);
     dup2(dev_null, STDOUT_FILENO);
@@ -341,8 +344,15 @@ void Server::run(sigset_t set)
     Server::finishTerminate = false;
 
     try {
+        Server::conf.read();
+    } catch (const std::exception& e) {
+        MSG(LTFSDMS0090E);
+        goto end;
+    }
+
+    try {
         inventory = new OpenLTFSInventory();
-        connector = new Connector(true);
+        connector = new Connector(true, &Server::conf);
     } catch (const std::exception& e) {
         TRACE(Trace::error, e.what());
         goto end;

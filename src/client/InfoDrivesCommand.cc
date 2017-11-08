@@ -6,10 +6,10 @@
 #include <sstream>
 #include <exception>
 
+#include "src/common/errors/errors.h"
 #include "src/common/exception/OpenLTFSException.h"
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
-#include "src/common/errors/errors.h"
 
 #include "src/common/comm/ltfsdm.pb.h"
 #include "src/common/comm/LTFSDmComm.h"
@@ -30,7 +30,7 @@ void InfoDrivesCommand::doCommand(int argc, char **argv)
 
     if (argc != optind) {
         printUsage();
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 
     try {
@@ -49,7 +49,7 @@ void InfoDrivesCommand::doCommand(int argc, char **argv)
         commCommand.send();
     } catch (const std::exception& e) {
         MSG(LTFSDMC0027E);
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 
     INFO(LTFSDMC0069I);
@@ -61,7 +61,7 @@ void InfoDrivesCommand::doCommand(int argc, char **argv)
             commCommand.recv();
         } catch (const std::exception& e) {
             MSG(LTFSDMC0028E);
-            THROW(Error::LTFSDM_GENERAL_ERROR);
+            THROW(Error::GENERAL_ERROR);
         }
 
         const LTFSDmProtocol::LTFSDmInfoDrivesResp infodrivesresp =

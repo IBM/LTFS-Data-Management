@@ -8,6 +8,7 @@ void SelRecall::addJob(std::string fileName)
     std::string tapeName;
     int state;
     FsObj::mig_attr_t attr;
+    fuid_t fuid;
 
     try {
         FsObj fso(fileName);
@@ -32,12 +33,12 @@ void SelRecall::addJob(std::string fileName)
 
         tapeName = Server::getTapeName(&fso, attr.tapeId[0]);
 
+        fuid = fso.getfuid();
         stmt(SelRecall::ADD_JOB) << DataBase::SELRECALL << fileName << reqNumber
-                << targetState << statbuf.st_size << (long long) fso.getFsId()
-                << fso.getIGen() << (long long) fso.getINode()
-                << statbuf.st_mtim.tv_sec << statbuf.st_mtim.tv_nsec
-                << time(NULL) << state << attr.tapeId[0]
-                << Server::getStartBlock(tapeName);
+                << targetState << statbuf.st_size << fuid.fsid_h << fuid.fsid_l
+                << fuid.igen << fuid.inum << statbuf.st_mtim.tv_sec
+                << statbuf.st_mtim.tv_nsec << time(NULL) << state
+                << attr.tapeId[0] << Server::getStartBlock(tapeName);
     } catch (const std::exception& e) {
         TRACE(Trace::error, e.what());
         stmt(SelRecall::ADD_JOB) << DataBase::SELRECALL << fileName << reqNumber
@@ -111,6 +112,7 @@ unsigned long SelRecall::recall(std::string fileName, std::string tapeId,
 
 {
     struct stat statbuf;
+    struct stat statbuf_tape;
     std::string tapeName;
     char buffer[Const::READ_BUFFER_SIZE];
     long rsize;
@@ -124,7 +126,7 @@ unsigned long SelRecall::recall(std::string fileName, std::string tapeId,
 
         TRACE(Trace::always, fileName);
 
-        target.lock();
+        std::lock_guard<FsObj> fsolock(target);
 
         curstate = target.getMigState();
 
@@ -136,34 +138,46 @@ unsigned long SelRecall::recall(std::string fileName, std::string tapeId,
             return 0;
         } else if (state == FsObj::MIGRATED) {
             tapeName = Server::getTapeName(&target, tapeId);
-            fd = open(tapeName.c_str(), O_RDWR);
+            fd = open(tapeName.c_str(), O_RDWR | O_CLOEXEC);
 
             if (fd == -1) {
                 TRACE(Trace::error, errno);
                 MSG(LTFSDMS0021E, tapeName.c_str());
-                THROW(Const::UNSET, tapeName, errno);
+                THROW(Error::GENERAL_ERROR, tapeName, errno);
             }
 
             statbuf = target.stat();
+
+            if (fstat(fd, &statbuf_tape) == 0
+                    && statbuf_tape.st_size != statbuf.st_size) {
+                MSG(LTFSDMS0097W, fileName, statbuf.st_size,
+                        statbuf_tape.st_size);
+                statbuf.st_size = statbuf_tape.st_size;
+                toState = FsObj::RESIDENT;
+            }
 
             target.prepareRecall();
 
             while (offset < statbuf.st_size) {
                 if (Server::forcedTerminate)
-                    THROW(Error::LTFSDM_OK);
+                    THROW(Error::OK);
 
                 rsize = read(fd, buffer, sizeof(buffer));
+                if (rsize == 0) {
+                    break;
+                }
+
                 if (rsize == -1) {
                     TRACE(Trace::error, errno);
                     MSG(LTFSDMS0023E, tapeName.c_str());
-                    THROW(Const::UNSET, fileName, errno);
+                    THROW(Error::GENERAL_ERROR, fileName, errno);
                 }
                 wsize = target.write(offset, (unsigned long) rsize, buffer);
                 if (wsize != rsize) {
                     TRACE(Trace::error, errno, wsize, rsize);
                     MSG(LTFSDMS0027E, fileName.c_str());
                     close(fd);
-                    THROW(Const::UNSET, fileName, wsize, rsize);
+                    THROW(Error::GENERAL_ERROR, fileName, wsize, rsize);
                 }
                 offset += rsize;
             }
@@ -174,12 +188,11 @@ unsigned long SelRecall::recall(std::string fileName, std::string tapeId,
         target.finishRecall(toState);
         if (toState == FsObj::RESIDENT)
             target.remAttribute();
-        target.unlock();
     } catch (const std::exception& e) {
         if (fd != -1)
             close(fd);
         TRACE(Trace::error, e.what());
-        THROW(Const::UNSET);
+        THROW(Error::GENERAL_ERROR);
     }
 
     return statbuf.st_size;
@@ -254,7 +267,7 @@ bool needsTape)
         try {
             if ((state == FsObj::MIGRATED) && (needsTape == false)) {
                 MSG(LTFSDMS0047E, fileName);
-                THROW(Const::UNSET, fileName);
+                THROW(Error::GENERAL_ERROR, fileName);
             }
             recall(fileName, tapeId, state, toState);
             inumList.push_back(inum);
@@ -323,7 +336,8 @@ void SelRecall::execRequest(std::string tapeId, bool needsTape)
 
     if (needsTape) {
         std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
-        inventory->getCartridge(tapeId)->setState(OpenLTFSCartridge::MOUNTED);
+        inventory->getCartridge(tapeId)->setState(
+                OpenLTFSCartridge::TAPE_MOUNTED);
         bool found = false;
         for (std::shared_ptr<OpenLTFSDrive> d : inventory->getDrives()) {
             if (d->get_slot() == inventory->getCartridge(tapeId)->get_slot()) {

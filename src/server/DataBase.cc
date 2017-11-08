@@ -57,14 +57,16 @@ void DataBase::open(bool dbUseMemory)
 
     if (rc != SQLITE_OK) {
         TRACE(Trace::error, rc);
-        THROW(Const::UNSET, uri, rc);
+        errno = rc;
+        THROW(Error::GENERAL_ERROR, uri, rc);
     }
 
     rc = sqlite3_initialize();
 
     if (rc != SQLITE_OK) {
         TRACE(Trace::error, rc);
-        THROW(Const::UNSET, rc);
+        errno = rc;
+        THROW(Error::GENERAL_ERROR, rc);
     }
 
     rc = sqlite3_open_v2(uri.c_str(), &db, SQLITE_OPEN_READWRITE |
@@ -73,14 +75,16 @@ void DataBase::open(bool dbUseMemory)
 
     if (rc != SQLITE_OK) {
         TRACE(Trace::error, rc, uri);
-        THROW(Const::UNSET, uri, rc);
+        errno = rc;
+        THROW(Error::GENERAL_ERROR, uri, rc);
     }
 
     rc = sqlite3_extended_result_codes(db, 1);
 
     if (rc != SQLITE_OK) {
         TRACE(Trace::error, rc);
-        THROW(Const::UNSET, rc);
+        errno = rc;
+        THROW(Error::GENERAL_ERROR, rc);
     }
 
     dbNeedsClosed = true;
@@ -153,7 +157,8 @@ void SQLStatement::prepare()
 
     if (rc != SQLITE_OK) {
         TRACE(Trace::error, fmt.str(), rc);
-        THROW(rc, rc);
+        errno = rc;
+        THROW(Error::GENERAL_ERROR, rc);
     }
 }
 
@@ -232,7 +237,8 @@ void SQLStatement::bind(int num, int value)
 
     if ((rc = sqlite3_bind_int(stmt, num, value)) != SQLITE_OK) {
         TRACE(Trace::error, rc);
-        THROW(rc);
+        errno = rc;
+        THROW(Error::GENERAL_ERROR, rc);
     }
 }
 
@@ -244,7 +250,8 @@ void SQLStatement::bind(int num, std::string value)
     if ((rc = sqlite3_bind_text(stmt, num, value.c_str(), value.size(), 0))
             != SQLITE_OK) {
         TRACE(Trace::error, rc);
-        THROW(rc);
+        errno = rc;
+        THROW(Error::GENERAL_ERROR, rc);
     }
 }
 
@@ -253,14 +260,16 @@ void SQLStatement::finalize()
 {
     if (stmt_rc != SQLITE_ROW && stmt_rc != SQLITE_DONE) {
         TRACE(Trace::error, fmt.str(), stmt_rc);
-        THROW(stmt_rc, stmt_rc);
+        errno = stmt_rc;
+        THROW(Error::GENERAL_ERROR, stmt_rc);
     }
 
     int rc = sqlite3_finalize(stmt);
 
     if (rc != SQLITE_OK) {
         TRACE(Trace::error, fmt.str(), rc);
-        THROW(rc, rc);
+        errno = rc;
+        THROW(Error::GENERAL_ERROR, rc);
     }
 }
 

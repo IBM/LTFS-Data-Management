@@ -6,6 +6,7 @@
 #include <dirent.h>
 #include <mntent.h>
 #include <sys/resource.h>
+#include <errno.h>
 
 #include <string>
 #include <fstream>
@@ -14,10 +15,10 @@
 #include <sstream>
 #include <exception>
 
+#include "src/common/errors/errors.h"
 #include "src/common/exception/OpenLTFSException.h"
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
-#include "src/common/errors/errors.h"
 #include "src/common/const/Const.h"
 
 #include "util.h"
@@ -31,12 +32,12 @@ void mkTmpDir()
         if (mkdir(Const::LTFSDM_TMP_DIR.c_str(), 0700) != 0) {
             std::cerr << messages[LTFSDMX0006E] << Const::LTFSDM_TMP_DIR
                     << std::endl;
-            THROW(Const::UNSET);
+            THROW(Error::GENERAL_ERROR);
         }
     } else if (!S_ISDIR(statbuf.st_mode)) {
         std::cerr << Const::LTFSDM_TMP_DIR << messages[LTFSDMX0007E]
                 << std::endl;
-        THROW(Const::UNSET);
+        THROW(Error::GENERAL_ERROR);
     }
 }
 
@@ -46,50 +47,6 @@ void LTFSDM::init(std::string ident)
     mkTmpDir();
     messageObject.init(ident);
     traceObject.init(ident);
-}
-
-std::vector<std::string> LTFSDM::getTapeIds()
-
-{
-    std::vector<std::string> tapeIds;
-    std::ifstream tpfile("/tmp/tapeids");
-    std::string line;
-
-    while (std::getline(tpfile, line)) {
-        tapeIds.push_back(line);
-    }
-
-    return tapeIds;
-}
-
-std::set<std::string> LTFSDM::getFs()
-
-{
-    unsigned int buflen = 32 * 1024;
-    char *buffer = NULL;
-    struct mntent mntbuf;
-    FILE *MNTINFO;
-    std::set<std::string> mountList;
-
-    MNTINFO = setmntent("/proc/mounts", "r");
-    if (!MNTINFO) {
-        THROW(errno, errno);
-    }
-
-    buffer = (char *) malloc(buflen);
-
-    if (buffer == NULL)
-        THROW(Const::UNSET);
-
-    while (getmntent_r(MNTINFO, &mntbuf, buffer, buflen))
-        if (!strcmp(mntbuf.mnt_type, "xfs") || !strcmp(mntbuf.mnt_type, "ext4"))
-            mountList.insert(std::string(mntbuf.mnt_dir));
-
-    endmntent(MNTINFO);
-
-    free(buffer);
-
-    return mountList;
 }
 
 long LTFSDM::getkey()
@@ -108,7 +65,7 @@ long LTFSDM::getkey()
     } catch (const std::exception& e) {
         TRACE(Trace::error, key);
         MSG(LTFSDMX0030E);
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 
     keyFile.close();

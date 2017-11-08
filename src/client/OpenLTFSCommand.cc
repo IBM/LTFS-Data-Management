@@ -9,10 +9,10 @@
 #include <sstream>
 #include <exception>
 
+#include "src/common/errors/errors.h"
 #include "src/common/exception/OpenLTFSException.h"
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
-#include "src/common/errors/errors.h"
 #include "src/common/util/util.h"
 
 #include "src/common/comm/ltfsdm.pb.h"
@@ -44,7 +44,7 @@ void OpenLTFSCommand::processOptions(int argc, char **argv)
         switch (opt) {
             case 'h':
                 printUsage();
-                THROW(Error::LTFSDM_OK);
+                THROW(Error::OK);
             case 'p':
                 preMigrate = true;
                 break;
@@ -56,7 +56,7 @@ void OpenLTFSCommand::processOptions(int argc, char **argv)
                 if (requestNumber < 0) {
                     MSG(LTFSDMC0064E);
                     printUsage();
-                    THROW(Error::LTFSDM_GENERAL_ERROR);
+                    THROW(Error::GENERAL_ERROR);
                 }
                 break;
             case 'f':
@@ -80,11 +80,11 @@ void OpenLTFSCommand::processOptions(int argc, char **argv)
             case ':':
                 INFO(LTFSDMC0014E);
                 printUsage();
-                THROW(Error::LTFSDM_GENERAL_ERROR);
+                THROW(Error::GENERAL_ERROR);
             default:
                 INFO(LTFSDMC0013E);
                 printUsage();
-                THROW(Error::LTFSDM_GENERAL_ERROR);
+                THROW(Error::GENERAL_ERROR);
         }
     }
 }
@@ -106,14 +106,14 @@ void OpenLTFSCommand::getRequestNumber()
         commCommand.send();
     } catch (const std::exception& e) {
         MSG(LTFSDMC0027E);
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 
     try {
         commCommand.recv();
     } catch (const std::exception& e) {
         MSG(LTFSDMC0028E);
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 
     const LTFSDmProtocol::LTFSDmReqNumberResp reqnumresp =
@@ -124,7 +124,7 @@ void OpenLTFSCommand::getRequestNumber()
         TRACE(Trace::normal, requestNumber);
     } else {
         MSG(LTFSDMC0029E);
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 }
 
@@ -136,7 +136,7 @@ void OpenLTFSCommand::connect()
     try {
         commCommand.connect();
     } catch (const std::exception& e) {
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 
     if (requestNumber == Const::UNSET)
@@ -149,12 +149,12 @@ void OpenLTFSCommand::checkOptions(int argc, char **argv)
 
 {
     if ((requestNumber != Const::UNSET) && (argc != 3))
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
 
     if (optind != argc) {
         if (fileList.compare("")) {
             INFO(LTFSDMC0016E);
-            THROW(Error::LTFSDM_GENERAL_ERROR);
+            THROW(Error::GENERAL_ERROR);
         }
     }
 }
@@ -210,19 +210,19 @@ void OpenLTFSCommand::sendObjects(std::stringstream *parmList)
             commCommand.send();
         } catch (const std::exception& e) {
             MSG(LTFSDMC0027E);
-            THROW(Error::LTFSDM_GENERAL_ERROR);
+            THROW(Error::GENERAL_ERROR);
         }
 
         try {
             commCommand.recv();
         } catch (const std::exception& e) {
             MSG(LTFSDMC0028E);
-            THROW(Error::LTFSDM_GENERAL_ERROR);
+            THROW(Error::GENERAL_ERROR);
         }
 
         if (!commCommand.has_sendobjectsresp()) {
             MSG(LTFSDMC0039E);
-            THROW(Error::LTFSDM_GENERAL_ERROR);
+            THROW(Error::GENERAL_ERROR);
         }
 
         const LTFSDmProtocol::LTFSDmSendObjectsResp sendobjresp =
@@ -232,16 +232,16 @@ void OpenLTFSCommand::sendObjects(std::stringstream *parmList)
             if (getpid() != sendobjresp.pid()) {
                 MSG(LTFSDMC0036E);
                 TRACE(Trace::error, getpid(), sendobjresp.pid());
-                THROW(Error::LTFSDM_GENERAL_ERROR);
+                THROW(Error::GENERAL_ERROR);
             }
             if (requestNumber != sendobjresp.reqnumber()) {
                 MSG(LTFSDMC0037E);
                 TRACE(Trace::error, requestNumber, sendobjresp.reqnumber());
-                THROW(Error::LTFSDM_GENERAL_ERROR);
+                THROW(Error::GENERAL_ERROR);
             }
         } else {
             MSG(LTFSDMC0029E);
-            THROW(Error::LTFSDM_GENERAL_ERROR);
+            THROW(Error::GENERAL_ERROR);
         }
         INFO(LTFSDMC0050I, count);
     }
@@ -274,14 +274,14 @@ void OpenLTFSCommand::queryResults()
             commCommand.send();
         } catch (const std::exception& e) {
             MSG(LTFSDMC0027E);
-            THROW(Error::LTFSDM_GENERAL_ERROR);
+            THROW(Error::GENERAL_ERROR);
         }
 
         try {
             commCommand.recv();
         } catch (const std::exception& e) {
             MSG(LTFSDMC0028E);
-            THROW(Error::LTFSDM_GENERAL_ERROR);
+            THROW(Error::GENERAL_ERROR);
         }
 
         const LTFSDmProtocol::LTFSDmReqStatusResp reqstatusresp =
@@ -291,12 +291,12 @@ void OpenLTFSCommand::queryResults()
             if (getpid() != reqstatusresp.pid()) {
                 MSG(LTFSDMC0036E);
                 TRACE(Trace::error, getpid(), reqstatusresp.pid());
-                THROW(Error::LTFSDM_GENERAL_ERROR);
+                THROW(Error::GENERAL_ERROR);
             }
             if (requestNumber != reqstatusresp.reqnumber()) {
                 MSG(LTFSDMC0037E);
                 TRACE(Trace::error, requestNumber, reqstatusresp.reqnumber());
-                THROW(Error::LTFSDM_GENERAL_ERROR);
+                THROW(Error::GENERAL_ERROR);
             }
             resident = reqstatusresp.resident();
             premigrated = reqstatusresp.premigrated();
@@ -315,7 +315,7 @@ void OpenLTFSCommand::queryResults()
                     failed);
         } else {
             MSG(LTFSDMC0029E);
-            THROW(Error::LTFSDM_GENERAL_ERROR);
+            THROW(Error::GENERAL_ERROR);
         }
     } while (!done);
 }
@@ -330,15 +330,15 @@ void OpenLTFSCommand::isValidRegularFile()
     } else if (fileList.compare("")) {
         if (stat(fileList.c_str(), &statbuf) == -1) {
             MSG(LTFSDMC0040E, fileList.c_str());
-            THROW(Error::LTFSDM_GENERAL_ERROR);
+            THROW(Error::GENERAL_ERROR);
         }
         if (!S_ISREG(statbuf.st_mode)) {
             MSG(LTFSDMC0042E, fileList.c_str());
-            THROW(Error::LTFSDM_GENERAL_ERROR);
+            THROW(Error::GENERAL_ERROR);
         }
         if (statbuf.st_size < 2) {
             MSG(LTFSDMC0041E, fileList.c_str());
-            THROW(Error::LTFSDM_GENERAL_ERROR);
+            THROW(Error::GENERAL_ERROR);
         }
     }
 }

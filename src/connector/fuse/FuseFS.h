@@ -1,29 +1,8 @@
 #pragma once
 
-struct fuid_t
-{
-    unsigned long long fsid;
-    unsigned int igen;
-    unsigned long long ino;
-    friend bool operator<(const fuid_t fuid1, const fuid_t fuid2)
-    {
-        return (fuid1.ino < fuid2.ino)
-                || ((fuid1.ino == fuid2.ino)
-                        && ((fuid1.igen < fuid2.igen)
-                                || ((fuid1.igen == fuid2.igen)
-                                        && ((fuid1.fsid < fuid2.fsid)))));
-    }
+#define FUSE_USE_VERSION 26
 
-    friend bool operator==(const fuid_t fuid1, const fuid_t fuid2)
-    {
-        return (fuid1.ino == fuid2.ino) && (fuid1.igen == fuid2.igen)
-                && (fuid1.fsid == fuid2.fsid);
-    }
-    friend bool operator!=(const fuid_t fuid1, const fuid_t fuid2)
-    {
-        return !(fuid1 == fuid2);
-    }
-};
+#include <fuse.h>
 
 class FuseFS
 {
@@ -42,13 +21,51 @@ public:
         struct stat statinfo;
         struct timespec changed;
     };
+    struct FuseHandle
+    {
+        char fusepath[PATH_MAX];
+        char mountpoint[PATH_MAX];
+        char lockpath[PATH_MAX];
+        unsigned long fsid_h;
+        unsigned long fsid_l;
+        int fd;
+        int ffd;
+        int ioctlfd;
+        int lockfd;
+        FuseLock *lock;
+    };
+
+    enum
+    {
+        LTFSDM_FINFO = _IOR('l', 0, FuseFS::FuseHandle),
+        LTFSDM_PREMOUNT = _IO('l', 1),
+        LTFSDM_POSTMOUNT = _IO('l', 2),
+        LTFSDM_STOP = _IO('l', 3),
+        LTFSDM_LOCK = _IOWR('l', 4, FuseFS::FuseHandle),    // not used
+        LTFSDM_TRYLOCK = _IOWR('l', 5, FuseFS::FuseHandle), // not used
+        LTFSDM_UNLOCK = _IOW('l', 6, FuseFS::FuseHandle),   // not used
+    };
+
+    struct shared_data
+    {
+        int rootFd;
+        std::string mountpt;
+        struct timespec starttime;
+        long ltfsdmKey;
+        const unsigned long fsid_h;
+        const unsigned long fsid_l;
+        pid_t mainpid;
+        std::string srcdir;
+    };
 
 private:
     struct ltfsdm_file_info
     {
         int fd;
-        std::string sourcepath;
+        int lfd;
         std::string fusepath;
+        FuseLock *main_lock;
+        FuseLock *trec_lock;
     };
 
     struct ltfsdm_dir_info
@@ -58,16 +75,36 @@ private:
         off_t offset;
     };
 
-    static thread_local std::string lsourcedir;
     std::string mountpt;
     std::thread *thrd;
+    int rootFd;
+    int ioctlFd;
 
+    struct
+    {
+        bool FUSE_STARTED;
+        bool CACHE_MOUNTED;
+        bool ROOTFD_FUSE;
+    } init_status;
+
+    static const FuseFS::shared_data *getshrd()
+    {
+        return ((FuseFS::shared_data *) fuse_get_context()->private_data);
+    }
+    static void setRootFd(int fd)
+    {
+        ((FuseFS::shared_data *) fuse_get_context()->private_data)->rootFd = fd;
+    }
+
+    std::string mask(std::string s);
+
+    static const char *relPath(const char *path);
+    static std::string lockPath(std::string path);
     static bool needsRecovery(FuseFS::mig_info miginfo);
     static void recoverState(const char *path,
             FuseFS::mig_info::state_num state);
-    static std::string source_path(const char *path);
     static int recall_file(FuseFS::ltfsdm_file_info *linfo, bool toresident);
-    static FuseFS::mig_info getMigInfoAt(int dirfd, const char *path);
+    static bool procIsOpenLTFS(pid_t tid);
 
     // FUSE call backs
     static int ltfsdm_getattr(const char *path, struct stat *statbuf);
@@ -113,28 +150,42 @@ private:
             size_t size);
     static int ltfsdm_listxattr(const char *path, char *list, size_t size);
     static int ltfsdm_removexattr(const char *path, const char *name);
+    static int ltfsdm_ioctl(const char *path, int cmd, void *arg,
+            struct fuse_file_info *fi, unsigned int flags, void *data);
     static void *ltfsdm_init(struct fuse_conn_info *conn);
 
-    static void execute(std::string sourcedir, std::string command);
+    static void execute(std::string sourcedir, std::string mountpt,
+            std::string command);
 
 public:
-    static Connector::rec_info_t recinfo_share;
-    static std::atomic<fuid_t> trecall_fuid;
-    static std::atomic<bool> no_rec_event;
-    static std::atomic<long> ltfsdmKey;
-
-    static FuseFS::mig_info genMigInfo(const char *path,
+    static FuseFS::mig_info genMigInfoAt(int fd,
             FuseFS::mig_info::state_num state);
-    static void setMigInfo(const char *path, FuseFS::mig_info::state_num state);
-    static int remMigInfo(const char *path);
-    static FuseFS::mig_info getMigInfo(const char *path);
+    static void setMigInfoAt(int fd, FuseFS::mig_info::state_num state);
+    static int remMigInfoAt(int fd);
+    static FuseFS::mig_info getMigInfoAt(int fd);
     static struct fuse_operations init_operations();
+
     std::string getMountPoint()
     {
         return mountpt;
     }
-    FuseFS(std::string sourcedir, std::string mountpt, std::string fsName,
-            struct timespec starttime);
+    int getRootFd()
+    {
+        return rootFd;
+    }
+    int getIoctlFd()
+    {
+        return ioctlFd;
+    }
+
+    void init(struct timespec starttime);
+
+    FuseFS(std::string _mountpt) :
+            mountpt(_mountpt), thrd(nullptr), rootFd(Const::UNSET), ioctlFd(
+                    Const::UNSET), init_status( { false, false, false })
+    {
+    }
+
     ~FuseFS();
 };
 

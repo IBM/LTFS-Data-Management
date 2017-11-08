@@ -86,6 +86,25 @@ public:
     {
     }
 
+    // convert unsigned to signed since there is unsigned in SQLite
+    SQLStatement& operator<<(unsigned long long llu)
+    {
+        fmt % static_cast<long>(llu);
+        return *this;
+    }
+
+    SQLStatement& operator<<(unsigned long lu)
+    {
+        fmt % static_cast<long>(lu);
+        return *this;
+    }
+
+    SQLStatement& operator<<(unsigned int u)
+    {
+        fmt % static_cast<int>(u);
+        return *this;
+    }
+
     template<typename T>
     SQLStatement& operator<<(T s)
     {

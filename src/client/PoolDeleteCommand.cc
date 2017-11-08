@@ -9,11 +9,11 @@
 #include <sstream>
 #include <exception>
 
+#include "src/common/errors/errors.h"
 #include "src/common/exception/OpenLTFSException.h"
 #include "src/common/util/util.h"
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
-#include "src/common/errors/errors.h"
 
 #include "src/common/comm/ltfsdm.pb.h"
 #include "src/common/comm/LTFSDmComm.h"
@@ -30,21 +30,21 @@ void PoolDeleteCommand::doCommand(int argc, char **argv)
 {
     if (argc <= 2) {
         printUsage();
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 
     processOptions(argc, argv);
 
     if (argc != optind) {
         printUsage();
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 
     try {
         connect();
     } catch (const std::exception& e) {
         MSG(LTFSDMC0026E);
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 
     LTFSDmProtocol::LTFSDmPoolDeleteRequest *pooldeletereq =
@@ -56,26 +56,26 @@ void PoolDeleteCommand::doCommand(int argc, char **argv)
         commCommand.send();
     } catch (const std::exception& e) {
         MSG(LTFSDMC0027E);
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 
     try {
         commCommand.recv();
     } catch (const std::exception& e) {
         MSG(LTFSDMC0028E);
-        THROW(Error::LTFSDM_GENERAL_ERROR);
+        THROW(Error::GENERAL_ERROR);
     }
 
     const LTFSDmProtocol::LTFSDmPoolResp poolresp = commCommand.poolresp();
 
     switch (poolresp.response()) {
-        case Error::LTFSDM_OK:
+        case static_cast<long>(Error::OK):
             INFO(LTFSDMC0082I, poolNames);
             break;
-        case Error::LTFSDM_POOL_NOT_EXISTS:
+        case static_cast<long>(Error::POOL_NOT_EXISTS):
             MSG(LTFSDMX0025E, poolNames);
             break;
-        case Error::LTFSDM_POOL_NOT_EMPTY:
+        case static_cast<long>(Error::POOL_NOT_EMPTY):
             MSG(LTFSDMX0024E, poolNames);
             break;
         default:
