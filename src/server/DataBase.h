@@ -44,6 +44,8 @@ private:
     boost::format fmt;
     int stmt_rc;
 
+    std::string encode(std::string s);
+    std::string decode(std::string s);
     void getColumn(int *result, int column);
     void getColumn(unsigned int *result, int column);
     void getColumn(DataBase::operation *result, int column);
@@ -96,6 +98,12 @@ public:
     SQLStatement& operator<<(unsigned long lu)
     {
         fmt % static_cast<long>(lu);
+        return *this;
+    }
+
+    SQLStatement& operator<<(std::string s)
+    {
+        fmt % encode(s);
         return *this;
     }
 

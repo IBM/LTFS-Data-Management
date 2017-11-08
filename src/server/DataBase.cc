@@ -162,6 +162,46 @@ void SQLStatement::prepare()
     }
 }
 
+std::string SQLStatement::encode(std::string s)
+
+{
+    std::string enc;
+
+    for (char c : s) {
+        switch (c) {
+            case 0047:
+                enc += "\\0047";
+                break;
+            case 0134:
+                enc += "\\0134";
+                break;
+            default:
+                enc += c;
+        }
+    }
+
+    return enc;
+}
+
+std::string SQLStatement::decode(std::string s)
+
+{
+    unsigned long pos = s.size();
+
+    while ((pos = s.rfind("\\", pos)) != std::string::npos) {
+        if (s.compare(pos, 5, "\\0047") == 0) {
+            s.replace(pos, 5, std::string(1, 0047));
+        } else if (s.compare(pos, 5, "\\0134") == 0) {
+            s.replace(pos, 5, std::string(1, 0134));
+        } else {
+            THROW(Error::GENERAL_ERROR, s);
+        }
+        pos--;
+    }
+
+    return s;
+}
+
 void SQLStatement::getColumn(int *result, int column)
 
 {
@@ -219,7 +259,7 @@ void SQLStatement::getColumn(std::string *result, int column)
     const char *column_ctr = reinterpret_cast<const char*>(sqlite3_column_text(
             stmt, column));
     if (column_ctr != NULL)
-        *result = std::string(column_ctr);
+        *result = decode(std::string(column_ctr));
     else
         *result = "";
 }
