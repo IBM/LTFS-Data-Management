@@ -147,7 +147,7 @@ FileSystems::fsinfo FileSystems::getByTarget(std::string target)
 }
 
 void FileSystems::mount(std::string source, std::string target,
-        std::string options)
+        std::string options, mountflag flag)
 
 {
     int rc;
@@ -159,19 +159,42 @@ void FileSystems::mount(std::string source, std::string target,
 
     getTable();
 
-    if ((rc = mnt_context_set_source(cxt, source.c_str())) != 0) {
+    if (flag == FileSystems::MNT_FAKE) {
+        if (mnt_context_enable_fake(cxt, TRUE) != 0) {
+            TRACE(Trace::error, target, rc);
+            THROW(Error::GENERAL_ERROR, target, rc);
+        }
+    } else {
+        if (mnt_context_enable_fake(cxt, FALSE) != 0) {
+            TRACE(Trace::error, target, rc);
+            THROW(Error::GENERAL_ERROR, target, rc);
+        }
+    }
+
+    if (source.compare("") == 0 && target.compare("") == 0) {
         TRACE(Trace::error, target, rc);
         THROW(Error::GENERAL_ERROR, target, rc);
     }
 
-    if ((rc = mnt_context_set_target(cxt, target.c_str())) != 0) {
-        TRACE(Trace::error, target, rc);
-        THROW(Error::GENERAL_ERROR, target, rc);
+    if (source.compare("") != 0) {
+        if ((rc = mnt_context_set_source(cxt, source.c_str())) != 0) {
+            TRACE(Trace::error, target, rc);
+            THROW(Error::GENERAL_ERROR, target, rc);
+        }
     }
 
-    if ((rc = mnt_context_set_options(cxt, options.c_str())) != 0) {
-        TRACE(Trace::error, target, rc);
-        THROW(Error::GENERAL_ERROR, target, rc);
+    if (target.compare("") != 0) {
+        if ((rc = mnt_context_set_target(cxt, target.c_str())) != 0) {
+            TRACE(Trace::error, target, rc);
+            THROW(Error::GENERAL_ERROR, target, rc);
+        }
+    }
+
+    if (options.compare("") != 0) {
+        if ((rc = mnt_context_set_options(cxt, options.c_str())) != 0) {
+            TRACE(Trace::error, target, rc);
+            THROW(Error::GENERAL_ERROR, target, rc);
+        }
     }
 
     if (mnt_context_mount(cxt) == 0)

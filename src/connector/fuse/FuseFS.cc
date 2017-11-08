@@ -1363,7 +1363,6 @@ struct fuse_operations FuseFS::init_operations()
     return ops;
 }
 
-
 void FuseFS::execute(std::string sourcedir, std::string mountpt,
         std::string command)
 
@@ -1380,14 +1379,13 @@ void FuseFS::execute(std::string sourcedir, std::string mountpt,
     }
 
     while (!feof(cmd)) {
-        if ((c=fgetc(cmd)) != 0) {
+        if ((c = fgetc(cmd)) != 0) {
             if (c == 0012) {
                 MSG(LTFSDMF0060I, mountpt, line);
                 line.clear();
-            }
-            else {
-                if ( c != EOF)
-                    line+=c;
+            } else {
+                if (c != EOF)
+                    line += c;
             }
         }
     }
@@ -1408,7 +1406,7 @@ void FuseFS::execute(std::string sourcedir, std::string mountpt,
             MSG(LTFSDMF0030I, sourcedir);
             fss.umount(mountpt, FileSystems::UMNT_DETACHED_FORCED);
         }
-    } catch(const std::exception& e) {
+    } catch (const std::exception& e) {
         TRACE(Trace::error, e.what());
     }
 }
@@ -1435,9 +1433,9 @@ std::string FuseFS::mask(std::string s)
             case '?':
             case '$':
             case '|':
-                masked+='\\';
+                masked += '\\';
             default:
-                masked+=c;
+                masked += c;
         }
     }
 
@@ -1467,8 +1465,16 @@ void FuseFS::init(struct timespec starttime)
     FsObj target(mountpt);
 
     if (target.isFsManaged()) {
+        FileSystems::fsinfo fschk;
         alreadyManaged = true;
         fs = Connector::conf->getFs(mountpt);
+        try {
+            fschk = fss.getByTarget(fs.target);
+            MSG(LTFSDMF0061E, fs.target);
+            fss.umount(fs.target, FileSystems::UMNT_NORMAL);
+        } catch (const std::exception& e) {
+            TRACE(Trace::always, e.what());
+        }
     } else {
         try {
             fs = fss.getByTarget(mountpt);
@@ -1489,9 +1495,18 @@ void FuseFS::init(struct timespec starttime)
         }
     }
 
-    stream << mask(dirname(exepath)) << "/" << Const::OVERLAY_FS_COMMAND << " -m "
-            << mask(mountpt) << " -f " << mask(fs.source) << " -S " << starttime.tv_sec
-            << " -N " << starttime.tv_nsec << " -l "
+    try {
+        fss.mount("", mountpt, "", FileSystems::MNT_FAKE);
+        MSG(LTFSDMF0062E, mountpt);
+        THROW(Error::FS_IN_FSTAB);
+    } catch (const OpenLTFSException& e) {
+        if (e.getError() == Error::FS_IN_FSTAB)
+            THROW(Error::GENERAL_ERROR);
+    }
+
+    stream << mask(dirname(exepath)) << "/" << Const::OVERLAY_FS_COMMAND
+            << " -m " << mask(mountpt) << " -f " << mask(fs.source) << " -S "
+            << starttime.tv_sec << " -N " << starttime.tv_nsec << " -l "
             << messageObject.getLogType() << " -t " << traceObject.getTrclevel()
             << " -p " << getpid() << " 2>&1";
     TRACE(Trace::always, stream.str());
@@ -1500,7 +1515,7 @@ void FuseFS::init(struct timespec starttime)
 
     while (true) {
         if ((fd = open((mountpt + Const::OPEN_LTFS_IOCTL).c_str(),
-                O_RDONLY | O_CLOEXEC)) == -1) {
+        O_RDONLY | O_CLOEXEC)) == -1) {
             if (count < 20) {
                 MSG(LTFSDMF0041I);
                 sleep(1);
@@ -1533,7 +1548,8 @@ void FuseFS::init(struct timespec starttime)
     MSG(LTFSDMF0036I, fs.source, mountpt + Const::OPEN_LTFS_CACHE_MP);
 
     try {
-        fss.mount(fs.source, mountpt + Const::OPEN_LTFS_CACHE_MP, fs.options);
+        fss.mount(fs.source, mountpt + Const::OPEN_LTFS_CACHE_MP, fs.options,
+                FileSystems::MNT_NORMAL);
     } catch (const std::exception &e) {
         TRACE(Trace::error, e.what());
         MSG(LTFSDMF0037E, fs.source, e.what());

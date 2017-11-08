@@ -4,6 +4,10 @@
 #define TRUE 1
 #endif
 
+#ifndef FALSE
+#define FALSE 0
+#endif
+
 class FileSystems
 {
 public:
@@ -27,10 +31,14 @@ public:
     {
         UMNT_NORMAL, UMNT_DETACHED, UMNT_FORCED, UMNT_DETACHED_FORCED,
     };
+    enum mountflag
+    {
+        MNT_NORMAL, MNT_FAKE,
+    };
     FileSystems();
     ~FileSystems();
     std::vector<FileSystems::fsinfo> getAll();
     FileSystems::fsinfo getByTarget(std::string target);
-    void mount(std::string source, std::string target, std::string options);
+    void mount(std::string source, std::string target, std::string options, mountflag flag);
     void umount(std::string target, umountflag flag);
 };
