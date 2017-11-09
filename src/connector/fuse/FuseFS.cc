@@ -1469,10 +1469,18 @@ void FuseFS::init(struct timespec starttime)
         alreadyManaged = true;
         fs = Connector::conf->getFs(mountpt);
         try {
-            fschk = fss.getByTarget(fs.target);
-            MSG(LTFSDMF0061E, fs.target);
-            fss.umount(fs.target, FileSystems::UMNT_NORMAL);
-        } catch (const std::exception& e) {
+            fschk = fss.getByTarget(mountpt);
+            MSG(LTFSDMF0061E, mountpt);
+            try {
+                fss.umount(mountpt, FileSystems::UMNT_NORMAL);
+            } catch (const std::exception& e) {
+                TRACE(Trace::error, e.what());
+                MSG(LTFSDMF0039E, mountpt);
+                THROW(Error::FS_UNMOUNT);
+            }
+        } catch (const OpenLTFSException& e) {
+            if (e.getError() == Error::FS_UNMOUNT)
+                THROW(Error::GENERAL_ERROR);
             TRACE(Trace::always, e.what());
         }
     } else {
