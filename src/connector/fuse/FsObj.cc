@@ -99,7 +99,8 @@ FsObj::FsObj(std::string fileName) :
         strncpy(fh->mountpoint, fileName.c_str(), PATH_MAX - 1);
         fh->fd = Const::UNSET;
     } else {
-        auto search = FuseConnector::managedFss.find(fh->mountpoint);
+        std::map<std::string, FuseFS*>::iterator search =
+                FuseConnector::managedFss.find(fh->mountpoint);
         if (search == FuseConnector::managedFss.end()) {
             // ltfsdm info files only operates on the ofs
             if ((fh->fd = open(fileName.c_str(), O_RDONLY | O_CLOEXEC)) == -1) {
@@ -110,9 +111,18 @@ FsObj::FsObj(std::string fileName) :
         } else {
             if ((fh->fd = openat(search->second->getRootFd(), fh->fusepath,
             O_RDWR)) == -1) {
-                delete (fh);
-                TRACE(Trace::error, errno);
-                THROW(Error::GENERAL_ERROR, fileName, errno);
+                if (errno == EISDIR) {
+                    if ((fh->fd = openat(search->second->getRootFd(),
+                            fh->fusepath, O_RDONLY)) == -1) {
+                        delete (fh);
+                        TRACE(Trace::error, errno);
+                        THROW(Error::GENERAL_ERROR, fileName, errno);
+                    }
+                } else {
+                    delete (fh);
+                    TRACE(Trace::error, errno);
+                    THROW(Error::GENERAL_ERROR, fileName, errno);
+                }
             }
         }
     }
