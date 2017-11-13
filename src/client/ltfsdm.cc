@@ -7,6 +7,7 @@
 #include <list>
 #include <thread>
 #include <exception>
+#include <memory>
 
 #include "src/common/errors/errors.h"
 #include "src/common/exception/OpenLTFSException.h"
@@ -47,9 +48,11 @@ void signalHandler(sigset_t set)
     int sig;
 
     while ( true) {
-        if (sigwait(&set, &sig))
+        if (sigwait(&set, &sig)) {
+            if ( sig == SIGUSR1 )
+                return;
             continue;
-
+        }
         exitClient = true;
         break;
     }
@@ -58,7 +61,7 @@ void signalHandler(sigset_t set)
 int main(int argc, char *argv[])
 
 {
-    OpenLTFSCommand *openLTFSCommand = NULL;
+    std::unique_ptr<OpenLTFSCommand> openLTFSCommand(nullptr);
     std::string command;
     int rc = static_cast<int>(Error::OK);
     sigset_t set;
@@ -68,25 +71,25 @@ int main(int argc, char *argv[])
     sigaddset(&set, SIGINT);
     sigaddset(&set, SIGTERM);
     sigaddset(&set, SIGPIPE);
+    sigaddset(&set, SIGUSR1);
     pthread_sigmask(SIG_BLOCK, &set, NULL);
 
     std::thread sigHandler(signalHandler, set);
-    sigHandler.detach();
 
     try {
         LTFSDM::init();
     } catch (const std::exception& e) {
         rc = static_cast<int>(Error::GENERAL_ERROR);
-        goto cleanup;
+        goto end;
     }
 
     traceObject.setTrclevel(Trace::none);
 
     if (argc < 2) {
-        openLTFSCommand = dynamic_cast<OpenLTFSCommand*>(new HelpCommand());
+        openLTFSCommand = std::unique_ptr<OpenLTFSCommand>(new HelpCommand);
         openLTFSCommand->doCommand(argc, argv);
         rc = static_cast<int>(Error::GENERAL_ERROR);
-        goto cleanup;
+        goto end;
     }
 
     command = argv[1];
@@ -94,30 +97,30 @@ int main(int argc, char *argv[])
     TRACE(Trace::normal, argc, command.c_str());
 
     if (StartCommand().compare(command)) {
-        openLTFSCommand = dynamic_cast<OpenLTFSCommand*>(new StartCommand());
+        openLTFSCommand = std::unique_ptr<OpenLTFSCommand>(new StartCommand);
     } else if (StopCommand().compare(command)) {
-        openLTFSCommand = dynamic_cast<OpenLTFSCommand*>(new StopCommand());
+        openLTFSCommand = std::unique_ptr<OpenLTFSCommand>(new StopCommand);
     } else if (AddCommand().compare(command)) {
-        openLTFSCommand = dynamic_cast<OpenLTFSCommand*>(new AddCommand());
+        openLTFSCommand = std::unique_ptr<OpenLTFSCommand>(new AddCommand);
     } else if (MigrationCommand().compare(command)) {
         openLTFSCommand =
-                dynamic_cast<OpenLTFSCommand*>(new MigrationCommand());
+                std::unique_ptr<OpenLTFSCommand>(new MigrationCommand);
     } else if (RecallCommand().compare(command)) {
-        openLTFSCommand = dynamic_cast<OpenLTFSCommand*>(new RecallCommand());
+        openLTFSCommand = std::unique_ptr<OpenLTFSCommand>(new RecallCommand);
     } else if (HelpCommand().compare(command)) {
-        openLTFSCommand = dynamic_cast<OpenLTFSCommand*>(new HelpCommand());
+        openLTFSCommand = std::unique_ptr<OpenLTFSCommand>(new HelpCommand);
     } else if (StatusCommand().compare(command)) {
-        openLTFSCommand = dynamic_cast<OpenLTFSCommand*>(new StatusCommand());
+        openLTFSCommand = std::unique_ptr<OpenLTFSCommand>(new StatusCommand);
     } else if (RetrieveCommand().compare(command)) {
-        openLTFSCommand = dynamic_cast<OpenLTFSCommand*>(new RetrieveCommand());
+        openLTFSCommand = std::unique_ptr<OpenLTFSCommand>(new RetrieveCommand);
     } else if (VersionCommand().compare(command)) {
-        openLTFSCommand = dynamic_cast<OpenLTFSCommand*>(new VersionCommand());
+        openLTFSCommand = std::unique_ptr<OpenLTFSCommand>(new VersionCommand);
     } else if (InfoCommand().compare(command)) {
         if (argc < 3) {
             MSG(LTFSDMC0011E);
             InfoCommand().printUsage();
             rc = static_cast<int>(Error::GENERAL_ERROR);
-            goto cleanup;
+            goto end;
         }
         argc--;
         argv++;
@@ -125,37 +128,37 @@ int main(int argc, char *argv[])
         TRACE(Trace::normal, command.c_str());
         if (InfoRequestsCommand().compare(command)) {
             openLTFSCommand =
-                    dynamic_cast<OpenLTFSCommand*>(new InfoRequestsCommand());
+                    std::unique_ptr<OpenLTFSCommand>(new InfoRequestsCommand);
         } else if (InfoJobsCommand().compare(command)) {
             openLTFSCommand =
-                    dynamic_cast<OpenLTFSCommand*>(new InfoJobsCommand());
+                    std::unique_ptr<OpenLTFSCommand>(new InfoJobsCommand);
         } else if (InfoFilesCommand().compare(command)) {
             openLTFSCommand =
-                    dynamic_cast<OpenLTFSCommand*>(new InfoFilesCommand());
+                    std::unique_ptr<OpenLTFSCommand>(new InfoFilesCommand);
         } else if (InfoFsCommand().compare(command)) {
             openLTFSCommand =
-                    dynamic_cast<OpenLTFSCommand*>(new InfoFsCommand());
+                    std::unique_ptr<OpenLTFSCommand>(new InfoFsCommand);
         } else if (InfoDrivesCommand().compare(command)) {
             openLTFSCommand =
-                    dynamic_cast<OpenLTFSCommand*>(new InfoDrivesCommand());
+                    std::unique_ptr<OpenLTFSCommand>(new InfoDrivesCommand);
         } else if (InfoTapesCommand().compare(command)) {
             openLTFSCommand =
-                    dynamic_cast<OpenLTFSCommand*>(new InfoTapesCommand());
+                    std::unique_ptr<OpenLTFSCommand>(new InfoTapesCommand);
         } else if (InfoPoolsCommand().compare(command)) {
             openLTFSCommand =
-                    dynamic_cast<OpenLTFSCommand*>(new InfoPoolsCommand());
+                    std::unique_ptr<OpenLTFSCommand>(new InfoPoolsCommand);
         } else {
             MSG(LTFSDMC0012E, command.c_str());
-            openLTFSCommand = dynamic_cast<OpenLTFSCommand*>(new HelpCommand());
+            openLTFSCommand = std::unique_ptr<OpenLTFSCommand>(new HelpCommand);
             rc = static_cast<int>(Error::GENERAL_ERROR);
-            goto cleanup;
+            goto end;
         }
     } else if (PoolCommand().compare(command)) {
         if (argc < 3) {
             MSG(LTFSDMC0074E);
             PoolCommand().printUsage();
             rc = static_cast<int>(Error::GENERAL_ERROR);
-            goto cleanup;
+            goto end;
         }
         argc--;
         argv++;
@@ -163,30 +166,30 @@ int main(int argc, char *argv[])
         TRACE(Trace::normal, command.c_str());
         if (PoolCreateCommand().compare(command)) {
             openLTFSCommand =
-                    dynamic_cast<OpenLTFSCommand*>(new PoolCreateCommand());
+                    std::unique_ptr<OpenLTFSCommand>(new PoolCreateCommand);
         } else if (PoolDeleteCommand().compare(command)) {
             openLTFSCommand =
-                    dynamic_cast<OpenLTFSCommand*>(new PoolDeleteCommand());
+                    std::unique_ptr<OpenLTFSCommand>(new PoolDeleteCommand);
         } else if (PoolAddCommand().compare(command)) {
             openLTFSCommand =
-                    dynamic_cast<OpenLTFSCommand*>(new PoolAddCommand());
+                    std::unique_ptr<OpenLTFSCommand>(new PoolAddCommand);
         } else if (PoolRemoveCommand().compare(command)) {
             openLTFSCommand =
-                    dynamic_cast<OpenLTFSCommand*>(new PoolRemoveCommand());
+                    std::unique_ptr<OpenLTFSCommand>(new PoolRemoveCommand);
         } else {
             MSG(LTFSDMC0012E, command.c_str());
-            openLTFSCommand = dynamic_cast<OpenLTFSCommand*>(new HelpCommand());
+            openLTFSCommand = std::unique_ptr<OpenLTFSCommand>(new HelpCommand);
             rc = static_cast<int>(Error::GENERAL_ERROR);
-            goto cleanup;
+            goto end;
         }
     } else {
         MSG(LTFSDMC0005E, command.c_str());
-        openLTFSCommand = dynamic_cast<OpenLTFSCommand*>(new HelpCommand());
+        openLTFSCommand = std::unique_ptr<OpenLTFSCommand>(new HelpCommand);
         rc = static_cast<int>(Error::GENERAL_ERROR);
-        goto cleanup;
+        goto end;
     }
 
-    TRACE(Trace::normal, openLTFSCommand);
+    TRACE(Trace::normal, openLTFSCommand->getCommand());
 
     argc--;
     argv++;
@@ -202,8 +205,10 @@ int main(int argc, char *argv[])
     } catch (const std::exception& e) {
     }
 
-    cleanup: if (openLTFSCommand)
-        delete (openLTFSCommand);
+    end:
+
+    kill(getpid(), SIGUSR1);
+    sigHandler.join();
 
     return (int) rc;
 }

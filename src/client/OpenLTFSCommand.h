@@ -47,6 +47,7 @@ public:
     {
         return !command.compare(name);
     }
+    std::string getCommand() { return command; }
     void connect();
     void sendObjects(std::stringstream *parmList);
     void isValidRegularFile();

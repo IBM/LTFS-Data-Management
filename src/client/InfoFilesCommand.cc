@@ -120,10 +120,13 @@ void InfoFilesCommand::doCommand(int argc, char **argv)
                         tapeIds.str(), file_name);
             }
         } catch (const std::exception& e) {
-            if (stat(file_name, &statbuf) == -1)
+            if (stat(file_name, &statbuf) == -1) {
+                free(file_name);
                 continue;
+            }
             INFO(LTFSDMC0049I, '-', statbuf.st_size, statbuf.st_blocks, '-',
                     file_name);
         }
+        free(file_name);
     }
 }

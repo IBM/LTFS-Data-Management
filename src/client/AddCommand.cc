@@ -49,6 +49,7 @@ void AddCommand::doCommand(int argc, char **argv)
     }
 
     managedFs = pathName;
+    free(pathName);
 
     try {
         FileSystems fss;
