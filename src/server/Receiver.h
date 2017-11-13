@@ -12,5 +12,5 @@ public:
     ~Receiver()
     {
     }
-    void run(long key, Connector *connector);
+    void run(long key, std::shared_ptr<Connector> connector);
 };

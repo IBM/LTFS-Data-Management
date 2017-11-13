@@ -106,7 +106,7 @@ void TransRecall::cleanupEvents()
     stmt.finalize();
 }
 
-void TransRecall::run(Connector *connector)
+void TransRecall::run(std::shared_ptr<Connector> connector)
 
 {
     ThreadPool<TransRecall, Connector::rec_info_t, std::string, long> wq(

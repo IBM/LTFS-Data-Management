@@ -99,7 +99,7 @@ FsObj::FsObj(std::string fileName) :
         strncpy(fh->mountpoint, fileName.c_str(), PATH_MAX - 1);
         fh->fd = Const::UNSET;
     } else {
-        std::map<std::string, FuseFS*>::iterator search =
+        std::map<std::string, std::unique_ptr<FuseFS>>::iterator search =
                 FuseConnector::managedFss.find(fh->mountpoint);
         if (search == FuseConnector::managedFss.end()) {
             // ltfsdm info files only operates on the ofs
@@ -178,24 +178,20 @@ void FsObj::manageFs(bool setDispo, struct timespec starttime)
 
 {
     FuseFS::FuseHandle *fh = (FuseFS::FuseHandle *) handle;
-    FuseFS *FS = nullptr;
 
     TRACE(Trace::always, fh->mountpoint);
 
-    FS = new FuseFS(fh->mountpoint);
+    FuseConnector::managedFss.emplace(fh->mountpoint, std::unique_ptr<FuseFS>(new FuseFS(fh->mountpoint)));
 
     try {
-        FS->init(starttime);
+        FuseConnector::managedFss[fh->mountpoint]->init(starttime);
     } catch (const std::exception& e) {
         TRACE(Trace::error, e.what());
-        delete (FS);
+        FuseConnector::managedFss.erase(FuseConnector::managedFss.find(fh->mountpoint));
         THROW(Error::GENERAL_ERROR);
     }
 
     std::unique_lock<std::mutex> lock(FuseConnector::mtx);
-
-    FuseConnector::managedFss[fh->mountpoint] = FS;
-
 }
 
 struct stat FsObj::stat()

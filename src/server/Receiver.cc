@@ -2,12 +2,12 @@
 
 std::atomic<long> globalReqNumber;
 
-void Receiver::run(long key, Connector *connector)
+void Receiver::run(long key, std::shared_ptr<Connector> connector)
 
 {
     MessageParser mproc;
     std::unique_lock<std::mutex> lock(Server::termmtx);
-    ThreadPool<long, LTFSDmCommServer, Connector*> wq(&MessageParser::run,
+    ThreadPool<long, LTFSDmCommServer, std::shared_ptr<Connector>> wq(&MessageParser::run,
             Const::MAX_RECEIVER_THREADS, "msg-wq");
     LTFSDmCommServer command(Const::CLIENT_SOCKET_FILE);
 

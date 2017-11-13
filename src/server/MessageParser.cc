@@ -428,7 +428,7 @@ void MessageParser::statusMessage(long key, LTFSDmCommServer *command,
 }
 
 void MessageParser::addMessage(long key, LTFSDmCommServer *command,
-        long localReqNumber, Connector *connector)
+        long localReqNumber, std::shared_ptr<Connector> connector)
 
 {
     TRACE(Trace::always, __PRETTY_FUNCTION__);
@@ -1065,7 +1065,7 @@ void MessageParser::retrieveMessage(long key, LTFSDmCommServer *command)
 }
 
 void MessageParser::run(long key, LTFSDmCommServer command,
-        Connector *connector)
+        std::shared_ptr<Connector> connector)
 
 {
     TRACE(Trace::always, __PRETTY_FUNCTION__);

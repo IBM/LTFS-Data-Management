@@ -396,11 +396,14 @@ OpenLTFSInventory::~OpenLTFSInventory()
 
 {
     try {
+        MSG(LTFSDMS0099I);
+
         for (std::shared_ptr<OpenLTFSDrive> drive : drives)
             delete (drive->wqp);
 
         LEControl::Disconnect(sess);
-    } catch (...) {
+    } catch (const std::exception& e) {
+        TRACE(Trace::error, e.what());
         Server::forcedTerminate = true;
         kill(getpid(), SIGUSR1);
     }

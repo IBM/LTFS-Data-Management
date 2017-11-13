@@ -28,7 +28,7 @@ private:
     static void statusMessage(long key, LTFSDmCommServer *command,
             long localReqNumber);
     static void addMessage(long key, LTFSDmCommServer *command,
-            long localReqNumber, Connector *connector);
+            long localReqNumber, std::shared_ptr<Connector> connector);
     static void infoRequestsMessage(long key, LTFSDmCommServer *command,
             long localReqNumber);
     static void infoJobsMessage(long key, LTFSDmCommServer *command,
@@ -48,5 +48,5 @@ public:
     ~MessageParser()
     {
     }
-    static void run(long key, LTFSDmCommServer command, Connector *connector);
+    static void run(long key, LTFSDmCommServer command, std::shared_ptr<Connector> connector);
 };

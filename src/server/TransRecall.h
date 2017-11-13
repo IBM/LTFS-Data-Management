@@ -26,7 +26,7 @@ public:
     void addRequest(Connector::rec_info_t recinfo, std::string tapeId,
             long reqNum);
     void cleanupEvents();
-    void run(Connector *connector);
+    void run(std::shared_ptr<Connector> connector);
     static unsigned long recall(Connector::rec_info_t recinfo,
             std::string tapeId, FsObj::file_state state,
             FsObj::file_state toState);

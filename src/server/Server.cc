@@ -337,7 +337,7 @@ void Server::run(sigset_t set)
     Scheduler sched;
     Receiver recv;
     TransRecall trec;
-    Connector *connector = NULL;
+    std::shared_ptr<Connector> connector(nullptr);
 
     Server::terminate = false;
     Server::forcedTerminate = false;
@@ -352,7 +352,7 @@ void Server::run(sigset_t set)
 
     try {
         inventory = new OpenLTFSInventory();
-        connector = new Connector(true, &Server::conf);
+        connector = std::shared_ptr<Connector>(new Connector(true, &Server::conf));
     } catch (const std::exception& e) {
         TRACE(Trace::error, e.what());
         goto end;
@@ -380,9 +380,6 @@ void Server::run(sigset_t set)
 
     if (inventory)
         delete (inventory);
-
-    if (connector)
-        delete (connector);
 
     MSG(LTFSDMS0088I);
 

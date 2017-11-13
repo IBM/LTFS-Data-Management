@@ -46,21 +46,17 @@ Connector::Connector(bool _cleanup, Configuration *_conf) :
 Connector::~Connector()
 
 {
-    try {
-        std::string mountpt;
+    if ( cleanup ) {
+        try {
+            std::string mountpt;
 
-        if (cleanup)
             MSG(LTFSDMF0025I);
-
-        for (auto const& fn : FuseConnector::managedFss) {
-            mountpt = fn.second->getMountPoint();
-            FuseConnector::managedFss.erase(mountpt);
-            delete (fn.second);
-        }
-        if (cleanup)
+            FuseConnector::managedFss.clear();
             MSG(LTFSDMF0027I);
-    } catch (...) {
-        kill(getpid(), SIGTERM);
+        } catch (const std::exception& e) {
+            TRACE(Trace::error, e.what());
+            kill(getpid(), SIGTERM);
+        }
     }
 }
 
