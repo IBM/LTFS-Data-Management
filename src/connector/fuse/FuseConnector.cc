@@ -20,5 +20,4 @@
 
 std::mutex FuseConnector::mtx;
 std::map<std::string, std::unique_ptr<FuseFS>> FuseConnector::managedFss;
-std::unique_lock<std::mutex> *FuseConnector::trecall_lock;
 long FuseConnector::ltfsdmKey;
