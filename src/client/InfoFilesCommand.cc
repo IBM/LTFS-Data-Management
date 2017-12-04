@@ -27,6 +27,38 @@
 #include "OpenLTFSCommand.h"
 #include "InfoFilesCommand.h"
 
+/** @page ltfsdm_info_files ltfsdm info files
+    The ltfsdm info files command provides information about the migration status of one or more files.
+
+    <tt>@LTFSDMC0010I</tt>
+
+    parameters | description
+    ---|---
+    \<file name\> … | a set of file names to get the migration status
+    -f \<file list\> | the name of a file containing file names to get the migration status
+
+    Example:
+
+    @verbatim
+    [root@visp ~]# ls /mnt/lxfs/bigfile* |ltfsdm info files -f -
+    state             size               blocks              tape id  file name
+    m          47049088000                    8             D01301L5  /mnt/lxfs/bigfile
+    r          47049088000             91892752                    -  /mnt/lxfs/bigfile.1
+    r          47049088000             91892752                    -  /mnt/lxfs/bigfile.1.cpy
+    r          47049088000             91892752                    -  /mnt/lxfs/bigfile.cp
+    @endverbatim
+
+    The migration states are:
+
+    state | description
+    ---|---
+    m | migrated
+    p | premigrated
+    r | resident
+
+    The responsible class is @ref InfoFilesCommand.
+ */
+
 void InfoFilesCommand::printUsage()
 {
     INFO(LTFSDMC0010I);

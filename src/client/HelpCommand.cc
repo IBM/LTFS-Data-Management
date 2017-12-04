@@ -14,7 +14,7 @@
 #include "OpenLTFSCommand.h"
 #include "StartCommand.h"
 #include "StopCommand.h"
-#include "MigrationCommand.h"
+#include "MigrateCommand.h"
 #include "RecallCommand.h"
 #include "AddCommand.h"
 #include "StatusCommand.h"
@@ -34,6 +34,45 @@
 #include "InfoPoolsCommand.h"
 #include "RetrieveCommand.h"
 #include "HelpCommand.h"
+
+/** @page ltfsdm_help ltfsdm help
+    The ltfsdm help command lists all available commands.
+
+    parameters | description
+    ---|---
+    - | -
+
+    Example:
+
+    @verbatim
+    [root@visp ~]# ltfsdm help
+    commands:
+               ltfsdm help              - show this help message
+               ltfsdm start             - start the Open LTFS service in background
+               ltfsdm stop              - stop the Open LTFS service
+               ltfsdm add               - adds Open LTFS management to a file system
+               ltfsdm status            - provides information if the back end has been started
+               ltfsdm migrate           - migrate file system objects from the local file system to tape
+               ltfsdm recall            - recall file system objects back from tape to local disk
+               ltfsdm retrieve          - synchonizes the inventory with the information provided by Spectrum Archive LE
+               ltfsdm version           - provides the version number of Open LTFS
+    info sub commands:
+               ltfsdm info requests     - retrieve information about all or a specific Open LTFS requests
+               ltfsdm info jobs         - retrieve information about all or a specific Open LTFS jobs
+               ltfsdm info files        - retrieve information about the migration state of file system objects
+               ltfsdm info fs           - lists the file systems managed by Open LTFS
+               ltfsdm info drives       - lists the drives known to OpenLTFS
+               ltfsdm info tapes        - lists the cartridges known to OpenLTFS
+               ltfsdm info pools        - lists all defined tape storage pools and their sizes
+    pool sub commands:
+               ltfsdm pool create       - create a tape storage pool
+               ltfsdm pool delete       - delete a tape storage pool
+               ltfsdm pool add          - add a cartridge to a tape storage pool
+               ltfsdm pool remove       - removes a cartridge from a tape storage pool
+    @endverbatim
+
+    The responsible class is @ref HelpCommand.
+ */
 
 void HelpCommand::printUsage()
 {
@@ -61,8 +100,8 @@ void HelpCommand::doCommand(int argc, char **argv)
         openLTFSCommand = new StartCommand();
     } else if (StopCommand().compare(command)) {
         openLTFSCommand = new StopCommand();
-    } else if (MigrationCommand().compare(command)) {
-        openLTFSCommand = new MigrationCommand();
+    } else if (MigrateCommand().compare(command)) {
+        openLTFSCommand = new MigrateCommand();
     } else if (RecallCommand().compare(command)) {
         openLTFSCommand = new RecallCommand();
     } else if (AddCommand().compare(command)) {

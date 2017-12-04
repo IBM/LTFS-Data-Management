@@ -17,6 +17,35 @@
 #include "OpenLTFSCommand.h"
 #include "InfoJobsCommand.h"
 
+/** @page ltfsdm_info_jobs ltfsdm info jobs
+    The ltfsdm info jobs command lists all jobs that have been created and which are processes by the backend.
+
+    <tt>@LTFSDMC0059I</tt>
+
+    parameters | description
+    ---|---
+    -n \<request number\> | restrict the jobs to be displayed to a certain request
+
+    Example:
+
+    @verbatim
+    [root@visp ~]# ltfsdm info jobs -n 19
+    operation            state                request number       tape pool            tape id              size                 file name
+    migration            premigrating         19                   pool1                D01301L5             32768                /mnt/lxfs/test2/file.0
+    migration            premigrating         19                   pool1                D01301L5             32768                /mnt/lxfs/test2/file.1
+    migration            premigrating         19                   pool1                D01301L5             32768                /mnt/lxfs/test2/file.2
+    migration            premigrating         19                   pool1                D01301L5             32768                /mnt/lxfs/test2/file.3
+    migration            premigrating         19                   pool1                D01301L5             32768                /mnt/lxfs/test2/file.4
+    migration            premigrating         19                   pool1                D01301L5             32768                /mnt/lxfs/test2/file.5
+    migration            premigrating         19                   pool1                D01301L5             32768                /mnt/lxfs/test2/file.6
+    migration            premigrating         19                   pool1                D01301L5             32768                /mnt/lxfs/test2/file.7
+    migration            premigrating         19                   pool1                D01301L5             32768                /mnt/lxfs/test2/file.8
+    migration            premigrating         19                   pool1                D01301L5             32768                /mnt/lxfs/test2/file.9
+    @endverbatim
+
+    The responsible class is @ref InfoJobsCommand.
+ */
+
 void InfoJobsCommand::printUsage()
 {
     INFO(LTFSDMC0059I);

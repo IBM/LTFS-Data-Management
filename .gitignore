@@ -30,3 +30,5 @@ src/common/Version.h
 .settings
 .cproject
 .project
+/latex/
+/html/

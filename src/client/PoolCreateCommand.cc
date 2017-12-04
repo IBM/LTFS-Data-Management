@@ -22,6 +22,25 @@
 #include "OpenLTFSCommand.h"
 #include "PoolCreateCommand.h"
 
+/** @page ltfsdm_pool_create ltfsdm pool create
+    The ltfsdm pool create command created a tape storage pool.
+
+    <tt>@LTFSDMC0075I</tt>
+
+    parameters | description
+    ---|---
+    -P \<pool name\> | pool name of the tape storage pool to be created
+
+    Example:
+
+    @verbatim
+    [root@visp ~]# ltfsdm pool create -P newpool
+    Pool "newpool" successfully created.
+    @endverbatim
+
+    The responsible class is @ref PoolCreateCommand.
+ */
+
 void PoolCreateCommand::printUsage()
 {
     INFO(LTFSDMC0075I);

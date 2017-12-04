@@ -23,6 +23,25 @@
 #include "OpenLTFSCommand.h"
 #include "VersionCommand.h"
 
+/** @page ltfsdm_version ltfsdm version
+    The ltfsdm version command provide the version of the OpenLTFS software.
+
+    <tt>@LTFSDMC0102I</tt>
+
+    parameters | description
+    ---|---
+    - | -
+
+    Example:
+
+    @verbatim
+    [root@visp ~]# ltfsdm version
+    OpenLTFS version: 0.0.624-master.2017-11-09T10.57.51
+    @endverbatim
+
+    The responsible class is @ref VersionCommand.
+ */
+
 void VersionCommand::printUsage()
 {
     INFO(LTFSDMC0102I);

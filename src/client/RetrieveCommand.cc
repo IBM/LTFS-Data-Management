@@ -16,6 +16,25 @@
 #include "OpenLTFSCommand.h"
 #include "RetrieveCommand.h"
 
+/** @page ltfsdm_retrieve ltfsdm retrieve
+    The ltfsdm retrieve command synchronizes the status of drives and cartridges with Spectrum Archive  LE.
+
+    <tt>@LTFSDMC0093I</tt>
+
+    parameters | description
+    ---|---
+    - | -
+
+    Example:
+
+    @verbatim
+    [root@visp ~]# ltfsdm retrieve
+    [root@visp ~]#
+    @endverbatim
+
+    The responsible class is @ref RetrieveCommand.
+ */
+
 void RetrieveCommand::printUsage()
 {
     INFO(LTFSDMC0093I);

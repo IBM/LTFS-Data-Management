@@ -1,0 +1,13 @@
+body {
+    background-color: #FAFAFA;
+}
+
+div.contents {
+    margin-left: auto;
+    margin-right: auto;
+    padding: 10px;
+    /* 960px has been often suggested */
+    width: 960px;
+    background-color: white;
+}
+

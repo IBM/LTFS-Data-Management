@@ -17,6 +17,30 @@
 #include "OpenLTFSCommand.h"
 #include "InfoTapesCommand.h"
 
+/** @page ltfsdm_info_tapes ltfsdm info tapes
+    The ltfsdm info tapes command lists all available cartridges and corresponding space information.
+
+    <tt>@LTFSDMC0065I</tt>
+
+    parameters | description
+    ---|---
+    - | -
+
+    Example:
+
+    @verbatim
+    [root@visp ~]# ltfsdm info tapes
+    id           slot         total cap.   rem. cap.    status       in progress  pool         state
+    D01298L5     4121         0            0            Unknown      0            n/a          not mounted
+    D01299L5     4134         0            0            Unknown      0            n/a          not mounted
+    D01300L5     4129         0            0            Unknown      0            n/a          not mounted
+    D01301L5     256          1358985      1357007      Valid LTFS   0            pool1        mounted
+    D01302L5     259          1358985      1357300      Valid LTFS   0            pool2        mounted
+    @endverbatim
+
+    The responsible class is @ref InfoTapesCommand.
+ */
+
 void InfoTapesCommand::printUsage()
 {
     INFO(LTFSDMC0065I);

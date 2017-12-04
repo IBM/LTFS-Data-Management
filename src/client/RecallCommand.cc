@@ -17,6 +17,38 @@
 #include "OpenLTFSCommand.h"
 #include "RecallCommand.h"
 
+/** @page ltfsdm_recall ltfsdm recall
+    The ltfsdm recall command selectively recall one or more files.
+
+    <tt>@LTFSDMC0002I</tt>
+
+    parameters | description
+    ---|---
+    -r | to recall files to resident state, without specifying this option files get recalled to premigrated state
+    -n \<request number\> | attach to an ongoing recall request to see its progress
+    \<file name\> | a set of file names of files to be recalled
+    -f \<file list\> | a file name containing a list of files to be recalled
+
+    Example:
+
+    @verbatim
+    [root@visp sdir]# find dir.* -type f |ltfsdm recall -r -f -
+    --- sending completed within 42 seconds ---
+                   resident  premigrated     migrated       failed
+    [00:01:01]            1            0        99999            0
+    [00:01:11]        17108            0        82892            0
+    [00:01:21]        36376            0        63624            0
+    [00:01:31]        55464            0        44536            0
+    [00:01:41]        74717            0        25283            0
+    [00:01:51]        93946            0         6054            0
+    [00:01:56]       100000            0            0            0
+    @endverbatim
+
+    The responsible class is @ref RecallCommand.
+
+    @page recall_processing recall processing
+ */
+
 void RecallCommand::printUsage()
 {
     INFO(LTFSDMC0002I);

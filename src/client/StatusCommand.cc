@@ -16,6 +16,25 @@
 #include "OpenLTFSCommand.h"
 #include "StatusCommand.h"
 
+/** @page ltfsdm_status ltfsdm status
+    The ltfsdm status command provides the status of the OpenLTFS service.
+
+    <tt>@LTFSDMC0030I</tt>
+
+    parameters | description
+    ---|---
+    - | -
+
+    Example:
+
+    @verbatim
+    [root@visp ~]# ltfsdm status
+    LTFSDMC0032I(0068): The OpenLTFS server process is operating with pid  13378.
+    @endverbatim
+
+    The responsible class is @ref StatusCommand.
+ */
+
 void StatusCommand::printUsage()
 {
     INFO(LTFSDMC0030I);

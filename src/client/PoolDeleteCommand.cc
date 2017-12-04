@@ -21,6 +21,25 @@
 #include "OpenLTFSCommand.h"
 #include "PoolDeleteCommand.h"
 
+/** @page ltfsdm_pool_delete ltfsdm pool delete
+    The ltfsdm pool delete command deletes a tape storage pool.
+
+    <tt>@LTFSDMC0076I</tt>
+
+    parameters | description
+    ---|---
+    -P \<pool name\> | pool name of the tape storage pool to be deleted
+
+    Example:
+
+    @verbatim
+    [root@visp ~]# ltfsdm pool delete -P newpool
+    Pool "newpool" successfully deleted.
+    @endverbatim
+
+    The responsible class is @ref PoolDeleteCommand.
+ */
+
 void PoolDeleteCommand::printUsage()
 {
     INFO(LTFSDMC0076I);

@@ -180,13 +180,14 @@ public:
 
     void init(struct timespec starttime);
 
+    ~FuseFS();
+
     FuseFS(std::string _mountpt) :
             mountpt(_mountpt), thrd(nullptr), rootFd(Const::UNSET), ioctlFd(
                     Const::UNSET), init_status( { false, false, false })
     {
     }
 
-    ~FuseFS();
 };
 
 struct conn_info_t

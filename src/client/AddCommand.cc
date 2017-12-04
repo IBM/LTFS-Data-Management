@@ -24,6 +24,23 @@
 #include "OpenLTFSCommand.h"
 #include "AddCommand.h"
 
+/** @page ltfsdm_add ltfsdm add
+    The ltfsdm add command is used to manage a file system with OpenLTFS.
+
+    <tt>@LTFSDMC0052I</tt>
+
+    parameters | description
+    ---|---
+    \<mount point\> | path to the mount point of the file system to be managed
+
+    Example:
+    @verbatim
+    [root@visp ~]# ltfsdm add /mnt/xfs
+    @endverbatim
+
+    The responsible class is @ref AddCommand.
+ */
+
 void AddCommand::printUsage()
 {
     INFO(LTFSDMC0052I);

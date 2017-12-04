@@ -17,6 +17,28 @@
 #include "OpenLTFSCommand.h"
 #include "InfoPoolsCommand.h"
 
+/** @page ltfsdm_info_pools ltfsdm info pools
+    The ltfsdm info pools command provides information about tape storage pools and the number of assigned tapes.
+
+    <tt>@LTFSDMC0087I</tt>
+
+    parameters | description
+    ---|---
+    - | -
+
+    Example:
+
+    @verbatim
+    [root@visp ~]# ltfsdm info pools
+    pool name    total cap.   rem. cap.    unref. cap.  #tapes
+    large pool   0            0            0            3
+    pool1        1358985      1357012      0            1
+    pool2        1358985      1357300      0            1
+    @endverbatim
+
+    The responsible class is @ref InfoPoolsCommand.
+ */
+
 void InfoPoolsCommand::printUsage()
 {
     INFO(LTFSDMC0087I);

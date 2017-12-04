@@ -22,7 +22,7 @@
 #include "StartCommand.h"
 #include "StopCommand.h"
 #include "AddCommand.h"
-#include "MigrationCommand.h"
+#include "MigrateCommand.h"
 #include "RecallCommand.h"
 #include "HelpCommand.h"
 #include "InfoCommand.h"
@@ -41,6 +41,51 @@
 #include "InfoPoolsCommand.h"
 #include "RetrieveCommand.h"
 #include "VersionCommand.h"
+
+
+
+/** @page client_code Client Code
+
+ ## Command evaluation
+
+ OpenLTFS is started, stopped, and operated using the [ltfsdm command](@ref md_src_1.commands).
+
+ For all commands the first the first and for the info and pool commands
+ also the second argument is evaluated.
+
+ @dot
+ digraph command_processing {
+    fontname=default;
+    fontsize=11;
+    color=white;
+    fillcolor=white;
+    node [shape=record, fontname=fixed, fontsize=11, style=filled, color=white, fillcolor=white];
+    subgraph cluster_command_line {
+        ranktype=max;
+        ltfsdm [color=white, label="ltfsdm"];
+        argv_1 [color=white, label="argv[1]"];
+        argv_2 [color=white, label="argv[2]"];
+        argv_x [color=white, label="..."];
+    }
+    compare [ label = "…Command.compare(argv[1])" ];
+    info_compare [ label = "Info…Command.compare(argv[2])" ];
+    pool_compare [ label = "Pool…Command.compare(argv[2])" ];
+    ltfsdm -> compare [color=transparent];      // necessary only for correct order
+    argv_1 -> info_compare [color=transparent]; // necessary only for correct order
+    argv_1 -> compare [];
+    argv_2 -> info_compare [];
+    argv_2 -> pool_compare [];
+    argv_x -> pool_compare [color=transparent]; // necessary only for correct order
+    object [ label = "openLTFSCommand = std::unique_ptr\<OpenLTFSCommand\>(new \[Info\|Pool\|\]…Command)" ];
+    compare -> object [];
+    info_compare -> object [];
+    pool_compare -> object [];
+    do_command [ label = "openLTFSCommand-\>doCommand(argc, argv)" ];
+    object -> do_command [];
+ }
+ @enddot
+
+ */
 
 void signalHandler(sigset_t set)
 
@@ -102,9 +147,9 @@ int main(int argc, char *argv[])
         openLTFSCommand = std::unique_ptr<OpenLTFSCommand>(new StopCommand);
     } else if (AddCommand().compare(command)) {
         openLTFSCommand = std::unique_ptr<OpenLTFSCommand>(new AddCommand);
-    } else if (MigrationCommand().compare(command)) {
+    } else if (MigrateCommand().compare(command)) {
         openLTFSCommand =
-                std::unique_ptr<OpenLTFSCommand>(new MigrationCommand);
+                std::unique_ptr<OpenLTFSCommand>(new MigrateCommand);
     } else if (RecallCommand().compare(command)) {
         openLTFSCommand = std::unique_ptr<OpenLTFSCommand>(new RecallCommand);
     } else if (HelpCommand().compare(command)) {
@@ -199,6 +244,7 @@ int main(int argc, char *argv[])
     }
 
     try {
+        //! [call_do_command]
         openLTFSCommand->doCommand(argc, argv);
     } catch (const OpenLTFSException& e) {
         rc = static_cast<int>(e.getError());

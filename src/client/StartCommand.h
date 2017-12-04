@@ -7,6 +7,7 @@ private:
     std::stringstream serverPath;
     void determineServerPath();
     void startServer();
+    void waitForResponse();
     void talkToBackend(std::stringstream *parmList)
     {
     }

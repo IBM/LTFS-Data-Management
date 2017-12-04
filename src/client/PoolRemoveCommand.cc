@@ -21,6 +21,26 @@
 #include "OpenLTFSCommand.h"
 #include "PoolRemoveCommand.h"
 
+/** @page ltfsdm_pool_remove ltfsdm pool remove
+    The ltfsdm pool remove command removes a cartridge from a tape storage pool.
+
+    <tt>@LTFSDMC0078I</tt>
+
+    parameters | description
+    ---|---
+    -P \<pool name\> | pool name to which a cartridge should be removed
+    -t \<tape id\> | id of a cartridge to be removed
+
+    Example:
+
+    @verbatim
+    [root@visp ~]# ltfsdm pool remove -P 'large pool' -t DV1478L6
+    Tape DV1478L6 successfully removed from pool "large pool".
+    @endverbatim
+
+    The responsible class is @ref PoolRemoveCommand.
+ */
+
 void PoolRemoveCommand::printUsage()
 {
     INFO(LTFSDMC0078I);

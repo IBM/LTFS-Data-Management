@@ -15,14 +15,47 @@
 #include "src/common/comm/LTFSDmComm.h"
 
 #include "OpenLTFSCommand.h"
-#include "MigrationCommand.h"
+#include "MigrateCommand.h"
 
-void MigrationCommand::printUsage()
+/** @page ltfsdm_migrate ltfsdm migrate
+    The ltfsdm recall command selectively recall one or more files.
+
+    <tt>@LTFSDMC0001I</tt>
+
+    parameters | description
+    ---|---
+    -p | to premigrate files, without specifying this option files get migrated
+    -P \<pool list: 'pool1,pool2,pool3'\> | a file can be migrated up to three different tape storage pools in parallel, at least one tape storage pool needs to be specified
+    -n \<request number\> | attach to an ongoing migration request to see its progress
+    \<file name\> | a set of file names of files to be migrated
+    -f \<file list\> | a file name containing a list of files to be migrated
+
+    Example:
+
+    @verbatim
+    [root@visp sdir]# find dir.* -type f |ltfsdm migrate -P pool1 -f -
+    --- sending completed within 32 seconds ---
+                   resident  premigrated     migrated       failed
+    [00:00:58]        99999            1            0            0
+    [00:01:08]        68937        31063            0            0
+    [00:01:18]        37745        62255            0            0
+    [00:01:28]         6558        93442            0            0
+    [00:01:38]            0       100000            0            0
+    [00:01:48]            0        36155        63845            0
+    [00:01:54]            0            0       100000            0
+    @endverbatim
+
+    The responsible class is @ref MigrateCommand.
+
+    @page migrate_processing migrate processing
+ */
+
+void MigrateCommand::printUsage()
 {
     INFO(LTFSDMC0001I);
 }
 
-void MigrationCommand::talkToBackend(std::stringstream *parmList)
+void MigrateCommand::talkToBackend(std::stringstream *parmList)
 
 {
     try {
@@ -96,7 +129,7 @@ void MigrationCommand::talkToBackend(std::stringstream *parmList)
     queryResults();
 }
 
-void MigrationCommand::doCommand(int argc, char **argv)
+void MigrateCommand::doCommand(int argc, char **argv)
 {
     std::stringstream parmList;
 

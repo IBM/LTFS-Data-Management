@@ -62,12 +62,6 @@ void OpenLTFSCommand::processOptions(int argc, char **argv)
             case 'f':
                 fileList = optarg;
                 break;
-            case 'm':
-                mountPoint = optarg;
-                break;
-            case 'N':
-                fsName = optarg;
-                break;
             case 'P':
                 poolNames = optarg;
                 break;

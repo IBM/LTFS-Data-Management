@@ -17,6 +17,26 @@
 #include "OpenLTFSCommand.h"
 #include "InfoRequestsCommand.h"
 
+/** @page ltfsdm_info_requests ltfsdm info requests
+    The ltfsdm info request command lists all OpenLTFS requests and the corresponding status.
+
+    <tt>@LTFSDMC0009I</tt>
+
+    parameters | description
+    ---|---
+    -n \<request number\> | request number for a specific request to see the information
+
+    Example:
+
+    @verbatim
+    [root@visp ~]# ltfsdm info requests -n 28
+    operation            state                request number       tape pool            tape id              target state
+    migration            in progress          28                   pool1                D01301L5             in progress
+    @endverbatim
+
+    The responsible class is @ref InfoRequestsCommand.
+ */
+
 void InfoRequestsCommand::printUsage()
 {
     INFO(LTFSDMC0009I);

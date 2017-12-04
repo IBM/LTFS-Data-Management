@@ -30,6 +30,25 @@
 #include "OpenLTFSCommand.h"
 #include "InfoFsCommand.h"
 
+/** @page ltfsdm_info_fs ltfsdm info fs
+    The ltfsdm info fs command lists all OpenLTFS managed file systems:
+
+    <tt>@LTFSDMC0056I</tt>
+
+    parameters | description
+    ---|---
+    - | -
+
+    @bug Does not work currently. This command uses old code to determine the filesystems being managed.
+
+    Example:
+
+    @verbatim
+    @endverbatim
+
+    The responsible class is @ref InfoFsCommand.
+ */
+
 void InfoFsCommand::printUsage()
 {
     INFO(LTFSDMC0056I);

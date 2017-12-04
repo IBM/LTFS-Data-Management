@@ -17,6 +17,27 @@
 #include "OpenLTFSCommand.h"
 #include "InfoDrivesCommand.h"
 
+/** @page ltfsdm_info_drives ltfsdm info drives
+    The ltfsdm info drives command lists all available tape drives.
+
+    <tt>@LTFSDMC0068I</tt>
+
+    parameters | description
+    ---|---
+    - | -
+
+    Example:
+
+    @verbatim
+    [root@visp ~]# ltfsdm info drives
+    id           device name   slot         status       usage
+    9068051229   /dev/IBMtape0 256          Available    free
+    1013000505   /dev/IBMtape1 259          Available    free
+    @endverbatim
+
+    The responsible class is @ref InfoDrivesCommand.
+ */
+
 void InfoDrivesCommand::printUsage()
 {
     INFO(LTFSDMC0068I);

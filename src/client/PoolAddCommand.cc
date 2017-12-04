@@ -21,6 +21,26 @@
 #include "OpenLTFSCommand.h"
 #include "PoolAddCommand.h"
 
+/** @page ltfsdm_pool_add ltfsdm pool add
+    The ltfsdm pool add command adds a cartridge to a tape storage pool.
+
+    <tt>@LTFSDMC0077I</tt>
+
+    parameters | description
+    ---|---
+    -P \<pool name\> | pool name to which a cartridge should be added
+    -t \<tape id\> | id of a cartridge to be added
+
+    Example:
+
+    @verbatim
+    [root@visp ~]# ltfsdm pool add -P 'large pool' -t DV1478L6
+    Tape DV1478L6 successfully added to pool "large pool".
+    @endverbatim
+
+    The responsible class is @ref PoolAddCommand.
+ */
+
 void PoolAddCommand::printUsage()
 {
     INFO(LTFSDMC0077I);

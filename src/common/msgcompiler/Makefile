@@ -16,4 +16,4 @@ include $(RELPATH)/definitions.mk
 # for the message compiler do not use any library
 
 $(MSGDIR)/msgdefs.h: $(RELPATH)/messages.cfg msgcompiler
-	msgcompiler $(RELPATH)/messages.cfg $(MSGDIR)/msgdefs.h
+	msgcompiler $(RELPATH)/messages.cfg $(MSGDIR)/msgdefs.h $(RELPATH)/messages.dox

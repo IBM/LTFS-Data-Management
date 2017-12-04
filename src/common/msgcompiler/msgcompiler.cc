@@ -14,6 +14,27 @@ typedef struct
 
 const std::string IDENTIFIER = "LTFSDM";
 
+std::string escape(std::string input)
+
+{
+    std::string result;
+
+    for ( char c : input ) {
+        switch(c) {
+            case '<':
+                result += "\\<";
+                break;
+            case '>':
+                result += "\\>";
+                break;
+            default:
+                result += c;
+        }
+    }
+
+    return result;
+}
+
 int main(int argc, char **argv)
 
 {
@@ -21,13 +42,15 @@ int main(int argc, char **argv)
 	std::string second;
 	std::string line;
 	std::vector<message_t> messages;
+	std::vector<message_t> documentation;
 	std::vector<message_t>::iterator it;
 	std::ifstream infile;
 	std::ofstream outfile;
+	std::ofstream doxfile;
 
-	if (argc != 3) {
+	if (argc != 4) {
 		std::cout << "usage: " << argv[0]
-				<< " <message text file name> <compiled message header>"
+				<< " <message text file name> <compiled message header> <compiled documentation file>"
 				<< std::endl;
 		return -1;
 	}
@@ -42,9 +65,16 @@ int main(int argc, char **argv)
 	try {
 		outfile.open(argv[2]);
 	} catch (const std::exception& e) {
-		std::cout << "unable to open outout file " << argv[2] << "."
+		std::cout << "unable to open output file " << argv[2] << "."
 				<< std::endl;
 	}
+
+    try {
+        doxfile.open(argv[3]);
+    } catch (const std::exception& e) {
+        std::cout << "unable to open output file " << argv[3] << "."
+                << std::endl;
+    }
 
 	while (std::getline(infile, line)) {
 		// remove leading white spaces and tabs
@@ -58,6 +88,8 @@ int main(int argc, char **argv)
 			messages.back().msgtxt += '\n';
 			messages.back().msgtxt += "                       ";
 			messages.back().msgtxt += "+std::string(" + line + ")";
+			documentation.back().msgtxt += "<BR>";
+			documentation.back().msgtxt += escape(line);
 		}
 		// new message
 		else {
@@ -72,6 +104,8 @@ int main(int argc, char **argv)
 			second = line.substr(line.find('"'), std::string::npos - 1);
 			messages.push_back(
 					(message_t ) { first, "std::string(" + second + ")" });
+			documentation.push_back(
+			        (message_t ) { first, escape(second)});
 		}
 	}
 
@@ -116,6 +150,12 @@ int main(int argc, char **argv)
 	outfile << std::endl;
 
 	outfile.close();
+
+	for (it = documentation.begin(); it != documentation.end(); ++it ) {
+        doxfile << "ALIASES += " << it->msgname << "=" << it->msgtxt << std::endl;
+	}
+
+	doxfile.close();
 
 	return 0;
 }

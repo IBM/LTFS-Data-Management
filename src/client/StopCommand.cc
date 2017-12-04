@@ -18,6 +18,29 @@
 #include "OpenLTFSCommand.h"
 #include "StopCommand.h"
 
+/** @page ltfsdm_stop ltfsdm stop
+    The ltfsdm stop command stop the OpenLTFS service.
+
+    <tt>@LTFSDMC0007I</tt>
+
+    parameters | description
+    ---|---
+    -x | force the stop of OpenLTFS even a managed file system is in use
+
+    Example:
+
+    @verbatim
+    [root@visp ~]# ltfsdm stop
+    The OpenLTFS backend is terminating.
+    Waiting for the termination of the OpenLTFS server............
+    [root@visp ~]#
+    @endverbatim
+
+    The responsible class is @ref StopCommand.
+
+    @page stop_processing stop processing
+ */
+
 void StopCommand::printUsage()
 {
     INFO(LTFSDMC0007I);
