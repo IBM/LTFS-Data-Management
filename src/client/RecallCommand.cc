@@ -47,6 +47,53 @@
     The responsible class is @ref RecallCommand.
 
     @page recall_processing recall processing
+
+    The following is a summary of the recall command processing:
+
+    @code
+    RecallCommand::doCommand
+        OpenLTFSCommand::processOptions
+        OpenLTFSCommand::checkOptions
+        if filename arguments
+            create stream containing file names
+        OpenLTFSCommand::isValidRegularFile
+        RecallCommand::talkToBackend
+            create selrecrequest message
+            LTFSDmCommClient::send
+            LTFSDmCommClient::recv
+            evaluate response
+            OpenLTFSCommand::sendObjects
+                while filenames to send
+                    create sendobjecs message
+                    LTFSDmCommClient::send
+                    LTFSDmCommClient::recv
+                    evaluate response
+            OpenLTFSCommand::queryResults
+                do
+                    create reqstatusrequest message
+                    LTFSDmCommClient::send
+                    LTFSDmCommClient::recv
+                    print progress
+                until not done
+    @endcode
+
+    After processing the selective recall options it is evaluated how the file
+    names are provided. There are three different possibilities
+
+    - the file names are provided as arguments to the command
+    - a file list is provided containing the file names
+    - a "-" is provided as file list name and the file names are provided by stdin
+
+    If the file names are provided as arguments a stream is created containing
+    all the names. If a file list is provided it is checked if it is a valid
+    regular file.
+
+    The further processing is performed by communicating with the backend. The
+    three steps that are performed are the following
+
+    - general selective recall information is sent to the backend
+    - the file names are send to the backend
+    - the progress or results are queried
  */
 
 void RecallCommand::printUsage()

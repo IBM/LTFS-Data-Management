@@ -52,43 +52,23 @@
 
     @page start_processing start processing
 
-    @dot
-    digraph client_processing {
-        compound=true;
-        rankdir=LR;
-        node [shape=record, fontname="fixed", fontsize=11, fillcolor=white, style=filled];
-        do_command [ fontname="fixed bold", fontcolor=dodgerblue4, label="StartCommand::doCommand", URL="@ref StartCommand::doCommand" ];
-        determin_server_path [ fontname="fixed bold", fontcolor=dodgerblue4, label="StartCommand::determineServerPath", URL="@ref StartCommand::determineServerPath" ];
-        start_server [ fontname="fixed bold", fontcolor=dodgerblue4, label="StartCommand::startServer", URL="@ref StartCommand::startServer" ];
-        wait_response [ fontname="fixed bold", fontcolor=dodgerblue4, label="StartCommand::waitForResponse", URL="@ref StartCommand::waitForResponse" ];
-        subgraph cluster_connect {
-            fontname="fixed";
-            fontsize=11;
-            labeljust=l;
-            label="retry up to 10 times"
-            connect_1 [ width=2.5, fontname="fixed bold", fontcolor=dodgerblue4, label="OpenLTFSCommand::connect", URL="@ref OpenLTFSCommand::connect" ];
-            sleep [ width=2.5, label="sleep 1" ];
-        }
-        create_message [ label="create message" ];
-        send [ fontname="fixed bold", fontcolor=dodgerblue4, label="LTFSDmCommClient::send", URL="@ref LTFSDmCommClient::send" ];
-        receive [ fontname="fixed bold", fontcolor=dodgerblue4, label="LTFSDmCommClient::recv", URL="@ref LTFSDmCommClient::recv" ];
-        eval_result [ label="evaluate result" ];
-        connect_2 [ fontname="fixed bold", fontcolor=dodgerblue4, label="LTFSDmCommClient::connect", URL="@ref LTFSDmCommClient::connect" ];
-        get_reqnum [ fontname="fixed bold", fontcolor=dodgerblue4, label="OpenLTFSCommand::getRequestNumber", URL="@ref OpenLTFSCommand::getRequestNumber" ¨];
+    The following is a summary of the start command processing:
 
-        do_command -> determin_server_path [];
-        do_command -> start_server [];
-        do_command -> wait_response [];
-        wait_response -> connect_1 [lhead=cluster_connect];
-        wait_response -> create_message [];
-        wait_response -> send [];
-        wait_response -> receive [];
-        wait_response -> eval_result [];
-
-        connect_1 -> connect_2 [];
-        connect_1 -> get_reqnum [];
-    }
-    @enddot
+    @code
+    StartCommand::doCommand
+       StartCommand::determineServerPath
+       StartCommand::startServer
+       StartCommand::waitForResponse
+           while not connected and retry<10
+               LTFSDmCommClient::connect
+               sleep 1
+           if retry == 10
+               exit with failue
+           create statusrequest message
+           LTFSDmCommClient::send
+           LTFSDmCommClient::recv
+           evaluate response
+    @endcode
 
     To start the backend executable its path name needs to be detected. This
     is done by the StartCommand::determineServerPath method. Since its path

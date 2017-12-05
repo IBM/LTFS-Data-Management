@@ -75,32 +75,38 @@
 
  @dot
  digraph client_processing {
+     compound=true;
      rankdir=LR;
-     node [shape=record, fontname="fixed", fontsize=11, fillcolor=white, style=filled];
+     fontname="fixed";
+     fontsize=11;
+     labeljust=l;
+     node [shape=record, width=2, fontname="fixed", fontsize=11, fillcolor=white, style=filled];
      do_command [ label="doCommand" ];
-     process_options [ fontname="fixed bold", fontcolor=dodgerblue4, label="processOptions", URL="@ref OpenLTFSCommand::processOptions" ];
-     check_options [ fontname="fixed bold", fontcolor=dodgerblue4, label="checkOptions", URL="@ref OpenLTFSCommand::checkOptions" ];
-     talk_to_backend [ label="talkToBackend" ];
-     connect_1 [ fontname="fixed bold", fontcolor=dodgerblue4, label="OpenLTFSCommand::connect", URL="@ref OpenLTFSCommand::connect" ];
-     create_message [ label="create message" ];
-     send [ fontname="fixed bold", fontcolor=dodgerblue4, label="LTFSDmCommClient::send", URL="@ref LTFSDmCommClient::send" ];
-     receive [ fontname="fixed bold", fontcolor=dodgerblue4, label="LTFSDmCommClient::recv", URL="@ref LTFSDmCommClient::recv" ];
-     eval_result [ label="evaluate result" ];
-     connect_2 [ fontname="fixed bold", fontcolor=dodgerblue4, label="LTFSDmCommClient::connect", URL="@ref LTFSDmCommClient::connect" ];
-     get_reqnum [ fontname="fixed bold", fontcolor=dodgerblue4, label="OpenLTFSCommand::getRequestNumber", URL="@ref OpenLTFSCommand::getRequestNumber" ¨];
+     subgraph cluster_do_command {
+         label="doCommand";
+         process_options [ fontname="fixed bold", fontcolor=dodgerblue4, label="processOptions", URL="@ref OpenLTFSCommand::processOptions" ];
+         check_options [ fontname="fixed bold", fontcolor=dodgerblue4, label="checkOptions", URL="@ref OpenLTFSCommand::checkOptions" ];
+         talk_to_backend [ label="talkToBackend" ];
+     }
+     subgraph cluster_talk_to_backend {
+         label="talkToBackend";
+         node [width=3];
+         connect_1 [ fontname="fixed bold", fontcolor=dodgerblue4, label="OpenLTFSCommand::connect", URL="@ref OpenLTFSCommand::connect" ];
+         create_message [ label="create message" ];
+         send [ fontname="fixed bold", fontcolor=dodgerblue4, label="LTFSDmCommClient::send", URL="@ref LTFSDmCommClient::send" ];
+         receive [ fontname="fixed bold", fontcolor=dodgerblue4, label="LTFSDmCommClient::recv", URL="@ref LTFSDmCommClient::recv" ];
+         eval_result [ label="evaluate result" ];
+     }
 
-     do_command -> process_options [];
-     do_command -> check_options [];
-     do_command -> talk_to_backend [];
-
-     talk_to_backend -> connect_1 [];
-     talk_to_backend -> create_message [];
-     talk_to_backend -> send [];
-     talk_to_backend -> receive [];
-     talk_to_backend -> eval_result [];
-
-     connect_1 -> connect_2 [];
-     connect_1 -> get_reqnum [];
+     subgraph cluster_connect_i {
+         label="OpenLTFSCommand::connect";
+         node [ width=3.5 ];
+         connect_2 [ fontname="fixed bold", fontcolor=dodgerblue4, label="LTFSDmCommClient::connect", URL="@ref LTFSDmCommClient::connect" ];
+         get_reqnum [ fontname="fixed bold", fontcolor=dodgerblue4, label="OpenLTFSCommand::getRequestNumber", URL="@ref OpenLTFSCommand::getRequestNumber" ¨];
+     }
+     do_command -> check_options [lhead=cluster_do_command];
+     talk_to_backend -> send [lhead=cluster_talk_to_backend];
+     connect_1 -> connect_2 [lhead=cluster_connect_i];
  }
  @enddot
 
