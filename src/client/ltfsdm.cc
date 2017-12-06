@@ -48,7 +48,7 @@
 
  ## Command evaluation
 
- OpenLTFS is started, stopped, and operated using the [ltfsdm command](@ref md_src_1.commands).
+ OpenLTFS is started, stopped, and operated using the [ltfsdm command](@ref md_src_1_commands).
 
  For all commands the first the first and for the info and pool commands
  also the second argument is evaluated.

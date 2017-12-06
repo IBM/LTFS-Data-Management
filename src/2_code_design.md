@@ -14,6 +14,7 @@ application. The code is structured within the following sub-directories:
 
 path | description
 ----|----
+<a href="../messages.cfg">messages.cfg</a> | @subpage messaging_system
 [src/client](@ref src/client) | @subpage client_code
 [src/common](@ref src/common) | code that is used within other parts (client, server, connector, common)
 [src/connector](@ref src/connector) | code for the connector library
