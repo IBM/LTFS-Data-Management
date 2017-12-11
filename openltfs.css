@@ -3,6 +3,8 @@ body {
 }
 
 div.contents {
+	overflow-y: hidden;
+	overflow-x: auto;
     margin-left: auto;
     margin-right: auto;
     padding: 10px;

@@ -1,6 +1,33 @@
 #include "src/common/Version.h"
 #include "ServerIncludes.h"
 
+/**
+    @page server_code
+
+    # Invoking the backend
+
+    The backend usually us started by the @ref ltfsdm_start "ltfsdm start"
+    command. However it is possible to start the backend directly by using
+    the
+
+    @verbatim
+    ltfsdmd [-f] [-m] [-d <debug level>]
+    @endverbatim
+
+    command.
+
+    The option arguments have the following meaning:
+
+    option | meaning
+    :---:|---
+    -f | Start the backend in foreground. Messages will be printed out to stdout.
+    -m | Store the Sqlite database in memory. By default it is stored in "/var/run" which usually is memory mapped.
+    -d | Use a different trace level. See @ref tracing_system "tracing" for details of trace levels.
+
+
+
+ */
+
 int main(int argc, char **argv)
 
 {

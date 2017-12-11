@@ -1,2 +1,2 @@
 #pragma once
-#define OPENLTFS_VERSION "0.0.634-master.2017-12-06T16.33.35"
+#define OPENLTFS_VERSION "0.0.635-master.2017-12-11T13.13.28"

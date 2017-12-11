@@ -14,11 +14,12 @@ application. The code is structured within the following sub-directories:
 
 path | description
 ----|----
-<a href="../messages.cfg">messages.cfg</a> | @subpage messaging_system
-[src/client](@ref src/client) | @subpage client_code
 [src/common](@ref src/common) | code that is used within other parts (client, server, connector, common)
+<a href="../messages.cfg">messages.cfg</a> | @subpage messaging_system
+[src/common/tracing](@ref src/common/tracing) | @subpage tracing_system
+[src/client](@ref src/client) | @subpage client_code
 [src/connector](@ref src/connector) | code for the connector library
-[src/server](@ref src/server) | server code
+[src/server](@ref src/server) | @subpage server_code
 
 The common code consists of the following:
 

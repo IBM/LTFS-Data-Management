@@ -46,15 +46,15 @@
 
     The message itself has to be written in c printf style format. E.g.:
 
-    @code
+    @verbatim
     LTFSDMX0001E "Unable to setup tracing: %d.\n"
-    @endcode
+    @endverbatim
 
     The message identifier is assembled in the following way:
 
-    @code
+    @verbatim
     LTFSDM[X|C|S|D|F|L]NNNN[I|E|W]
-    @endcode
+    @endverbatim
 
     in which the different characters have to following meaning:
 
@@ -80,7 +80,7 @@
     the build process. I.e. some development environment may show up errors
     that some symbols could not be resolved before building the code.
 
-    The macros MSG() and INFO() are used here to automatically add the file
+    The macros MSG() and INFO() are used to automatically add the file
     name and the line number to the output. The class Message is responsible
     to process the message string and corresponding arguments. Internally
     the <a href="http://www.boost.org/doc/libs/release/libs/format/">Boost Format library</a>
