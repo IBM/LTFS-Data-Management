@@ -70,6 +70,49 @@
            evaluate response
     @endcode
 
+    @dot
+    digraph start_command {
+        compound=true;
+        fontname="fixed";
+        fontsize=11;
+        labeljust=l;
+        node [shape=record, width=2, fontname="fixed", fontsize=11, fillcolor=white, style=filled];
+        do_command [fontname="fixed bold", fontcolor=dodgerblue4, label="StartCommand::doCommand", URL="@ref StartCommand::doCommand"];
+        subgraph cluster_do_command {
+            label="StartCommand::doCommand";
+            determine_server_path [fontname="fixed bold", fontcolor=dodgerblue4, label="StartCommand::determineServerPath", URL="@ref StartCommand::determineServerPath"];
+            start_server [fontname="fixed bold", fontcolor=dodgerblue4, label="StartCommand::startServer", URL="@ref StartCommand::startServer"];
+            wait_for_response [fontname="fixed bold", fontcolor=dodgerblue4, label="StartCommand::waitForResponse", URL="@ref StartCommand::waitForResponse"];
+        }
+        subgraph cluster_wait_for_response {
+            label="StartCommand::waitForResponse";
+            subgraph cluster_loop {
+                label="while not connected and retry<10";
+                connect [fontname="fixed bold", fontcolor=dodgerblue4, label="LTFSDmCommClient::connect", URL="@ref LTFSDmCommClient::connect"];
+                sleep [label="sleep 1"];
+            }
+            subgraph cluster_condition {
+                label="if retry == 10";
+                exit [label="exit with failue"];
+            }
+            create_message [label="create statusrequest message"];
+            send [fontname="fixed bold", fontcolor=dodgerblue4, label="LTFSDmCommClient::send", URL="@ref LTFSDmCommClient::send"];
+            recv [fontname="fixed bold", fontcolor=dodgerblue4, label="LTFSDmCommClient::recv", URL="@ref LTFSDmCommClient::recv"];
+            response [label="evaluate response"];
+        }
+        do_command -> determine_server_path [lhead=cluster_do_command,minlen=2];
+        determine_server_path -> start_server [];
+        start_server -> wait_for_response [];
+        wait_for_response -> connect [lhead=cluster_wait_for_response,minlen=2];
+        connect -> sleep [];
+        sleep -> exit [ltail=cluster_loop,lhead=cluster_condition,minlen=2];
+        exit -> create_message [ltail=cluster_condition,minlen=2];
+        create_message -> send [];
+        send -> recv [];
+        recv -> response [];
+    }
+    @enddot
+
     To start the backend executable its path name needs to be detected. This
     is done by the StartCommand::determineServerPath method. Since its path
     is the same like the current executable it is just necessary to read

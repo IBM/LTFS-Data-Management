@@ -267,6 +267,7 @@ void Server::writeKey()
 void Server::initialize(bool dbUseMemory)
 
 {
+    //! [set resource limits]
     if (setrlimit(RLIMIT_NOFILE, &Const::NOFILE_LIMIT) == -1) {
         MSG(LTFSDMS0046E);
         THROW(Error::GENERAL_ERROR, errno);
@@ -276,6 +277,7 @@ void Server::initialize(bool dbUseMemory)
         MSG(LTFSDMS0046E);
         THROW(Error::GENERAL_ERROR, errno);
     }
+    //! [set resource limits]
 
     lockServer();
     writeKey();
@@ -283,6 +285,7 @@ void Server::initialize(bool dbUseMemory)
     unlink(Const::CLIENT_SOCKET_FILE.c_str());
     unlink(Const::RECALL_SOCKET_FILE.c_str());
 
+    //! [init db]
     try {
         DB.cleanup();
         DB.open(dbUseMemory);
@@ -292,6 +295,7 @@ void Server::initialize(bool dbUseMemory)
         MSG(LTFSDMS0014E);
         THROW(Error::GENERAL_ERROR);
     }
+    //! [init db]
 }
 
 void Server::daemonize()
@@ -343,24 +347,32 @@ void Server::run(sigset_t set)
     Server::forcedTerminate = false;
     Server::finishTerminate = false;
 
+    //! [read the configuration file]
     try {
         Server::conf.read();
     } catch (const std::exception& e) {
         MSG(LTFSDMS0090E);
         goto end;
     }
+    //! [read the configuration file]
 
     try {
+        //! [inventorize]
         inventory = new OpenLTFSInventory();
+        //! [inventorize]
+        //! [connector]
         connector = std::shared_ptr<Connector>(new Connector(true, &Server::conf));
+        //! [connector]
     } catch (const std::exception& e) {
         TRACE(Trace::error, e.what());
         goto end;
     }
 
+    //! [thread pool for stubbing]
     Server::wqs = new ThreadPool<Migration::mig_info_t,
             std::shared_ptr<std::list<unsigned long>>>(&Migration::stub,
             Const::MAX_STUBBING_THREADS, "stub1-wq");
+    //! [thread pool for stubbing]
 
     subs.enqueue("Scheduler", &Scheduler::run, &sched, key);
     subs.enqueue("Signal Handler", &Server::signalHandler, set, key);

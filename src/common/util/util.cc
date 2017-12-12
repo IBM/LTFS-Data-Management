@@ -41,6 +41,7 @@ void mkTmpDir()
     }
 }
 
+//! [init]
 void LTFSDM::init(std::string ident)
 
 {
@@ -48,6 +49,7 @@ void LTFSDM::init(std::string ident)
     messageObject.init(ident);
     traceObject.init(ident);
 }
+//! [init]
 
 long LTFSDM::getkey()
 
