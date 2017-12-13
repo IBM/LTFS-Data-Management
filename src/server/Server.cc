@@ -375,7 +375,7 @@ void Server::run(sigset_t set)
     //! [thread pool for stubbing]
 
     subs.enqueue("Scheduler", &Scheduler::run, &sched, key);
-    subs.enqueue("Signal Handler", &Server::signalHandler, set, key);
+    subs.enqueue("SigHandler", &Server::signalHandler, set, key);
     subs.enqueue("Receiver", &Receiver::run, &recv, key, connector);
     subs.enqueue("RecallD", &TransRecall::run, &trec, connector);
 
