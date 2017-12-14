@@ -109,7 +109,7 @@ void TransRecall::cleanupEvents()
 void TransRecall::run(std::shared_ptr<Connector> connector)
 
 {
-    ThreadPool<TransRecall, Connector::rec_info_t, std::string, long> wq(
+    ThreadPool<TransRecall, Connector::rec_info_t, std::string, long> wqr(
             &TransRecall::addRequest, Const::MAX_TRANSPARENT_RECALL_THREADS,
             "trec-wq");
     Connector::rec_info_t recinfo;
@@ -211,7 +211,7 @@ void TransRecall::run(std::shared_ptr<Connector> connector)
 
         TRACE(Trace::always, recinfo.fuid.inum, tapeId, reqmap[tapeId]);
 
-        wq.enqueue(Const::UNSET, TransRecall(), recinfo, tapeId,
+        wqr.enqueue(Const::UNSET, TransRecall(), recinfo, tapeId,
                 reqmap[tapeId]);
         /*
          subs.enqueue(thrdinfo.str(), TransRecall::addRequest, recinfo, tapeId,
@@ -221,7 +221,7 @@ void TransRecall::run(std::shared_ptr<Connector> connector)
 
     MSG(LTFSDMS0083I);
     connector->endTransRecalls();
-    wq.waitCompletion(Const::UNSET);
+    wqr.waitCompletion(Const::UNSET);
     cleanupEvents();
     MSG(LTFSDMS0084I);
 }

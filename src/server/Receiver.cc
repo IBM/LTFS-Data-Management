@@ -1,3 +1,5 @@
+/** @file */
+
 #include "ServerIncludes.h"
 
 std::atomic<long> globalReqNumber;
@@ -7,7 +9,7 @@ void Receiver::run(long key, std::shared_ptr<Connector> connector)
 {
     MessageParser mproc;
     std::unique_lock<std::mutex> lock(Server::termmtx);
-    ThreadPool<long, LTFSDmCommServer, std::shared_ptr<Connector>> wq(&MessageParser::run,
+    ThreadPool<long, LTFSDmCommServer, std::shared_ptr<Connector>> wqm(&MessageParser::run,
             Const::MAX_RECEIVER_THREADS, "msg-wq");
     LTFSDmCommServer command(Const::CLIENT_SOCKET_FILE);
 
@@ -33,7 +35,7 @@ void Receiver::run(long key, std::shared_ptr<Connector> connector)
         }
 
         try {
-            wq.enqueue(Const::UNSET, key, command, connector);
+            wqm.enqueue(Const::UNSET, key, command, connector);
         } catch (const std::exception& e) {
             TRACE(Trace::error, e.what());
             MSG(LTFSDMS0010E);
@@ -50,7 +52,7 @@ void Receiver::run(long key, std::shared_ptr<Connector> connector)
 
     lock.unlock();
 
-    wq.waitCompletion(Const::UNSET);
+    wqm.waitCompletion(Const::UNSET);
 
     command.closeRef();
 

@@ -63,66 +63,133 @@
     thread pools are available where threads automatically terminate
     if not longer used.
 
-    The following threads and thread pools are available after starting
-    the backend:
+    The following threads are available after starting the backend:
 
+    @verbatim
+      Id   Target Id         Frame
+      12   Thread 0x7f8f62c7a700 (LWP 16635) "ltfsdmd" 0x00007f8f65889a9b in recv () from /lib64/libpthread.so.0
+      11   Thread 0x7f8f62479700 (LWP 16640) "Scheduler" 0x00007f8f65886945 in pthread_cond_wait@@GLIBC_2.3.2 () from /lib64/libpthread.so.0
+      10   Thread 0x7f8f61c78700 (LWP 16641) "w:Scheduler" 0x00007f8f65883f57 in pthread_join () from /lib64/libpthread.so.0
+      9    Thread 0x7f8f61477700 (LWP 16642) "SigHandler" 0x00007f8f6588a371 in sigwait () from /lib64/libpthread.so.0
+      8    Thread 0x7f8f60c76700 (LWP 16643) "w:SigHandler" 0x00007f8f65883f57 in pthread_join () from /lib64/libpthread.so.0
+      7    Thread 0x7f8f4bfff700 (LWP 16644) "Receiver" 0x00007f8f6588998d in accept () from /lib64/libpthread.so.0
+      6    Thread 0x7f8f4b7fe700 (LWP 16645) "w:Receiver" 0x00007f8f65883f57 in pthread_join () from /lib64/libpthread.so.0
+      5    Thread 0x7f8f4affd700 (LWP 16646) "RecallD" 0x00007f8f6588998d in accept () from /lib64/libpthread.so.0
+      4    Thread 0x7f8f4a7fc700 (LWP 16647) "w:RecallD" 0x00007f8f65883f57 in pthread_join () from /lib64/libpthread.so.0
+      3    Thread 0x7f8f49ffb700 (LWP 16648) "ltfsdmd.ofs" 0x00007f8f640f07fd in read () from /lib64/libc.so.6
+      2    Thread 0x7f8f497fa700 (LWP 16662) "ltfsdmd.ofs" 0x00007f8f640f07fd in read () from /lib64/libc.so.6
+    * 1    Thread 0x7f8f660e08c0 (LWP 16633) "ltfsdmd" 0x00007f8f65883f57 in pthread_join () from /lib64/libpthread.so.0
+    @endverbatim
+
+    These threads have the following purpose
+
+    Id | function being executed | description
+    :---:|---|---
+    12 | - | communication with LTFS LE
+    11 | Scheduler::run | schedules requests based on free resources
+    10 | SubServer::waitThread | waits for Scheduler thread termination
+    9 | Server::signalHandler | cares about signals
+    8 | SubServer::waitThread | waits for signal handler thread termination
+    7 | Receiver::run | listens for client messages
+    6 | SubServer::waitThread | waits for Receiver thread termination
+    5 | TransRecall::run | listens for transparent recall requests
+    4 | SubServer::waitThread | waits for TransRecall thread termination
+    3 | FuseFS::execute | started the Fuse connector process for a single file system
+    2 | FuseFS::execute | started the Fuse connector process for another file system
+    1 | ltfsdmd.cc:main() | main thread
+
+    In this example two file systems are managed by OpenLTFS. Therefore two
+    Fuse threads exist. Thread pools are not visible after initial start since
+    threads within a thread pool are created on request.
+
+    The following thread pools exist:
+
+    operation | object | function being executed | description
+    ---|---|---|---
+    message parsing | Receiver::run -> wqm | MessageParser::run | After the Receiver gets a new message this message is further processed by a new thread from this thread pool.
+    premigration | OpenLTFSDrive::wqp | Migration::preMigrate | For premigration there is one thread pool per drive since only a single request can be executed on a certain drive at a time.
+    stubbing | Server::wqs | Migration::stub | There exist one thread pool for all stubbing operations (even from different requests).
+    transparent recall | TransRecall::run -> wqr | TransRecall::addRequest | Adds a transparent recall request and waits for completion.
+
+    Furthermore the scheduler is creating additional threads for each
+    request being scheduled:
+
+    function | description
+    ---|---
+    Migration::execRequest | schedules a migration request
+    SelRecall::execRequest | schedules a selective recall request
+    TransRecall::execRequest | schedules a transparent recall request
+
+    For each of these threads there will be an additional waiter thread.
+
+    Overall this leads to the following picture:
+
+    @verbatim
+    main()
+    ltfsdmd.run
+        communication with LTFS LE (1 thread)
+        OpenLTFSDrive::wqp(number of thread pools equal number of drives)
+        FuseFS::execute (threads equal number of files systems)
+        Server::wqs (1 thread pool)
+        Scheduler::run (1 thread)
+            Migration::execRequest (number of thread less or equal number of drives)
+            SelRecall::execRequest (number of thread less or equal number of drives)
+            TransRecall::execRequest (number of thread less or equal number of drives)
+        Server::signalHandler (1 thread)
+        Receiver::run (1 thread)
+            Receiver::run -> wqm (1 thread pool)
+        TransRecall::run (1 thread)
+            TransRecall::run -> wqr (1 thread pool)
+    @endverbatim
 
     ## The startup sequence
 
     During the startup initialization happens and threads are started for
-    further processing. The following gives an overview:
+    further processing.
 
-    @dot
-    digraph startup {
-        compound=true;
-        fontname="fixed";
-        fontsize=11;
-        labeljust=l;
-        node [shape=record, width=2, fontname="fixed", fontsize=11, fillcolor=white, style=filled];
-        ltfsdmd [fontname="fixed bold", fontcolor=dodgerblue4, label="main", URL="@ref ltfsdmd.cc::main"];
-        create_server [ label="create Server object: ltfsdmd"];
-        option_processing[label="option processing"];
-        setup_signal_handling[label="setup signal handling"];
-        subgraph cluster_init {
-            fontname="fixed bold";
-            fontcolor=dodgerblue4;
-            label="LTFSDM::init";
-            URL="@ref LTFSDM::init"
-            init [ label="make temporary directory|<it> initialize tracing|initialize messaging"];
-        }
-        subgraph cluster_init_server {
-            fontname="fixed bold";
-            fontcolor=dodgerblue4;
-            label="initialize server: ltfsdmd.initialize";
-            URL="@ref Server::initialize"
-            serv_init [ label="setup resource limits|lock server|write key|initialize database"];
-        }
-        daemonize [ fontname="fixed bold", fontcolor=dodgerblue4, label="daemonize: ltfsdmd.daemonize", URL="@ref Server::daemonize" ];
-        subgraph cluster_run_server {
-            fontname="fixed bold";
-            fontcolor=dodgerblue4;
-            label="run server: ltfsdmd.run";
-            URL="@ref Server::run"
-            read_config [fontname="fixed bold", fontcolor=dodgerblue4, label="read configuration", URL="@ref Configuration::read"];
-            ínventorize [fontname="fixed bold", fontcolor=dodgerblue4, label="inventorize", URL="@ref OpenLTFSInventory"];
-            connector [fontname="fixed bold", fontcolor=dodgerblue4, label="connector", URL="@ref Connector"];
-            stub_thread_pool [ label="create stubbing thread pool"];
-            start_scheduler [fontname="fixed bold", fontcolor=dodgerblue4, label="start scheduler", URL="@ref Scheduler::run"];
-            start_signal_handler [fontname="fixed bold", fontcolor=dodgerblue4, label="start signal handler", URL="@ref Receiver::run"];
-            start_receiver [fontname="fixed bold", fontcolor=dodgerblue4, label="start receiver", URL="@ref Server::signalHandler"];
-            start_recall_listener [fontname="fixed bold", fontcolor=dodgerblue4, label="start recall listener", URL="@ref TransRecall::run"];
-            read_config -> ínventorize -> connector -> stub_thread_pool -> start_scheduler -> start_signal_handler -> start_receiver -> start_recall_listener [];
-        }
-        ltfsdmd -> create_server -> option_processing -> setup_signal_handling [];
-        setup_signal_handling -> init [lhead=cluster_init,minlen=2];
-        init -> serv_init [ltail=cluster_init,lhead=cluster_init_server,minlen=2];
-        serv_init -> daemonize [ltail=cluster_init_server,minlen=2];
-        daemonize -> read_config [lhead=cluster_run_server,minlen=2];
+    The configuration is read and the information
+    about drives and cartridges are received from LTFS LE. The configuration
+    provides information about the managed file systems and the tape
+    storage pools. When the connector object is created these file systems
+    will be managed. For the Fuse connector an overlay file system will
+    be created for each managed file system. The creation of the drive and
+    cartridge inventory in the following is called inventorize. During this
+    operation premigration thread pools are created: one pool for each drive.
+    A thread pool for the stubbing operation is setup. Thereafter the thread
+    for scheduling, singnal handling, the receiver, and the listener for the
+    transparent recall requests are started.
 
-    }
-    @enddot
+    The following gives an overview:
 
-    The items within the chart have the following purpose:
+    @code
+    main
+        create Server object: ltfsdmd
+        option processing
+        setup signal handling
+        LTFSDM::init
+            make temporary directory
+            initialize tracing
+            initialize messaging
+        initialize server: ltfsdmd.initialize
+            setup system limits
+            lock server
+            write key file
+            initialize database
+        ltfsdmd.daemonize
+        ltfsdmd.run
+            read configuration
+            inventorize
+            connector
+            create stubbing thread pool
+            start scheduler
+            start signal handler
+            start receiver
+            start recall listener
+    @endcode
+
+    For each of the these items in the following there is a more
+    detailed desciption. Most corresponding code is part of the
+    ltfsdmd.cc and Server.cc files.
 
     item | description
     ---|---
@@ -150,7 +217,7 @@
     run server: ltfsdmd.run -> start receiver| see: Receiver::run
     run server: ltfsdmd.run -> start recall listener | thread listening for transparent recall requests, see TransRecall::run
 
- */
+*/
 
 int main(int argc, char **argv)
 
