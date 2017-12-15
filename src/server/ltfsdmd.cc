@@ -142,6 +142,16 @@
             TransRecall::run -> wqr (1 thread pool)
     @endverbatim
 
+    To create threads there are two facilities created:
+    - Threads normally created by the SubServer class. After the thread
+      function finishes the thread is terminated. For each thread an
+      additional waiter thread is created. See @subpage standard_thread.
+    - For a better performance and less overhead a ThreadPool class
+      exist. Threads will stay for another 10 seconds before termination
+      after the thread function terminates. Within these 10 seconds it
+      is possible to reuse them. See @subpage thread_pool.
+
+
     ## The startup sequence
 
     During the startup initialization happens and threads are started for
@@ -186,6 +196,55 @@
             start receiver
             start recall listener
     @endcode
+
+    @dot
+    digraph startup {
+        compound=true;
+        fontname="fixed";
+        fontsize=11;
+        labeljust=l;
+        rankdir=LR;
+        node [shape=record, width=2, fontname="fixed", fontsize=11, fillcolor=white, style=filled];
+        subgraph cluster_main {
+            fontname="fixed bold";
+            fontcolor=dodgerblue4;
+            label="main";
+            URL="@ref main";
+            main [label="create Server\nobject: ltfsdmd|option\nprocessing|setup\nsignal\nhandling|<init> LTFSDM::init|<init_server> initialize server:\nltfsdmd.initialize|daemonize:\nltfsdmd.daemonize|<run> run server:\nltfsdmd.run"];
+        }
+        subgraph cluster_sub {
+            label="";
+            style=invis;
+            subgraph cluster_init {
+                style=solid;
+                fontname="fixed bold";
+                fontcolor=dodgerblue4;
+                label="LTFSDM::init";
+                URL="@ref LTFSDM::init"
+                init [ label="make\ntemporary directory|<it> initialize tracing|<init_msg> initialize messaging"];
+            }
+            subgraph cluster_init_server {
+                style=solid;
+                fontname="fixed bold";
+                fontcolor=dodgerblue4;
+                label="initialize server:\nltfsdmd.initialize";
+                URL="@ref Server::initialize"
+                serv_init [ label="setup\nresource limits|lock server|write key|<init_db> initialize database"];
+            }
+            subgraph cluster_run_server {
+                style=solid;
+                fontname="fixed bold";
+                fontcolor=dodgerblue4;
+                label="run server:\nltfsdmd.run";
+                URL="@ref Server::run"
+                run [ label="read\nconfiguration|inventorize|connector|create stubbing\nthread pool|start\nscheduler|start\nsignal handler|start\nreceiver|<recalld> start\nrecall listener" ]
+            }
+            main:init -> init [lhead=cluster_init];
+            main:init_server -> serv_init [lhead=cluster_init_server];
+            main:run -> run [lhead=cluster_run_server];
+        }
+    }
+    @enddot
 
     For each of the these items in the following there is a more
     detailed desciption. Most corresponding code is part of the

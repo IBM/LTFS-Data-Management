@@ -81,10 +81,10 @@ digraph start_sequence {
 The following is an example for processes that are running in the
 background if one file system (here <tt><b>/mnt/lxfs</b></tt>) is managed:
 
-<tt>
+@verbatim
    [root\@visp ~]# ps -p $(pidof ltfsdmd) $(pidof ltfsdmd.ofs)\n
     PID TTY      STAT   TIME COMMAND\n
     32246 ?        Ssl  674:51 /root/OpenLTFS/bin/ltfsdmd\n
     32263 ?        Sl   918:32 /root/OpenLTFS/bin/ltfsdmd.ofs -m /mnt/lxfs -f /dev/sdc1 -S 1510663933 -N 49751364 -l 1 -t 2 -p 32246
-</tt>
+@endverbatim
 

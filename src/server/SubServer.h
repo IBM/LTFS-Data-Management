@@ -1,5 +1,49 @@
 #pragma once
 
+/** @page standard_thread SubServer
+
+    @dot
+    digraph sub_server {
+        compound=yes;
+        fontname="fixed";
+        fontsize=11;
+        labeljust=l;
+        node [shape=record, width=1, fontname="fixed", fontsize=11, fillcolor=white, style=filled];
+        style=solid;
+        sub_server [fontname="fixed bold", fontcolor=dodgerblue4, label="SubServer", URL="@ref SubServer"];
+        subgraph cluster_1 {
+            thread_1 [label="thread 1"];
+            waiter_1 [label="waiter 1"];
+        }
+        subgraph cluster_2 {
+            thread_2 [label="thread 2"];
+            waiter_2 [label="waiter 2"];
+        }
+        subgraph cluster_3 {
+            thread_3 [label="thread 3"];
+            waiter_3 [label="waiter 3"];
+        }
+        subgraph cluster_n {
+            thread_n [label="..."];
+            waiter_n [label="..."];
+        }
+        thread_1 -> waiter_1 -> thread_2 -> waiter_2 -> thread_3 -> waiter_3 -> thread_n -> waiter_n [style=invis]; // work around
+        sub_server:s -> thread_1:n [lhead=cluster_1, label="enqueue"];
+        sub_server:s -> thread_2:n [lhead=cluster_2, label="enqueue"];
+        sub_server:s -> thread_3:n [lhead=cluster_3, label="enqueue"];
+        sub_server:s -> thread_n:n [lhead=cluster_n, style=dotted];
+        waiter_1 -> thread_1 [label="join"];
+        waiter_2 -> thread_2 [label="1st join"];
+        waiter_3 -> thread_3 [label="1st join"];
+        waiter_n -> thread_n [style=dotted];
+        waiter_n -> waiter_3 [style=dotted, minlen=2];
+        waiter_3 -> waiter_2 -> waiter_1 [label="2nd join",minlen=2];
+    }
+    @enddot
+
+
+ */
+
 class SubServer
 {
 private:

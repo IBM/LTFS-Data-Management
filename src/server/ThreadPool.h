@@ -1,5 +1,9 @@
 #pragma once
 
+/** @page thread_pool ThreadPool
+
+ */
+
 template<typename ... Args> class ThreadPool
 {
 private:
