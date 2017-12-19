@@ -1,6 +1,6 @@
 #pragma once
 
-class OpenLTFSDrive: public ltfsadmin::Drive
+class LTFSDMDrive: public ltfsadmin::Drive
 {
 private:
     bool busy;
@@ -10,8 +10,8 @@ public:
     std::mutex *mtx;
     ThreadPool<std::string, std::string, long, long, Migration::mig_info_t,
             std::shared_ptr<std::list<unsigned long>>, std::shared_ptr<bool>> *wqp;
-    OpenLTFSDrive(ltfsadmin::Drive drive);
-    ~OpenLTFSDrive();
+    LTFSDMDrive(ltfsadmin::Drive drive);
+    ~LTFSDMDrive();
     void update(std::shared_ptr<LTFSAdminSession> sess);
     bool isBusy();
     void setBusy();
@@ -24,7 +24,7 @@ public:
     void clearToUnblock();
 };
 
-class OpenLTFSCartridge: public ltfsadmin::Cartridge
+class LTFSDMCartridge: public ltfsadmin::Cartridge
 {
 private:
     unsigned long inProgress;
@@ -40,9 +40,9 @@ public:
         TAPE_INVALID,
         TAPE_UNKNOWN
     } state;
-    OpenLTFSCartridge(ltfsadmin::Cartridge cartridge) :
+    LTFSDMCartridge(ltfsadmin::Cartridge cartridge) :
             ltfsadmin::Cartridge(cartridge), inProgress(0), pool(""), requested(
-                    false), state(OpenLTFSCartridge::TAPE_UNKNOWN)
+                    false), state(LTFSDMCartridge::TAPE_UNKNOWN)
     {
     }
     void update(std::shared_ptr<LTFSAdminSession> sess);
@@ -57,28 +57,28 @@ public:
     void unsetRequested();
 };
 
-class OpenLTFSInventory
+class LTFSDMInventory
 {
 private:
-    std::list<std::shared_ptr<OpenLTFSDrive>> drives;
-    std::list<std::shared_ptr<OpenLTFSCartridge>> cartridges;
+    std::list<std::shared_ptr<LTFSDMDrive>> drives;
+    std::list<std::shared_ptr<LTFSDMCartridge>> cartridges;
     std::shared_ptr<ltfsadmin::LTFSAdminSession> sess;
     std::string mountPoint;
 public:
-    OpenLTFSInventory();
-    ~OpenLTFSInventory();
+    LTFSDMInventory();
+    ~LTFSDMInventory();
 
     static std::recursive_mutex mtx;
 
     void inventorize();
 
-    std::list<std::shared_ptr<OpenLTFSDrive>> getDrives();
-    std::shared_ptr<OpenLTFSDrive> getDrive(std::string driveid);
-    std::list<std::shared_ptr<OpenLTFSCartridge>> getCartridges();
-    std::shared_ptr<OpenLTFSCartridge> getCartridge(std::string cartridgeid);
+    std::list<std::shared_ptr<LTFSDMDrive>> getDrives();
+    std::shared_ptr<LTFSDMDrive> getDrive(std::string driveid);
+    std::list<std::shared_ptr<LTFSDMCartridge>> getCartridges();
+    std::shared_ptr<LTFSDMCartridge> getCartridge(std::string cartridgeid);
 
-    void update(std::shared_ptr<OpenLTFSDrive>);
-    void update(std::shared_ptr<OpenLTFSCartridge>);
+    void update(std::shared_ptr<LTFSDMDrive>);
+    void update(std::shared_ptr<LTFSDMCartridge>);
 
     void poolCreate(std::string poolname);
     void poolDelete(std::string poolname);
@@ -93,4 +93,4 @@ public:
     std::string getMountPoint();
 };
 
-extern OpenLTFSInventory *inventory;
+extern LTFSDMInventory *inventory;

@@ -1,6 +1,6 @@
 #pragma once
 
-class RetrieveCommand: public OpenLTFSCommand
+class RetrieveCommand: public LTFSDMCommand
 
 {
 private:
@@ -11,7 +11,7 @@ private:
     }
 public:
     RetrieveCommand() :
-            OpenLTFSCommand("retrieve", "h")
+            LTFSDMCommand("retrieve", "h")
     {
     }
     ~RetrieveCommand()

@@ -1,13 +1,13 @@
 #pragma once
 
-class MigrateCommand: public OpenLTFSCommand
+class MigrateCommand: public LTFSDMCommand
 
 {
 private:
     void talkToBackend(std::stringstream *parmList);
 public:
     MigrateCommand() :
-            OpenLTFSCommand("migrate", ":+hpn:f:P:")
+            LTFSDMCommand("migrate", ":+hpn:f:P:")
     {
     }
     ~MigrateCommand()

@@ -113,7 +113,7 @@ def prepare():
     resource.setrlimit(resource.RLIMIT_STACK, (resource.RLIM_INFINITY, resource.RLIM_INFINITY))
 
     if os.system("ltfsdm stop") != 0:
-        print("unable to stop OpenLTFS, perhaps already stopped")
+        print("unable to stop LTFS Data Management, perhaps already stopped")
 
     try:
         shutil.rmtree("/var/run/ltfsdm")
@@ -149,7 +149,7 @@ def prepare():
     time.sleep(1)
 
     if os.system("ltfsdm start") != 0:
-        print("unable to start OpenLTFS")
+        print("unable to start LTFS Data Management")
 
     crfiles()
 

@@ -137,7 +137,7 @@ void TransRecall::run(std::shared_ptr<Connector> connector)
                     MSG(LTFSDMS0042I, fs);
                     fileSystem.manageFs(true, connector->getStartTime());
                 }
-            } catch (const OpenLTFSException& e) {
+            } catch (const LTFSDMException& e) {
                 TRACE(Trace::error, e.what());
                 switch (e.getError()) {
                     case Error::FS_CHECK_ERROR:
@@ -193,7 +193,7 @@ void TransRecall::run(std::shared_ptr<Connector> connector)
             }
 
             tapeId = fso.getAttribute().tapeId[0];
-        } catch (const OpenLTFSException& e) {
+        } catch (const LTFSDMException& e) {
             TRACE(Trace::error, e.what());
             if (e.getError() == Error::ATTR_FORMAT)
                 MSG(LTFSDMS0037W, recinfo.fuid.inum);
@@ -409,11 +409,11 @@ void TransRecall::execRequest(int reqNum, std::string tapeId)
 
     {
         std::lock_guard<std::recursive_mutex> inventorylock(
-                OpenLTFSInventory::mtx);
+                LTFSDMInventory::mtx);
         inventory->getCartridge(tapeId)->setState(
-                OpenLTFSCartridge::TAPE_MOUNTED);
+                LTFSDMCartridge::TAPE_MOUNTED);
         bool found = false;
-        for (std::shared_ptr<OpenLTFSDrive> d : inventory->getDrives()) {
+        for (std::shared_ptr<LTFSDMDrive> d : inventory->getDrives()) {
             if (d->get_slot() == inventory->getCartridge(tapeId)->get_slot()) {
                 TRACE(Trace::normal, d->GetObjectID());
                 d->setFree();

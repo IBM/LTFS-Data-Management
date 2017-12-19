@@ -1,13 +1,13 @@
 #pragma once
 
-class RecallCommand: public OpenLTFSCommand
+class RecallCommand: public LTFSDMCommand
 
 {
 private:
     void talkToBackend(std::stringstream *parmList);
 public:
     RecallCommand() :
-            OpenLTFSCommand("recall", ":+hrn:f:")
+            LTFSDMCommand("recall", ":+hrn:f:")
     {
     }
     ~RecallCommand()

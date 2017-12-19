@@ -10,7 +10,7 @@
 #include <memory>
 
 #include "src/common/errors/errors.h"
-#include "src/common/exception/OpenLTFSException.h"
+#include "src/common/exception/LTFSDMException.h"
 #include "src/common/util/util.h"
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
@@ -18,7 +18,7 @@
 #include "src/common/comm/ltfsdm.pb.h"
 #include "src/common/comm/LTFSDmComm.h"
 
-#include "OpenLTFSCommand.h"
+#include "LTFSDMCommand.h"
 #include "StartCommand.h"
 #include "StopCommand.h"
 #include "AddCommand.h"
@@ -48,7 +48,7 @@
 
  ## Command evaluation
 
- OpenLTFS is started, stopped, and operated using the [ltfsdm command](@ref md_src_1_commands).
+ LTFS Data Management is started, stopped, and operated using the [ltfsdm command](@ref md_src_1_commands).
 
  For all commands the first the first and for the info and pool commands
  also the second argument is evaluated.
@@ -76,11 +76,11 @@
     argv_2 -> info_compare [];
     argv_2 -> pool_compare [];
     argv_x -> pool_compare [color=transparent]; // necessary only for correct order
-    object [ label = "openLTFSCommand = std::unique_ptr\<OpenLTFSCommand\>(new \[Info\|Pool\|\]…Command)" ];
+    object [ label = "ltfsdmCommand = std::unique_ptr\<LTFSDMCommand\>(new \[Info\|Pool\|\]…Command)" ];
     compare -> object [];
     info_compare -> object [];
     pool_compare -> object [];
-    do_command [ label = "openLTFSCommand-\>doCommand(argc, argv)" ];
+    do_command [ label = "LTFSDMCommand-\>doCommand(argc, argv)" ];
     object -> do_command [];
  }
  @enddot
@@ -106,7 +106,7 @@ void signalHandler(sigset_t set)
 int main(int argc, char *argv[])
 
 {
-    std::unique_ptr<OpenLTFSCommand> openLTFSCommand(nullptr);
+    std::unique_ptr<LTFSDMCommand> ltfsdmCommand(nullptr);
     std::string command;
     int rc = static_cast<int>(Error::OK);
     sigset_t set;
@@ -131,8 +131,8 @@ int main(int argc, char *argv[])
     traceObject.setTrclevel(Trace::none);
 
     if (argc < 2) {
-        openLTFSCommand = std::unique_ptr<OpenLTFSCommand>(new HelpCommand);
-        openLTFSCommand->doCommand(argc, argv);
+        ltfsdmCommand = std::unique_ptr<LTFSDMCommand>(new HelpCommand);
+        ltfsdmCommand->doCommand(argc, argv);
         rc = static_cast<int>(Error::GENERAL_ERROR);
         goto end;
     }
@@ -142,24 +142,24 @@ int main(int argc, char *argv[])
     TRACE(Trace::normal, argc, command.c_str());
 
     if (StartCommand().compare(command)) {
-        openLTFSCommand = std::unique_ptr<OpenLTFSCommand>(new StartCommand);
+        ltfsdmCommand = std::unique_ptr<LTFSDMCommand>(new StartCommand);
     } else if (StopCommand().compare(command)) {
-        openLTFSCommand = std::unique_ptr<OpenLTFSCommand>(new StopCommand);
+        ltfsdmCommand = std::unique_ptr<LTFSDMCommand>(new StopCommand);
     } else if (AddCommand().compare(command)) {
-        openLTFSCommand = std::unique_ptr<OpenLTFSCommand>(new AddCommand);
+        ltfsdmCommand = std::unique_ptr<LTFSDMCommand>(new AddCommand);
     } else if (MigrateCommand().compare(command)) {
-        openLTFSCommand =
-                std::unique_ptr<OpenLTFSCommand>(new MigrateCommand);
+        ltfsdmCommand =
+                std::unique_ptr<LTFSDMCommand>(new MigrateCommand);
     } else if (RecallCommand().compare(command)) {
-        openLTFSCommand = std::unique_ptr<OpenLTFSCommand>(new RecallCommand);
+        ltfsdmCommand = std::unique_ptr<LTFSDMCommand>(new RecallCommand);
     } else if (HelpCommand().compare(command)) {
-        openLTFSCommand = std::unique_ptr<OpenLTFSCommand>(new HelpCommand);
+        ltfsdmCommand = std::unique_ptr<LTFSDMCommand>(new HelpCommand);
     } else if (StatusCommand().compare(command)) {
-        openLTFSCommand = std::unique_ptr<OpenLTFSCommand>(new StatusCommand);
+        ltfsdmCommand = std::unique_ptr<LTFSDMCommand>(new StatusCommand);
     } else if (RetrieveCommand().compare(command)) {
-        openLTFSCommand = std::unique_ptr<OpenLTFSCommand>(new RetrieveCommand);
+        ltfsdmCommand = std::unique_ptr<LTFSDMCommand>(new RetrieveCommand);
     } else if (VersionCommand().compare(command)) {
-        openLTFSCommand = std::unique_ptr<OpenLTFSCommand>(new VersionCommand);
+        ltfsdmCommand = std::unique_ptr<LTFSDMCommand>(new VersionCommand);
     } else if (InfoCommand().compare(command)) {
         if (argc < 3) {
             MSG(LTFSDMC0011E);
@@ -172,29 +172,29 @@ int main(int argc, char *argv[])
         command = argv[1];
         TRACE(Trace::normal, command.c_str());
         if (InfoRequestsCommand().compare(command)) {
-            openLTFSCommand =
-                    std::unique_ptr<OpenLTFSCommand>(new InfoRequestsCommand);
+            ltfsdmCommand =
+                    std::unique_ptr<LTFSDMCommand>(new InfoRequestsCommand);
         } else if (InfoJobsCommand().compare(command)) {
-            openLTFSCommand =
-                    std::unique_ptr<OpenLTFSCommand>(new InfoJobsCommand);
+            ltfsdmCommand =
+                    std::unique_ptr<LTFSDMCommand>(new InfoJobsCommand);
         } else if (InfoFilesCommand().compare(command)) {
-            openLTFSCommand =
-                    std::unique_ptr<OpenLTFSCommand>(new InfoFilesCommand);
+            ltfsdmCommand =
+                    std::unique_ptr<LTFSDMCommand>(new InfoFilesCommand);
         } else if (InfoFsCommand().compare(command)) {
-            openLTFSCommand =
-                    std::unique_ptr<OpenLTFSCommand>(new InfoFsCommand);
+            ltfsdmCommand =
+                    std::unique_ptr<LTFSDMCommand>(new InfoFsCommand);
         } else if (InfoDrivesCommand().compare(command)) {
-            openLTFSCommand =
-                    std::unique_ptr<OpenLTFSCommand>(new InfoDrivesCommand);
+            ltfsdmCommand =
+                    std::unique_ptr<LTFSDMCommand>(new InfoDrivesCommand);
         } else if (InfoTapesCommand().compare(command)) {
-            openLTFSCommand =
-                    std::unique_ptr<OpenLTFSCommand>(new InfoTapesCommand);
+            ltfsdmCommand =
+                    std::unique_ptr<LTFSDMCommand>(new InfoTapesCommand);
         } else if (InfoPoolsCommand().compare(command)) {
-            openLTFSCommand =
-                    std::unique_ptr<OpenLTFSCommand>(new InfoPoolsCommand);
+            ltfsdmCommand =
+                    std::unique_ptr<LTFSDMCommand>(new InfoPoolsCommand);
         } else {
             MSG(LTFSDMC0012E, command.c_str());
-            openLTFSCommand = std::unique_ptr<OpenLTFSCommand>(new HelpCommand);
+            ltfsdmCommand = std::unique_ptr<LTFSDMCommand>(new HelpCommand);
             rc = static_cast<int>(Error::GENERAL_ERROR);
             goto end;
         }
@@ -210,31 +210,31 @@ int main(int argc, char *argv[])
         command = argv[1];
         TRACE(Trace::normal, command.c_str());
         if (PoolCreateCommand().compare(command)) {
-            openLTFSCommand =
-                    std::unique_ptr<OpenLTFSCommand>(new PoolCreateCommand);
+            ltfsdmCommand =
+                    std::unique_ptr<LTFSDMCommand>(new PoolCreateCommand);
         } else if (PoolDeleteCommand().compare(command)) {
-            openLTFSCommand =
-                    std::unique_ptr<OpenLTFSCommand>(new PoolDeleteCommand);
+            ltfsdmCommand =
+                    std::unique_ptr<LTFSDMCommand>(new PoolDeleteCommand);
         } else if (PoolAddCommand().compare(command)) {
-            openLTFSCommand =
-                    std::unique_ptr<OpenLTFSCommand>(new PoolAddCommand);
+            ltfsdmCommand =
+                    std::unique_ptr<LTFSDMCommand>(new PoolAddCommand);
         } else if (PoolRemoveCommand().compare(command)) {
-            openLTFSCommand =
-                    std::unique_ptr<OpenLTFSCommand>(new PoolRemoveCommand);
+            ltfsdmCommand =
+                    std::unique_ptr<LTFSDMCommand>(new PoolRemoveCommand);
         } else {
             MSG(LTFSDMC0012E, command.c_str());
-            openLTFSCommand = std::unique_ptr<OpenLTFSCommand>(new HelpCommand);
+            ltfsdmCommand = std::unique_ptr<LTFSDMCommand>(new HelpCommand);
             rc = static_cast<int>(Error::GENERAL_ERROR);
             goto end;
         }
     } else {
         MSG(LTFSDMC0005E, command.c_str());
-        openLTFSCommand = std::unique_ptr<OpenLTFSCommand>(new HelpCommand);
+        ltfsdmCommand = std::unique_ptr<LTFSDMCommand>(new HelpCommand);
         rc = static_cast<int>(Error::GENERAL_ERROR);
         goto end;
     }
 
-    TRACE(Trace::normal, openLTFSCommand->getCommand());
+    TRACE(Trace::normal, ltfsdmCommand->getCommand());
 
     argc--;
     argv++;
@@ -245,8 +245,8 @@ int main(int argc, char *argv[])
 
     try {
         //! [call_do_command]
-        openLTFSCommand->doCommand(argc, argv);
-    } catch (const OpenLTFSException& e) {
+        ltfsdmCommand->doCommand(argc, argv);
+    } catch (const LTFSDMException& e) {
         rc = static_cast<int>(e.getError());
     } catch (const std::exception& e) {
     }

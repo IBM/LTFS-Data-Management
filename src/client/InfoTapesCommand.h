@@ -1,6 +1,6 @@
 #pragma once
 
-class InfoTapesCommand: public OpenLTFSCommand
+class InfoTapesCommand: public LTFSDMCommand
 
 {
 private:
@@ -9,7 +9,7 @@ private:
     }
 public:
     InfoTapesCommand() :
-            OpenLTFSCommand("tapes", ":+h")
+            LTFSDMCommand("tapes", ":+h")
     {
     }
     ~InfoTapesCommand()

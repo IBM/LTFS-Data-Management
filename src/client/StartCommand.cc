@@ -18,7 +18,7 @@
 #include <exception>
 
 #include "src/common/errors/errors.h"
-#include "src/common/exception/OpenLTFSException.h"
+#include "src/common/exception/LTFSDMException.h"
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
 #include "src/common/const/Const.h"
@@ -26,11 +26,11 @@
 #include "src/common/comm/ltfsdm.pb.h"
 #include "src/common/comm/LTFSDmComm.h"
 
-#include "OpenLTFSCommand.h"
+#include "LTFSDMCommand.h"
 #include "StartCommand.h"
 
 /** @page ltfsdm_start ltfsdm start
-    The ltfsdm start command starts the OpenLTFS service.
+    The ltfsdm start command starts the LTFS Data Management service.
 
     <tt>@LTFSDMC0006I</tt>
 
@@ -42,10 +42,10 @@
 
     @verbatim
     [root@visp ~]# ltfsdm start
-    LTFSDMC0099I(0073): Starting the OpenLTFS backend service.
-    LTFSDMX0029I(0062): OpenLTFS version: 0.0.624-master.2017-11-09T10.57.51
+    LTFSDMC0099I(0073): Starting the LTFS Data Management backend service.
+    LTFSDMX0029I(0062): LTFS Data Management version: 0.0.624-master.2017-11-09T10.57.51
     LTFSDMC0100I(0097): Connecting.
-    LTFSDMC0097I(0141): The OpenLTFS server process has been started with pid  13378.
+    LTFSDMC0097I(0141): The LTFS Data Management server process has been started with pid  13378.
     @endverbatim
 
     The responsible class is @ref StartCommand.

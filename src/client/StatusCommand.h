@@ -1,6 +1,6 @@
 #pragma once
 
-class StatusCommand: public OpenLTFSCommand
+class StatusCommand: public LTFSDMCommand
 
 {
 private:
@@ -11,7 +11,7 @@ private:
     }
 public:
     StatusCommand() :
-            OpenLTFSCommand("status", "h")
+            LTFSDMCommand("status", "h")
     {
     }
     ~StatusCommand()

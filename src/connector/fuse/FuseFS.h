@@ -104,7 +104,7 @@ private:
     static void recoverState(const char *path,
             FuseFS::mig_info::state_num state);
     static int recall_file(FuseFS::ltfsdm_file_info *linfo, bool toresident);
-    static bool procIsOpenLTFS(pid_t tid);
+    static bool procIsLTFSDM(pid_t tid);
 
     // FUSE call backs
     static int ltfsdm_getattr(const char *path, struct stat *statbuf);

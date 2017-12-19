@@ -15,7 +15,7 @@ bool Scheduler::poolResAvail(unsigned long minFileSize)
 {
     bool found;
     bool unmountedExists = false;
-    std::shared_ptr<OpenLTFSCartridge> cart;
+    std::shared_ptr<LTFSDMCartridge> cart;
 
     assert(pool.compare("") != 0);
 
@@ -24,15 +24,15 @@ bool Scheduler::poolResAvail(unsigned long minFileSize)
             MSG(LTFSDMX0034E, cartname);
             Server::conf.poolRemove(pool, cartname);
         }
-        if (cart->getState() == OpenLTFSCartridge::TAPE_MOUNTED) {
+        if (cart->getState() == LTFSDMCartridge::TAPE_MOUNTED) {
             tapeId = cart->GetObjectID();
             found = false;
-            for (std::shared_ptr<OpenLTFSDrive> drive : inventory->getDrives()) {
+            for (std::shared_ptr<LTFSDMDrive> drive : inventory->getDrives()) {
                 if (drive->get_slot() == cart->get_slot()
                         && 1024 * 1024 * cart->get_remaining_cap()
                                 >= minFileSize) {
                     assert(drive->isBusy() == false);
-                    cart->setState(OpenLTFSCartridge::TAPE_INUSE);
+                    cart->setState(LTFSDMCartridge::TAPE_INUSE);
                     TRACE(Trace::always, drive->GetObjectID());
                     drive->setBusy();
                     found = true;
@@ -43,20 +43,20 @@ bool Scheduler::poolResAvail(unsigned long minFileSize)
                     found == true || 1024*1024*cart->get_remaining_cap() < minFileSize);
             if (found == true)
                 return true;
-        } else if (cart->getState() == OpenLTFSCartridge::TAPE_UNMOUNTED)
+        } else if (cart->getState() == LTFSDMCartridge::TAPE_UNMOUNTED)
             unmountedExists = true;
     }
 
     if (unmountedExists == false)
         return false;
 
-    for (std::shared_ptr<OpenLTFSDrive> drive : inventory->getDrives()) {
+    for (std::shared_ptr<LTFSDMDrive> drive : inventory->getDrives()) {
         if (drive->isBusy() == true)
             continue;
         found = false;
-        for (std::shared_ptr<OpenLTFSCartridge> card : inventory->getCartridges()) {
+        for (std::shared_ptr<LTFSDMCartridge> card : inventory->getCartridges()) {
             if (drive->get_slot() == card->get_slot()
-                    && card->getState() == OpenLTFSCartridge::TAPE_MOUNTED) {
+                    && card->getState() == LTFSDMCartridge::TAPE_MOUNTED) {
                 found = true;
                 break;
             }
@@ -67,13 +67,13 @@ bool Scheduler::poolResAvail(unsigned long minFileSize)
                     MSG(LTFSDMX0034E, cartname);
                     Server::conf.poolRemove(pool, cartname);
                 }
-                if (cart->getState() == OpenLTFSCartridge::TAPE_UNMOUNTED
+                if (cart->getState() == LTFSDMCartridge::TAPE_UNMOUNTED
                         && 1024 * 1024 * cart->get_remaining_cap()
                                 >= minFileSize) {
                     TRACE(Trace::always, drive->GetObjectID());
                     drive->setBusy();
                     drive->setUnmountReqNum(reqNum);
-                    cart->setState(OpenLTFSCartridge::TAPE_MOVING);
+                    cart->setState(LTFSDMCartridge::TAPE_MOVING);
                     subs.enqueue(std::string("m:") + cart->GetObjectID(), mount,
                             drive->GetObjectID(), cart->GetObjectID());
                     return false;
@@ -83,20 +83,20 @@ bool Scheduler::poolResAvail(unsigned long minFileSize)
         }
     }
 
-    for (std::shared_ptr<OpenLTFSDrive> drive : inventory->getDrives())
+    for (std::shared_ptr<LTFSDMDrive> drive : inventory->getDrives())
         if (drive->getUnmountReqNum() == reqNum)
             return false;
 
-    for (std::shared_ptr<OpenLTFSDrive> drive : inventory->getDrives()) {
+    for (std::shared_ptr<LTFSDMDrive> drive : inventory->getDrives()) {
         if (drive->isBusy() == true)
             continue;
-        for (std::shared_ptr<OpenLTFSCartridge> card : inventory->getCartridges()) {
+        for (std::shared_ptr<LTFSDMCartridge> card : inventory->getCartridges()) {
             if ((drive->get_slot() == card->get_slot())
-                    && (card->getState() == OpenLTFSCartridge::TAPE_MOUNTED)) {
+                    && (card->getState() == LTFSDMCartridge::TAPE_MOUNTED)) {
                 TRACE(Trace::normal, drive->GetObjectID());
                 drive->setBusy();
                 drive->setUnmountReqNum(reqNum);
-                card->setState(OpenLTFSCartridge::TAPE_MOVING);
+                card->setState(LTFSDMCartridge::TAPE_MOVING);
                 subs.enqueue(std::string("unm:") + card->GetObjectID(), unmount,
                         drive->GetObjectID(), card->GetObjectID());
                 return false;
@@ -115,13 +115,13 @@ bool Scheduler::tapeResAvail()
     assert(tapeId.compare("") != 0);
 
     if (inventory->getCartridge(tapeId)->getState()
-            == OpenLTFSCartridge::TAPE_MOVING)
+            == LTFSDMCartridge::TAPE_MOVING)
         return false;
 
     if (inventory->getCartridge(tapeId)->getState()
-            == OpenLTFSCartridge::TAPE_INUSE) {
+            == LTFSDMCartridge::TAPE_INUSE) {
         found = false;
-        for (std::shared_ptr<OpenLTFSDrive> drive : inventory->getDrives()) {
+        for (std::shared_ptr<LTFSDMDrive> drive : inventory->getDrives()) {
             if (drive->get_slot()
                     == inventory->getCartridge(tapeId)->get_slot()) {
                 TRACE(Trace::always, op, drive->getToUnblock(),
@@ -135,13 +135,13 @@ bool Scheduler::tapeResAvail()
         assert(found == true);
         return false;
     } else if (inventory->getCartridge(tapeId)->getState()
-            == OpenLTFSCartridge::TAPE_MOUNTED) {
+            == LTFSDMCartridge::TAPE_MOUNTED) {
         found = false;
-        for (std::shared_ptr<OpenLTFSDrive> drive : inventory->getDrives()) {
+        for (std::shared_ptr<LTFSDMDrive> drive : inventory->getDrives()) {
             if (drive->get_slot()
                     == inventory->getCartridge(tapeId)->get_slot()) {
                 inventory->getCartridge(tapeId)->setState(
-                        OpenLTFSCartridge::TAPE_INUSE);
+                        LTFSDMCartridge::TAPE_INUSE);
                 assert(drive->isBusy() == false);
                 TRACE(Trace::always, drive->GetObjectID());
                 drive->setBusy();
@@ -154,25 +154,25 @@ bool Scheduler::tapeResAvail()
     }
 
     // looking for a free drive
-    for (std::shared_ptr<OpenLTFSDrive> drive : inventory->getDrives()) {
+    for (std::shared_ptr<LTFSDMDrive> drive : inventory->getDrives()) {
         if (drive->isBusy() == true)
             continue;
         found = false;
-        for (std::shared_ptr<OpenLTFSCartridge> card : inventory->getCartridges()) {
+        for (std::shared_ptr<LTFSDMCartridge> card : inventory->getCartridges()) {
             if ((drive->get_slot() == card->get_slot())
-                    && (card->getState() == OpenLTFSCartridge::TAPE_MOUNTED)) {
+                    && (card->getState() == LTFSDMCartridge::TAPE_MOUNTED)) {
                 found = true;
                 break;
             }
         }
         if (found == false) {
             if (inventory->getCartridge(tapeId)->getState()
-                    == OpenLTFSCartridge::TAPE_UNMOUNTED) {
+                    == LTFSDMCartridge::TAPE_UNMOUNTED) {
                 TRACE(Trace::always, drive->GetObjectID());
                 drive->setBusy();
                 drive->setUnmountReqNum(reqNum);
                 inventory->getCartridge(tapeId)->setState(
-                        OpenLTFSCartridge::TAPE_MOVING);
+                        LTFSDMCartridge::TAPE_MOVING);
                 subs.enqueue(std::string("m:") + tapeId, mount,
                         drive->GetObjectID(), tapeId);
                 return false;
@@ -181,16 +181,16 @@ bool Scheduler::tapeResAvail()
     }
 
     // looking for a tape to unmount
-    for (std::shared_ptr<OpenLTFSDrive> drive : inventory->getDrives()) {
+    for (std::shared_ptr<LTFSDMDrive> drive : inventory->getDrives()) {
         if (drive->isBusy() == true)
             continue;
-        for (std::shared_ptr<OpenLTFSCartridge> card : inventory->getCartridges()) {
+        for (std::shared_ptr<LTFSDMCartridge> card : inventory->getCartridges()) {
             if ((drive->get_slot() == card->get_slot())
-                    && (card->getState() == OpenLTFSCartridge::TAPE_MOUNTED)) {
+                    && (card->getState() == LTFSDMCartridge::TAPE_MOUNTED)) {
                 TRACE(Trace::always, drive->GetObjectID());
                 drive->setBusy();
                 drive->setUnmountReqNum(reqNum);
-                card->setState(OpenLTFSCartridge::TAPE_MOVING);
+                card->setState(LTFSDMCartridge::TAPE_MOVING);
                 inventory->getCartridge(tapeId)->unsetRequested();
                 subs.enqueue(std::string("unm:") + card->GetObjectID(), unmount,
                         drive->GetObjectID(), card->GetObjectID());
@@ -203,7 +203,7 @@ bool Scheduler::tapeResAvail()
         return false;
 
     // suspend an operation
-    for (std::shared_ptr<OpenLTFSDrive> drive : inventory->getDrives()) {
+    for (std::shared_ptr<LTFSDMDrive> drive : inventory->getDrives()) {
         if (op < drive->getToUnblock()) {
             TRACE(Trace::always, op, drive->getToUnblock(),
                     drive->GetObjectID());
@@ -263,7 +263,7 @@ void Scheduler::run(long key)
         selstmt.prepare();
         while (selstmt.step(&op, &reqNum, &tgtState, &numRepl, &replNum, &pool,
                 &tapeId)) {
-            std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+            std::lock_guard<std::recursive_mutex> lock(LTFSDMInventory::mtx);
 
             if (op == DataBase::MIGRATION)
                 minFileSize = smallestMigJob(reqNum, replNum);

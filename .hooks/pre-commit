@@ -10,6 +10,6 @@ VERSION="${MAJOR}.${MINOR}.${COMMIT_COUNT}-${BRANCH_NAME}.${COMMIT_TIME}"
 echo ${VERSION} > .version
 
 echo "#pragma once" > "$(git rev-parse --show-toplevel)"/src/common/Version.h
-echo "#define OPENLTFS_VERSION \"${VERSION}\"" >> "$(git rev-parse --show-toplevel)"/src/common/Version.h
+echo "#define LTFSDM_VERSION \"${VERSION}\"" >> "$(git rev-parse --show-toplevel)"/src/common/Version.h
 
 git add -f "$(git rev-parse --show-toplevel)"/src/common/Version.h

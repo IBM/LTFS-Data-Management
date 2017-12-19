@@ -98,7 +98,7 @@
     2 | FuseFS::execute | started the Fuse connector process for another file system
     1 | ltfsdmd.cc:main() | main thread
 
-    In this example two file systems are managed by OpenLTFS. Therefore two
+    In this example two file systems are managed by LTFS Data Management. Therefore two
     Fuse threads exist. Thread pools are not visible after initial start since
     threads within a thread pool are created on request.
 
@@ -107,7 +107,7 @@
     operation | object | function being executed | description
     ---|---|---|---
     message parsing | Receiver::run -> wqm | MessageParser::run | After the Receiver gets a new message this message is further processed by a new thread from this thread pool.
-    premigration | OpenLTFSDrive::wqp | Migration::preMigrate | For premigration there is one thread pool per drive since only a single request can be executed on a certain drive at a time.
+    premigration | LTFSDMDrive::wqp | Migration::preMigrate | For premigration there is one thread pool per drive since only a single request can be executed on a certain drive at a time.
     stubbing | Server::wqs | Migration::stub | There exist one thread pool for all stubbing operations (even from different requests).
     transparent recall | TransRecall::run -> wqr | TransRecall::addRequest | Adds a transparent recall request and waits for completion.
 
@@ -128,7 +128,7 @@
     main()
     ltfsdmd.run
         communication with LTFS LE (1 thread)
-        OpenLTFSDrive::wqp(number of thread pools equal number of drives)
+        LTFSDMDrive::wqp(number of thread pools equal number of drives)
         FuseFS::execute (threads equal number of files systems)
         Server::wqs (1 thread pool)
         Scheduler::run (1 thread)
@@ -354,7 +354,7 @@ int main(int argc, char **argv)
 
     traceObject.setTrclevel(tl);
     TRACE(Trace::always, getpid());
-    MSG(LTFSDMX0029I, OPENLTFS_VERSION);
+    MSG(LTFSDMX0029I, LTFSDM_VERSION);
 
     try {
         ltfsdmd.initialize(dbUseMemory);
@@ -362,10 +362,10 @@ int main(int argc, char **argv)
         if (detach)
             ltfsdmd.daemonize();
 
-        MSG(LTFSDMX0029I, OPENLTFS_VERSION);
+        MSG(LTFSDMX0029I, LTFSDM_VERSION);
 
         ltfsdmd.run(set);
-    } catch (const OpenLTFSException& e) {
+    } catch (const LTFSDMException& e) {
         if (e.getError() != Error::OK) {
             TRACE(Trace::error, e.what());
             err = static_cast<int>(Error::GENERAL_ERROR);

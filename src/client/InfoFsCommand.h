@@ -1,13 +1,13 @@
 #pragma once
 
-class InfoFsCommand: public OpenLTFSCommand
+class InfoFsCommand: public LTFSDMCommand
 
 {
 private:
     void talkToBackend(std::stringstream *parmList);
 public:
     InfoFsCommand() :
-            OpenLTFSCommand("fs", "h")
+            LTFSDMCommand("fs", "h")
     {
     }
     ~InfoFsCommand()

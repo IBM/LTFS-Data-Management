@@ -1,6 +1,6 @@
 #pragma once
 
-class PoolCommand: public OpenLTFSCommand
+class PoolCommand: public LTFSDMCommand
 
 {
 private:
@@ -9,7 +9,7 @@ private:
     }
 public:
     PoolCommand() :
-            OpenLTFSCommand("pool", "")
+            LTFSDMCommand("pool", "")
     {
     }
     void printUsage()

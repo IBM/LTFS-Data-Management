@@ -14,9 +14,9 @@ ARC_SRC_FILES += SelRecall.cc
 ARC_SRC_FILES += TransRecall.cc
 ARC_SRC_FILES += Scheduler.cc
 ARC_SRC_FILES += Status.cc
-ARC_SRC_FILES += OpenLTFSDrive.cc
-ARC_SRC_FILES += OpenLTFSCartridge.cc
-ARC_SRC_FILES += OpenLTFSInventory.cc
+ARC_SRC_FILES += LTFSDMDrive.cc
+ARC_SRC_FILES += LTFSDMCartridge.cc
+ARC_SRC_FILES += LTFSDMInventory.cc
 
 CLEANUP_FILES := ltfsdmd
 BINARY := ltfsdmd

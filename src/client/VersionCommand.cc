@@ -11,7 +11,7 @@
 #include <exception>
 
 #include "src/common/errors/errors.h"
-#include "src/common/exception/OpenLTFSException.h"
+#include "src/common/exception/LTFSDMException.h"
 #include "src/common/util/util.h"
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
@@ -20,11 +20,11 @@
 #include "src/common/comm/ltfsdm.pb.h"
 #include "src/common/comm/LTFSDmComm.h"
 
-#include "OpenLTFSCommand.h"
+#include "LTFSDMCommand.h"
 #include "VersionCommand.h"
 
 /** @page ltfsdm_version ltfsdm version
-    The ltfsdm version command provide the version of the OpenLTFS software.
+    The ltfsdm version command provide the version of the LTFS Data Management software.
 
     <tt>@LTFSDMC0102I</tt>
 
@@ -36,7 +36,7 @@
 
     @verbatim
     [root@visp ~]# ltfsdm version
-    OpenLTFS version: 0.0.624-master.2017-11-09T10.57.51
+    LTFS Data Management version: 0.0.624-master.2017-11-09T10.57.51
     @endverbatim
 
     The responsible class is @ref VersionCommand.
@@ -61,5 +61,5 @@ void VersionCommand::doCommand(int argc, char **argv)
         THROW(Error::GENERAL_ERROR);
     }
 
-    INFO(LTFSDMX0029I, OPENLTFS_VERSION);
+    INFO(LTFSDMX0029I, LTFSDM_VERSION);
 }

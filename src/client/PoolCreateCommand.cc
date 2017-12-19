@@ -11,7 +11,7 @@
 #include <exception>
 
 #include "src/common/errors/errors.h"
-#include "src/common/exception/OpenLTFSException.h"
+#include "src/common/exception/LTFSDMException.h"
 #include "src/common/util/util.h"
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
@@ -19,7 +19,7 @@
 #include "src/common/comm/ltfsdm.pb.h"
 #include "src/common/comm/LTFSDmComm.h"
 
-#include "OpenLTFSCommand.h"
+#include "LTFSDMCommand.h"
 #include "PoolCreateCommand.h"
 
 /** @page ltfsdm_pool_create ltfsdm pool create

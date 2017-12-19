@@ -8,31 +8,31 @@
 #include <exception>
 
 #include "src/common/errors/errors.h"
-#include "src/common/exception/OpenLTFSException.h"
+#include "src/common/exception/LTFSDMException.h"
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
 
 #include "src/common/comm/ltfsdm.pb.h"
 #include "src/common/comm/LTFSDmComm.h"
 
-#include "OpenLTFSCommand.h"
+#include "LTFSDMCommand.h"
 #include "StopCommand.h"
 
 /** @page ltfsdm_stop ltfsdm stop
-    The ltfsdm stop command stop the OpenLTFS service.
+    The ltfsdm stop command stop the LTFS Data Management service.
 
     <tt>@LTFSDMC0007I</tt>
 
     parameters | description
     ---|---
-    -x | force the stop of OpenLTFS even a managed file system is in use
+    -x | force the stop of LTFS Data Management even a managed file system is in use
 
     Example:
 
     @verbatim
     [root@visp ~]# ltfsdm stop
-    The OpenLTFS backend is terminating.
-    Waiting for the termination of the OpenLTFS server............
+    The LTFS Data Management backend is terminating.
+    Waiting for the termination of the LTFS Data Management server............
     [root@visp ~]#
     @endverbatim
 
@@ -44,10 +44,10 @@
 
     @code
     StopCommand::doCommand
-        OpenLTFSCommand::processOptions
-        OpenLTFSCommand::connect
+        LTFSDMCommand::processOptions
+        LTFSDMCommand::connect
             LTFSDmCommClient::connect
-            OpenLTFSCommand::getRequestNumber
+            LTFSDMCommand::getRequestNumber
         do
             create stoprequest message
             LTFSDmCommClient::send
@@ -55,7 +55,7 @@
             if stopped == false
                 sleep 1
         until stopped == false
-        open OpenLTFS lock
+        LTFS Data Management lock
         while locking fails
             sleep 1
         unlock lock
@@ -71,12 +71,12 @@
         do_command [fontname="fixed bold", fontcolor=dodgerblue4, label="StopCommand::doCommand", URL="@ref StopCommand::doCommand"];
         subgraph cluster_do_command {
             label="StopCommand::doCommand";
-            process_options [fontname="fixed bold", fontcolor=dodgerblue4, label="OpenLTFSCommand::processOptions", URL="@ref OpenLTFSCommand::processOptions"];
-            connect1 [fontname="fixed bold", fontcolor=dodgerblue4, label="OpenLTFSCommand::connect", URL="@ref OpenLTFSCommand::connect"];
+            process_options [fontname="fixed bold", fontcolor=dodgerblue4, label="LTFSDMCommand::processOptions", URL="@ref LTFSDMCommand::processOptions"];
+            connect1 [fontname="fixed bold", fontcolor=dodgerblue4, label="LTFSDMCommand::connect", URL="@ref LTFSDMCommand::connect"];
             subgraph cluster_connect {
-                label="OpenLTFSCommand::connect";
+                label="LTFSDMCommand::connect";
                 connect2 [fontname="fixed bold", fontcolor=dodgerblue4, label="LTFSDmCommClient::connect", URL="@ref LTFSDmCommClient::connect"];
-                get_req_num [fontname="fixed bold", fontcolor=dodgerblue4, label="OpenLTFSCommand::getRequestNumber", URL="@ref OpenLTFSCommand::getRequestNumber"];
+                get_req_num [fontname="fixed bold", fontcolor=dodgerblue4, label="LTFSDMCommand::getRequestNumber", URL="@ref LTFSDMCommand::getRequestNumber"];
             }
             subgraph cluster_loop_1 {
                 label="do until stopped == false";
@@ -88,7 +88,7 @@
                     sleep_1 [label="sleep 1"];
                 }
             }
-            lock_open [label="open OpenLTFS lock file"];
+            lock_open [label="LTFS Data Management lock file"];
             subgraph cluster_loop_2 {
                 label="while locking fails";
                 sleep_2 [label="sleep 1"];

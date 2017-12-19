@@ -2,13 +2,13 @@
 
 ## Directories
 
-In the following the internal OpenLTFS design is described on a high
+In the following the internal LTFS Data Management design is described on a high
 level. It describes the path it takes from the client side to start
 the back end and to migrate, selectively ? and transparently migrate files.
  
-OpenLTFS is a client-server application where the server (sometimes also
+LTFS Data Management is a client-server application where the server (sometimes also
 referred as backend) is started initially and eventually performs all the
-operations and the client - as an interface to OpenLTFS - that initiates
+operations and the client - as an interface to LTFS Data Management - that initiates
 these operations. A user only has to work with the client part of the
 application. The code is structured within the following sub-directories:
 
@@ -29,10 +29,10 @@ path | description
 [src/common/configuration](@ref src/common/configuration) | maintaining the configuration (storage pools, file systems)
 [src/common/const](@ref src/common/const) | constants consolidated
 [src/common/errors](@ref src/common/errors) | error values consolidated
-[src/common/exception](@ref src/common/exception) | the OpenLTFS exception class
-[src/common/messages](@ref src/common/messages) | the OpenLTFS messaging system
+[src/common/exception](@ref src/common/exception) | the LTFS Data Management exception class
+[src/common/messages](@ref src/common/messages) | the LTFS Data Management messaging system
 [src/common/msgcompiler](@ref src/common/msgcompiler) | the message compiler that transforms a text based message file into c++ code
-[src/common/tracing](@ref src/common/tracing) | the OpenLTFS tracing facility
+[src/common/tracing](@ref src/common/tracing) | the LTFS Data Management tracing facility
 [src/common/util](@ref src/common/util) | utility functions
 
 There are two files within the main directory that are used to generate c++ code:
@@ -75,7 +75,7 @@ digraph start_sequence {
  @enddot
 
  The number of processes of the Fuse overlay file systems corresponds to
- the number of OpenLTFS managed file systems. If there is only one file
+ the number of LTFS Data Management managed file systems. If there is only one file
  system managed there will only be one such process.
 
 The following is an example for processes that are running in the
@@ -84,7 +84,7 @@ background if one file system (here <tt><b>/mnt/lxfs</b></tt>) is managed:
 @verbatim
    [root\@visp ~]# ps -p $(pidof ltfsdmd) $(pidof ltfsdmd.ofs)\n
     PID TTY      STAT   TIME COMMAND\n
-    32246 ?        Ssl  674:51 /root/OpenLTFS/bin/ltfsdmd\n
-    32263 ?        Sl   918:32 /root/OpenLTFS/bin/ltfsdmd.ofs -m /mnt/lxfs -f /dev/sdc1 -S 1510663933 -N 49751364 -l 1 -t 2 -p 32246
+    32246 ?        Ssl  674:51 /root/LTFSDM/bin/ltfsdmd\n
+    32263 ?        Sl   918:32 /root/LTFSDM/bin/ltfsdmd.ofs -m /mnt/lxfs -f /dev/sdc1 -S 1510663933 -N 49751364 -l 1 -t 2 -p 32246
 @endverbatim
 

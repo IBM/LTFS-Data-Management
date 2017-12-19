@@ -210,7 +210,7 @@ bool needsTape)
     std::string fileName;
     FsObj::file_state state;
     unsigned long inum;
-    std::shared_ptr<OpenLTFSDrive> drive = nullptr;
+    std::shared_ptr<LTFSDMDrive> drive = nullptr;
     std::list<unsigned long> inumList;
     bool suspended = false;
     time_t start;
@@ -224,7 +224,7 @@ bool needsTape)
     }
 
     if (needsTape) {
-        for (std::shared_ptr<OpenLTFSDrive> d : inventory->getDrives()) {
+        for (std::shared_ptr<LTFSDMDrive> d : inventory->getDrives()) {
             if (d->get_slot() == inventory->getCartridge(tapeId)->get_slot()) {
                 drive = d;
                 break;
@@ -339,11 +339,11 @@ void SelRecall::execRequest(std::string tapeId, bool needsTape)
     TRACE(Trace::always, reqNumber, needsTape, tapeId);
 
     if (needsTape) {
-        std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+        std::lock_guard<std::recursive_mutex> lock(LTFSDMInventory::mtx);
         inventory->getCartridge(tapeId)->setState(
-                OpenLTFSCartridge::TAPE_MOUNTED);
+                LTFSDMCartridge::TAPE_MOUNTED);
         bool found = false;
-        for (std::shared_ptr<OpenLTFSDrive> d : inventory->getDrives()) {
+        for (std::shared_ptr<LTFSDMDrive> d : inventory->getDrives()) {
             if (d->get_slot() == inventory->getCartridge(tapeId)->get_slot()) {
                 TRACE(Trace::always, d->GetObjectID());
                 d->setFree();

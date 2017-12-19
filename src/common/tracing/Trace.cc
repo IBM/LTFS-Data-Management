@@ -14,7 +14,7 @@
 #include "src/common/messages/Message.h"
 #include "src/common/errors/errors.h"
 #include "src/common/util/util.h"
-#include "src/common/exception/OpenLTFSException.h"
+#include "src/common/exception/LTFSDMException.h"
 
 #include "Trace.h"
 

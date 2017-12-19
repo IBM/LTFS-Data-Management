@@ -16,7 +16,7 @@
 #include <set>
 
 #include "src/common/errors/errors.h"
-#include "src/common/exception/OpenLTFSException.h"
+#include "src/common/exception/LTFSDMException.h"
 #include "src/common/util/util.h"
 #include "src/common/util/FileSystems.h"
 #include "src/common/messages/Message.h"
@@ -152,12 +152,12 @@ int main(int argc, char **argv)
         exit((int) Error::GENERAL_ERROR);
     }
 
-    MSG(LTFSDMF0001I, mountpt + Const::OPEN_LTFS_CACHE_MP, mountpt);
+    MSG(LTFSDMF0001I, mountpt + Const::LTFSDM_CACHE_MP, mountpt);
 
     fargs = FUSE_ARGS_INIT(0, NULL);
     fuse_opt_add_arg(&fargs, argv[0]);
     fuse_opt_add_arg(&fargs, mountpt.c_str());
-    options << "-ouse_ino,fsname=OpenLTFS:" << fsName
+    options << "-ouse_ino,fsname=LTFSDM:" << fsName
 //            << ",nopath,default_permissions,allow_other,kernel_cache,hard_remove,max_background="
             << ",nopath,default_permissions,allow_other,kernel_cache,max_background="
             << Const::MAX_FUSE_BACKGROUND;
@@ -176,7 +176,7 @@ int main(int argc, char **argv)
         be64toh(*(unsigned long *) &uuid[0]),
         be64toh(*(unsigned long *) &uuid[8]),
         mainpid,
-        mountpt + Const::OPEN_LTFS_CACHE_MP
+        mountpt + Const::LTFSDM_CACHE_MP
     };
 
     return fuse_main(fargs.argc, fargs.argv, &ltfsdm_operations, (void * ) &sd);

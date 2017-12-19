@@ -1,9 +1,9 @@
 #include "ServerIncludes.h"
 
-OpenLTFSInventory *inventory = NULL;
-std::recursive_mutex OpenLTFSInventory::mtx;
+LTFSDMInventory *inventory = NULL;
+std::recursive_mutex LTFSDMInventory::mtx;
 
-void OpenLTFSInventory::inventorize()
+void LTFSDMInventory::inventorize()
 
 {
     std::list<std::shared_ptr<Drive> > drvs;
@@ -13,13 +13,13 @@ void OpenLTFSInventory::inventorize()
     int i = 0;
     int rc;
 
-    std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+    std::lock_guard<std::recursive_mutex> lock(LTFSDMInventory::mtx);
 
-    for (std::shared_ptr<OpenLTFSDrive> d : drives)
+    for (std::shared_ptr<LTFSDMDrive> d : drives)
         if (d->isBusy() == true)
             THROW(Error::DRIVE_BUSY);
 
-    for (std::shared_ptr<OpenLTFSDrive> d : drives)
+    for (std::shared_ptr<LTFSDMDrive> d : drives)
         delete (d->wqp);
 
     drives.clear();
@@ -36,7 +36,7 @@ void OpenLTFSInventory::inventorize()
     for (std::shared_ptr<Drive> i : drvs) {
         TRACE(Trace::always, i->GetObjectID());
         MSG(LTFSDMS0052I, i->GetObjectID());
-        drives.push_back(std::make_shared<OpenLTFSDrive>(OpenLTFSDrive(*i)));
+        drives.push_back(std::make_shared<LTFSDMDrive>(LTFSDMDrive(*i)));
     }
 
     rc = LEControl::InventoryCartridge(crts, sess);
@@ -53,7 +53,7 @@ void OpenLTFSInventory::inventorize()
         TRACE(Trace::always, c->GetObjectID());
         MSG(LTFSDMS0054I, c->GetObjectID());
         cartridges.push_back(
-                std::make_shared<OpenLTFSCartridge>(OpenLTFSCartridge(*c)));
+                std::make_shared<LTFSDMCartridge>(LTFSDMCartridge(*c)));
     }
 
     cartridges.sort(
@@ -75,17 +75,17 @@ void OpenLTFSInventory::inventorize()
         }
     }
 
-    for (std::shared_ptr<OpenLTFSCartridge> c : cartridges) {
-        c->setState(OpenLTFSCartridge::TAPE_UNMOUNTED);
-        for (std::shared_ptr<OpenLTFSDrive> d : drives) {
+    for (std::shared_ptr<LTFSDMCartridge> c : cartridges) {
+        c->setState(LTFSDMCartridge::TAPE_UNMOUNTED);
+        for (std::shared_ptr<LTFSDMDrive> d : drives) {
             if (c->get_slot() == d->get_slot()) {
-                c->setState(OpenLTFSCartridge::TAPE_MOUNTED);
+                c->setState(LTFSDMCartridge::TAPE_MOUNTED);
                 break;
             }
         }
     }
 
-    for (std::shared_ptr<OpenLTFSDrive> drive : drives) {
+    for (std::shared_ptr<LTFSDMDrive> drive : drives) {
         std::stringstream threadName;
         threadName << "pmig" << i++ << "-wq";
         drive->wqp =
@@ -98,10 +98,10 @@ void OpenLTFSInventory::inventorize()
     }
 }
 
-OpenLTFSInventory::OpenLTFSInventory()
+LTFSDMInventory::LTFSDMInventory()
 
 {
-    std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+    std::lock_guard<std::recursive_mutex> lock(LTFSDMInventory::mtx);
     std::shared_ptr<ltfsadmin::LTFSNode> nodeInfo;
     struct stat statbuf;
 
@@ -155,84 +155,84 @@ OpenLTFSInventory::OpenLTFSInventory()
     }
 }
 
-std::list<std::shared_ptr<OpenLTFSDrive>> OpenLTFSInventory::getDrives()
+std::list<std::shared_ptr<LTFSDMDrive>> LTFSDMInventory::getDrives()
 
 {
-    std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+    std::lock_guard<std::recursive_mutex> lock(LTFSDMInventory::mtx);
 
     return drives;
 }
 
-std::shared_ptr<OpenLTFSDrive> OpenLTFSInventory::getDrive(std::string driveid)
+std::shared_ptr<LTFSDMDrive> LTFSDMInventory::getDrive(std::string driveid)
 
 {
-    std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+    std::lock_guard<std::recursive_mutex> lock(LTFSDMInventory::mtx);
 
-    for (std::shared_ptr<OpenLTFSDrive> drive : drives)
+    for (std::shared_ptr<LTFSDMDrive> drive : drives)
         if (drive->GetObjectID().compare(driveid) == 0)
             return drive;
 
     return nullptr;
 }
 
-std::list<std::shared_ptr<OpenLTFSCartridge>> OpenLTFSInventory::getCartridges()
+std::list<std::shared_ptr<LTFSDMCartridge>> LTFSDMInventory::getCartridges()
 
 {
-    std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+    std::lock_guard<std::recursive_mutex> lock(LTFSDMInventory::mtx);
 
     return cartridges;
 }
 
-std::shared_ptr<OpenLTFSCartridge> OpenLTFSInventory::getCartridge(
+std::shared_ptr<LTFSDMCartridge> LTFSDMInventory::getCartridge(
         std::string cartridgeid)
 
 {
-    std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+    std::lock_guard<std::recursive_mutex> lock(LTFSDMInventory::mtx);
 
-    for (std::shared_ptr<OpenLTFSCartridge> cartridge : cartridges)
+    for (std::shared_ptr<LTFSDMCartridge> cartridge : cartridges)
         if (cartridge->GetObjectID().compare(cartridgeid) == 0)
             return cartridge;
 
     return nullptr;
 }
 
-void OpenLTFSInventory::update(std::shared_ptr<OpenLTFSDrive> drive)
+void LTFSDMInventory::update(std::shared_ptr<LTFSDMDrive> drive)
 
 {
-    std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+    std::lock_guard<std::recursive_mutex> lock(LTFSDMInventory::mtx);
 
     drive->update(sess);
 }
 
-void OpenLTFSInventory::update(std::shared_ptr<OpenLTFSCartridge> cartridge)
+void LTFSDMInventory::update(std::shared_ptr<LTFSDMCartridge> cartridge)
 
 {
-    std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+    std::lock_guard<std::recursive_mutex> lock(LTFSDMInventory::mtx);
 
     cartridge->update(sess);
 }
 
-void OpenLTFSInventory::poolCreate(std::string poolname)
+void LTFSDMInventory::poolCreate(std::string poolname)
 
 {
-    std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+    std::lock_guard<std::recursive_mutex> lock(LTFSDMInventory::mtx);
 
     try {
         Server::conf.poolCreate(poolname);
-    } catch (const OpenLTFSException & e) {
+    } catch (const LTFSDMException & e) {
         MSG(LTFSDMX0023E, poolname);
         THROW(Error::POOL_EXISTS);
     }
 }
 
-void OpenLTFSInventory::poolDelete(std::string poolname)
+void LTFSDMInventory::poolDelete(std::string poolname)
 
 {
-    std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+    std::lock_guard<std::recursive_mutex> lock(LTFSDMInventory::mtx);
 
     try {
         Server::conf.poolDelete(poolname);
-    } catch (const OpenLTFSException & e) {
+    } catch (const LTFSDMException & e) {
         if (e.getError() == Error::CONFIG_POOL_NOT_EMPTY) {
             MSG(LTFSDMX0024E, poolname);
             THROW(Error::POOL_NOT_EMPTY);
@@ -246,12 +246,12 @@ void OpenLTFSInventory::poolDelete(std::string poolname)
     }
 }
 
-void OpenLTFSInventory::poolAdd(std::string poolname, std::string cartridgeid)
+void LTFSDMInventory::poolAdd(std::string poolname, std::string cartridgeid)
 
 {
-    std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+    std::lock_guard<std::recursive_mutex> lock(LTFSDMInventory::mtx);
 
-    std::shared_ptr<OpenLTFSCartridge> cartridge;
+    std::shared_ptr<LTFSDMCartridge> cartridge;
 
     if ((cartridge = getCartridge(cartridgeid)) == nullptr) {
         MSG(LTFSDMX0034E, cartridgeid);
@@ -265,7 +265,7 @@ void OpenLTFSInventory::poolAdd(std::string poolname, std::string cartridgeid)
 
     try {
         Server::conf.poolAdd(poolname, cartridgeid);
-    } catch (const OpenLTFSException & e) {
+    } catch (const LTFSDMException & e) {
         if (e.getError() == Error::CONFIG_POOL_NOT_EXISTS) {
             MSG(LTFSDMX0025E, poolname);
             THROW(Error::POOL_NOT_EXISTS);
@@ -281,13 +281,13 @@ void OpenLTFSInventory::poolAdd(std::string poolname, std::string cartridgeid)
     cartridge->setPool(poolname);
 }
 
-void OpenLTFSInventory::poolRemove(std::string poolname,
+void LTFSDMInventory::poolRemove(std::string poolname,
         std::string cartridgeid)
 
 {
-    std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+    std::lock_guard<std::recursive_mutex> lock(LTFSDMInventory::mtx);
 
-    std::shared_ptr<OpenLTFSCartridge> cartridge;
+    std::shared_ptr<LTFSDMCartridge> cartridge;
 
     if ((cartridge = getCartridge(cartridgeid)) == nullptr) {
         MSG(LTFSDMX0034E, cartridgeid);
@@ -301,7 +301,7 @@ void OpenLTFSInventory::poolRemove(std::string poolname,
 
     try {
         Server::conf.poolRemove(poolname, cartridgeid);
-    } catch (const OpenLTFSException& e) {
+    } catch (const LTFSDMException& e) {
         if (e.getError() == Error::CONFIG_POOL_NOT_EXISTS) {
             MSG(LTFSDMX0025E, poolname);
             THROW(Error::POOL_NOT_EXISTS);
@@ -315,28 +315,28 @@ void OpenLTFSInventory::poolRemove(std::string poolname,
     }
 }
 
-void OpenLTFSInventory::mount(std::string driveid, std::string cartridgeid)
+void LTFSDMInventory::mount(std::string driveid, std::string cartridgeid)
 
 {
     MSG(LTFSDMS0068I, cartridgeid, driveid);
 
-    std::shared_ptr<OpenLTFSDrive> drive = inventory->getDrive(driveid);
-    std::shared_ptr<OpenLTFSCartridge> cartridge = inventory->getCartridge(
+    std::shared_ptr<LTFSDMDrive> drive = inventory->getDrive(driveid);
+    std::shared_ptr<LTFSDMCartridge> cartridge = inventory->getCartridge(
             cartridgeid);
 
     assert(drive != nullptr);
     assert(cartridge != nullptr);
 
     assert(drive->isBusy() == true);
-    assert(cartridge->getState() == OpenLTFSCartridge::TAPE_MOVING);
+    assert(cartridge->getState() == LTFSDMCartridge::TAPE_MOVING);
 
     cartridge->Mount(driveid);
 
     {
-        std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+        std::lock_guard<std::recursive_mutex> lock(LTFSDMInventory::mtx);
 
         cartridge->update(sess);
-        cartridge->setState(OpenLTFSCartridge::TAPE_MOUNTED);
+        cartridge->setState(LTFSDMCartridge::TAPE_MOUNTED);
         TRACE(Trace::always, drive->GetObjectID());
         drive->setFree();
         drive->unsetUnmountReqNum();
@@ -348,29 +348,29 @@ void OpenLTFSInventory::mount(std::string driveid, std::string cartridgeid)
     Scheduler::cond.notify_one();
 }
 
-void OpenLTFSInventory::unmount(std::string driveid, std::string cartridgeid)
+void LTFSDMInventory::unmount(std::string driveid, std::string cartridgeid)
 
 {
     MSG(LTFSDMS0070I, cartridgeid, driveid);
 
-    std::shared_ptr<OpenLTFSDrive> drive = inventory->getDrive(driveid);
-    std::shared_ptr<OpenLTFSCartridge> cartridge = inventory->getCartridge(
+    std::shared_ptr<LTFSDMDrive> drive = inventory->getDrive(driveid);
+    std::shared_ptr<LTFSDMCartridge> cartridge = inventory->getCartridge(
             cartridgeid);
 
     assert(drive != nullptr);
     assert(cartridge != nullptr);
 
     assert(drive->isBusy() == true);
-    assert(cartridge->getState() == OpenLTFSCartridge::TAPE_MOVING);
+    assert(cartridge->getState() == LTFSDMCartridge::TAPE_MOVING);
     assert(drive->get_slot() == cartridge->get_slot());
 
     cartridge->Unmount();
 
     {
-        std::lock_guard<std::recursive_mutex> lock(OpenLTFSInventory::mtx);
+        std::lock_guard<std::recursive_mutex> lock(LTFSDMInventory::mtx);
 
         cartridge->update(sess);
-        cartridge->setState(OpenLTFSCartridge::TAPE_UNMOUNTED);
+        cartridge->setState(LTFSDMCartridge::TAPE_UNMOUNTED);
         TRACE(Trace::always, drive->GetObjectID());
         drive->setFree();
         drive->unsetUnmountReqNum();
@@ -382,23 +382,23 @@ void OpenLTFSInventory::unmount(std::string driveid, std::string cartridgeid)
     Scheduler::cond.notify_one();
 }
 
-void OpenLTFSInventory::format(std::string cartridgeid)
+void LTFSDMInventory::format(std::string cartridgeid)
 
 {
 }
 
-void OpenLTFSInventory::check(std::string cartridgeid)
+void LTFSDMInventory::check(std::string cartridgeid)
 
 {
 }
 
-OpenLTFSInventory::~OpenLTFSInventory()
+LTFSDMInventory::~LTFSDMInventory()
 
 {
     try {
         MSG(LTFSDMS0099I);
 
-        for (std::shared_ptr<OpenLTFSDrive> drive : drives)
+        for (std::shared_ptr<LTFSDMDrive> drive : drives)
             delete (drive->wqp);
 
         LEControl::Disconnect(sess);
@@ -409,7 +409,7 @@ OpenLTFSInventory::~OpenLTFSInventory()
     }
 }
 
-std::string OpenLTFSInventory::getMountPoint()
+std::string LTFSDMInventory::getMountPoint()
 
 {
     return mountPoint;

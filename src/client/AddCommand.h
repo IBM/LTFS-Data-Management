@@ -1,6 +1,6 @@
 #pragma once
 
-class AddCommand: public OpenLTFSCommand
+class AddCommand: public LTFSDMCommand
 
 {
 private:
@@ -9,7 +9,7 @@ private:
     }
 public:
     AddCommand() :
-            OpenLTFSCommand("add", ":+")
+            LTFSDMCommand("add", ":+")
     {
     }
     ~AddCommand()

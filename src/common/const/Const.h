@@ -10,14 +10,14 @@ const std::string LTFSDM_DATA_DIR = ".ltfsdm";
 const std::string DELIM = "/";
 const std::string SERVER_LOCK_FILE = LTFSDM_TMP_DIR + DELIM + SERVER_COMMAND
         + ".lock";
-const std::string TRACE_FILE = LTFSDM_TMP_DIR + DELIM + "OpenLTFS.trc";
-const std::string LOG_FILE = LTFSDM_TMP_DIR + DELIM + "OpenLTFS.log";
+const std::string TRACE_FILE = LTFSDM_TMP_DIR + DELIM + "LTFSDM.trc";
+const std::string LOG_FILE = LTFSDM_TMP_DIR + DELIM + "LTFSDM.log";
 const std::string CLIENT_SOCKET_FILE = LTFSDM_TMP_DIR + DELIM
-        + "OpenLTFS.client.soc";
+        + "LTFSDM.client.soc";
 const std::string RECALL_SOCKET_FILE = LTFSDM_TMP_DIR + DELIM
-        + "OpenLTFS.recall.soc";
-const std::string KEY_FILE = LTFSDM_TMP_DIR + DELIM + "OpenLTFS.key";
-const std::string DB_FILE = LTFSDM_TMP_DIR + DELIM + "OpenLTFS.db";
+        + "LTFSDM.recall.soc";
+const std::string KEY_FILE = LTFSDM_TMP_DIR + DELIM + "LTFSDM.key";
+const std::string DB_FILE = LTFSDM_TMP_DIR + DELIM + "LTFSDM.db";
 const std::string CONFIG_FILE = "/etc/ltfsdm.conf";
 const std::string TMP_CONFIG_FILE = "/etc/ltfsdm.tmp.conf";
 //const std::string DB_FILE = ":memory:";
@@ -46,14 +46,14 @@ const int maxReplica = 3;
 const int tapeIdLength = 8;
 const std::string DMAPI_TERMINATION_MESSAGE = "termination message";
 const std::string FAILED_TAPE_ID = "FAILED";
-const std::string OPEN_LTFS_EA = ".openltfs.";
-const std::string OPEN_LTFS_EA_MANAGED = "trusted.openltfs.ismanaged";
-const std::string OPEN_LTFS_EA_MIGINFO_INT = "trusted.openltfs.miginfo.int";
-const std::string OPEN_LTFS_EA_MIGINFO_EXT = "trusted.openltfs.miginfo.ext";
-const std::string OPEN_LTFS_EA_FSINFO = "trusted.openltfs.fsinfo";
-const std::string OPEN_LTFS_CACHE_DIR = "/.cache";
-const std::string OPEN_LTFS_CACHE_MP = OPEN_LTFS_CACHE_DIR + "/...";
-const std::string OPEN_LTFS_IOCTL = OPEN_LTFS_CACHE_DIR + "/ioctl";
-const std::string OPEN_LTFS_LOCK_DIR = OPEN_LTFS_CACHE_DIR + "/locks";
+const std::string LTFSDM_EA = ".ltfsdm.";
+const std::string LTFSDM_EA_MANAGED = "trusted.ltfsdm.ismanaged";
+const std::string LTFSDM_EA_MIGINFO_INT = "trusted.ltfsdm.miginfo.int";
+const std::string LTFSDM_EA_MIGINFO_EXT = "trusted.ltfsdm.miginfo.ext";
+const std::string LTFSDM_EA_FSINFO = "trusted.ltfsdm.fsinfo";
+const std::string LTFSDM_CACHE_DIR = "/.cache";
+const std::string LTFSDM_CACHE_MP = LTFSDM_CACHE_DIR + "/...";
+const std::string LTFSDM_IOCTL = LTFSDM_CACHE_DIR + "/ioctl";
+const std::string LTFSDM_LOCK_DIR = LTFSDM_CACHE_DIR + "/locks";
 const std::string TMP_DIR_TEMPLATE = "/tmp/ltfsdm.XXXXXX";
 }

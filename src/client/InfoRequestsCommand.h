@@ -1,6 +1,6 @@
 #pragma once
 
-class InfoRequestsCommand: public OpenLTFSCommand
+class InfoRequestsCommand: public LTFSDMCommand
 
 {
 private:
@@ -9,7 +9,7 @@ private:
     }
 public:
     InfoRequestsCommand() :
-            OpenLTFSCommand("requests", ":+hn:")
+            LTFSDMCommand("requests", ":+hn:")
     {
     }
     ~InfoRequestsCommand()

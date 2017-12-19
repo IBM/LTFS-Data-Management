@@ -1,6 +1,6 @@
 #pragma once
 
-class OpenLTFSException: public std::exception
+class LTFSDMException: public std::exception
 
 {
 private:
@@ -31,12 +31,12 @@ private:
     exception_info_t exception_info;
 
 public:
-    OpenLTFSException(const OpenLTFSException& e) :
+    LTFSDMException(const LTFSDMException& e) :
             exception_info(e.exception_info)
     {
     }
 
-    OpenLTFSException(exception_info_t exception_info_) :
+    LTFSDMException(exception_info_t exception_info_) :
             exception_info(exception_info_)
     {
     }
@@ -85,4 +85,4 @@ public:
     }
 };
 
-#define THROW(args ...) throw(OpenLTFSException(OpenLTFSException::processArgs(__FILE__, __LINE__, ##args)))
+#define THROW(args ...) throw(LTFSDMException(LTFSDMException::processArgs(__FILE__, __LINE__, ##args)))

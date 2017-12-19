@@ -358,7 +358,7 @@ void Server::run(sigset_t set)
 
     try {
         //! [inventorize]
-        inventory = new OpenLTFSInventory();
+        inventory = new LTFSDMInventory();
         //! [inventorize]
         //! [connector]
         connector = std::shared_ptr<Connector>(new Connector(true, &Server::conf));

@@ -1,6 +1,6 @@
 #pragma once
 
-class InfoCommand: public OpenLTFSCommand
+class InfoCommand: public LTFSDMCommand
 
 {
 private:
@@ -9,7 +9,7 @@ private:
     }
 public:
     InfoCommand() :
-            OpenLTFSCommand("info", "")
+            LTFSDMCommand("info", "")
     {
     }
     void printUsage()

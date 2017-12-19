@@ -1,13 +1,13 @@
 #pragma once
 
-class VersionCommand: public OpenLTFSCommand
+class VersionCommand: public LTFSDMCommand
 
 {
 private:
     void talkToBackend(std::stringstream *parmList);
 public:
     VersionCommand() :
-            OpenLTFSCommand("version", "h")
+            LTFSDMCommand("version", "h")
     {
     }
     ~VersionCommand()

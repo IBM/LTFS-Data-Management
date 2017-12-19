@@ -2,7 +2,7 @@ RELPATH = ../..
 
 LDFLAGS += -lprotobuf -lconnector -latomic -lpthread -luuid -lblkid -lmount
 
-ARC_SRC_FILES := OpenLTFSCommand.cc
+ARC_SRC_FILES := LTFSDMCommand.cc
 ARC_SRC_FILES += StartCommand.cc
 ARC_SRC_FILES += StopCommand.cc
 ARC_SRC_FILES += AddCommand.cc

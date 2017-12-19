@@ -14,7 +14,7 @@
 #include <mutex>
 
 #include "src/common/messages/Message.h"
-#include "src/common/exception/OpenLTFSException.h"
+#include "src/common/exception/LTFSDMException.h"
 #include "src/common/errors/errors.h"
 
 /**
@@ -45,7 +45,7 @@
 
     @todo use rsyslog facility to write trace output
 
-    The trace information is written to /var/rum/ltfsdm/OpenLTFS.trc*.
+    The trace information is written to /var/rum/ltfsdm/LTFSDM.trc*.
 
     In the following there is some sample output:
 

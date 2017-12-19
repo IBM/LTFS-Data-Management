@@ -1,6 +1,6 @@
 #pragma once
 
-class StopCommand: public OpenLTFSCommand
+class StopCommand: public LTFSDMCommand
 
 {
 private:
@@ -9,7 +9,7 @@ private:
     }
 public:
     StopCommand() :
-            OpenLTFSCommand("stop", "hx")
+            LTFSDMCommand("stop", "hx")
     {
     }
     ~StopCommand()

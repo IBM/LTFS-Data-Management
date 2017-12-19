@@ -19,7 +19,7 @@
 #include <thread>
 
 #include "src/common/errors/errors.h"
-#include "src/common/exception/OpenLTFSException.h"
+#include "src/common/exception/LTFSDMException.h"
 #include "src/common/util/util.h"
 #include "src/common/util/FileSystems.h"
 #include "src/common/messages/Message.h"
@@ -89,7 +89,7 @@ FsObj::FsObj(std::string fileName) :
 {
     FuseFS::FuseHandle *fh = new FuseFS::FuseHandle();
 
-    if (getxattr(fileName.c_str(), Const::OPEN_LTFS_EA_FSINFO.c_str(), fh,
+    if (getxattr(fileName.c_str(), Const::LTFSDM_EA_FSINFO.c_str(), fh,
             sizeof(FuseFS::FuseHandle)) == -1) {
         if ( errno != ENODATA) {
             delete (fh);
@@ -202,7 +202,7 @@ struct stat FsObj::stat()
 
     FuseFS::FuseHandle *fh = (FuseFS::FuseHandle *) handle;
     std::string sourcemp = std::string(fh->mountpoint).append(
-            Const::OPEN_LTFS_CACHE_MP);
+            Const::LTFSDM_CACHE_MP);
 
     miginfo = FuseFS::getMigInfoAt(fh->fd);
 
@@ -344,7 +344,7 @@ void FsObj::addAttribute(mig_attr_t value)
 {
     FuseFS::FuseHandle *fh = (FuseFS::FuseHandle *) handle;
 
-    if (fsetxattr(fh->fd, Const::OPEN_LTFS_EA_MIGINFO_EXT.c_str(),
+    if (fsetxattr(fh->fd, Const::LTFSDM_EA_MIGINFO_EXT.c_str(),
             (void *) &value, sizeof(value), 0) == -1) {
         TRACE(Trace::error, errno);
         THROW(Error::GENERAL_ERROR, errno, fh->fusepath);
@@ -356,16 +356,16 @@ void FsObj::remAttribute()
 {
     FuseFS::FuseHandle *fh = (FuseFS::FuseHandle *) handle;
 
-    if (fremovexattr(fh->fd, Const::OPEN_LTFS_EA_MIGINFO_EXT.c_str()) == -1) {
+    if (fremovexattr(fh->fd, Const::LTFSDM_EA_MIGINFO_EXT.c_str()) == -1) {
         TRACE(Trace::error, errno);
-        MSG(LTFSDMF0018W, Const::OPEN_LTFS_EA_MIGINFO_EXT);
+        MSG(LTFSDMF0018W, Const::LTFSDM_EA_MIGINFO_EXT);
         if ( errno != ENODATA)
             THROW(Error::GENERAL_ERROR, errno, fh->fusepath);
     }
 
-    if (fremovexattr(fh->fd, Const::OPEN_LTFS_EA_MIGINFO_INT.c_str()) == -1) {
+    if (fremovexattr(fh->fd, Const::LTFSDM_EA_MIGINFO_INT.c_str()) == -1) {
         TRACE(Trace::error, errno);
-        MSG(LTFSDMF0018W, Const::OPEN_LTFS_EA_MIGINFO_INT);
+        MSG(LTFSDMF0018W, Const::LTFSDM_EA_MIGINFO_INT);
         if ( errno != ENODATA)
             THROW(Error::GENERAL_ERROR, errno, fh->fusepath);
     }
@@ -378,7 +378,7 @@ FsObj::mig_attr_t FsObj::getAttribute()
     FsObj::mig_attr_t value;
     memset(&value, 0, sizeof(mig_attr_t));
 
-    if (fgetxattr(fh->fd, Const::OPEN_LTFS_EA_MIGINFO_EXT.c_str(),
+    if (fgetxattr(fh->fd, Const::LTFSDM_EA_MIGINFO_EXT.c_str(),
             (void *) &value, sizeof(value)) == -1) {
         if ( errno != ENODATA) {
             TRACE(Trace::error, errno);

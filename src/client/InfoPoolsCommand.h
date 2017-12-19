@@ -1,6 +1,6 @@
 #pragma once
 
-class InfoPoolsCommand: public OpenLTFSCommand
+class InfoPoolsCommand: public LTFSDMCommand
 
 {
 private:
@@ -9,7 +9,7 @@ private:
     }
 public:
     InfoPoolsCommand() :
-            OpenLTFSCommand("pools", ":+h")
+            LTFSDMCommand("pools", ":+h")
     {
     }
     ~InfoPoolsCommand()

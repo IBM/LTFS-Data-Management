@@ -32,7 +32,7 @@ DOXYFILE_ENCODING      = UTF-8
 # title of most generated pages and in a few other places.
 # The default value is: My Project.
 
-PROJECT_NAME           = OpenLTFS
+PROJECT_NAME           = "LTFS Data Management"
 
 # The PROJECT_NUMBER tag can be used to enter a project or revision number. This
 # could be handy for archiving the generated documentation or if some version
@@ -835,7 +835,7 @@ EXCLUDE_SYMLINKS       = NO
 # Note that the wildcards are matched against the file with absolute path, so to
 # exclude all test directories for example use the pattern */test/*
 
-# EXCLUDE_PATTERNS       = */comm/ltfsdm.pb.* *LTFSDmComm* *ThreadPool* *SubServer* *OpenLTFSException*
+# EXCLUDE_PATTERNS       = */comm/ltfsdm.pb.* *LTFSDmComm* *ThreadPool* *SubServer* *LTFSDMException*
 EXCLUDE_PATTERNS       = *ltfsadminlib*
 
 # The EXCLUDE_SYMBOLS tag can be used to specify one or more symbol names
@@ -1111,7 +1111,7 @@ HTML_STYLESHEET        =
 # see the documentation.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-HTML_EXTRA_STYLESHEET  = openltfs.css
+HTML_EXTRA_STYLESHEET  = ltfsdm.css
 
 # The HTML_EXTRA_FILES tag can be used to specify one or more extra images or
 # other source files which should be copied to the HTML output directory. Note

@@ -1,6 +1,6 @@
 #pragma once
 
-class PoolCreateCommand: public OpenLTFSCommand
+class PoolCreateCommand: public LTFSDMCommand
 
 {
 private:
@@ -9,7 +9,7 @@ private:
     }
 public:
     PoolCreateCommand() :
-            OpenLTFSCommand("create", ":+hP:")
+            LTFSDMCommand("create", ":+hP:")
     {
     }
     ~PoolCreateCommand()

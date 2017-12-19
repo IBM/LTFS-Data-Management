@@ -10,7 +10,7 @@
 #include <exception>
 
 #include "src/common/errors/errors.h"
-#include "src/common/exception/OpenLTFSException.h"
+#include "src/common/exception/LTFSDMException.h"
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
 #include "src/common/util/util.h"
@@ -18,9 +18,9 @@
 #include "src/common/comm/ltfsdm.pb.h"
 #include "src/common/comm/LTFSDmComm.h"
 
-#include "OpenLTFSCommand.h"
+#include "LTFSDMCommand.h"
 
-OpenLTFSCommand::~OpenLTFSCommand()
+LTFSDMCommand::~LTFSDMCommand()
 
 {
     try {
@@ -33,7 +33,7 @@ OpenLTFSCommand::~OpenLTFSCommand()
     }
 }
 
-void OpenLTFSCommand::processOptions(int argc, char **argv)
+void LTFSDMCommand::processOptions(int argc, char **argv)
 
 {
     int opt;
@@ -83,14 +83,14 @@ void OpenLTFSCommand::processOptions(int argc, char **argv)
     }
 }
 
-void OpenLTFSCommand::traceParms()
+void LTFSDMCommand::traceParms()
 
 {
     TRACE(Trace::normal, preMigrate, recToResident, requestNumber, poolNames,
             fileList, command, optionStr, key);
 }
 
-void OpenLTFSCommand::getRequestNumber()
+void LTFSDMCommand::getRequestNumber()
 
 {
     LTFSDmProtocol::LTFSDmReqNumber *reqnum = commCommand.mutable_reqnum();
@@ -122,7 +122,7 @@ void OpenLTFSCommand::getRequestNumber()
     }
 }
 
-void OpenLTFSCommand::connect()
+void LTFSDMCommand::connect()
 
 {
     key = LTFSDM::getkey();
@@ -139,7 +139,7 @@ void OpenLTFSCommand::connect()
     TRACE(Trace::normal, requestNumber);
 }
 
-void OpenLTFSCommand::checkOptions(int argc, char **argv)
+void LTFSDMCommand::checkOptions(int argc, char **argv)
 
 {
     if ((requestNumber != Const::UNSET) && (argc != 3))
@@ -153,7 +153,7 @@ void OpenLTFSCommand::checkOptions(int argc, char **argv)
     }
 }
 
-void OpenLTFSCommand::sendObjects(std::stringstream *parmList)
+void LTFSDMCommand::sendObjects(std::stringstream *parmList)
 
 {
     std::istream *input;
@@ -242,7 +242,7 @@ void OpenLTFSCommand::sendObjects(std::stringstream *parmList)
     INFO(LTFSDMC0051I, time(NULL) - startTime);
 }
 
-void OpenLTFSCommand::queryResults()
+void LTFSDMCommand::queryResults()
 
 {
     long resident = 0;
@@ -314,7 +314,7 @@ void OpenLTFSCommand::queryResults()
     } while (!done);
 }
 
-void OpenLTFSCommand::isValidRegularFile()
+void LTFSDMCommand::isValidRegularFile()
 
 {
     struct stat statbuf;

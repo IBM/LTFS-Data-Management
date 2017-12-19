@@ -15,7 +15,7 @@
 #include <exception>
 
 #include "src/common/errors/errors.h"
-#include "src/common/exception/OpenLTFSException.h"
+#include "src/common/exception/LTFSDMException.h"
 #include "src/common/util/util.h"
 #include "src/common/util/FileSystems.h"
 #include "src/common/messages/Message.h"
@@ -27,11 +27,11 @@
 
 #include "src/connector/Connector.h"
 
-#include "OpenLTFSCommand.h"
+#include "LTFSDMCommand.h"
 #include "InfoFsCommand.h"
 
 /** @page ltfsdm_info_fs ltfsdm info fs
-    The ltfsdm info fs command lists all OpenLTFS managed file systems:
+    The ltfsdm info fs command lists all LTFS Data Management managed file systems:
 
     <tt>@LTFSDMC0056I</tt>
 
@@ -78,7 +78,7 @@ void InfoFsCommand::doCommand(int argc, char **argv)
                 if (fileSystem.isFsManaged()) {
                     INFO(LTFSDMC0057I, fs.target);
                 }
-            } catch (const OpenLTFSException& e) {
+            } catch (const LTFSDMException& e) {
                 if (e.getError() == Error::FS_CHECK_ERROR) {
                     MSG(LTFSDMC0058E, fs.target);
                     break;

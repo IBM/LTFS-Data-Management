@@ -13,7 +13,7 @@
 #include <exception>
 
 #include "src/common/errors/errors.h"
-#include "src/common/exception/OpenLTFSException.h"
+#include "src/common/exception/LTFSDMException.h"
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
 #include "src/common/util/FileSystems.h"
@@ -24,7 +24,7 @@
 
 #include "src/connector/Connector.h"
 
-#include "OpenLTFSCommand.h"
+#include "LTFSDMCommand.h"
 #include "InfoFilesCommand.h"
 
 /** @page ltfsdm_info_files ltfsdm info files

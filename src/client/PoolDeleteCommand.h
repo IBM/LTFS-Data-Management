@@ -1,6 +1,6 @@
 #pragma once
 
-class PoolDeleteCommand: public OpenLTFSCommand
+class PoolDeleteCommand: public LTFSDMCommand
 
 {
 private:
@@ -9,7 +9,7 @@ private:
     }
 public:
     PoolDeleteCommand() :
-            OpenLTFSCommand("delete", ":+hP:")
+            LTFSDMCommand("delete", ":+hP:")
     {
     }
     ~PoolDeleteCommand()

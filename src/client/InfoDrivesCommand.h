@@ -1,6 +1,6 @@
 #pragma once
 
-class InfoDrivesCommand: public OpenLTFSCommand
+class InfoDrivesCommand: public LTFSDMCommand
 
 {
 private:
@@ -9,7 +9,7 @@ private:
     }
 public:
     InfoDrivesCommand() :
-            OpenLTFSCommand("drives", ":+h")
+            LTFSDMCommand("drives", ":+h")
     {
     }
     ~InfoDrivesCommand()

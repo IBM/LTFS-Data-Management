@@ -15,7 +15,7 @@
 #include "src/common/const/Const.h"
 #include "src/common/errors/errors.h"
 #include "src/common/util/util.h"
-#include "src/common/exception/OpenLTFSException.h"
+#include "src/common/exception/LTFSDMException.h"
 
 #include "Message.h"
 

@@ -122,7 +122,7 @@ def prepare():
     cntfile.close();
 
     if os.system("ltfsdm stop") != 0:
-        print("unable to stop OpenLTFS, perhaps already stopped")
+        print("unable to stop LTFS Data Management, perhaps already stopped")
 
     try:
         shutil.rmtree("/var/run/ltfsdm")
@@ -159,7 +159,7 @@ def prepare():
 
     if os.system("ltfsdm start") != 0:
     #if os.system("valgrind --leak-check=full  ltfsdmd -f > valgrind.out 2>&1 &") != 0:
-        print("unable to start OpenLTFS")
+        print("unable to start LTFS Data Management")
 
     # time.sleep(10)
     print("creating the files")

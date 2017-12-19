@@ -19,7 +19,7 @@
 #include <exception>
 
 #include "src/common/errors/errors.h"
-#include "src/common/exception/OpenLTFSException.h"
+#include "src/common/exception/LTFSDMException.h"
 #include "src/common/util/util.h"
 #include "src/common/util/FileSystems.h"
 #include "src/common/messages/Message.h"
@@ -467,7 +467,7 @@ Connector::rec_info_t Connector::getEvents()
 					FsObj fileSystem(handRP, handRLen);
 					fileSystem.manageFs(false, starttime);
 					break;
-				} catch (const OpenLTFSException& e) {
+				} catch (const LTFSDMException& e) {
 					switch (e.getError()) {
 						case Error::FS_ADD_ERROR:
 							usleep(100000);
@@ -671,7 +671,7 @@ void FsObj::manageFs(bool setDispo, struct timespec starttime)
 				THROW(Error::FS_ADD_ERROR,
 						(unsigned long ) handle, errno);
 			}
-		} catch (const OpenLTFSException& e) {
+		} catch (const LTFSDMException& e) {
 			lock();
 			attr.managed = false;
 			if (dm_set_dmattr(dmapiSession, handle, handleLength, dmapiToken,

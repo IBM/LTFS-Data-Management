@@ -6,18 +6,18 @@
 #include <exception>
 
 #include "src/common/errors/errors.h"
-#include "src/common/exception/OpenLTFSException.h"
+#include "src/common/exception/LTFSDMException.h"
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
 
 #include "src/common/comm/ltfsdm.pb.h"
 #include "src/common/comm/LTFSDmComm.h"
 
-#include "OpenLTFSCommand.h"
+#include "LTFSDMCommand.h"
 #include "StatusCommand.h"
 
 /** @page ltfsdm_status ltfsdm status
-    The ltfsdm status command provides the status of the OpenLTFS service.
+    The ltfsdm status command provides the status of the LTFS Data Management service.
 
     <tt>@LTFSDMC0030I</tt>
 
@@ -29,7 +29,7 @@
 
     @verbatim
     [root@visp ~]# ltfsdm status
-    LTFSDMC0032I(0068): The OpenLTFS server process is operating with pid  13378.
+    LTFSDMC0032I(0068): The LTFS Data Management server process is operating with pid  13378.
     @endverbatim
 
     The responsible class is @ref StatusCommand.

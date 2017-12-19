@@ -20,7 +20,7 @@
 
     # Messaging System
 
-    OpenLTFS writes output to the console and a log file. Every output to these
+    LTFS Data Management writes output to the console and a log file. Every output to these
     two locations should be regarded as a message even it is a single character.
     Tracing does not used messages since only values of variables are printed
     out. All messages are consolidated in a single file

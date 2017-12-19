@@ -7,18 +7,18 @@
 #include <exception>
 
 #include "src/common/errors/errors.h"
-#include "src/common/exception/OpenLTFSException.h"
+#include "src/common/exception/LTFSDMException.h"
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
 
 #include "src/common/comm/ltfsdm.pb.h"
 #include "src/common/comm/LTFSDmComm.h"
 
-#include "OpenLTFSCommand.h"
+#include "LTFSDMCommand.h"
 #include "InfoRequestsCommand.h"
 
 /** @page ltfsdm_info_requests ltfsdm info requests
-    The ltfsdm info request command lists all OpenLTFS requests and the corresponding status.
+    The ltfsdm info request command lists all LTFS Data Management requests and the corresponding status.
 
     <tt>@LTFSDMC0009I</tt>
 
