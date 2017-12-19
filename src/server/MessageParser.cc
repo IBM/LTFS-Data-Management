@@ -1,5 +1,38 @@
 #include "ServerIncludes.h"
 
+/**
+    @page messaging
+
+    In MessageParser::run it is determined which Protocol Buffer message
+    has been received. If the migration command has been called the
+    following would be true:
+
+    command.has_migrequest()
+
+    For each message there exists a corresponding method for further processing:
+
+    Message | Description
+    ---|---
+    MessageParser::reqStatusMessage | query results after a migration or recall request have been sent
+    MessageParser::migrationMessage | migration command
+    MessageParser::selRecallMessage | recall command
+    MessageParser::requestNumber | message to get a request number
+    MessageParser::stopMessage | stop command
+    MessageParser::statusMessage | status command
+    MessageParser::addMessage | add command
+    MessageParser::infoRequestsMessage | info requests command
+    MessageParser::infoJobsMessage | info jobs command
+    MessageParser::infoDrivesMessage | info drives command
+    MessageParser::infoTapesMessage | info tapes command
+    MessageParser::poolCreateMessage | pool create command
+    MessageParser::poolDeleteMessage | pool delete command
+    MessageParser::poolAddMessage | pool add command
+    MessageParser::poolRemoveMessage | pool remove command
+    MessageParser::infoPoolsMessage | info pools command
+    MessageParser::retrieveMessage | retrieve command
+
+ */
+
 void MessageParser::getObjects(LTFSDmCommServer *command, long localReqNumber,
         unsigned long pid, long requestNumber, FileOperation *fopt)
 

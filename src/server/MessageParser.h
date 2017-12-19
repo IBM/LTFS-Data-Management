@@ -14,12 +14,9 @@ private:
             unsigned long pid, long requestNumber, FileOperation *fopt);
     static void reqStatusMessage(long key, LTFSDmCommServer *command,
             FileOperation *fopt);
-    static void reqStatusMessage(long key, LTFSDmCommServer *command);
     static void migrationMessage(long key, LTFSDmCommServer *command,
             long localReqNumber);
     static void selRecallMessage(long key, LTFSDmCommServer *command,
-            long localReqNumber);
-    static void infoFilesMessage(long key, LTFSDmCommServer *command,
             long localReqNumber);
     static void requestNumber(long key, LTFSDmCommServer *command,
             long *localReqNumber);
