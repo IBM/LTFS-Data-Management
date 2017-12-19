@@ -44,7 +44,7 @@
 
 
 
-/** @page client_code Client Code
+/** @page command_evaluation
 
  ## Command evaluation
 

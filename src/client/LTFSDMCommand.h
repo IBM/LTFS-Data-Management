@@ -45,6 +45,8 @@
  the LTFSDMCommand::doCommand method. Any command needs to implement
  this method even there is no need to talk to the backend.
 
+ @copydoc command_evaluation
+
  ## Options
 
  Some commands do an additional option processing. Each option has a particular
