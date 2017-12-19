@@ -1,5 +1,9 @@
 #include "ServerIncludes.h"
 
+/** @page selective_recall Selective Recall
+
+ */
+
 void SelRecall::addJob(std::string fileName)
 
 {

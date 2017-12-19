@@ -152,6 +152,19 @@
       is possible to reuse them. See @subpage thread_pool.
 
 
+    ## Backend Processing
+
+    The following sections provides an overview about the backend processing of client requests:
+
+    - @subpage receiver_and_message_processing
+    - @subpage scheduler
+    - @subpage migration
+    - @subpage selective_recall
+
+    Furthermore for transparent recalling the following sections are available:
+
+    - @subpage transparent_recall
+
     ## The startup sequence
 
     During the startup initialization happens and threads are started for
@@ -275,7 +288,6 @@
     run server: ltfsdmd.run -> start signal handler| see: Server::signalHandler
     run server: ltfsdmd.run -> start receiver| see: Receiver::run
     run server: ltfsdmd.run -> start recall listener | thread listening for transparent recall requests, see TransRecall::run
-
 */
 
 int main(int argc, char **argv)

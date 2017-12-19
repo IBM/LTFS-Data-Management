@@ -1,5 +1,9 @@
 #include "ServerIncludes.h"
 
+/** @page scheduler Scheduler
+
+ */
+
 std::mutex Scheduler::mtx;
 std::condition_variable Scheduler::cond;
 std::mutex Scheduler::updmtx;

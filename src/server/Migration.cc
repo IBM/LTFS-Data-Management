@@ -1,5 +1,9 @@
 #include "ServerIncludes.h"
 
+/** @page migration Migration
+
+ */
+
 std::mutex Migration::pmigmtx;
 
 ThreadPool<Migration, int, std::string, std::string, bool> Migration::swq(

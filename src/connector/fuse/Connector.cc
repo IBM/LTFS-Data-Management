@@ -27,6 +27,10 @@
 #include "src/connector/fuse/FuseConnector.h"
 #include "src/connector/Connector.h"
 
+/** @page fuse_connector Fuse connector
+
+ */
+
 std::atomic<bool> Connector::connectorTerminate(false);
 std::atomic<bool> Connector::forcedTerminate(false);
 std::atomic<bool> Connector::recallEventSystemStopped(false);

@@ -2,6 +2,42 @@
 
 /** @page thread_pool ThreadPool
 
+    The ThreadPool class is designated as a facility to start threads
+    and wait for their completion. It has the following capabilities
+    and limitations:
+
+    - Only a single function can be specified to be executed by the
+      threads, parameters can be different.
+    - A single name can be specified for the threads.
+    - A thread can be reused up to 10 seconds of inactivity. Thereafter
+      it will terminate.
+
+    For the constructor of the class the following parameters need to
+    be specified:
+
+    - the function to be executed
+    - the maximum number of threads
+    - the name of the threads
+
+    A new thread can be enqueued with the ThreadPool::enqueue method.
+    Only the function (that has been specified with the constructor)
+    parameters and if necessary (if not Const::UNSET should be specified)
+    as a first parameter. For ThreadPool::waitCompletion method a request
+    number can be specified to wait only for for specific request to
+    finish (if not Const::UNSET should be specified). This only is the
+    case for those ThreadPools that perform tasks for different request at
+    the same time.
+
+    The ThreadPool is used by doing the following three steps:
+
+    - Setup the ThreadPool within its @ref ThreadPool::ThreadPool "constructor"
+      with a name and a function to be executed.
+    - Execute this function in a thread by the ThreadPool::enqueue method
+      and specifying a request number (use Const::UNSET if not required) and
+      function parameters.
+    - Wait for all threads to complete by using the ThreadPool::waitCompletion
+      method.
+
  */
 
 template<typename ... Args> class ThreadPool

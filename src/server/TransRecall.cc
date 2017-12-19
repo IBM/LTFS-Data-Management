@@ -1,5 +1,9 @@
 #include "ServerIncludes.h"
 
+/** @page transparent_recall Transparent Recall
+
+ */
+
 void TransRecall::addRequest(Connector::rec_info_t recinfo, std::string tapeId,
         long reqNum)
 

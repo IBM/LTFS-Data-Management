@@ -1,5 +1,10 @@
 /** @file */
 
+
+/** @page receiver_and_message_processing Receiver and message processing
+
+ */
+
 #include "ServerIncludes.h"
 
 std::atomic<long> globalReqNumber;
