@@ -44,9 +44,53 @@
 
 
 
-/** @page command_evaluation
+/**
+ @page client_code Client Code
 
- ## Command evaluation
+ # Class Hierarchy
+
+ For each of the commands there exists a class derived from the
+ @ref LTFSDMCommand class. The class name corresponds to the command name
+ that the command names are prepended to the word "Command".
+
+ @dot
+ digraph client {
+     fontname=default;
+     fontsize=11;
+     rankdir=RL;
+     node [shape=record, fontsize=11, fillcolor=white, style=filled];
+     open_ltfs_command [fontname="fixed bold", fontcolor=dodgerblue4, width=2, label="LTFSDMCommand" URL="@ref LTFSDMCommand"];
+     command [fontname="fixed", fontcolor=black, label="ltfsdm X Y → class XYCommand"];
+     command -> open_ltfs_command;
+ }
+ @enddot
+
+ E.g. for the @ref ltfsdm_migrate "ltfsdm migrate" and for the @ref ltfsdm_recall "ltfsdm recall"
+ commands there exist @ref MigrateCommand and @ref RecallCommand classes:
+
+ @dot
+ digraph client {
+     fontname=default;
+     fontsize=11;
+     rankdir=RL;
+     node [shape=record, fontname="fixed bold", fontcolor=dodgerblue4, fontsize=11, fillcolor=white, style=filled, width=2];
+     open_ltfs_command [label="LTFSDMCommand" URL="@ref LTFSDMCommand"];
+     migrate_command [label="MigrateCommand" URL="@ref MigrateCommand"];
+     recall_command [label="RecallCommand" URL="@ref RecallCommand"];
+     other_commands [fontname="fixed", fontcolor=black, label="..."];
+     migrate_command -> open_ltfs_command;
+     recall_command -> open_ltfs_command;
+     other_commands -> open_ltfs_command;
+ }
+ @enddot
+
+ Any new command should follow this rule of creating a corresponding class name.
+
+ The actual processing of a command happens within virtual
+ the LTFSDMCommand::doCommand method. Any command needs to implement
+ this method even there is no need to talk to the backend.
+
+ # Command evaluation
 
  LTFS Data Management is started, stopped, and operated using the [ltfsdm command](@ref md_src_1_commands).
 

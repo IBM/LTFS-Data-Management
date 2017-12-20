@@ -1,15 +1,20 @@
 #include "ServerIncludes.h"
 
 /**
-    @page messaging
+    @page message_parsing Message parsing
 
-    In MessageParser::run it is determined which Protocol Buffer message
-    has been received. If the migration command has been called the
-    following would be true:
+    The message parsing is invoked by Receiver calling the MessageParser::run
+    method. Within this method it is determined which Protocol
+    Buffer message has been received. The Prorocol Buffers framework
+    provides functions to determine which command has been issued
+    on the client side. If the migration command has been
+    called the following method
 
     command.has_migrequest()
 
-    For each message there exists a corresponding method for further processing:
+    should be used to identify. This identification is part of the
+    MessageParser::run method. Further parsing amd processing
+    is performed within command specific methods:
 
     Message | Description
     ---|---
@@ -30,6 +35,45 @@
     MessageParser::poolRemoveMessage | pool remove command
     MessageParser::infoPoolsMessage | info pools command
     MessageParser::retrieveMessage | retrieve command
+
+    For selective recall and migration the file names need to be transferred
+    from the client to the backend. This is handled within the MessageParser::getObjects
+    method. Sending the objects and querying the migration and recall status
+    is performed over same connection like the initial migration and recall
+    requests to be followed and not processed by the Receiver.
+
+    The following graph provides an overview of the complete client message processing:
+
+    @dot
+    digraph message_processing {
+        compound=yes;
+        fontname="fixed";
+        fontsize=11;
+        labeljust=l;
+        node [shape=record, width=1, fontname="fixed", fontsize=11, fillcolor=white, style=filled];
+        listen [fontname="fixed bold", fontcolor=dodgerblue4, label="command.listen", URL="@ref LTFSDmCommServer::listen"];
+        subgraph cluster_loop {
+            label="while not terminated"
+            accept [fontname="fixed bold", fontcolor=dodgerblue4, label="command.accept", URL="@ref LTFSDmCommServer::accept"];
+            run [fontname="fixed bold", fontcolor=dodgerblue4, label="MessageParser::run", URL="@ref MessageParser::run"];
+            msg [label="MessageParser::...Message"];
+            mig_msg [fontname="fixed bold", fontcolor=dodgerblue4, label="MessageParser::migrationMessage", URL="@ref MessageParser::migrationMessage"];
+            rec_msg [fontname="fixed bold", fontcolor=dodgerblue4, label="MessageParser::selRecallMessage", URL="@ref MessageParser::selRecallMessage"];
+            get_objects [fontname="fixed bold", fontcolor=dodgerblue4, label="MessageParser::getObjects", URL="@ref MessageParser::getObjects"];
+            req_status_msg [fontname="fixed bold", fontcolor=dodgerblue4, label="MessageParser::reqStatusMessage", URL="@ref MessageParser::reqStatusMessage"];
+        }
+        listen -> accept [lhead=cluster_loop, minlen=2];
+        accept -> run [fontname="fixed bold", fontsize=8, fontcolor=dodgerblue4, label="wqm.enqueue", URL="@ref ThreadPool::enqueue"];
+        run -> msg [];
+        run -> mig_msg [];
+        run -> rec_msg [];
+        mig_msg -> get_objects [fontsize=8, label="1st"];
+        mig_msg -> req_status_msg [fontsize=8, label="2nd"];
+        rec_msg -> get_objects [fontsize=8, label="1st"];
+        rec_msg -> req_status_msg [fontsize=8, label="2nd"];
+    }
+    @enddot
+
 
  */
 

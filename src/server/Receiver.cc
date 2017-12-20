@@ -1,25 +1,23 @@
-/**
-    @page receiver_and_message_processing Receiver and message processing
+/** @page receiver_and_message_processing Receiver and client message parsing
 
-    Within the Receiver::run method the backend is listening for messages
+    When a client send a message to the backend there are two components
+    who are processing such a message:
+
+    - The Receiver listens on a socket and provides the information sent to
+    - a MessageParser object that is evaluating the message in a separate thread.
+
+    For details about parsing client messages see @subpage message_parsing.
+
+    The Receiver is started by calling the Receiver::run method. This method
+    is executed within a separate thread and it is listening for messages
     sent by a client. If a new message is received further processing is
-    performed within another thread to keep the Receiver listening. For these
-    threads a ThreadPool wqm is available calling MessageParser::run with
-    message specific parameters: the key number, the LTFSDmCommServer command,
-    and a pointer to the Connector.
-
-    @copydoc messaging
-
-    For selective recall and migration the file names need to be transferred
-    from the client to the backend. This is handled within the MessageParser::getObjects
-    method. Sending the objects and querying the migration and recall status
-    is performed over same connection like the initial migration and recall
-    requests to be followed and not processed by the Receiver.
-
-    This gives the following picture:
+    performed within another thread to keep the Receiver listening for further
+    messages. For these threads a ThreadPool wqm is available calling
+    MessageParser::run with message specific parameters: the key number,
+    the LTFSDmCommServer command, and a pointer to the Connector.
 
     @dot
-    digraph message_processing {
+    digraph receiver {
         compound=yes;
         fontname="fixed";
         fontsize=11;
@@ -29,23 +27,16 @@
         subgraph cluster_loop {
             label="while not terminated"
             accept [fontname="fixed bold", fontcolor=dodgerblue4, label="command.accept", URL="@ref LTFSDmCommServer::accept"];
-            //enqueue [fontname="fixed bold", fontcolor=dodgerblue4, label="wqm.enqueue", URL="@ref ThreadPool::enqueue"];
-            run [fontname="fixed bold", fontcolor=dodgerblue4, label="MessageParser::run", URL="@ref MessageParser::run"];
-            msg [label="MessageParser::...Message"];
-            mig_msg [fontname="fixed bold", fontcolor=dodgerblue4, label="MessageParser::migrationMessage", URL="@ref MessageParser::migrationMessage"];
-            rec_msg [fontname="fixed bold", fontcolor=dodgerblue4, label="MessageParser::selRecallMessage", URL="@ref MessageParser::selRecallMessage"];
-            get_objects [fontname="fixed bold", fontcolor=dodgerblue4, label="MessageParser::getObjects", URL="@ref MessageParser::getObjects"];
-            req_status_msg [fontname="fixed bold", fontcolor=dodgerblue4, label="MessageParser::reqStatusMessage", URL="@ref MessageParser::reqStatusMessage"];
+            subgraph cluster_thread_pool {
+                fontname="fixed bold";
+                fontcolor=dodgerblue4;
+                label="ThreadPool wqm";
+                URL="@ref ThreadPool";
+                wqm [label="...|...|<mpo> MessageParser::run|...|..."];
+            }
         }
         listen -> accept [lhead=cluster_loop, minlen=2];
-        accept -> run [fontname="fixed bold", fontsize=8, fontcolor=dodgerblue4, label="wqm.enqueue", URL="@ref ThreadPool::enqueue"];
-        run -> msg [];
-        run -> mig_msg [];
-        run -> rec_msg [];
-        mig_msg -> get_objects [fontsize=8, label="1st"];
-        mig_msg -> req_status_msg [fontsize=8, label="2nd"];
-        rec_msg -> get_objects [fontsize=8, label="1st"];
-        rec_msg -> req_status_msg [fontsize=8, label="2nd"];
+        accept -> wqm:mpo[fontname="fixed bold", fontsize=8, fontcolor=dodgerblue4, label="wqm.enqueue", URL="@ref ThreadPool::enqueue"];
     }
     @enddot
 
