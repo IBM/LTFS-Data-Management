@@ -2,6 +2,86 @@
 
 /** @page migration Migration
 
+    # Migration
+
+    The migration processing happens within two phases:
+
+    1. The backend receives a migration message which is further processed
+       within the MessageParser::migrationMessage method. During this
+       processing migration jobs and migration requests are added to
+       the internal queues.
+    2. The Scheduler identifies a migration request to get scheduled.\n
+       The migration happens within the following sequence:
+       - The corresponding data is written to the selected tape.
+       - The tape index is synchronized.
+       - The corresponding files on disk are stubbed (only for migration
+         state as target).
+
+    The second step cannot start before the first step is completed. For
+    the second step the required tape and drive resources need to be
+    available: e.g. a corresponding tape cartridge is mounted on a tape drive.
+
+    If the premigration state is chosen as the target migration state the third
+    item - the stubbing phase - of the second step is skipped.
+
+    ## 1st adding jobs and requests to the internal tables
+
+    When a client sends a migration request to the backend the corresponding
+    information is split into two parts. The first part contains information
+    the is relevant for the whole request:
+
+    - the tape storage pools the migration is targeted to
+    - the final migration state (premigrated or migrated)
+
+    Thereafter the file names of the files to be migrated are sent to the backend.
+    When receiving this information corresponding entries are added to the SQL
+    table JOB_QUEUE table. For each file name one or more jobs are created based
+    on the number of tape storage pools being specified. After that entries are added
+    to the SQL table REQUEST_QUEUE. For each storage pool being specified a
+    corresponding entry is added to that table.
+
+    This an example of the two tables when migrating four files to two pools:
+
+    @verbatim
+    sqlite> select * from JOB_QUEUE;
+    OPERATION   FILE_NAME               REQ_NUM     TARGET_STATE  REPL_NUM    TAPE_POOL   FILE_SIZE   FS_ID_H               FS_ID_L               I_GEN        I_NUM       MTIME_SEC   MTIME_NSEC  LAST_UPD    TAPE_ID     FILE_STATE  START_BLOCK  CONN_INFO
+    ----------  ----------------------  ----------  ------------  ----------  ----------  ----------  --------------------  --------------------  -----------  ----------  ----------  ----------  ----------  ----------  ----------  -----------  ----------
+    2           /mnt/lxfs/test3/file.1  6           1             0           pool_1      32768       -4229860921927319251  -6765444084672883911  -1926452355  1084047255  1514983931  500913649   1514983959              0
+    2           /mnt/lxfs/test3/file.1  6           1             1           pool_2      32768       -4229860921927319251  -6765444084672883911  -1926452355  1084047255  1514983931  500913649   1514983959              0
+    2           /mnt/lxfs/test3/file.2  6           1             0           pool_1      32768       -4229860921927319251  -6765444084672883911  1442398178   1083519761  1514983931  504913625   1514983959              0
+    2           /mnt/lxfs/test3/file.2  6           1             1           pool_2      32768       -4229860921927319251  -6765444084672883911  1442398178   1083519761  1514983931  504913625   1514983959              0
+    2           /mnt/lxfs/test3/file.3  6           1             0           pool_1      32768       -4229860921927319251  -6765444084672883911  -1348613989  1074666489  1514983931  507913608   1514983959              0
+    2           /mnt/lxfs/test3/file.3  6           1             1           pool_2      32768       -4229860921927319251  -6765444084672883911  -1348613989  1074666489  1514983931  507913608   1514983959              0
+    2           /mnt/lxfs/test3/file.4  6           1             0           pool_1      32768       -4229860921927319251  -6765444084672883911  -1199258554  1074666490  1514983931  510913590   1514983959              0
+    2           /mnt/lxfs/test3/file.4  6           1             1           pool_2      32768       -4229860921927319251  -6765444084672883911  -1199258554  1074666490  1514983931  510913590   1514983959              0
+    sqlite> select * from REQUEST_QUEUE;
+    OPERATION   REQ_NUM     TARGET_STATE  NUM_REPL    REPL_NUM    TAPE_POOL   TAPE_ID     TIME_ADDED  STATE
+    ----------  ----------  ------------  ----------  ----------  ----------  ----------  ----------  ----------
+    2           6           1             2           0           pool_1                  1514983959  0
+    2           6           1             2           1           pool_2                  1514983959  0
+    @endverbatim
+
+    For a description of the columns see @ref sqlite.
+
+    During the scheduling later-on the cartridges will be identified as
+    parts of the tape storage pools.
+
+    The following is an overview of this initial migration processing including
+    corresponding links to the code parts:
+
+    <TT>
+    - MessageParser::migrationMessage
+        - retrieve tape storage pool information (@ref LTFSDmProtocol::LTFSDmMigRequest::pools "migreq.pools()")
+        - retrieve target state information (premigrated or migrated state, @ref LTFSDmProtocol::LTFSDmMigRequest::state "migreq.state()")
+        - create a Migration object
+        - respond back to the client with a request number
+        - MessageParser::getObjects - retrieving file names to migrate
+            - Migration::addJob - add migration information the the SQLite table JOB_QUEUE
+        - Migration::addRequest - add a request to the SQLite table REQUEST_QUEUE
+        - MessageParser::reqStatusMessage - provide updates to the migration processing to the client
+
+    </TT>
+
  */
 
 std::mutex Migration::pmigmtx;

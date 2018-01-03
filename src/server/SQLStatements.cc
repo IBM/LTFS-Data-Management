@@ -1,5 +1,66 @@
 #include "ServerIncludes.h"
 
+/** @page sqlite SQLite tables
+
+    # SQLite tables
+
+    Since client requests like migration or selective recall cannot
+    always being processed immediately information about these
+    requests needs to be stored temporarily. A request only can be
+    executed if there is a free drive and tape resource available.
+    A request is related to a single command initiated by a client.
+    A client can e.g.:
+
+    - call the recall command which leads to one recall request.
+    - call the migration command which leads to up to three migration
+      requests depending on the number of storage pools specified.
+
+    All requests are stored in the SQLite table REQUEST_QUEUE.
+
+    For each request one or more file can be processed. For each
+    file one jobs is created (for migration up to three jobs
+    depending on the number of tape storage pools being specified).
+    Jobs are stored within the SQlite table JOB_QUEUE.
+
+    ## JOB_QUEUE
+
+    column | data type | details
+    ---|---|---
+    OPERATION | INT | operation: see DataBase::operation
+    FILE_NAME | CHAR(4096) | file name
+    REQ_NUM | INT | for each new request incremented by one
+    TARGET_STATE | INT | target state as defined within the protocol buffer definitions
+    REPL_NUM | INT | 0, for migration 0,1,2 depending of the number of tape storage pools
+    TAPE_POOL | VARCHAR | name of the tape storage pool
+    FILE_SIZE | BIGINT | file size
+    FS_ID_H | BIGINT | higher 64 bit part of the 128 bit file system id
+    FS_ID_L | BIGINT | lower 64 bit part of the 128 bit file system id
+    I_GEN | INT | inode generation number
+    I_NUM | BIGINT | inode number
+    MTIME_SEC | BIGINT | mtime: seconds
+    MTIME_NSEC | BIGINT | mtime: nano seconds
+    LAST_UPD | INT | last update of this record (need to check if really used)
+    TAPE_ID | CHAR(9) | id of the cartridge that is being used
+    FILE_STATE | INT | file state: see FsObj::file_state
+    START_BLOCK | INT | starting block of the data on tape of a (pre)migrated file
+    CONN_INFO | BIGINT | address of connector specific information
+
+    ## REQUEST_QUEUE
+
+    column | data type | details
+    ---|---|---
+    OPERATION | INT | operation: see DataBase::operation
+    REQ_NUM | INT | for each new request incremented by one
+    TARGET_STATE | INT | target state as defined within the protocol buffer definitions
+    NUM_REPL | | number of replicas, only used for migration
+    REPL_NUM | INT | 0, for migration 0,1,2 depending of the number of tape storage pools
+    TAPE_POOL | VARCHAR | name of the tape storage pool
+    TAPE_ID | CHAR(9) | id of the cartridge that is being used
+    TIME_ADDED | INT | time the request has been added (need to check if really used)
+    STATE | INT | request state, see DataBase::req_state
+
+ */
+
 /* ======== DataBase ======== */
 
 const std::string DataBase::CREATE_JOB_QUEUE =

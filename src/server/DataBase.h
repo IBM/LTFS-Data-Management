@@ -11,11 +11,16 @@ private:
 public:
     enum operation
     {
-        TRARECALL, SELRECALL, MIGRATION, NOOP
+        TRARECALL, /**< 0 */
+        SELRECALL, /**< 1 */
+        MIGRATION, /**< 2 */
+        NOOP /**< 3 */
     };
     enum req_state
     {
-        REQ_NEW, REQ_INPROGRESS, REQ_COMPLETED
+        REQ_NEW, /**< 0 */
+        REQ_INPROGRESS, /**< 1 */
+        REQ_COMPLETED /**< 2 */
     };
     static std::mutex trans_mutex;
     DataBase() :

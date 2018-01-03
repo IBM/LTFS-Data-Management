@@ -32,8 +32,11 @@
     requests and to perform the resource management of cartridges and
     tape drives. To optimally use the resources for migration and recall
     requests requests need to be queued and schedules when a required
-    resource is ready to be used. The following is a high level sequence
-    how such requests get processed:
+    resource is ready to be used. For the queuing information needs to
+    be stored temporarily. Two SQLite tables are used for that purpose.
+    A description of the two tables can be found at @subpage sqlite.
+
+    The following is a high level sequence how such requests get processed:
 
     - a request and corresponding jobs are added to the internal queues
     - the scheduler is looking for a free drive and tape resource
@@ -51,7 +54,7 @@
       migration request to migrate 1000 files to a single tape 1000 jobs
       will be created.
 
-    Requests as well as some takes can and should happen concurrently.
+    Some requests as well as some jobs can and should happen concurrently.
     E.g. there are two drives available and some files get recalled
     form a single tape another tape can be used in parallel e.g. for
     migration. If a request is being processed on a tape it should be

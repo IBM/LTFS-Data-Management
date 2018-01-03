@@ -83,14 +83,14 @@ public:
     };
     enum file_state
     {
-        RESIDENT,
-        PREMIGRATED,
-        MIGRATED,
-        FAILED,
-        PREMIGRATING,
-        STUBBING,
-        RECALLING_MIG,
-        RECALLING_PREMIG
+        RESIDENT,  /**< 0 */
+        PREMIGRATED,  /**< 1 */
+        MIGRATED,  /**< 2 */
+        FAILED,  /**< 3 */
+        PREMIGRATING,  /**< 4 */
+        STUBBING,  /**< 5 */
+        RECALLING_MIG,  /**< 6 */
+        RECALLING_PREMIG  /**< 7 */
     };
     static std::string migStateStr(file_state migstate)
     {
