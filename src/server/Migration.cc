@@ -17,14 +17,53 @@
        - The corresponding files on disk are stubbed (only for migration
          state as target).
 
-    The second step cannot start before the first step is completed. For
+
+    @dot
+    digraph migration {
+        compound=true;
+        fontname="fixed";
+        fontsize=11;
+        labeljust=l;
+        node [shape=record, width=2, fontname="fixed", fontsize=11, fillcolor=white, style=filled];
+        subgraph cluster_first {
+            label="first phase";
+            recv [label="Receiver"];
+            msgparser [label="MessageParser"];
+            recv -> msgparser [];
+        }
+        subgraph cluster_second {
+            label="second phase";
+            scheduler [label="Scheduler"];
+            subgraph cluster_mig_exec {
+                label="Migration::execRequest";
+                mig_exec [label="{ <write_to_tape> write to tape|<sync_index> sync index|<stub> stub files }"];
+            }
+            scheduler -> mig_exec [lhead=cluster_mig_exec];
+        }
+        subgraph cluster_tables {
+            label="SQLite tables";
+            tables [label="<rq> REQUEST_QUEUE|<jq> JOB_QUEUE"];
+        }
+        msgparser -> tables:jq [style=dotted, label="add", fontname="fixed", fontsize=8];
+        msgparser -> tables [style=dotted, label="add", fontname="fixed", fontsize=8, headport=w];
+        scheduler -> tables:rq [style=dotted, label="check for items to schedule", fontname="fixed", fontsize=8];
+        mig_exec -> tables [style=dotted, label="read", fontname="fixed", fontsize=8, headport=e];
+    }
+    @enddot
+
+    This high level description is explained in more detail in the following
+    subsections.
+
+    The second step will not start before the first step is completed. For
     the second step the required tape and drive resources need to be
     available: e.g. a corresponding tape cartridge is mounted on a tape drive.
+    The second phase may start immediately after the first phase but it also
+    can take a longer time depending when a required resource gets available.
 
     If the premigration state is chosen as the target migration state the third
     item - the stubbing phase - of the second step is skipped.
 
-    ## 1st adding jobs and requests to the internal tables
+    ## 1. adding jobs and requests to the internal tables
 
     When a client sends a migration request to the backend the corresponding
     information is split into two parts. The first part contains information
@@ -75,12 +114,46 @@
         - retrieve target state information (premigrated or migrated state, @ref LTFSDmProtocol::LTFSDmMigRequest::state "migreq.state()")
         - create a Migration object
         - respond back to the client with a request number
-        - MessageParser::getObjects - retrieving file names to migrate
-            - Migration::addJob - add migration information the the SQLite table JOB_QUEUE
-        - Migration::addRequest - add a request to the SQLite table REQUEST_QUEUE
-        - MessageParser::reqStatusMessage - provide updates to the migration processing to the client
+        - MessageParser::getObjects: retrieving file names to migrate
+            - Migration::addJob: add migration information the the SQLite table JOB_QUEUE
+        - Migration::addRequest: add a request to the SQLite table REQUEST_QUEUE
+        - MessageParser::reqStatusMessage: provide updates to the migration processing to the client
 
     </TT>
+
+    ## 2. Scheduling migration jobs
+
+    After a migration request has been added to the REQUEST_QUEUE and and
+    there is a free tape and drive resource available to schedule this
+    migration request the following will happen:
+
+    <TT>
+    - Scheduler::run
+        - if a migration request is ready do be scheduled:
+            - update record in request queue to mark it as DataBase::REQ_INPROGRESS
+            - Migration::execRequest
+                - add status: @ref Status::add "mrStatus.add"
+                - if @ref Migration::needsTape "needsTape" is true:
+                    - Migration::processFiles: premigrate all files according this request
+                    - synchronize tape index
+                    - release tape for further operations since for stubbing files there is nothing written to tape
+                - Migration::processFiles: stub all files according this request
+                - update record in request queue to mark it as DataBase::REQ_COMPLETED
+
+    </TT>
+
+    In Migration::execRequest adding an entry to the @ref mrStatus object is
+    necessary for the client that initiated the request to receive progress
+    information.
+
+    The Migration::processFiles method is called twice first to premigrate
+    files and a second time to stub them if necessary. If all files
+    to be processed are already premigrated there is no need to mount a
+    cartridge. In this case the premigration step is skipped. If the
+    target state is LTFSDmProtocol::LTFSDmMigRequest::PREMIGRATED the
+    step to stub files is skipped.
+
+
 
  */
 
@@ -576,6 +649,16 @@ Migration::req_return_t Migration::processFiles(int replNum, std::string tapeId,
     return retval;
 }
 
+/**
+ *
+ * @param replNum
+ * @param pool
+ * @param tapeId
+ * @param needsTape
+ *
+ * @bug needsTape vs. Migration::needsTape
+ *
+ */
 void Migration::execRequest(int replNum, std::string pool, std::string tapeId,
 bool needsTape)
 
