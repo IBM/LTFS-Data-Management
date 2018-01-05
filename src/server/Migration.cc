@@ -36,18 +36,17 @@
             scheduler [label="Scheduler"];
             subgraph cluster_mig_exec {
                 label="Migration::execRequest";
-                mig_exec [label="{ <write_to_tape> write to tape|<sync_index> sync index|<stub> stub files }"];
+                mig_exec [label="{ <write_to_tape> write to tape\n(Migration::preMigrate)|<sync_index> sync index|<stub> stub files\n(Migration::stub)}"];
             }
-            scheduler -> mig_exec [lhead=cluster_mig_exec];
+            scheduler -> mig_exec [label="schedule\nmigration request", fontname="fixed", fontsize=8, lhead=cluster_mig_exec];
         }
         subgraph cluster_tables {
             label="SQLite tables";
             tables [label="<rq> REQUEST_QUEUE|<jq> JOB_QUEUE"];
         }
-        msgparser -> tables:jq [style=dotted, label="add", fontname="fixed", fontsize=8];
-        msgparser -> tables [style=dotted, label="add", fontname="fixed", fontsize=8, headport=w];
-        scheduler -> tables:rq [style=dotted, label="check for items to schedule", fontname="fixed", fontsize=8];
-        mig_exec -> tables [style=dotted, label="read", fontname="fixed", fontsize=8, headport=e];
+        msgparser -> tables [style=dotted, label="add", fontname="fixed", fontsize=8, headport=w, lhead=cluster_tables];
+        scheduler -> tables:rq [style=dotted, label="check for requests to schedule", fontname="fixed", fontsize=8, tailport=e];
+        mig_exec -> tables [style=dotted, label="read and update", fontname="fixed", fontsize=8, lhead=cluster_tables, ltail=cluster_mig_exec];
     }
     @enddot
 
@@ -146,6 +145,8 @@
     necessary for the client that initiated the request to receive progress
     information.
 
+    ### Migration::processFiles
+
     The Migration::processFiles method is called twice first to premigrate
     files and a second time to stub them if necessary. If all files
     to be processed are already premigrated there is no need to mount a
@@ -153,6 +154,121 @@
     target state is LTFSDmProtocol::LTFSDmMigRequest::PREMIGRATED the
     step to stub files is skipped.
 
+    The Migration::processFiles method in general perform the following
+    steps:
+
+    -# All corresponding jobs are changed to FsObj::PREMIGRATING or FsObj::STUBBING
+       depending if it is called for premigration or stubbing. The following
+       example shows this change for a primigration phase of six files:
+       @dot
+       digraph step_1 {
+            compound=true;
+            fontname="fixed";
+            fontsize=11;
+            rankdir=LR;
+            node [shape=record, width=2, fontname="fixed", fontsize=11, fillcolor=white, style=filled];
+            before [label="file.1: FsObj::RESIDENT|file.2: FsObj::RESIDENT|file.3: FsObj::RESIDENT|file.4: FsObj::RESIDENT|file.5: FsObj::RESIDENT|file.6: FsObj::RESIDENT"];
+            after [label="file.1: FsObj::PREMIGRATING|file.2: FsObj::PREMIGRATING|file.3: FsObj::PREMIGRATING|file.4: FsObj::PREMIGRATING|file.5: FsObj::PREMIGRATING|file.6: FsObj::PREMIGRATING"];
+            before -> after [];
+       }
+       @enddot
+    -# Process all these jobs in FsObj::PREMIGRATING or FsObj::STUBBING state
+       which results in the premigration or stubbing of all corresponding files.
+       The following change indicates that the premigration of file file.4 failed:
+       @dot
+       digraph step_1 {
+            compound=true;
+            fontname="fixed";
+            fontsize=11;
+            rankdir=LR;
+            node [shape=record, width=2, fontname="fixed", fontsize=11, fillcolor=white, style=filled];
+            before [label="file.1: FsObj::PREMIGRATING|file.2: FsObj::PREMIGRATING|file.3: FsObj::PREMIGRATING|file.4: FsObj::PREMIGRATING|file.5: FsObj::PREMIGRATING|file.6: FsObj::PREMIGRATING"];
+            after [label="file.1: FsObj::PREMIGRATING|file.2: FsObj::PREMIGRATING|file.3: FsObj::PREMIGRATING|file.4: FsObj::FAILED|file.5: FsObj::PREMIGRATING|file.6: FsObj::PREMIGRATING"];
+            before -> after [];
+       }
+       @enddot
+    -# A list is returned containing the inode numbers of these files where
+       the previous operation was successful. Change all corresponding jobs
+       to FsObj::PREMIGRATED or FsObj::MIGRATED depending of the migration
+       phase. The following changed indicates that premigration stopped
+       before file file.5:
+       @dot
+       digraph step_1 {
+            compound=true;
+            fontname="fixed";
+            fontsize=11;
+            rankdir=LR;
+            node [shape=record, width=2, fontname="fixed", fontsize=11, fillcolor=white, style=filled];
+            before [label="file.1: FsObj::PREMIGRATING|file.2: FsObj::PREMIGRATING|file.3: FsObj::PREMIGRATING|file.4: FsObj::FAILED|file.5: FsObj::PREMIGRATING|file.6: FsObj::PREMIGRATING"];
+            after [label="file.1: FsObj::PREMIGRATED|file.2: FsObj::PREMIGRATED|file.3: FsObj::PREMIGRATED|file.4: FsObj::FAILED|file.5: FsObj::PREMIGRATING|file.6: FsObj::PREMIGRATING"];
+            before -> after [];
+       }
+       @enddot
+    -# The remaining jobs (those where no corresponding inode numbers were
+       in the list) have not been processed and need to be changed to the
+       original state if these were still in FsObj::PREMIGRATING or
+       FsObj::STUBBING state. Jobs that failed in the second step already
+       have been marked as FsObj::FAILED. A reason for remaining jobs left
+       over from the second step could be that a request with a higher
+       priority (e.g. recall) required the same tape resource. This
+       change is shown below for the remaining two files of the example:
+       @dot
+       digraph step_1 {
+            compound=true;
+            fontname="fixed";
+            fontsize=11;
+            rankdir=LR;
+            node [shape=record, width=2, fontname="fixed", fontsize=11, fillcolor=white, style=filled];
+            before [label="file.1: FsObj::PREMIGRATED|file.2: FsObj::PREMIGRATED|file.3: FsObj::PREMIGRATED|file.4: FsObj::FAILED|file.5: FsObj::PREMIGRATING|file.6: FsObj::PREMIGRATING"];
+            after [label="file.1: FsObj::PREMIGRATED|file.2: FsObj::PREMIGRATED|file.3: FsObj::PREMIGRATED|file.4: FsObj::FAILED|file.5: FsObj::RESIDENT|file.6: FsObj::RESIDENT"];
+            before -> after [];
+       }
+       @enddot
+
+
+    Depending on the number of files to premigrate or to stub the premigration
+    or stubbing operations can be performed in parallel. For premigration each
+    file needs to be written continuously on tape and therefore the writes
+    are serialized . For this purpose two or more ThreadPool objects exists:
+
+    - one ThreadPool object for stubbing: Server::wqs
+    - for each LTFSDMDrive object one ThreadPool object: LTFSDMDrive::wqp
+
+    In the premigration case the Migration::preMigrate method is executed
+    and the stubbing case it is the Migration::stub method. Each of these
+    methods operate on a single file.
+
+    ### Migration::preMigrate
+
+    For premigration the following steps are performed:
+
+    -# In a loop the data is read from disk and written to tape.
+    -# The FILE_PATH attribute is set on the data file on tape.
+    -# A symbolic link is created by recreating the original
+       full path on tape pointing to the corresponding data file.
+    -# The status object @ref Status "mrStatus" gets updated
+       for the output statistics.
+    -# The attributes on the disk file are updated.
+
+    For premigration each file needs to be written continuously on tape.
+    Since the copy of data from disk to tape is performed in a loop by
+    doing one or more reads and writes this loop is serialized by
+    a std::mutex LTFSDMDrive::mtx.
+
+    ### Migration::stub
+
+    For stubbing the following steps are performed:
+
+    -# The attributes on the disk file are changed accordingly.
+    -# The file is truncated to zero size.
+    -# The status object @ref Status "mrStatus" gets updated
+       for the output statistics.
+
+    It is required that the attributes are changed before the file
+    is truncated. It needs to be avoided that a file is truncated
+    before it changes to migrated state. A recall of a premigrated
+    file just change the file state from premigrated to resident
+    assuming the data is already on disk.
 
 
  */
