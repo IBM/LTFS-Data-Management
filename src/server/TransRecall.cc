@@ -2,6 +2,58 @@
 
 /** @page transparent_recall Transparent Recall
 
+    # TransRecall
+
+    The transparent recall processing happens within two phases:
+
+    1. One backend thread ("RecallD" executing TransRecall::run) waits on a
+       socket for recall events. Recall events are are initiated by
+       applications that perform read, write, or truncate calls on a
+       premigrated or migrated files. Recall events are sent as protocol
+       buffer messages (LTFSDmProtocol::LTFSDmTransRecRequest) over a socket. A corresponding
+       job is created within the JOB_QUEUE table and if it does not exist a
+       request is created within the REQUEST_QUEUE table. If the transparent
+       recall job is finally processed (even it is failed) the event is
+       responded  as protocol buffer messages (LTFSDmProtocol::LTFSDmTransRecResp).
+    2. The Scheduler identifies a transparent recall request to get scheduled.
+       The order of files being recalled depends on the starting block of
+       the data files on tape: @snippet server/SQLStatements.cc trans_recall_sql_qry
+
+    @dot
+    digraph trans_recall {
+        compound=true;
+        fontname="fixed";
+        fontsize=11;
+        labeljust=l;
+        node [shape=record, width=2, fontname="fixed", fontsize=11, fillcolor=white, style=filled];
+        subgraph cluster_first {
+            label="first phase";
+            recv [label="receive event"];
+            ajr [label="add job/request"];
+            re [label="respond event"];
+            recv -> ajr -> re [];
+        }
+        subgraph cluster_second {
+            label="second phase";
+            scheduler [label="Scheduler"];
+            subgraph cluster_rec_exec {
+                label="SelRecall::execRequest";
+                rec_exec [label="read from tape\n(SelRecall::processFiles)\nordered by starting block"];
+            }
+            scheduler -> rec_exec [label="schedule\nrecall request", fontname="fixed", fontsize=8, lhead=cluster_rec_exec];
+        }
+        subgraph cluster_tables {
+            label="SQLite tables";
+            tables [label="<rq> REQUEST_QUEUE|<jq> JOB_QUEUE"];
+        }
+        ajr ->  tables [color=darkgreen, fontcolor=darkgreen, label="add", fontname="fixed", fontsize=8, headport=w, lhead=cluster_tables];
+        scheduler -> tables:rq [color=darkgreen, fontcolor=darkgreen, label="check for requests to schedule", fontname="fixed", fontsize=8, tailport=e];
+        rec_exec -> tables [color=darkgreen, fontcolor=darkgreen, label="read and update", fontname="fixed", fontsize=8, lhead=cluster_tables, ltail=cluster_rec_exec];
+        ajr -> scheduler [color=blue, fontcolor=blue, label="condition", fontname="fixed", fontsize=8];
+        rec_exec -> re [color=blue, fontcolor=blue, label="condition", fontname="fixed", fontsize=8];
+    }
+    @enddot
+
  */
 
 void TransRecall::addRequest(Connector::rec_info_t recinfo, std::string tapeId,

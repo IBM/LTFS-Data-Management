@@ -44,9 +44,11 @@
             label="SQLite tables";
             tables [label="<rq> REQUEST_QUEUE|<jq> JOB_QUEUE"];
         }
-        msgparser -> tables [style=dotted, label="add", fontname="fixed", fontsize=8, headport=w, lhead=cluster_tables];
-        scheduler -> tables:rq [style=dotted, label="check for requests to schedule", fontname="fixed", fontsize=8, tailport=e];
-        mig_exec -> tables [style=dotted, label="read and update", fontname="fixed", fontsize=8, lhead=cluster_tables, ltail=cluster_mig_exec];
+        msgparser -> scheduler [color=blue, fontcolor=blue, label="condition", fontname="fixed", fontsize=8];
+        scheduler -> msgparser [style=invis]; // just for the correct order of the subgraphs
+        msgparser -> tables [color=darkgreen, fontcolor=darkgreen, label="add", fontname="fixed", fontsize=8, headport=w, lhead=cluster_tables];
+        scheduler -> tables:rq [color=darkgreen, fontcolor=darkgreen, label="check for requests to schedule", fontname="fixed", fontsize=8, tailport=e];
+        mig_exec -> tables [color=darkgreen, fontcolor=darkgreen, label="read and update", fontname="fixed", fontsize=8, lhead=cluster_tables, ltail=cluster_mig_exec];
     }
     @enddot
 

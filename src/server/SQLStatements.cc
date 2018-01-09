@@ -293,11 +293,13 @@ const std::string TransRecall::SET_RECALLING =
                 " AND FILE_STATE=%3%"
                 " AND TAPE_ID='%4%'";
 
+//! [trans_recall_sql_qry]
 const std::string TransRecall::SELECT_JOBS =
         "SELECT FS_ID_H, FS_ID_L, I_GEN, I_NUM, FILE_NAME, FILE_STATE, TARGET_STATE, CONN_INFO  FROM JOB_QUEUE"
                 " WHERE REQ_NUM=%1%"
                 " AND (FILE_STATE=%2% OR FILE_STATE=%3%)"
                 " AND TAPE_ID='%4%' ORDER BY START_BLOCK";
+//! [trans_recall_sql_qry]
 
 const std::string TransRecall::DELETE_JOBS = "DELETE FROM JOB_QUEUE"
         " WHERE REQ_NUM=%1%"
