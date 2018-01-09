@@ -229,11 +229,13 @@ const std::string SelRecall::SET_RECALLING =
                 " AND FILE_STATE=%3%"
                 " AND TAPE_ID='%4%'";
 
+//! [sel_recall_sql_qry]
 const std::string SelRecall::SELECT_JOBS =
         "SELECT FILE_NAME, FILE_STATE, I_NUM FROM JOB_QUEUE WHERE REQ_NUM=%1%"
                 " AND TAPE_ID='%2%'"
                 " AND (FILE_STATE=%3% OR FILE_STATE=%4%)"
                 " ORDER BY START_BLOCK";
+//! [sel_recall_sql_qry]
 
 const std::string SelRecall::FAIL_JOB = "UPDATE JOB_QUEUE SET FILE_STATE = %1%"
         " WHERE FILE_NAME='%2%'"

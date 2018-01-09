@@ -66,15 +66,15 @@
 
     When a client sends a migration request to the backend the corresponding
     information is split into two parts. The first part contains information
-    the is relevant for the whole request:
+    that is relevant for the whole request:
 
     - the tape storage pools the migration is targeted to
     - the final migration state (premigrated or migrated)
 
     Thereafter the file names of the files to be migrated are sent to the backend.
     When receiving this information corresponding entries are added to the SQL
-    table JOB_QUEUE table. For each file name one or more jobs are created based
-    on the number of tape storage pools being specified. After that entries are added
+    table JOB_QUEUE. For each file name one or more jobs are created based
+    on the number of tape storage pools being specified. After that: entries are added
     to the SQL table REQUEST_QUEUE. For each storage pool being specified a
     corresponding entry is added to that table.
 
@@ -225,8 +225,7 @@
        }
        @enddot
 
-
-    Depending on the number of files to premigrate or to stub the premigration
+    If more than one job is processed the premigration
     or stubbing operations can be performed in parallel. For premigration each
     file needs to be written continuously on tape and therefore the writes
     are serialized . For this purpose two or more ThreadPool objects exists:
