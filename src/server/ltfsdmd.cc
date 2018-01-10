@@ -112,7 +112,7 @@
     message parsing | Receiver::run -> wqm | MessageParser::run | After the Receiver gets a new message this message is further processed by a new thread from this thread pool.
     premigration | LTFSDMDrive::wqp | Migration::preMigrate | For premigration there is one thread pool per drive since only a single request can be executed on a certain drive at a time.
     stubbing | Server::wqs | Migration::stub | There exist one thread pool for all stubbing operations (even from different requests).
-    transparent recall | TransRecall::run -> wqr | TransRecall::addRequest | Adds a transparent recall request and waits for completion.
+    transparent recall | TransRecall::run -> wqr | TransRecall::addJob | Adds a transparent recall request and waits for completion.
 
     Furthermore the scheduler is creating additional threads for each
     request being scheduled:

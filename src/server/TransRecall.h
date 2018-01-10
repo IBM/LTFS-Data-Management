@@ -23,7 +23,7 @@ public:
     ~TransRecall()
     {
     }
-    void addRequest(Connector::rec_info_t recinfo, std::string tapeId,
+    void addJob(Connector::rec_info_t recinfo, std::string tapeId,
             long reqNum);
     void cleanupEvents();
     void run(std::shared_ptr<Connector> connector);

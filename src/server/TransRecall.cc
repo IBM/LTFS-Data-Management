@@ -9,15 +9,15 @@
     1. One backend thread ("RecallD" executing TransRecall::run) waits on a
        socket for recall events. Recall events are are initiated by
        applications that perform read, write, or truncate calls on a
-       premigrated or migrated files. Recall events are sent as protocol
-       buffer messages (LTFSDmProtocol::LTFSDmTransRecRequest) over a socket. A corresponding
+       premigrated or migrated files. A corresponding
        job is created within the JOB_QUEUE table and if it does not exist a
-       request is created within the REQUEST_QUEUE table. If the transparent
-       recall job is finally processed (even it is failed) the event is
-       responded  as protocol buffer messages (LTFSDmProtocol::LTFSDmTransRecResp).
+       request is created within the REQUEST_QUEUE table.
     2. The Scheduler identifies a transparent recall request to get scheduled.
        The order of files being recalled depends on the starting block of
        the data files on tape: @snippet server/SQLStatements.cc trans_recall_sql_qry
+       If the transparent recall job is finally processed (even it is failed)
+       the event is responded  as protocol buffer messages
+       (LTFSDmProtocol::LTFSDmTransRecResp).
 
     @dot
     digraph trans_recall {
@@ -29,16 +29,18 @@
         subgraph cluster_first {
             label="first phase";
             recv [label="receive event"];
-            ajr [label="add job/request"];
-            re [label="respond event"];
-            recv -> ajr -> re [];
+            ajr [label="add job, add\nrequest if not exists"];
+            recv -> ajr [];
         }
         subgraph cluster_second {
             label="second phase";
             scheduler [label="Scheduler"];
             subgraph cluster_rec_exec {
                 label="SelRecall::execRequest";
-                rec_exec [label="read from tape\n(SelRecall::processFiles)\nordered by starting block"];
+                subgraph cluster_proc_files {
+                    label="SelRecall::processFiles";
+                    rec_exec [label="{read from tape\n\nordered by starting block|respond event}"];
+                }
             }
             scheduler -> rec_exec [label="schedule\nrecall request", fontname="fixed", fontsize=8, lhead=cluster_rec_exec];
         }
@@ -50,13 +52,53 @@
         scheduler -> tables:rq [color=darkgreen, fontcolor=darkgreen, label="check for requests to schedule", fontname="fixed", fontsize=8, tailport=e];
         rec_exec -> tables [color=darkgreen, fontcolor=darkgreen, label="read and update", fontname="fixed", fontsize=8, lhead=cluster_tables, ltail=cluster_rec_exec];
         ajr -> scheduler [color=blue, fontcolor=blue, label="condition", fontname="fixed", fontsize=8];
-        rec_exec -> re [color=blue, fontcolor=blue, label="condition", fontname="fixed", fontsize=8];
+        scheduler -> ajr [style=invis]; // just for the correct order of the subgraphs
     }
     @enddot
 
+    This high level description is explained in more detail in the following subsections.
+
+    If there are multiple recall events for files on the same tape
+    only one request is created within the REQUEST_QUEUE table. This
+    request is removed if there are no further outstanding transparent
+    recalls for the same tape. If there is a new transparent recall
+    event and if a corresponding request already exists within the
+    REQUEST_QUEUE table this existing request is used for further
+    processing the event.
+
+    The second step will not start before the first step is completed. For
+    the second step the required tape and drive resources need to be
+    available: e.g. a corresponding tape cartridge is mounted on a tape drive.
+    The second phase may start immediately after the first phase but it also
+    can take a longer time depending when a required resource gets available.
+
+    ## 1. adding jobs and requests to the internal tables
+
+    One backend thread exists (see @ref server_code) that executes the
+    TransRecall::run method to wait for recall events. Recall events are sent
+    as protocol buffer messages (LTFSDmProtocol::LTFSDmTransRecRequest) over a
+    socket. The information provided contains the following:
+
+    - opaque information specific to the connector
+    - an indicator if a file should be recall to premigrated or to
+      resident state
+    - the file uid (see fuid_t)
+    - the file name
+
+    Thereafter the tape id for the first tape listed within the attributes
+    is obtained. The recall will happen from that tape. There currently is
+    no optimization if the file has been migrated to more than one tape to
+    select between these tapes in an optimal way.
+
+    To add a corresponding job within the JOB_QUEUE table or if necessary
+    a request within the REQUEST_QUEUE table an additional thread is used
+    as part of the ThreadPool wqr executing the method TransRecall::addJob.
+
+
+
  */
 
-void TransRecall::addRequest(Connector::rec_info_t recinfo, std::string tapeId,
+void TransRecall::addJob(Connector::rec_info_t recinfo, std::string tapeId,
         long reqNum)
 
 {
@@ -166,7 +208,7 @@ void TransRecall::run(std::shared_ptr<Connector> connector)
 
 {
     ThreadPool<TransRecall, Connector::rec_info_t, std::string, long> wqr(
-            &TransRecall::addRequest, Const::MAX_TRANSPARENT_RECALL_THREADS,
+            &TransRecall::addJob, Const::MAX_TRANSPARENT_RECALL_THREADS,
             "trec-wq");
     Connector::rec_info_t recinfo;
     std::map<std::string, long> reqmap;
@@ -269,10 +311,6 @@ void TransRecall::run(std::shared_ptr<Connector> connector)
 
         wqr.enqueue(Const::UNSET, TransRecall(), recinfo, tapeId,
                 reqmap[tapeId]);
-        /*
-         subs.enqueue(thrdinfo.str(), TransRecall::addRequest, recinfo, tapeId,
-         reqmap[tapeId]);
-         */
     }
 
     MSG(LTFSDMS0083I);
