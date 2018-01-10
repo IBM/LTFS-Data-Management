@@ -94,8 +94,132 @@
     a request within the REQUEST_QUEUE table an additional thread is used
     as part of the ThreadPool wqr executing the method TransRecall::addJob.
 
+    This is an example of these two tables in case of transparently recalling a few files:
 
+    @verbatim
+    sqlite> select * from JOB_QUEUE;
+    OPERATION   FILE_NAME               REQ_NUM     TARGET_STATE  REPL_NUM    TAPE_POOL   FILE_SIZE   FS_ID_H               FS_ID_L               I_GEN       I_NUM       MTIME_SEC   MTIME_NSEC  LAST_UPD    TAPE_ID     FILE_STATE  START_BLOCK  CONN_INFO
+    ----------  ----------------------  ----------  ------------  ----------  ----------  ----------  --------------------  --------------------  ----------  ----------  ----------  ----------  ----------  ----------  ----------  -----------  ---------------
+    0           /mnt/lxfs/test2/file.4  3           1             -1                      32768       -4229860921927319251  -6765444084672883911  1380830956  788454      1514304375  0           1515591742  D01301L5    6           199882       139980701699680
+    0           /mnt/lxfs/test2/file.2  3           1             -1                      32768       -4229860921927319251  -6765444084672883911  -316887448  788450      1514304375  0           1515591742  D01301L5    6           206251       139980701699984
+    0           /mnt/lxfs/test2/file.0  3           1             -1                      32768       -4229860921927319251  -6765444084672883911  -188757665  787590      1514304375  0           1515591742  D01301L5    6           207111       139980701700096
+    sqlite> select * from REQUEST_QUEUE;
+    OPERATION   REQ_NUM     TARGET_STATE  NUM_REPL    REPL_NUM    TAPE_POOL   TAPE_ID     TIME_ADDED  STATE
+    ----------  ----------  ------------  ----------  ----------  ----------  ----------  ----------  ----------
+    0           3                                                             D01301L5    1515591742  1
+    @endverbatim
 
+    For a description of the columns see @ref sqlite.
+
+    The following is an overview of this initial transparent recall processing
+    including corresponding links to the code parts:
+
+    <TT>
+    - TransRecall::run
+        - while not terminating (Connector::connectorTerminate == false)
+            - wait for events: Connector::getEvents
+            - create FsObj object according the recall information recinfo
+            - determine the if of the first cartridge from the attributes
+            - enqueue the job and request creation   as part of the
+              ThreadPool wqr executing the method TransRecall::addJob.
+
+    </TT>
+    <TT>
+    - TransRecall::addJob
+        - determine path name on tape
+        - add a job within the JOB_QUEUE table
+        - if a request already exists: if (reqExists == true)
+            - change request state to new
+        - else
+            - create a request within the REQUEST_QUEUE table
+
+    </TT>
+
+    ## 2. Scheduling transparent recall jobs
+
+    After a transparent recall request is ready to be scheduled and
+    there is a free tape and drive resource available to schedule this
+    transparent recall request the following will happen:
+
+    <TT>
+    - Scheduler::run
+        - if a transparent request is ready do be scheduled:
+            - update record in request queue to mark it as DataBase::REQ_INPROGRESS
+            - TransRecall::execRequest
+                - call TransRecall::processFiles
+                    - respond recall event Connector::respondRecallEvent
+                - if there are outstanding transparent recall requests for the same tape (remaining)
+                    - update record in request queue to mark it as DataBase::REQ_NEW
+                - else
+                    - delete request within the REQUEST_QUEUE table
+
+    </TT>
+
+    ### TransRecall::processFiles
+
+    The TransRecall::processFiles method is traversing the JOB_QUEUE table to
+    process individual files for transparent recall. In general the following
+    steps are performed:
+
+    -# All corresponding jobs are changed to FsObj::RECALLING_MIG or FsObj::RECALLING_PREMIG
+       depending if it is called for files in migrated or in premigrated state. The following
+       example shows this change regarding six files:
+       @dot
+       digraph step_1 {
+            compound=true;
+            fontname="fixed";
+            fontsize=11;
+            rankdir=LR;
+            node [shape=record, width=2, fontname="fixed", fontsize=11, fillcolor=white, style=filled];
+            before [label="file.1: FsObj::MIGRATED|file.2: FsObj::PREMIGRATED|file.3: FsObj::MIGRATED|file.4: FsObj::PREMIGRATED|file.5: FsObj::MIGRATED|file.6: FsObj::PREMIGRATED"];
+            after [label="file.1: FsObj::RECALLING_MIG|file.2: FsObj::RECALLING_PREMIG|file.3: FsObj::RECALLING_MIG|file.4: FsObj::RECALLING_PREMIG|file.5: FsObj::RECALLING_MIG|file.6: FsObj::RECALLING_PREMIG"];
+            before -> after [];
+       }
+       @enddot
+    -# Process all these jobs in FsObj::RECALLING_MIG or FsObj::RECALLING_PREMIG state
+       which results in the recall of all corresponding files. For all jobs in
+       FsObj::RECALLING_PREMIG state there will no data transfer happen.
+       The result of each individual transparent recall is stored in a
+       respinfo_t respinfo std::list object (no change within the JOB_QUEUE table):
+       @dot
+       digraph step_1 {
+            compound=true;
+            fontname="fixed";
+            fontsize=11;
+            rankdir=LR;
+            node [shape=record, width=2, fontname="fixed", fontsize=11, fillcolor=white, style=filled];
+            before [label="file.1: FsObj::RECALLING_MIG|file.2: FsObj::RECALLING_PREMIG|file.3: FsObj::RECALLING_MIG|file.4: FsObj::RECALLING_PREMIG|file.5: FsObj::RECALLING_MIG|file.6: FsObj::RECALLING_PREMIG"];
+            after [label="file.1: FsObj::RECALLING_MIG|file.2: FsObj::RECALLING_PREMIG|file.3: FsObj::RECALLING_MIG|file.4: FsObj::RECALLING_PREMIG|file.5: FsObj::RECALLING_MIG|file.6: FsObj::RECALLING_PREMIG"];
+            before -> after [];
+       }
+       @enddot
+    -# The corresponding jobs are deleted from the JOB_QUEUE table:
+       @dot
+       digraph step_1 {
+            compound=true;
+            fontname="fixed";
+            fontsize=11;
+            rankdir=LR;
+            node [shape=record, width=2, fontname="fixed", fontsize=11, fillcolor=white, style=filled];
+            before [label="file.1: FsObj::RECALLING_MIG|file.2: FsObj::RECALLING_PREMIG|file.3: FsObj::RECALLING_MIG|file.4: FsObj::FAILED|file.5: FsObj::RECALLING_MIG|file.6: FsObj::RECALLING_PREMIG"];
+            after [fontcolor=lightgrey, label="file.1: FsObj::RECALLING_MIG|file.2: FsObj::RECALLING_PREMIG|file.3: FsObj::RECALLING_MIG|file.4: FsObj::FAILED|file.5: FsObj::RECALLING_MIG|file.6: FsObj::RECALLING_PREMIG"];
+            before -> after [];
+       }
+       @enddot
+    -# All entries within the respinfo_t respinfo std::list object are
+       responded if processing was successful or not (respinfo.succeeded)
+       by calling Connector::respondRecallEvent.
+
+    In opposite to migration recalls are not performed in parallel.
+    For an optimal performance the data should be read serially from
+    tape in the order of the starting block of each data file.
+
+    ### TransRecall::recall
+
+    Recalling an individual file is performed according the following steps:
+
+    -# If state is FsObj::MIGRATED data is read in a loop from tape and written to disk.
+    -# The attributes on the disk file are updated or removed in the case of target state resident.
  */
 
 void TransRecall::addJob(Connector::rec_info_t recinfo, std::string tapeId,

@@ -88,9 +88,6 @@
 
     For a description of the columns see @ref sqlite.
 
-    During the scheduling later-on the cartridges will be identified as
-    parts of the tape storage pools.
-
     The following is an overview of this initial selective recall processing
     including corresponding links to the code parts:
 
@@ -108,7 +105,7 @@
 
     ## 2. Scheduling selective recall jobs
 
-    After a selective request has been added to the REQUEST_QUEUE and and
+    After a selective recall request has been added to the REQUEST_QUEUE and
     there is a free tape and drive resource available to schedule this
     selective recall request the following will happen:
 
