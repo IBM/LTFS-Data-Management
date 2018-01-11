@@ -4,7 +4,68 @@
 
     # TransRecall
 
-    The transparent recall processing happens within two phases:
+    For each file system that is managed by LTFS Data Management a
+    Fuse overlay file system is created. The Fuse overlay file systems
+    have to be used by the user for file system operations instead
+    of the original one. For each of these Fuse overlay file systems
+    an additional process is started:
+
+    @dot
+    digraph ltfsdm_processes {
+        compound=true;
+        fontname="fixed";
+        fontsize=11;
+        labeljust=l;
+        node [shape=record, width=2, fontname="fixed", fontsize=11, fillcolor=white, style=filled];
+        ltfsdmd [label="ltfsdmd (backend)"];
+        ltfsdmd_fs1 [label="ltfsdmd.ofs -m /mnt/fs1"];
+        ltfsdmd_fs2 [label="ltfsdmd.ofs -m /mnt/fs2"];
+        ltfsdmd_fs3 [label="ltfsdmd.ofs -m /mnt/fs3"];
+        ltfsdmd -> ltfsdmd_fs1 [];
+        ltfsdmd -> ltfsdmd_fs2 [];
+        ltfsdmd -> ltfsdmd_fs3 [];
+    }
+    @enddot
+
+    Within the Fuse processes read, write, and truncate calls on premigrated
+    or migrated files are intercepted if there is a requirement to recall
+    (transfer data back to disk) data or to perform a file state change.
+    The Fuse overlay file system as part of the Fuse connector is described
+    in more detail at @ref fuse_connector.
+
+    The data transfer and the file system change of a file are performed
+    within the backend. Therefore there needs to be a communication between
+    the Fuse overlay file system processes and the backend regarding files
+    to recall. The communication method is the same like between the client
+    and the backend: local socket communication and Google protocol buffers
+    for message serialization:
+
+    @dot
+    digraph trec_communication {
+        compound=true;
+        fontname="fixed";
+        fontsize=11;
+        labeljust=l;
+        rankdir=LR;
+        node [shape=record, width=2, fontname="fixed", fontsize=11, fillcolor=white, style=filled];
+        ltfsdmd_fs1 [label="ltfsdmd.ofs -m /mnt/fs1"];
+        ltfsdmd [label="ltfsdmd (backend)"];
+        ltfsdmd_fs1 -> ltfsdmd [fontname="fixed", fontsize=8, fontcolor=dodgerblue4,
+            label="1) Connector::getEvents()\nLTFSDmProtocol::LTFSDmTransRecRequest",
+            URL="@ref Connector::getEvents"];
+        ltfsdmd -> ltfsdmd_fs1 [fontname="fixed", fontsize=8, fontcolor=dodgerblue4,
+            label="2) Connector::respondRecallEvent()\nLTFSDmProtocol::LTFSDmTransRecResp",
+            URL="@ref Connector::respondRecallEvent" ];
+    }
+    @enddot
+
+    If a recall request LTFSDmProtocol::LTFSDmTransRecRequest has been sent
+    to the backend within the Fuse process read, write, and truncate
+    processing is blocked until the backend responds with
+    Connector::respondRecallEvent
+
+
+    The transparent recall processing within the backend happens within two phases:
 
     1. One backend thread ("RecallD" executing TransRecall::run) waits on a
        socket for recall events. Recall events are are initiated by
