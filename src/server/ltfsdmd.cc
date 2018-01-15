@@ -61,6 +61,8 @@
     possible to add further requests and jobs to the internal queues
     in parallel.
 
+    ## Threads
+
     For concurrency threads are created. Some of them run all the
     time - some others are started on request. For the latter case
     thread pools are available where threads automatically terminate

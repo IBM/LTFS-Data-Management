@@ -2,6 +2,71 @@
 
 /** @page scheduler Scheduler
 
+    # Scheduler
+
+    The Scheduler main method Scheduler::run is started by the Server::run
+    method and continuously running as an additional thread. For an overview
+    about all threads that are started within the backend have a look at
+    @ref server_code. Within the Server::run routine a loop is waiting on a
+    condition of either a new request has been added or a resource got free.
+    If there is a request that has not been scheduled so far an a corresponding
+    resource is available this request can be scheduled. Therefore there can be
+    two possibilities when a request is scheduled:
+
+    - A new request has been added an a cartridge and drive resource already is
+      available.
+    - A request has been previously added but there was no free drive and
+      cartridge resource available at that time. Now, a corresponding resource
+      became free.
+
+    Within the loop the condition Scheduler::cond is waiting for a lock on the
+    Scheduler::mtx mutex.
+
+    The scheduler also initiates mount and unmounts of cartridges. E.g. if there
+    is a new request to migrate data but all available drives are empty the
+    scheduler initiates a tape mount for a corresponding cartridge.
+    Therefore a notification on the Scheduler::cond condition is done in the
+    following cases:
+
+    - a new request has been added
+    - a request has been completed: the corresponding tape and drive resource
+      is available thereafter
+    - a tape mount is completed (see @ref LTFSDMInventory::mount): drive and
+      cartridge can be used to schedule a request
+    - a tape unmount is completed (see @ref LTFSDMInventory::unmount): drive
+      can be used to mount a cartridge
+
+    After that Scheduler::resAvail checks if there is are resources available
+    to schedule a request or to mount and unmount cartridges. For recall a
+    specific cartridge needs to be considered (Scheduler::tapeResAvail). For
+    migration it needs to be a cartridge from a corresponding tape storage pool
+    where at least one file will fit on it (Scheduler::poolResAvail).
+
+    ## Scheduler::tapeResAvail
+
+    A tape resource is checked for availability in the following way:
+
+    -# If the corresponding cartridge is moving: <b>return false</b>.
+    -# If corresponding cartridge is in use (by another request) try to unblock
+       the cartridge. If e.g. the cartridge is used for migration recall
+       requests have a higher priority and can led the migration request to
+       suspend processing. Since there is no free resource: <b>return false</b>.
+    -# Else if the corresponding cartridge is mounted (but not in use) it
+       can be used for the current request: <b>return true</b>.
+    -# Thereafter it is checked for free (not in use) drives. If there is a
+       drive that has cartridge mounted that is not in use unmount this
+       cartridge: <b>return false</b>
+    -# Next it is checked if a operation with a lower priority can be
+       suspended. If an operation already has been suspended
+       (LTFSDMCartridge::isRequested is true): <b>return false</b>
+    -# Now try to suspend an operation.
+    -# <b>return false</b>
+
+
+    ## Scheduler::poolResAvail
+
+    A tape storage pool is checked for availability in the following way:
+
  */
 
 std::mutex Scheduler::mtx;
