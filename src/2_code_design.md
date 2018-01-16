@@ -18,7 +18,7 @@ path | description
 <a href="../messages.cfg">messages.cfg</a> | @subpage messaging_system
 [src/common/tracing](@ref src/common/tracing) | @subpage tracing_system
 [src/client](@ref src/client) | @subpage client_code
-[src/connector](@ref src/connector) | code for the connector library, see @subpage fuse_connector for more information
+[src/connector](@ref src/connector) | code for the connector library, see @subpage connector for more information
 [src/server](@ref src/server) | @subpage server_code
 
 The common code consists of the following:
