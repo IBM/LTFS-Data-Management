@@ -42,6 +42,29 @@
     migration it needs to be a cartridge from a corresponding tape storage pool
     where at least one file will fit on it (Scheduler::poolResAvail).
 
+    @dot
+    digraph scheduler {
+        compound=true;
+        fontname="fixed";
+        fontsize=11;
+        labeljust=l;
+        node [shape=record, width=2, fontname="fixed", fontsize=11, fillcolor=white, style=filled];
+        wait [label="wait for a new request or a free resource"];
+        subgraph cluster_res_avail {
+            res_avail [fontname="fixed bold", fontcolor=dodgerblue4, label="Scheduler::resAvail", URL="@ref Scheduler::resAvail"];
+            tape_res_avail [fontname="fixed bold", fontcolor=dodgerblue4, label="Scheduler::tapeResAvail", URL="@ref Scheduler::tapeResAvail"];
+            pool_res_avail [fontname="fixed bold", fontcolor=dodgerblue4, label="Scheduler::poolResAvail", URL="@ref Scheduler::poolResAvail"];
+        }
+        schedule_mig [label="schedule migration"];
+        schedule_rec [label="{<srec> schedule selective recall|<trec> schedule transparent recall}"];
+        wait -> res_avail[lhead=cluster_res_avail];
+        res_avail -> pool_res_avail [fontsize=8, label="if migration"];
+        res_avail -> tape_res_avail[];
+        tape_res_avail -> schedule_rec [ltail=cluster_res_avail, fontsize=8, label="if resource found"];
+        pool_res_avail -> schedule_mig [ltail=cluster_res_avail, fontsize=8, label="if resource found"];
+    }
+    @enddot
+
     ## Scheduler::tapeResAvail
 
     A tape resource is checked for availability in the following way:
@@ -55,10 +78,10 @@
        can be used for the current request: <b>return true</b>.
     -# Thereafter it is checked for free (not in use) drives. If there is a
        drive that has cartridge mounted that is not in use unmount this
-       cartridge: <b>return false</b>
+       cartridge: <b>return false</b>.
     -# Next it is checked if a operation with a lower priority can be
        suspended. If an operation already has been suspended
-       (LTFSDMCartridge::isRequested is true): <b>return false</b>
+       (LTFSDMCartridge::isRequested is true): <b>return false</b>.
     -# Now try to suspend an operation.
     -# <b>return false</b>
 
@@ -66,6 +89,32 @@
     ## Scheduler::poolResAvail
 
     A tape storage pool is checked for availability in the following way:
+
+    -# If a cartridge of the specified tape storage pool is mounted but not
+       in use and the remaining space is larger than the smallest file to
+       migrate: <b>return true</b>.
+    -# If there is no cartridge that is not mounted there is no need to look
+       for a cartridge from another pool to unmount: <b>return false</b>.
+    -# Check if there is an empty drive to mount a tape which is part of the
+       specified pool. If this is the case: <b>return false</b>.
+    -# Check if a for the current request there is a tape mount/unmount already
+       in progress. If this is the case: <b>return false</b>.
+    -# Thereafter it is checked if there is a cartridge from another pool
+       that is mounted but not in use. Unmount this cartridge and:
+       <b>return false</b>.
+    -# <b>return false</b>
+
+    ## Schedule request
+
+    If Scheduler::resAvail is true a request can be scheduled. Depending on
+    the operation type  a new thread is created (Scheduler::subs,
+    SubServer::enqueue) to execute:
+
+    operation type | executed method
+    ---|---
+    DataBase::MIGRATION | Migration::execRequest
+    DataBase::SELRECALL | SelRecall::execRequest
+    DataBase::TRARECALL | TransRecall::execRequest
 
  */
 
@@ -115,10 +164,12 @@ bool Scheduler::poolResAvail(unsigned long minFileSize)
     if (unmountedExists == false)
         return false;
 
+    // check if there is an empty drive to mount a tape
     for (std::shared_ptr<LTFSDMDrive> drive : inventory->getDrives()) {
         if (drive->isBusy() == true)
             continue;
         found = false;
+        // check if there is a cartridge mounted in that drive:
         for (std::shared_ptr<LTFSDMCartridge> card : inventory->getCartridges()) {
             if (drive->get_slot() == card->get_slot()
                     && card->getState() == LTFSDMCartridge::TAPE_MOUNTED) {
@@ -148,10 +199,14 @@ bool Scheduler::poolResAvail(unsigned long minFileSize)
         }
     }
 
+    /** @todo: check if the following needs to be moved before the
+               for loop that is checking for a tape to mount
+     */
     for (std::shared_ptr<LTFSDMDrive> drive : inventory->getDrives())
         if (drive->getUnmountReqNum() == reqNum)
             return false;
 
+    // check if there is a tape to unmount
     for (std::shared_ptr<LTFSDMDrive> drive : inventory->getDrives()) {
         if (drive->isBusy() == true)
             continue;
