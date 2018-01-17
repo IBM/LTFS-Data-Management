@@ -1442,6 +1442,26 @@ std::string FuseFS::mask(std::string s)
     return masked;
 }
 
+/**
+    @brief Setup of LTFS Data Management for a file system.
+    @details
+    Setup of LTFS Data Management for a file system.
+
+    The setup happens according the following steps:
+    -# unmount the original file system
+    -# try a fake mount by only specifying the mount point to see if it is
+       listed in fstab
+    -# start the Fuse overlay file system
+    -# wait for the Fuse overlay file system is in operation and open a file
+       descriptor for the ioctl communication
+    -# mount the original file system within the cache mount point
+       Const::LTFSDM_CACHE_MP
+    -# open a file descriptor on its root
+    -# via ioctl tell the Fuse process to continue
+    -# perform a detached unmount of the original file system
+
+    @param starttime start time of the LTFS Data Management service
+ */
 void FuseFS::init(struct timespec starttime)
 
 {

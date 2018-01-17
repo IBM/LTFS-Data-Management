@@ -1,6 +1,6 @@
 #pragma once
 
-/** @page connector
+/** @page connector Connector
 
     # Connector
 
@@ -26,7 +26,7 @@
     should be tolerant against delays since it can take time to perform the
     data transfer.
 
-    ## The three different technologies for data management
+    ## Three different technologies for data management
 
     To block system calls require additional functionality provided by the
     operating system. Migration and selective recall do not have any additional
