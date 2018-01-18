@@ -186,7 +186,50 @@
     @copydoc FuseFS::init
     </BLOCKQUOTE>
 
-    ## Classes
+    ## Code overview
+
+    code part | description
+    ---|---
+    class Connector | @copybrief Connector
+    class FsObj | @copybrief FsObj
+    file ltfsdmd.ofs.cc | @copybrief ltfsdmd.ofs.cc
+    class FuseFS | @copybrief FuseFS
+    namespace FuseConnector | @copybrief FuseConnector
+
+    ## Connector
+
+    @copydetails Connector
+
+    ## FsObj
+
+    @copydetails FsObj
+
+    ## ltfsdmd.ofs.cc
+
+    @copydetails ltfsdmd.ofs.cc
+
+    ## FuseFS
+
+    @copydetails FuseFS
+
+    ## Communication between LTFS Data Management backend and the Fuse overlay file system
+
+    Communication between the LTFS Data Management backend and the Fuse
+    overlay file system is performed in two different ways:
+
+    - using the file system API
+    - using a local socket
+
+    The later one only is used to communicate recall requests and their
+    responses. For the socket communication Google Protocol Buffers are
+    used in the same way as the client talks to the backend.
+
+    ### File system API communication
+
+
+
+    ### Local socket communicatiom
+
  */
 
 std::atomic<bool> Connector::connectorTerminate(false);

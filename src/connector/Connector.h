@@ -121,6 +121,18 @@ struct fuid_t
     }
 };
 
+/**
+    @brief Class for external usage for managing recall events.
+
+    @details
+    This call is providing the recall event system. Most prominent methods are
+
+    - Connector::getEvents to get recall event
+    - Connector::respondRecallEvent to respond recall events
+
+    Further methods initialize end end the recall event system.
+
+ */
 class Connector
 {
 private:
@@ -152,6 +164,43 @@ public:
     void terminate();
 };
 
+/**
+    @brief Class for external usage to represent a file system object.
+
+    @details
+    The FsObj class provides an interface to manage and work with file system
+    objects. This includes:
+
+    - to manage a file system\n
+      FsObj::isFsManaged\n
+      FsObj::manageFs
+    - to provide stat information of a file system object\n
+      FsObj::stat
+    - to provide file file uid: fuid_t\n
+      FsObj::getfuid
+    - to provide the tape id of migrated and premigrated files\n
+      FsObj::getTapeId
+    - to lock file system objects\n
+      FsObj::lock\n
+      FsObj::try_lock\n
+      FsObj::unlock
+    - to read and write from and to files\n
+      FsObj::read\n
+      FsObj::write
+    - to work with file attributes\n
+      FsObj::addAttribute\n
+      FsObj::remAttribute\n
+      FsObj::getAttribute
+    - to perform file state changes or to prepare them\n
+      FsObj::preparePremigration\n
+      FsObj::finishPremigration\n
+      FsObj::prepareRecall\n
+      FsObj::finishRecall\n
+      FsObj::prepareStubbing\n
+      FsObj::stub\n
+    - to get the migration state of a file system object\n
+      FsObj::getMigState
+ */
 class FsObj
 {
 private:

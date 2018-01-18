@@ -4,6 +4,9 @@
 
 #include <fuse.h>
 
+/**
+    @brief Fuse overlay file system implementation
+ */
 class FuseFS
 {
 public:

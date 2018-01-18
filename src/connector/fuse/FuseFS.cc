@@ -1448,17 +1448,30 @@ std::string FuseFS::mask(std::string s)
     Setup of LTFS Data Management for a file system.
 
     The setup happens according the following steps:
-    -# unmount the original file system
-    -# try a fake mount by only specifying the mount point to see if it is
-       listed in fstab
-    -# start the Fuse overlay file system
-    -# wait for the Fuse overlay file system is in operation and open a file
-       descriptor for the ioctl communication
-    -# mount the original file system within the cache mount point
-       Const::LTFSDM_CACHE_MP
-    -# open a file descriptor on its root
-    -# via ioctl tell the Fuse process to continue
-    -# perform a detached unmount of the original file system
+    -# Unmount the original file system.
+    -# Perform a so called fake mount (see <TT>mount -f</TT> command) by only
+       specifying the mount point to see if it can be mounted automatically.
+       Any file system managed by LTFS Data Management should not be mounted
+       beside the LTFS Data Management service.
+    -# Start of the Fuse overlay file system. The Fuse overlay file system
+       gets mounted at the original mount point.
+    -# Wait for the Fuse overlay file system is in operation and open a file
+       descriptor for the ioctl communication.
+    -# Mount the original file system within the cache mount point
+       Const::LTFSDM_CACHE_MP.
+    -# Open the file descriptor FuseFS::rootFd on its root: i.e.
+       @<original mount point@>/Const@::LTFSDM_CACHE_MP.
+    -# Via ioctl tell the Fuse process to continue. It was blocked before
+       since it can only be fully operational if access to the orginal
+       file system is available.
+    -# Perform a detached unmount of the original file system.
+
+    After the last step there is no general access possible to the original
+    file system. However the LTFS Data Management service is able to access
+    the file system via FuseFS::rootFd file descriptor. The procedure listed
+    here i.a. is to guarantee that the original file system is not in use
+    anymore when doing the management. If one of the steps fails the original
+    file system will not be managed.
 
     @param starttime start time of the LTFS Data Management service
  */
