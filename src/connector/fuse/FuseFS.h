@@ -6,6 +6,58 @@
 
 /**
     @brief Fuse overlay file system implementation
+    @details
+
+    To implement a Fuse file system Fuse call back function have to be
+    implemented. These call back function are similar and correspond to
+    POSIX calls.
+
+    In the following graph it is shown if a stat call is performed in an
+    application and the request is transferred via glibc system library,
+    the kernel vfs layer, the kernel fuse layer, the libfuse system library
+    to the FuseFS::ltfsdm_getattr the corresponding call back implemented
+    for the Fuse overlay file system (<span style="color:blue">blue color</span>)
+    and the response in the reverse direction (
+    <span style="color:lightgreen">green color</span>):
+
+    @dot
+    digraph fuse {
+        compound=true;
+        fontname="fixed";
+        fontsize=11;
+        node [shape=record, width=3, fontname="fixed", fontsize=11, fillcolor=white, style=filled];
+        subgraph cluster_userspace {
+            label="user space";
+            bgcolor=lightgrey;
+            subgraph cluster_fuse {
+                bgcolor=grey;
+                label="Fuse overlay file system";
+                ltfsdm [fontname="fixed bold", fontcolor=dodgerblue4, label="FuseFS::ltfsdm_getattr()", URL="@ref FuseFS::ltfsdm_getattr"];
+                libfuse [label="libfuse"];
+            }
+            subgraph cluster_application {
+                bgcolor=grey;
+                label="Application";
+                stat [label="stat()"];
+                glibc1 [label="glibc"];
+            }
+        }
+        subgraph cluster_kernel {
+            bgcolor=lightgrey;
+            label="Linux kernel";
+            kernel [label="<vfs> VFS|<fuse> Fuse"];
+        }
+        stat -> glibc1 -> kernel:vfs [color=blue];
+        kernel:fuse -> libfuse -> ltfsdm [color=blue];
+        ltfsdm -> libfuse -> kernel:fuse [color=green];
+        kernel:vfs -> glibc1 -> stat [color=green];
+    }
+    @enddot
+
+    The following call back functions have been implemented:
+
+    @snippet FuseFS.h fuse callback
+
  */
 class FuseFS
 {
@@ -38,16 +90,21 @@ public:
         FuseLock *lock;
     };
 
+    //! [ioctls]
     enum
     {
-        LTFSDM_FINFO = _IOR('l', 0, FuseFS::FuseHandle),
-        LTFSDM_PREMOUNT = _IO('l', 1),
-        LTFSDM_POSTMOUNT = _IO('l', 2),
-        LTFSDM_STOP = _IO('l', 3),
+        LTFSDM_FINFO = _IOR('l', 0, FuseFS::FuseHandle),    // provides the mount point, the relative path
+                                                            // of a file, and the lock path
+        LTFSDM_PREMOUNT = _IO('l', 1),                      // synchronization when adding a file system
+        LTFSDM_POSTMOUNT = _IO('l', 2),                     // set the root file descriptor when adding
+                                                            // management to a file system
+        LTFSDM_STOP = _IO('l', 3),                          // close the root file descriptor when stopping
+                                                            // file system management
         LTFSDM_LOCK = _IOWR('l', 4, FuseFS::FuseHandle),    // not used
         LTFSDM_TRYLOCK = _IOWR('l', 5, FuseFS::FuseHandle), // not used
         LTFSDM_UNLOCK = _IOW('l', 6, FuseFS::FuseHandle),   // not used
     };
+    //! [ioctls]
 
     struct shared_data
     {
@@ -110,6 +167,7 @@ private:
     static bool procIsLTFSDM(pid_t tid);
 
     // FUSE call backs
+    //! [fuse callback]
     static int ltfsdm_getattr(const char *path, struct stat *statbuf);
     static int ltfsdm_access(const char *path, int mask);
     static int ltfsdm_readlink(const char *path, char *buffer, size_t size);
@@ -132,10 +190,12 @@ private:
     static int ltfsdm_open(const char *path, struct fuse_file_info *finfo);
     static int ltfsdm_ftruncate(const char *path, off_t size,
             struct fuse_file_info *finfo);
+    // read not used
     static int ltfsdm_read(const char *path, char *buffer, size_t size,
             off_t offset, struct fuse_file_info *finfo);
     static int ltfsdm_read_buf(const char *path, struct fuse_bufvec **bufferp,
             size_t size, off_t offset, struct fuse_file_info *finfo);
+    // write not used
     static int ltfsdm_write(const char *path, const char *buf, size_t size,
             off_t offset, struct fuse_file_info *finfo);
     static int ltfsdm_write_buf(const char *path, struct fuse_bufvec *buf,
@@ -156,6 +216,7 @@ private:
     static int ltfsdm_ioctl(const char *path, int cmd, void *arg,
             struct fuse_file_info *fi, unsigned int flags, void *data);
     static void *ltfsdm_init(struct fuse_conn_info *conn);
+    //! [fuse callback]
 
     static void execute(std::string sourcedir, std::string mountpt,
             std::string command);

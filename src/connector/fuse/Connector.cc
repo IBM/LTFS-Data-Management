@@ -226,9 +226,57 @@
 
     ### File system API communication
 
+    Generally for many of the POSIX file i/o calls it is possible to transfer
+    information that is not related to specific files, file content, or file
+    attributes within the original file system that is managed. E.g. the
+    overlay file system provides information of a virtual file that does not
+    exist in the original file system. For normal files read or write calls
+    are transferred to the original file within the original file system.
+    The virtual file just is used for communication. The same can be done
+    for virtual attributes that does not exist on files within the original
+    file system. Using virtual attributes is a common way of communicating.
 
+    One virtual attribute is also used by LTFS Data Management:
+    - Const::LTFSDM_EA_FSINFO
 
-    ### Local socket communicatiom
+    A more appropriate way to communicate with the file system is the
+    implementation of the ioctl call. This call is generally used to
+    communicate with the kernel - also beside Fuse. The ioctl calls
+    that are implemented here are the following:
+
+    @snippet FuseFS.h ioctls
+
+    ### Local socket communication
+
+    For transparent recalls the Fuse overlay file system needs to inform
+    the backend about recall events. The backend needs to provide the
+    response if it finished successfully or not. For that purpose
+    local socket communication is used since it already has been used
+    for the communication between clients and the backend.
+
+    The following Protocol Buffers messages are used for that purpose:
+
+    - LTFSDmProtocol::LTFSDmTransRecRequest
+    - LTFSDmProtocol::LTFSDmTransRecResp
+
+    ### Mandatory file locking
+
+    LTFS Data Management requires mandatory file locking. If a file data is
+    just being transferred to tape application should not be able to write to
+    that file.
+
+    One possibility would be to to use the standard advisory locking and lock
+    certain portions of that file to indicate that it is locked mandatorily.
+    A problem would be that this lock can interfere with a similar lock
+    performed by an application.
+
+    Therefore a different virtual file is used for the purpose of locking:
+
+    @par
+    Const::LTFSDM_LOCK_DIR/@<inode number@>.[m|f]
+
+    where 'm' and 'f' indicate different levels of locking.
+
 
  */
 
