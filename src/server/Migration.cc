@@ -111,36 +111,36 @@
     corresponding links to the code parts:
 
     <TT>
-    - MessageParser::migrationMessage
-        - retrieve tape storage pool information (@ref LTFSDmProtocol::LTFSDmMigRequest::pools "migreq.pools()")
-        - retrieve target state information (premigrated or migrated state, @ref LTFSDmProtocol::LTFSDmMigRequest::state "migreq.state()")
-        - create a Migration object
-        - respond back to the client with a request number
-        - MessageParser::getObjects: retrieving file names to migrate
-            - Migration::addJob: add migration information the the SQLite table JOB_QUEUE
-        - Migration::addRequest: add a request to the SQLite table REQUEST_QUEUE
-        - MessageParser::reqStatusMessage: provide updates of the migration processing to the client
+    MessageParser::migrationMessage:
+    - retrieve tape storage pool information (@ref LTFSDmProtocol::LTFSDmMigRequest::pools "migreq.pools()")
+    - retrieve target state information (premigrated or migrated state, @ref LTFSDmProtocol::LTFSDmMigRequest::state "migreq.state()")
+    - create a Migration object
+    - respond back to the client with a request number
+    - MessageParser::getObjects: retrieving file names to migrate
+        - Migration::addJob: add migration information the the SQLite table JOB_QUEUE
+    - Migration::addRequest: add a request to the SQLite table REQUEST_QUEUE
+    - MessageParser::reqStatusMessage: provide updates of the migration processing to the client
 
     </TT>
 
-    ## 2. Scheduling migration jobs
+    ## 2. Scheduling migration jobs
 
     After a migration request has been added to the REQUEST_QUEUE and
     there is a free tape and drive resource available to schedule this
     migration request the following will happen:
 
     <TT>
-    - Scheduler::run
-        - if a migration request is ready do be scheduled:
-            - update record in request queue to mark it as DataBase::REQ_INPROGRESS
-            - Migration::execRequest
-                - add status: @ref Status::add "mrStatus.add"
-                - if @ref Migration::needsTape "needsTape" is true:
-                    - Migration::processFiles: premigrate all files according this request
-                    - synchronize tape index
-                    - release tape for further operations since for stubbing files there is nothing written to tape
-                - Migration::processFiles: stub all files according this request
-                - update record in request queue to mark it as DataBase::REQ_COMPLETED
+    Scheduler::run:
+    - if a migration request is ready do be scheduled:
+        - update record in request queue to mark it as DataBase::REQ_INPROGRESS
+        - Migration::execRequest
+            - add status: @ref Status::add "mrStatus.add"
+            - if @ref Migration::needsTape "needsTape" is true:
+                - Migration::processFiles: premigrate all files according this request
+                - synchronize tape index
+                - release tape for further operations since for stubbing files there is nothing written to tape
+            - Migration::processFiles: stub all files according this request
+            - update record in request queue to mark it as DataBase::REQ_COMPLETED
 
     </TT>
 

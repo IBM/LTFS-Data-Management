@@ -59,7 +59,7 @@
          label="LTFSDMCommand::connect";
          node [ width=3.5 ];
          connect_2 [ fontname="fixed bold", fontcolor=dodgerblue4, label="LTFSDmCommClient::connect", URL="@ref LTFSDmCommClient::connect" ];
-         get_reqnum [ fontname="fixed bold", fontcolor=dodgerblue4, label="LTFSDMCommand::getRequestNumber", URL="@ref LTFSDMCommand::getRequestNumber" ¨];
+         get_reqnum [ fontname="fixed bold", fontcolor=dodgerblue4, label="LTFSDMCommand::getRequestNumber", URL="@ref LTFSDMCommand::getRequestNumber" ];
      }
      do_command -> check_options [lhead=cluster_do_command];
      talk_to_backend -> send [lhead=cluster_talk_to_backend];
@@ -87,7 +87,7 @@
  LTFSDmCommClient::recv | receives a Protocol Buffer message | yes
  evaluate result | checks the information that has been sent from the backend | no
  LTFSDmCommClient::connect | connects to the backend | yes
- LTFSDMCommand::getRequestNumber | retrieves the request number | yes
+ LTFSDMCommand::getRequestNumber | retrieves the request number | yes
 
  <BR>
 

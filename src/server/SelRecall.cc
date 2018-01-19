@@ -92,33 +92,33 @@
     including corresponding links to the code parts:
 
     <TT>
-    - MessageParser::selRecallMessage
-        - create a SelRecall object with target state information (premigrated or resident state,
-          @ref LTFSDmProtocol::LTFSDmSelRecRequest::state "recreq.state()")
-        - respond back to the client with a request number
-        - MessageParser::getObjects: retrieving file names to recall
-            - SelRecall::addJob: add recall information the the SQLite table JOB_QUEUE
-        - SelRecall::addRequest: add a request to the SQLite table REQUEST_QUEUE
-        - MessageParser::reqStatusMessage: provide updates to the recall processing to the client
+    MessageParser::selRecallMessage:
+    - create a SelRecall object with target state information (premigrated or resident state,
+      @ref LTFSDmProtocol::LTFSDmSelRecRequest::state "recreq.state()")
+    - respond back to the client with a request number
+    - MessageParser::getObjects: retrieving file names to recall
+        - SelRecall::addJob: add recall information the the SQLite table JOB_QUEUE
+    - SelRecall::addRequest: add a request to the SQLite table REQUEST_QUEUE
+    - MessageParser::reqStatusMessage: provide updates to the recall processing to the client
 
     </TT>
 
-    ## 2. Scheduling selective recall jobs
+    ## 2. Scheduling selective recall jobs
 
     After a selective recall request has been added to the REQUEST_QUEUE and
     there is a free tape and drive resource available to schedule this
     selective recall request the following will happen:
 
     <TT>
-    - Scheduler::run
-        - if a selective request is ready do be scheduled:
-            - update record in request queue to mark it as DataBase::REQ_INPROGRESS
-            - SelRecall::execRequest
-                - add status: @ref Status::add "mrStatus.add"
-                - call SelRecall::processFiles depending the target state SelRecall::targetState
-                - if @ref SelRecall::needsTape "needsTape" is true:
-                    - release tape for further operations since for stubbing files there is nothing written to tape
-                - update record in request queue to mark it as DataBase::REQ_COMPLETED
+    Scheduler::run:
+    - if a selective request is ready do be scheduled:
+        - update record in request queue to mark it as DataBase::REQ_INPROGRESS
+        - SelRecall::execRequest
+            - add status: @ref Status::add "mrStatus.add"
+            - call SelRecall::processFiles depending the target state SelRecall::targetState
+            - if @ref SelRecall::needsTape "needsTape" is true:
+                - release tape for further operations since for stubbing files there is nothing written to tape
+            - update record in request queue to mark it as DataBase::REQ_COMPLETED
 
     </TT>
 

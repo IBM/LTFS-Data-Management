@@ -1,4 +1,5 @@
 msgdefs.h
+messages.dot
 *~
 *.o
 src/common/comm/test

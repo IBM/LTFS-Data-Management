@@ -176,43 +176,43 @@
     including corresponding links to the code parts:
 
     <TT>
-    - TransRecall::run
-        - while not terminating (Connector::connectorTerminate == false)
-            - wait for events: Connector::getEvents
-            - create FsObj object according the recall information recinfo
-            - determine the id of the first cartridge from the attributes
-            - enqueue the job and request creation   as part of the
-              ThreadPool wqr executing the method TransRecall::addJob.
+    TransRecall::run:
+    - while not terminating (Connector::connectorTerminate == false)
+        - wait for events: Connector::getEvents
+        - create FsObj object according the recall information recinfo
+        - determine the id of the first cartridge from the attributes
+        - enqueue the job and request creation   as part of the
+          ThreadPool wqr executing the method TransRecall::addJob.
 
     </TT>
     <TT>
-    - TransRecall::addJob
-        - determine path name on tape
-        - add a job within the JOB_QUEUE table
-        - if a request already exists: if (reqExists == true)
-            - change request state to new
-        - else
-            - create a request within the REQUEST_QUEUE table
+    TransRecall::addJob:
+    - determine path name on tape
+    - add a job within the JOB_QUEUE table
+    - if a request already exists: if (reqExists == true)
+        - change request state to new
+    - else
+        - create a request within the REQUEST_QUEUE table
 
     </TT>
 
-    ## 2. Scheduling transparent recall jobs
+    ## 2. Scheduling transparent recall jobs
 
     After a transparent recall request is ready to be scheduled and
     there is a free tape and drive resource available to schedule this
     transparent recall request the following will happen:
 
     <TT>
-    - Scheduler::run
-        - if a transparent request is ready do be scheduled:
-            - update record in request queue to mark it as DataBase::REQ_INPROGRESS
-            - TransRecall::execRequest
-                - call TransRecall::processFiles
-                    - respond recall event Connector::respondRecallEvent
-                - if there are outstanding transparent recall requests for the same tape (remaining)
-                    - update record in request queue to mark it as DataBase::REQ_NEW
-                - else
-                    - delete request within the REQUEST_QUEUE table
+    Scheduler::run:
+    - if a transparent request is ready do be scheduled:
+        - update record in request queue to mark it as DataBase::REQ_INPROGRESS
+        - TransRecall::execRequest
+            - call TransRecall::processFiles
+                - respond recall event Connector::respondRecallEvent
+            - if there are outstanding transparent recall requests for the same tape (remaining)
+                - update record in request queue to mark it as DataBase::REQ_NEW
+            - else
+                - delete request within the REQUEST_QUEUE table
 
     </TT>
 

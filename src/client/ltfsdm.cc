@@ -60,7 +60,7 @@
      rankdir=RL;
      node [shape=record, fontsize=11, fillcolor=white, style=filled];
      open_ltfs_command [fontname="fixed bold", fontcolor=dodgerblue4, width=2, label="LTFSDMCommand" URL="@ref LTFSDMCommand"];
-     command [fontname="fixed", fontcolor=black, label="ltfsdm X Y → class XYCommand"];
+     command [fontname="fixed", fontcolor=black, label="ltfsdm X Y &rarr; class XYCommand"];
      command -> open_ltfs_command;
  }
  @enddot

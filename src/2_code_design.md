@@ -25,7 +25,7 @@ The common code consists of the following:
 
 path | description
 ----|----
-[src/common/comm](@ref src/common/comm) | code for the communication between: client ↔ server,server ↔ Fuse overlay file system (transparent recalls)
+[src/common/comm](@ref src/common/comm) | code for the communication between: client &larr;&rarr; server,server &larr;&rarr; Fuse overlay file system (transparent recalls)
 [src/common/configuration](@ref src/common/configuration) | code to maintain the configuration information (storage pools, file systems)
 [src/common/const](@ref src/common/const) | internal constants of the code consolidated here
 [src/common/errors](@ref src/common/errors) | error values used within the code consolidated here
@@ -60,11 +60,11 @@ are used during normal operation:
 @dot
 digraph start_sequence {
      node [shape=record, width=2 ];
-     cli [ label="ltfsdm.cc → main()\n(ltfsdm start)" URL="@ref src/client/ltfsdm.cc" ];
-     srv [ label="ltfsdmd.cc → main()\n(ltfsdmd ...)" URL="@ref src/server/ltfsdmd.cc" ];
-     con1 [ label="ltfsdmd.ofs.cc → main()\n(ltfsdmd.ofs -m /mnt/fs1 ...)" URL="@ref src/connector/fuse/ltfsdmd.ofs.cc" ];
-     con2 [ label="ltfsdmd.ofs.cc → main()\n(ltfsdmd.ofs -m /mnt/fs2 ...)" URL="@ref src/connector/fuse/ltfsdmd.ofs.cc" ];
-     con3 [ label="ltfsdmd.ofs.cc → main()\n(ltfsdmd.ofs -m /mnt/fs3 ...)" URL="@ref src/connector/fuse/ltfsdmd.ofs.cc" ];
+     cli [ label="ltfsdm.cc &rarr; main()\n(ltfsdm start)" URL="@ref src/client/ltfsdm.cc" ];
+     srv [ label="ltfsdmd.cc &rarr; main()\n(ltfsdmd ...)" URL="@ref src/server/ltfsdmd.cc" ];
+     con1 [ label="ltfsdmd.ofs.cc &rarr; main()\n(ltfsdmd.ofs -m /mnt/fs1 ...)" URL="@ref src/connector/fuse/ltfsdmd.ofs.cc" ];
+     con2 [ label="ltfsdmd.ofs.cc &rarr; main()\n(ltfsdmd.ofs -m /mnt/fs2 ...)" URL="@ref src/connector/fuse/ltfsdmd.ofs.cc" ];
+     con3 [ label="ltfsdmd.ofs.cc &rarr; main()\n(ltfsdmd.ofs -m /mnt/fs3 ...)" URL="@ref src/connector/fuse/ltfsdmd.ofs.cc" ];
      conn [label="            "];
      cli -> srv [];
      srv -> con1 [];
@@ -77,15 +77,14 @@ digraph start_sequence {
 The number of processes of the Fuse overlay file systems corresponds to
 the number of file systems managed with LTFS Data Management. E.g. if only
 one file system is managed there will be only one Fuse overlay file system
-process.  
+process.
 
 The following is an example that shows the processes that are running in the
 background if one file system (here <tt><b>/mnt/lxfs</b></tt>) is managed:
 
 @verbatim
    [root\@visp ~]# ps -p $(pidof ltfsdmd) $(pidof ltfsdmd.ofs)
-    PID TTY      STAT   TIME COMMAND
-    32246 ?        Ssl  674:51 /root/LTFSDM/bin/ltfsdmd
-    32263 ?        Sl   918:32 /root/LTFSDM/bin/ltfsdmd.ofs -m /mnt/lxfs -f /dev/sdc1 -S 1510663933 -N 49751364 -l 1 -t 2 -p 32246
+    PID TTY     STAT   TIME COMMAND
+    32246 ?        Ssl  674:51 /root/LTFSDM/bin/ltfsdmd
+    32263 ?        Sl   918:32 /root/LTFSDM/bin/ltfsdmd.ofs -m /mnt/lxfs -f /dev/sdc1 -S 1510663933 -N 49751364 -l 1 -t 2 -p 32246
 @endverbatim
-
