@@ -31,7 +31,7 @@
 #include "InfoFsCommand.h"
 
 /** @page ltfsdm_info_fs ltfsdm info fs
-    The ltfsdm info fs command lists all LTFS Data Management managed file systems:
+    The ltfsdm info fs command lists all file systems that are managed with LTFS Data Management:
 
     <tt>@LTFSDMC0056I</tt>
 
@@ -46,7 +46,7 @@
     @verbatim
     @endverbatim
 
-    The responsible class is @ref InfoFsCommand.
+    The corresponding class is @ref InfoFsCommand.
  */
 
 void InfoFsCommand::printUsage()

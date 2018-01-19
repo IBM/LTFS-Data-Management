@@ -24,7 +24,8 @@
 #include "VersionCommand.h"
 
 /** @page ltfsdm_version ltfsdm version
-    The ltfsdm version command provide the version of the LTFS Data Management software.
+    The ltfsdm version command provide the version information of
+    the LTFS Data Management software.
 
     <tt>@LTFSDMC0102I</tt>
 
@@ -39,7 +40,7 @@
     LTFS Data Management version: 0.0.624-master.2017-11-09T10.57.51
     @endverbatim
 
-    The responsible class is @ref VersionCommand.
+    The corresponding class is @ref VersionCommand.
  */
 
 void VersionCommand::printUsage()

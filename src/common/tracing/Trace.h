@@ -20,8 +20,8 @@
 /**
     @page tracing_system Tracing
 
-    The tracing system is to print out values of variables within the source
-    code to a trace file.
+    The tracing system is used to print out values of variables of the
+    source code into a trace file.
 
     @todo enable tracing on the client side
 
@@ -55,24 +55,22 @@
     2017-12-07T15:42:46.366653:[004502:031034]:--------Migration.cc(0113): fileName(/mnt/lxfs/test2/file.945), replNum,(0), pool()
     @endverbatim
 
-    with the following structure:
+    The trace output has the following structure:
 
     <tt>
     @b date T @b time :[ @b pid  : @b tid  ]:---- @b file_name( @b line_number ): @b variable_name_1 ( @b value_1 ),@b variable_name_2 ( @b value_2 ),...
     </tt>
 
-    There exists a tracing object @ref traceObject that never is directly used.
-    Only the TRACE() macro should be invoked. The macro TRACE() is used to
-    automatically add the file name and the line number to the output.
+    For each process there exists a tracing object @ref traceObject that
+    never should be used directly used but is used internally as part of
+    the TRACE() macro. The macro TRACE() automatically adds the corresponding
+    file name and the line number to the output.
 
     The usage is the following:
 
     @verbatim
     TRACE(tracelevel, var1, var2, ...)
     @endverbatim
-
-    A trace object @ref traceObject is created for tracing purposes. It
-    should not be used directly but as part of the @ref TRACE() macro.
 
     The following gives an overview about the internal processing of tracing:
 

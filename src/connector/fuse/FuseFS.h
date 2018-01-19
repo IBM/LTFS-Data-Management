@@ -8,16 +8,16 @@
     @brief Fuse overlay file system implementation
     @details
 
-    To implement a Fuse file system Fuse call back function have to be
-    implemented. These call back function are similar and correspond to
-    POSIX calls.
+    Call back functions have to be implemented to create a Fuse file system.
+    These call back functions are similar and correspond to POSIX calls.
 
-    In the following graph it is shown if a stat call is performed in an
-    application and the request is transferred via glibc system library,
+    In the following graph it is shown how a stat call within a user space
+    application is processed: the stat call is performed in the
+    application, the request is transferred via glibc system library,
     the kernel vfs layer, the kernel fuse layer, the libfuse system library
-    to the FuseFS::ltfsdm_getattr the corresponding call back implemented
-    for the Fuse overlay file system (<span style="color:blue">blue color</span>)
-    and the response in the reverse direction (
+    to the FuseFS::ltfsdm_getattr method which is the corresponding call back implemented
+    for the Fuse overlay file system (<span style="color:blue">blue color</span>). The
+    the response is shown in the reverse direction (
     <span style="color:lightgreen">green color</span>):
 
     @dot

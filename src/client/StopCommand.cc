@@ -19,7 +19,7 @@
 #include "StopCommand.h"
 
 /** @page ltfsdm_stop ltfsdm stop
-    The ltfsdm stop command stop the LTFS Data Management service.
+    The ltfsdm stop command stops the LTFS Data Management service.
 
     <tt>@LTFSDMC0007I</tt>
 
@@ -36,7 +36,7 @@
     [root@visp ~]#
     @endverbatim
 
-    The responsible class is @ref StopCommand.
+    The corresponding class is @ref StopCommand.
 
     @page stop_processing stop processing
 
@@ -108,11 +108,11 @@
     }
     @enddot
 
-    When processing the stop command first stoprequest message is sent to the
-    to the backend. This is repeated as long the backend does not respond with
-    success message. Thereafter the server lock is tried to acquire to see
-    that the server process is finally gone. The backend holds a lock all the
-    time it is operating.
+    When processing the stop command at first a stoprequest message is sent to
+    the to the backend. If this fails it is repeated as long the backend does
+    not respond with success message. Thereafter the server lock is tried to
+    acquire to see that the server process is finally gone. The backend holds
+    a lock all the time it is operating.
  */
 
 void StopCommand::printUsage()

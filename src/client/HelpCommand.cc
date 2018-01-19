@@ -36,7 +36,7 @@
 #include "HelpCommand.h"
 
 /** @page ltfsdm_help ltfsdm help
-    The ltfsdm help command lists all available commands.
+    The ltfsdm help command lists all available client interface commands.
 
     parameters | description
     ---|---
@@ -54,7 +54,8 @@
                ltfsdm status            - provides information if the back end has been started
                ltfsdm migrate           - migrate file system objects from the local file system to tape
                ltfsdm recall            - recall file system objects back from tape to local disk
-               ltfsdm retrieve          - synchonizes the inventory with the information provided by Spectrum Archive LE
+               ltfsdm retrieve          - synchronizes the inventory with the information
+                                          provided by Spectrum Archive LE
                ltfsdm version           - provides the version number of LTFS Data Management
     info sub commands:
                ltfsdm info requests     - retrieve information about all or a specific LTFS Data Management requests
@@ -71,7 +72,7 @@
                ltfsdm pool remove       - removes a cartridge from a tape storage pool
     @endverbatim
 
-    The responsible class is @ref HelpCommand.
+    The corresponding class is @ref HelpCommand.
  */
 
 void HelpCommand::printUsage()

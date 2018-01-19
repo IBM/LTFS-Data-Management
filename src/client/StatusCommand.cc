@@ -32,7 +32,7 @@
     LTFSDMC0032I(0068): The LTFS Data Management server process is operating with pid  13378.
     @endverbatim
 
-    The responsible class is @ref StatusCommand.
+    The corresponding class is @ref StatusCommand.
  */
 
 void StatusCommand::printUsage()

@@ -1452,11 +1452,12 @@ std::string FuseFS::mask(std::string s)
     -# Perform a so called fake mount (see <TT>mount -f</TT> command) by only
        specifying the mount point to see if it can be mounted automatically.
        Any file system managed by LTFS Data Management should not be mounted
-       beside the LTFS Data Management service.
+       beside the LTFS Data Management service (especially not automatically
+       during system startup).
     -# Start of the Fuse overlay file system. The Fuse overlay file system
-       gets mounted at the original mount point.
-    -# Wait for the Fuse overlay file system is in operation and open a file
-       descriptor for the ioctl communication.
+       is mounted at the original mount point.
+    -# Wait for the Fuse overlay file system to be  in operation and open a
+       file descriptor for the ioctl communication.
     -# Mount the original file system within the cache mount point
        Const::LTFSDM_CACHE_MP.
     -# Open the file descriptor FuseFS::rootFd on its root: i.e.

@@ -8,10 +8,10 @@
     method and continuously running as an additional thread. For an overview
     about all threads that are started within the backend have a look at
     @ref server_code. Within the Server::run routine a loop is waiting on a
-    condition of either a new request has been added or a resource got free.
-    If there is a request that has not been scheduled so far an a corresponding
-    resource is available this request can be scheduled. Therefore there can be
-    two possibilities when a request is scheduled:
+    condition of either a new request has been added or a resource became free.
+    If there is a request that has not been scheduled so far and a corresponding
+    resource is became this request can be scheduled. Therefore there can be
+    two possibilities a request get scheduled:
 
     - A new request has been added an a cartridge and drive resource already is
       available.
@@ -19,8 +19,8 @@
       cartridge resource available at that time. Now, a corresponding resource
       became free.
 
-    Within the loop the condition Scheduler::cond is waiting for a lock on the
-    Scheduler::mtx mutex.
+    Within the outer while loop of Scheduler::runthe condition Scheduler::cond
+    is waiting for a lock on the Scheduler::mtx mutex.
 
     The scheduler also initiates mount and unmounts of cartridges. E.g. if there
     is a new request to migrate data but all available drives are empty the
@@ -36,7 +36,7 @@
     - a tape unmount is completed (see @ref LTFSDMInventory::unmount): drive
       can be used to mount a cartridge
 
-    After that Scheduler::resAvail checks if there is are resources available
+    After that Scheduler::resAvail checks if there is a resource available
     to schedule a request or to mount and unmount cartridges. For recall a
     specific cartridge needs to be considered (Scheduler::tapeResAvail). For
     migration it needs to be a cartridge from a corresponding tape storage pool
@@ -67,7 +67,8 @@
 
     ## Scheduler::tapeResAvail
 
-    A tape resource is checked for availability in the following way:
+    A tape resource is checked for availability in the following way (return
+    statements are performed in respect to the condition):
 
     -# If the corresponding cartridge is moving: <b>return false</b>.
     -# If corresponding cartridge is in use (by another request) try to unblock
@@ -88,7 +89,8 @@
 
     ## Scheduler::poolResAvail
 
-    A tape storage pool is checked for availability in the following way:
+    A tape storage pool is checked for availability in the following way
+    (return statements are performed in respect to the condition):
 
     -# If a cartridge of the specified tape storage pool is mounted but not
        in use and the remaining space is larger than the smallest file to

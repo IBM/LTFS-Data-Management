@@ -65,7 +65,7 @@ void getUUID(std::string fsName, uuid_t *uuid)
 
 /**
     @file
-    @brief This file provides the main entry point for the Fuse overlay file system.
+    @brief File that provides the main entry point for the Fuse overlay file system.
     @details
     For every file system that is managed with LTFS Data Management an Fuse
     overlay file system is created as a separate process. This file provides

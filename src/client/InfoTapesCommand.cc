@@ -38,7 +38,7 @@
     D01302L5     259          1358985      1357300      Valid LTFS   0            pool2        mounted
     @endverbatim
 
-    The responsible class is @ref InfoTapesCommand.
+    The corresponding class is @ref InfoTapesCommand.
  */
 
 void InfoTapesCommand::printUsage()

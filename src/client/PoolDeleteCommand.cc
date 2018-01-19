@@ -37,7 +37,7 @@
     Pool "newpool" successfully deleted.
     @endverbatim
 
-    The responsible class is @ref PoolDeleteCommand.
+    The corresponding class is @ref PoolDeleteCommand.
  */
 
 void PoolDeleteCommand::printUsage()

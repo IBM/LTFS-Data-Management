@@ -18,7 +18,7 @@
 #include "MigrateCommand.h"
 
 /** @page ltfsdm_migrate ltfsdm migrate
-    The ltfsdm recall command selectively recall one or more files.
+    The ltfsdm migrate command is used to migrate one or more files to tape.
 
     <tt>@LTFSDMC0001I</tt>
 
@@ -45,7 +45,7 @@
     [00:01:54]            0            0       100000            0
     @endverbatim
 
-    The responsible class is @ref MigrateCommand.
+    The corresponding class is @ref MigrateCommand.
 
     @page migrate_processing migrate processing
 
@@ -78,19 +78,18 @@
                 until not done
     @endcode
 
-    After processing the migration options it is evaluated how the file names
-    are provided. There are three different possibilities
+    After the option processing is done it is evaluated in which way the
+    file names are provided to the command. There are three different
+    possibilities:
 
     - the file names are provided as arguments to the command
     - a file list is provided containing the file names
     - a "-" is provided as file list name and the file names are provided by stdin
 
-    If the file names are provided as arguments a stream is created containing
-    all the names. If a file list is provided it is checked if it is a valid
-    regular file.
+    If a file list is provided it is checked if it is a valid regular file.
 
     The further processing is performed by communicating with the backend. The
-    three steps that are performed are the following
+    three steps that are performed are the following:
 
     - general migration information is sent to the backend
     - the file names are send to the backend

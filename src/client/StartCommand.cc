@@ -48,7 +48,7 @@
     LTFSDMC0097I(0141): The LTFS Data Management server process has been started with pid  13378.
     @endverbatim
 
-    The responsible class is @ref StartCommand.
+    The corresponding class is @ref StartCommand.
 
     @page start_processing start processing
 
@@ -113,13 +113,14 @@
     }
     @enddot
 
-    To start the backend executable its path name needs to be detected. This
-    is done by the StartCommand::determineServerPath method. Since its path
-    is the same like the current executable it is just necessary to read
-    the link of the current process to the client executable via procfs.
+    The start commands starts the LTFS Data Management server. To do so
+    its path name needs to be detected. This is performed by the
+    StartCommand::determineServerPath method. Since the client and the
+    server path are the same it is just necessary to read
+    the link to the executable of the current client process via procfs.
 
     The backend is started within the StartCommand::startServer method.
-    It is start via popen system call.
+    It is started via popen system call.
 
     After the backend is started the status information is requested
     within the StartCommand::waitForResponse method. A connection is

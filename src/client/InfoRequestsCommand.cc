@@ -18,7 +18,8 @@
 #include "InfoRequestsCommand.h"
 
 /** @page ltfsdm_info_requests ltfsdm info requests
-    The ltfsdm info request command lists all LTFS Data Management requests and the corresponding status.
+    The ltfsdm info request command lists all LTFS Data Management requests
+    and their corresponding status.
 
     <tt>@LTFSDMC0009I</tt>
 
@@ -34,7 +35,7 @@
     migration            in progress          28                   pool1                D01301L5             in progress
     @endverbatim
 
-    The responsible class is @ref InfoRequestsCommand.
+    The corresponding class is @ref InfoRequestsCommand.
  */
 
 void InfoRequestsCommand::printUsage()

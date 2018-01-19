@@ -53,7 +53,7 @@
 
     The second step will not start before the first step is completed. For
     the second step the required tape and drive resources need to be
-    available: e.g. a corresponding tape cartridge is mounted on a tape drive.
+    available: e.g. a corresponding cartridge is mounted on a tape drive.
     The second phase may start immediately after the first phase but it also
     can take a longer time depending when a required resource gets available.
 
@@ -62,7 +62,7 @@
     When a client sends a selective recall request to the backend the
     corresponding information is split into two parts. The first part
     contains information that is relevant for the whole request: the
-    final recall state. A file can be recalled to resident state or
+    target recall state. A file can be recalled to resident state or
     to premigrated state.
 
     Thereafter the file names of the files to be recalled are sent to the backend.
@@ -186,7 +186,7 @@
        FsObj::RECALLING_PREMIG state. Jobs that failed in the second step
        already have been marked as FsObj::FAILED. A reason for remaining
        jobs left over from the second step could be that a request with a
-       higher priority (e.g. transparent recall) required the same tape resource.
+       higher priority (transparent recall) required the same tape resource.
        This change is shown below for the remaining two files of the example:
        @dot
        digraph step_1 {

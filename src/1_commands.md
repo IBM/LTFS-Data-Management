@@ -1,11 +1,11 @@
 # Commands
 
-LTFS Data Management consists of a client interface and a set of background processes
-that perform the processing of requests. Beside the special case of
-transparent recalls requests that are driven by file i/o all other
-operations are initiated by the client interface.
+LTFS Data Management consists of a client interface and a set of background
+processes that perform the processing. Beside the special case of transparent
+recall where requests are driven by file i/o all other operations are initiated
+by the client interface.
 
-The following client interface command exist:
+The following client interface commands exist:
 <pre>
     commands:
           @subpage ltfsdm_help          "ltfsdm help"              - gives an overview

@@ -35,7 +35,7 @@
     1013000505   /dev/IBMtape1 259          Available    free
     @endverbatim
 
-    The responsible class is @ref InfoDrivesCommand.
+    The corresponding class is @ref InfoDrivesCommand.
  */
 
 void InfoDrivesCommand::printUsage()

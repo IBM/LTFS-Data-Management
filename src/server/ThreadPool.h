@@ -22,10 +22,10 @@
     A new thread can be enqueued with the ThreadPool::enqueue method.
     Only the function (that has been specified with the constructor)
     parameters and if necessary (if not Const::UNSET should be specified)
-    as a first parameter. For ThreadPool::waitCompletion method a request
-    number can be specified to wait only for for specific request to
-    finish (if not Const::UNSET should be specified). This only is the
-    case for those ThreadPools that perform tasks for different request at
+    a request number as a first parameter. For ThreadPool::waitCompletion
+    method a request number can be specified to wait only for for specific
+    request to finish (if not Const::UNSET should be specified). This only is
+    the case for those ThreadPools that perform tasks for different request at
     the same time.
 
     The ThreadPool is used by doing the following three steps:

@@ -20,20 +20,21 @@
 
     # Messaging System
 
-    LTFS Data Management writes output to the console and a log file. Every output to these
-    two locations should be regarded as a message even it is a single character.
-    Tracing does not used messages since only values of variables are printed
-    out. All messages are consolidated in a single file
-    <a href="../messages.cfg">messages.cfg</a> within the root of the code tree.
+    LTFS Data Management writes output to the console and to log files.
+    Every output to these two locations should be regarded as a message even
+    it is a single character. Tracing does not used messages since only
+    values of variables are printed out. All messages are consolidated
+    within a single file <a href="../messages.cfg">messages.cfg</a> that
+    is located in the root of the code tree.
 
     There are two types of messages:
 
-    - Informational messages that do not show up the message identifier.
-      Those messages are added to the code using the INFO() macro.
+    - Informational messages do not show up the message identifier.
+      Those messages can be used by specifying the INFO() macro.
     - Messages that should show up the message identifier. For those
-      the MSG() macro should be used.
+      the MSG() macro should be specified.
 
-    The INFO() macro is especially used for the output of the client commands.
+    The INFO() macro is especially used for the output of client commands.
 
     The  <a href="../messages.cfg">messages.cfg</a> has a special format:
 
@@ -41,10 +42,10 @@
     - A '#' character at the beginning of a line indicates a comment.
     - Usually a message starts with a message identifier followed by the message
       surrounded by quotes.
-    - If the message identifier is missing the message text is added to the
-      previous message.
+    - If a line starts without a message identifier the message text is added
+      to the previous message.
 
-    The message itself has to be written in c printf style format. E.g.:
+    The message text has to be written in c printf style format. E.g.:
 
     @verbatim
     LTFSDMX0001E "Unable to setup tracing: %d.\n"
@@ -56,38 +57,40 @@
     LTFSDM[X|C|S|D|F|L]NNNN[I|E|W]
     @endverbatim
 
-    in which the different characters have to following meaning:
+    The message identifier components have the following meaning:
 
     characters | meaning
     :---:|---
-    X | common message used by different parts of the code (client, server, ...)
+    X | common message used in multiple parts of the code (client, server, ...)
     C | a client message
     S | a server message
     D | a message used by the dmapi connector
     F | a message used by the Fuse connector
-    L | a message used by LTFS
+    L | a message used by LTFS LE
     NNNN | a four digit number
     I | an informational message
     E | an error message
     W | a warning
 
-    A line feed not automatically is added. It is necessary to add a "\n" sequence
+    A line feed is not automatically added. It is necessary to add a "\n" sequence
     if required.
 
     There is a message compiler @ref msgcompiler.cc that
-    transforms this text based  <a href="../messages.cfg">messages.cfg</a>
+    transforms the text based  <a href="../messages.cfg">messages.cfg</a>
     message file into c++ code. This operation is done at the beginning of
-    the build process. I.e. some development environment may show up errors
-    that some symbols could not be resolved before building the code.
+    the build process. If that has not happened symbols are missing and
+    integrated development environment may show up errors.
 
-    The macros MSG() and INFO() are used to automatically add the file
-    name and the line number to the output. The class Message is responsible
-    to process the message string and corresponding arguments. Internally
-    the <a href="http://www.boost.org/doc/libs/release/libs/format/">Boost Format library</a>
+    The MSG() macro automatically add the file name and the line number
+    to the output. The class Message is responsible to process the message
+    string and corresponding arguments. Internally the
+    <a href="http://www.boost.org/doc/libs/release/libs/format/">Boost Format library</a>
     is used to perform the formatting.
 
-    A messaging object @ref messageObject is created for message processing. It
-    should not be used directly but as part of the MSG() and INFO() macros.
+    For each process there exists a messaging object @ref messageObject to
+    perform the message processing. This messaging object should not be
+    used directly but is used internally as part of the MSG() and INFO()
+    macros.
 
     The following gives an overview about the internal processing of a message:
 

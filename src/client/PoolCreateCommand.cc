@@ -23,7 +23,7 @@
 #include "PoolCreateCommand.h"
 
 /** @page ltfsdm_pool_create ltfsdm pool create
-    The ltfsdm pool create command created a tape storage pool.
+    The ltfsdm pool create command creates a tape storage pool.
 
     <tt>@LTFSDMC0075I</tt>
 
@@ -38,7 +38,7 @@
     Pool "newpool" successfully created.
     @endverbatim
 
-    The responsible class is @ref PoolCreateCommand.
+    The corresponding class is @ref PoolCreateCommand.
  */
 
 void PoolCreateCommand::printUsage()

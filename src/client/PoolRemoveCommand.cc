@@ -38,7 +38,7 @@
     Tape DV1478L6 successfully removed from pool "large pool".
     @endverbatim
 
-    The responsible class is @ref PoolRemoveCommand.
+    The corresponding class is @ref PoolRemoveCommand.
  */
 
 void PoolRemoveCommand::printUsage()

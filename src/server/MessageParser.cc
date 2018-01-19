@@ -5,7 +5,7 @@
 
     The message parsing is invoked by Receiver calling the MessageParser::run
     method. Within this method it is determined which Protocol
-    Buffer message has been received. The Prorocol Buffers framework
+    Buffer message has been received. The Protocol Buffers framework
     provides functions to determine which command has been issued
     on the client side. If the migration command has been
     called the following method
@@ -13,7 +13,7 @@
     command.has_migrequest()
 
     should be used to identify. This identification is part of the
-    MessageParser::run method. Further parsing amd processing
+    MessageParser::run method. Further parsing and processing
     is performed within command specific methods:
 
     Message | Description

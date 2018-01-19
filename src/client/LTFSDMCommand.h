@@ -12,17 +12,17 @@
 
  option | meaning
  ---|---
- -h | show the usage
- -p | migrate to premigrate state instead to to fully migrate
- -r | recall to resident state instead to premigrated state
- -n | the request number
- -f | the name of a file that contains a list of file names
- -m | the mount point of a file system to be managed
- -P | a list of up to three tape storage pools (separated by commas)
- -t | the id of a cartridge
- -x | indicates a forced operation
+ -h                    | show the usage
+ -p                    | perform a premigration instead to fully migrate (no stubbing)
+ -r                    | recall to resident state instead to premigrated state
+ -n @<request number@> | the request number
+ -f @<file name@>      | the name of a file that contains a list of file names
+ -m @<mount point@>    | the mount point of a file system to be managed
+ -P @<pool list@>      | a list of up to three tape storage pools (separated by commas)
+ -t @<tape id@>        | the id of a cartridge
+ -x                    | indicates a forced operation
 
- The LTFSDMCommand::checkOptions method checks the the number
+ The LTFSDMCommand::checkOptions method checks if the number
  of arguments is correct and the request number is not set.
 
  # Command processing
@@ -69,22 +69,23 @@
 
  <BR>
 
- Not all items are performed for all commands. The [ltfsdm info files](@ref ltfsdm_info_files)
- command e.g does not communicate to the backend since it is not necessary to
- do so for the file state evaluation. The following gives a description of
- each item:
+ Not all items that are listed in the following are performed for all commands.
+ The [ltfsdm info files](@ref ltfsdm_info_files) command e.g does not
+ communicate to the backend since it is not necessary to do so for the file
+ state evaluation. The following list gives a description of code components
+ of the LTFS Data Management client:
 
  item | description | same implementation for all commands
  ---|---|:---:
  doCommand | performs all required operations for a certain command | no
- LTFSDMCommand::processOptions | processing of additional options | yes
+ LTFSDMCommand::processOptions | option processing | yes
  LTFSDMCommand::checkOptions | checks the number of arguments | yes
  talkToBackend | performs the communication with the backend | no
  LTFSDMCommand::connect | connects to the backend and retrieves the request number | yes
- create message | assembles the message to send to the backend | no
- LTFSDmCommClient::send | send a message | yes
- LTFSDmCommClient::recv | received a message | yes
- evaluate result | checks the information that has been sent back | no
+ create message | assembles a Protocol Buffer message to send to the backend | no
+ LTFSDmCommClient::send | sends a Protocol Buffer message | yes
+ LTFSDmCommClient::recv | receives a Protocol Buffer message | yes
+ evaluate result | checks the information that has been sent from the backend | no
  LTFSDmCommClient::connect | connects to the backend | yes
  LTFSDMCommand::getRequestNumber | retrieves the request number | yes
 

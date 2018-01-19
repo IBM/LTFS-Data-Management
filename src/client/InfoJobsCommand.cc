@@ -18,7 +18,7 @@
 #include "InfoJobsCommand.h"
 
 /** @page ltfsdm_info_jobs ltfsdm info jobs
-    The ltfsdm info jobs command lists all jobs that have been created and which are processes by the backend.
+    The ltfsdm info jobs command lists all jobs that are currently processed by the backend.
 
     <tt>@LTFSDMC0059I</tt>
 
@@ -43,7 +43,7 @@
     migration            premigrating         19                   pool1                D01301L5             32768                /mnt/lxfs/test2/file.9
     @endverbatim
 
-    The responsible class is @ref InfoJobsCommand.
+    The corresponding class is @ref InfoJobsCommand.
  */
 
 void InfoJobsCommand::printUsage()

@@ -49,9 +49,9 @@
 
  # Class Hierarchy
 
- For each of the commands there exists a class derived from the
- @ref LTFSDMCommand class. The class name corresponds to the command name
- that the command names are prepended to the word "Command".
+ For each of the commands there exists a separate class that is derived
+ from the @ref LTFSDMCommand class. The class name of a command
+ consists of the string "Command" that is appended to the command name.
 
  @dot
  digraph client {
@@ -92,10 +92,10 @@
 
  # Command evaluation
 
- LTFS Data Management is started, stopped, and operated using the [ltfsdm command](@ref md_src_1_commands).
+ LTFS Data Management is started, stopped, and operated using the [ltfsdm executable](@ref md_src_1_commands).
 
- For all commands the first the first and for the info and pool commands
- also the second argument is evaluated.
+ For all commands the first and for the info and pool commands
+ also the second argument of the ltfsdm executable is evaluated.
 
  @dot
  digraph command_processing {

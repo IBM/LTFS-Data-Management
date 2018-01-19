@@ -1,7 +1,7 @@
 /** @page receiver_and_message_processing Receiver and client message parsing
 
     When a client send a message to the backend there are two components
-    who are processing such a message:
+    that are processing such a message:
 
     - The Receiver listens on a socket and provides the information sent to
     - a MessageParser object that is evaluating the message in a separate thread.

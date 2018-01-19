@@ -38,7 +38,7 @@
     Tape DV1478L6 successfully added to pool "large pool".
     @endverbatim
 
-    The responsible class is @ref PoolAddCommand.
+    The corresponding class is @ref PoolAddCommand.
  */
 
 void PoolAddCommand::printUsage()

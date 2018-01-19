@@ -32,7 +32,7 @@
     [root@visp ~]#
     @endverbatim
 
-    The responsible class is @ref RetrieveCommand.
+    The corresponding class is @ref RetrieveCommand.
  */
 
 void RetrieveCommand::printUsage()

@@ -28,28 +28,30 @@
 
     ## Three different technologies for data management
 
-    To block system calls require additional functionality provided by the
-    operating system. Migration and selective recall do not have any additional
-    requirements on the operating system and therefore are simpler and more
-    flexible to implement. Three different technologies have been discussed
-    or implemented for that purpose:
+    To implement an application that provides a transparent recall feature
+    additional functionality provided by the operating system is necessary
+    to intercept and block i/o system calls. Migration and selective recall
+    do not have any additional requirements on the operating system and
+    therefore are simpler and more flexible to implement.
+    Three different technologies have been discussed or implemented for that
+    purpose:
 
     technology/API  | description
     ---|---
     DMAPI | Data Management API (https://en.wikipedia.org/wiki/DMAPI), only available for the XFS file system type
-    Fanotify | File system event notification system (http://man7.org/linux/man-pages/man7/fanotify.7.html), file system independent, no mandatory locking
-    @ref fuse_connector "Fuse overlay file system"| File system in user space (https://github.com/libfuse/libfuse), file system independent, no direct file system access
+    Fanotify | File system event notification system (http://man7.org/linux/man-pages/man7/fanotify.7.html), file system type independent, no mandatory locking
+    @ref fuse_connector "Fuse overlay file system"| File system in user space (https://github.com/libfuse/libfuse), file system type independent, no direct file system access
 
-    The Fanotify API looked very promising since it is file system independent
-    and also provides direct file system access. This API seems to have two
-    limitations that still persist:
+    The Fanotify API looked very promising since it is file system type
+    independent and also provides direct file system access. This API seems
+    to have two limitations that still persist:
 
     - Only open (FAN_OPEN_PERM) and read (FAN_ACCESS_PERM) calls are able to
       intercept. It is possible to deal with that limitation by using the
       assumption that a file opened for write will be always written. If an
       application opens a file for writing it would be always recalled even
       there never followed a read or write call.
-    - It does not to seem possible to block file access if a data management
+    - It does not to seem possible to block file access if the data management
       application that implements the Fanotify API has not been started. Events
       only seem to be generated if the data management application is in
       operation. Especially this limitation does not allow to use this
@@ -58,15 +60,15 @@
     For DMAPI there has been implemented a reference implementation. One
     limitation is that it is only available for teh XFS file system type. Since
     only the SLES distributions fully provide this API it is not considered
-    to fully support that.
+    to completely support that.
 
     Fuse is an API to implement a file system in user space. By using this
     third approach it is possible to write an overlay file system on top
     on the original file system that should be managed. Read, write, or
     truncate system call can be intercepted within the overlay file system
-    to let data be transferred back to disk. Other system calls can forwarded
-    to the original file system. See @subpage fuse_connector for detailed
-    information. Even this third possibility has disadvantages:
+    to let data be transferred back frpm tape to disk. Other system calls are
+    forwarded to the original file system. See @subpage fuse_connector for
+    detailed information. Also this third possibility has disadvantages:
 
     - The original file system never should be directly accessed. All access
       should happen through the Fuse overlay file system.
@@ -78,15 +80,16 @@
       file system. Any file system type specific functionality is not
       available.
 
-    it is the only practical technology that in contrast to DMAPI is
-    fully developed for LTFS Data Management.
+    The Fuse approach is the only that is completely developed for
+    LTFS Data Management.
 
     ## The Connector
 
     The Connector is an API that should cover the very different technologies.
     Currently it is implemented for the Fuse overlay approach and the DMAPI
     reference implementation. If there will be a better or more suitable API
-    for doing data management it should be possible to integrate that.
+    - additionally to the three approaches discussed here - for doing data
+    management it should be possible to integrate that by using the connector.
 
  */
 
@@ -122,15 +125,15 @@ struct fuid_t
 };
 
 /**
-    @brief Class for external usage for managing recall events.
+    @brief Class for external usage to manage recall events.
 
     @details
-    This call is providing the recall event system. Most prominent methods are
+    This class is providing the recall event system. Most prominent methods are
 
-    - Connector::getEvents to get recall event
-    - Connector::respondRecallEvent to respond recall events
+    - Connector::getEvents to get a recall event
+    - Connector::respondRecallEvent to respond a recall event
 
-    Further methods initialize end end the recall event system.
+    Further methods initialize and stop the recall event system.
 
  */
 class Connector
@@ -176,7 +179,7 @@ public:
       FsObj::manageFs
     - to provide stat information of a file system object\n
       FsObj::stat
-    - to provide file file uid: fuid_t\n
+    - to provide file file uid, see fuid_t\n
       FsObj::getfuid
     - to provide the tape id of migrated and premigrated files\n
       FsObj::getTapeId
@@ -184,7 +187,7 @@ public:
       FsObj::lock\n
       FsObj::try_lock\n
       FsObj::unlock
-    - to read and write from and to files\n
+    - to read from and to write to files\n
       FsObj::read\n
       FsObj::write
     - to work with file attributes\n

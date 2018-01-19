@@ -25,7 +25,8 @@
 #include "AddCommand.h"
 
 /** @page ltfsdm_add ltfsdm add
-    The ltfsdm add command is used to manage a file system with LTFS Data Management.
+    The ltfsdm add command is used to add file system management
+    with LTFS Data Management to a particular file system.
 
     <tt>@LTFSDMC0052I</tt>
 
@@ -38,7 +39,7 @@
     [root@visp ~]# ltfsdm add /mnt/xfs
     @endverbatim
 
-    The responsible class is @ref AddCommand.
+    The corresponding class is @ref AddCommand.
  */
 
 void AddCommand::printUsage()

@@ -39,7 +39,7 @@
 
     The Fuse overlay file system has the following two basic tasks:
 
-    - It provides some kind of control to the original file system.
+    - It provides some kind of control over the original file system.
       Most of the file system accesses are bypassed to the original.
       Read, write, and truncate system calls are suspended on
       migrated files to copy data from tape to disk.
@@ -56,7 +56,8 @@
     states (resident, premigrated, migrated) within the two file systems. The
     Fuse overlay file system is virtual in a sense that there is no storage
     directly managed and all data and meta data are stored "somewhere else".
-    Nevertheless it is possible to access data and meta data.
+    Nevertheless it is possible to access data and meta data from the original
+    file system.
 
     <table class="doxtable">
     <tr><th></th><th>resident/<BR>premigrated</th><th>migrated</th></tr>
@@ -108,8 +109,8 @@
     </tr>
     </table>
 
-    The stat information of a migrated file shows the following within the
-    Fuse overlay file system:
+    Within the Fuse overlay file system the stat information of a migrated file
+    looks as follows:
 
     @verbatim
       File: ‘file.1’
@@ -122,7 +123,8 @@
      Birth: -
     @endverbatim
 
-    and the following within the original file system:
+    For the file the following is the stat information within the original
+    file system:
 
     @verbatim
       File: ‘file.1’
@@ -136,20 +138,25 @@
     @endverbatim
 
     For each file system that is managed a Fuse overlay file system is created.
-    Each of these file systems is implemented within a different process. If
+    Each of these file systems is operating within a different process. If
     there are three file systems (/dev/loop0, /dev/loop1, and /dev/loop2)
-    managed with LTFS Data Management it looks like the following:
+    which are managed with LTFS Data Management it looks like the following:
 
+    - mount information before managing:
     @verbatim
     vex:~ # cat /proc/mounts |grep loop
     /dev/loop0 /mnt/loop0 ext4 rw,relatime,data=ordered 0 0
     /dev/loop1 /mnt/loop1 ext4 rw,relatime,data=ordered 0 0
     /dev/loop2 /mnt/loop2 ext4 rw,relatime,data=ordered 0 0
-
+    @endverbatim
+    - now managing with LTFS Data Management:
+    @verbatim
     vex:~ # ltfsdm add /mnt/loop0
     vex:~ # ltfsdm add /mnt/loop1
     vex:~ # ltfsdm add /mnt/loop2
-
+    @endverbatim
+    - process and mount information thereafter:
+    @verbatim
     vex:~ # cat /proc/mounts |grep loop
     LTFSDM:/dev/loop0 /mnt/loop0 fuse rw,nosuid,nodev,relatime,user_id=0,group_id=0,default_permissions,allow_other 0 0
     LTFSDM:/dev/loop1 /mnt/loop1 fuse rw,nosuid,nodev,relatime,user_id=0,group_id=0,default_permissions,allow_other 0 0
@@ -168,13 +175,13 @@
 
     ## Startup
 
-    File systems are managed by LTFS Data Management in two events:
+    File systems are managed by LTFS Data Management in two cases:
 
     - If a file system is added using the ltfsdm add command.
-    - If a file system has been added previously during the startup phase
-      of LTFS Data management automatically.
+    - If a file system has been added previously: during the startup phase
+      of LTFS Data management done automatically.
 
-    These two methods are involved when managing a file system:
+    The following two methods are involved when managing a file system:
     @code
     FsObj::manageFs
         -> FuseFS::init
@@ -220,28 +227,34 @@
     - using the file system API
     - using a local socket
 
-    The later one only is used to communicate recall requests and their
-    responses. For the socket communication Google Protocol Buffers are
-    used in the same way as the client talks to the backend.
+    The later one only is used to communicate transparent recall events and
+    the correspondig responses. For the socket communication Google Protocol
+    Buffers are used in the same way as the client talks to the backend.
 
     ### File system API communication
 
-    Generally for many of the POSIX file i/o calls it is possible to transfer
-    information that is not related to specific files, file content, or file
-    attributes within the original file system that is managed. E.g. the
-    overlay file system provides information of a virtual file that does not
-    exist in the original file system. For normal files read or write calls
-    are transferred to the original file within the original file system.
-    The virtual file just is used for communication. The same can be done
-    for virtual attributes that does not exist on files within the original
-    file system. Using virtual attributes is a common way of communicating.
+    In general the POSIX file operation calls are forwarded to the underlying
+    original file system. E.g. if an attribute of a file within the Fuse
+    overlay file system is changed, the attribute change actually is done
+    at the corresponding file within the underlying original file system.
+    However it is possible to transfer information that is not related
+    to specific files, file content, or file attributes within the original
+    file system that is managed. E.g. the overlay file system provides
+    information of a virtual file that does not exist in the original file
+    system. For normal files read or write calls are transferred to the
+    original file within the original file system. The virtual file just
+    is used for communication. The same can be done for virtual attributes
+    that does not exist on files within the original file system. Using
+    virtual attributes is a common way of communicating.
 
     One virtual attribute is also used by LTFS Data Management:
     - Const::LTFSDM_EA_FSINFO
 
+    This virtual attribute provides information part of FuseFS::FuseHandle.
+
     A more appropriate way to communicate with the file system is the
     implementation of the ioctl call. This call is generally used to
-    communicate with the kernel - also beside Fuse. The ioctl calls
+    communicate with the kernel - also outside Fuse. The ioctl calls
     that are implemented here are the following:
 
     @snippet FuseFS.h ioctls
@@ -262,22 +275,23 @@
     ### Mandatory file locking
 
     LTFS Data Management requires mandatory file locking. If a file data is
-    just being transferred to tape application should not be able to write to
+    just being transferred to tape applications should not be able to write to
     that file.
 
-    One possibility would be to to use the standard advisory locking and lock
-    certain portions of that file to indicate that it is locked mandatorily.
-    A problem would be that this lock can interfere with a similar lock
-    performed by an application.
+    To provides this functionality one possibility would be to to use the
+    standard advisory locking and lock certain portions of that file to
+    indicate that it is locked mandatorily. A problem with this approach is
+    that such a lock can interfere with a similar lock performed by an
+    application on the same file.
 
-    Therefore a different virtual file is used for the purpose of locking:
+    The approach in LTFS Data Management is to use a virtual files for the
+    purpose of locking. These files are not accessible from user space
+    applications and have the following format:
 
     @par
     Const::LTFSDM_LOCK_DIR/@<inode number@>.[m|f]
 
     where 'm' and 'f' indicate different levels of locking.
-
-
  */
 
 std::atomic<bool> Connector::connectorTerminate(false);

@@ -17,7 +17,7 @@
 
     All requests are stored in the SQLite table REQUEST_QUEUE.
 
-    For each request one or more file can be processed. For each
+    For each request one or more files can be processed. For each
     file one jobs is created (for migration up to three jobs
     depending on the number of tape storage pools being specified).
     Jobs are stored within the SQlite table JOB_QUEUE.

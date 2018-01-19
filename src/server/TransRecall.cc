@@ -4,11 +4,11 @@
 
     # TransRecall
 
-    For each file system that is managed by LTFS Data Management a
-    Fuse overlay file system is created. The Fuse overlay file systems
-    have to be used by the user for file system operations instead
-    of the original one. For each of these Fuse overlay file systems
-    an additional process is started:
+    For each file system that is managed with LTFS Data Management a
+    Fuse overlay file system is created. After that the original file
+    system should not be used anymore by an user or by an application:
+    only the Fuse overlay file system should be used instead. For each
+    of these Fuse overlay file systems an additional process is started:
 
     @dot
     digraph ltfsdm_processes {
@@ -28,10 +28,10 @@
     @enddot
 
     Within the Fuse processes read, write, and truncate calls on premigrated
-    or migrated files are intercepted if there is a requirement to recall
-    (transfer data back to disk) data or to perform a file state change.
-    The Fuse overlay file system as part of the Fuse connector is described
-    in more detail at @ref fuse_connector.
+    or migrated files are intercepted since there is a requirement to recall
+    (transfer data back from tape to disk) data or to perform a file state
+    change. The Fuse overlay file system as part of the Fuse connector is
+    described in more detail at @ref fuse_connector.
 
     The data transfer and the file system change of a file are performed
     within the backend. Therefore there needs to be a communication between
@@ -62,7 +62,7 @@
     If a recall request LTFSDmProtocol::LTFSDmTransRecRequest has been sent
     to the backend within the Fuse process read, write, and truncate
     processing is blocked until the backend responds with
-    Connector::respondRecallEvent
+    Connector::respondRecallEvent.
 
 
     The transparent recall processing within the backend happens within two phases:
@@ -71,13 +71,13 @@
        socket for recall events. Recall events are are initiated by
        applications that perform read, write, or truncate calls on a
        premigrated or migrated files. A corresponding
-       job is created within the JOB_QUEUE table and if it does not exist a
+       job is created within the JOB_QUEUE table and - if it does not exist - a
        request is created within the REQUEST_QUEUE table.
     2. The Scheduler identifies a transparent recall request to get scheduled.
        The order of files being recalled depends on the starting block of
        the data files on tape: @snippet server/SQLStatements.cc trans_recall_sql_qry
        If the transparent recall job is finally processed (even it is failed)
-       the event is responded  as protocol buffer messages
+       the event is responded  as a Protocol Buffers message
        (LTFSDmProtocol::LTFSDmTransRecResp).
 
     @dot
@@ -125,11 +125,11 @@
     recalls for the same tape. If there is a new transparent recall
     event and if a corresponding request already exists within the
     REQUEST_QUEUE table this existing request is used for further
-    processing the event.
+    processing this request/event.
 
     The second step will not start before the first step is completed. For
     the second step the required tape and drive resources need to be
-    available: e.g. a corresponding tape cartridge is mounted on a tape drive.
+    available: e.g. a corresponding cartridge is mounted on a tape drive.
     The second phase may start immediately after the first phase but it also
     can take a longer time depending when a required resource gets available.
 
@@ -137,7 +137,7 @@
 
     One backend thread exists (see @ref server_code) that executes the
     TransRecall::run method to wait for recall events. Recall events are sent
-    as protocol buffer messages (LTFSDmProtocol::LTFSDmTransRecRequest) over a
+    as Protocol Buffers messages (LTFSDmProtocol::LTFSDmTransRecRequest) over a
     socket. The information provided contains the following:
 
     - opaque information specific to the connector
@@ -180,7 +180,7 @@
         - while not terminating (Connector::connectorTerminate == false)
             - wait for events: Connector::getEvents
             - create FsObj object according the recall information recinfo
-            - determine the if of the first cartridge from the attributes
+            - determine the id of the first cartridge from the attributes
             - enqueue the job and request creation   as part of the
               ThreadPool wqr executing the method TransRecall::addJob.
 

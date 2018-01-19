@@ -8,7 +8,7 @@
 
     ## The ltfsdmd command
 
-    The backend usually us started by the @ref ltfsdm_start "ltfsdm start"
+    The backend usually is started by the @ref ltfsdm_start "ltfsdm start"
     command. However it is possible to start the backend directly by using
     the
 
@@ -31,9 +31,9 @@
     Main task of the backend is the processing of migration and recall
     requests and to perform the resource management of cartridges and
     tape drives. To optimally use the resources for migration and recall
-    requests requests need to be queued and schedules when a required
-    resource is ready to be used. For the queuing information needs to
-    be stored temporarily. Two SQLite tables are used for that purpose.
+    requests, requests need to be queued and scheduled when a required
+    resource is ready to be used. Information needs to be stored temporarily
+    for the queuing. Two SQLite tables are used for that purpose.
     A description of the two tables can be found at @subpage sqlite.
 
     The following is a high level sequence how such requests get processed:
@@ -50,7 +50,7 @@
       be a single migration request. The scheduler only is considering
       requests to be scheduled.
     - A job is a single operation that is performed on a cartridge. For
-      migration a job is related to a file to be migrated. If there is a
+      migration: a job is related to a file to be migrated. If there is a
       migration request to migrate 1000 files to a single tape 1000 jobs
       will be created.
 
@@ -68,7 +68,7 @@
     thread pools are available where threads automatically terminate
     if not longer used.
 
-    The following threads are available after starting the backend:
+    In the following example threads are listed after starting the backend:
 
     @verbatim
       Id   Target Id         Frame
@@ -103,18 +103,10 @@
     2 | FuseFS::execute | started the Fuse connector process for another file system
     1 | ltfsdmd.cc:main() | main thread
 
-    In this example two file systems are managed by LTFS Data Management. Therefore two
-    Fuse threads exist. Thread pools are not visible after initial start since
-    threads within a thread pool are created on request.
-
-    The following thread pools exist:
-
-    operation | object | function being executed | description
-    ---|---|---|---
-    message parsing | Receiver::run -> wqm | MessageParser::run | After the Receiver gets a new message this message is further processed by a new thread from this thread pool.
-    premigration | LTFSDMDrive::wqp | Migration::preMigrate | For premigration there is one thread pool per drive since only a single request can be executed on a certain drive at a time.
-    stubbing | Server::wqs | Migration::stub | There exist one thread pool for all stubbing operations (even from different requests).
-    transparent recall | TransRecall::run -> wqr | TransRecall::addJob | Adds a transparent recall request and waits for completion.
+    In this example two file systems are managed by LTFS Data Management.
+    Therefore two Fuse threads exist (for starting the Fuse overlay
+    file system processes). Thread pools are not visible after initial
+    start since threads within a thread pool are created on request.
 
     Furthermore the scheduler is creating additional threads for each
     request being scheduled:
@@ -126,6 +118,15 @@
     TransRecall::execRequest | schedules a transparent recall request
 
     For each of these threads there will be an additional waiter thread.
+
+    The following thread pools are available:
+
+    operation | object | function being executed | description
+    ---|---|---|---
+    message parsing | Receiver::run -> wqm | MessageParser::run | After the Receiver gets a new message this message is further processed by a new thread from this thread pool.
+    premigration | LTFSDMDrive::wqp | Migration::preMigrate | For premigration there is one thread pool per drive since only a single request can be executed on a certain drive at a time.
+    stubbing | Server::wqs | Migration::stub | There exist one thread pool for all stubbing operations (even from different requests).
+    transparent recall | TransRecall::run -> wqr | TransRecall::addJob | For adding transparent recall requests and jobs.
 
     Overall this leads to the following picture:
 
@@ -166,13 +167,13 @@
     - @subpage migration
     - @subpage selective_recall
 
-    Furthermore for transparent recalling the following sections are available:
+    Furthermore for transparent recalling the following section is available:
 
     - @subpage transparent_recall
 
     ## The startup sequence
 
-    During the startup initialization happens and threads are started for
+    During the startup initialization is done and threads are started for
     further processing.
 
     The configuration is read and the information
@@ -183,8 +184,8 @@
     be created for each managed file system. The creation of the drive and
     cartridge inventory in the following is called inventorize. During this
     operation premigration thread pools are created: one pool for each drive.
-    A thread pool for the stubbing operation is setup. Thereafter the thread
-    for scheduling, singnal handling, the receiver, and the listener for the
+    A thread pool for the stubbing operation is setup. Thereafter the threads
+    for scheduling, signal handling, the receiver, and the listener for the
     transparent recall requests are started.
 
     The following gives an overview:

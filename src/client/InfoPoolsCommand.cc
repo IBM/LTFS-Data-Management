@@ -36,7 +36,7 @@
     pool2        1358985      1357300      0            1
     @endverbatim
 
-    The responsible class is @ref InfoPoolsCommand.
+    The corresponding class is @ref InfoPoolsCommand.
  */
 
 void InfoPoolsCommand::printUsage()

@@ -56,7 +56,7 @@
     p | premigrated
     r | resident
 
-    The responsible class is @ref InfoFilesCommand.
+    The corresponding class is @ref InfoFilesCommand.
  */
 
 void InfoFilesCommand::printUsage()

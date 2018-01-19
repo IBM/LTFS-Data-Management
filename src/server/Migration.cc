@@ -57,7 +57,7 @@
 
     The second step will not start before the first step is completed. For
     the second step the required tape and drive resources need to be
-    available: e.g. a corresponding tape cartridge is mounted on a tape drive.
+    available: e.g. a corresponding cartridge is mounted on a tape drive.
     The second phase may start immediately after the first phase but it also
     can take a longer time depending when a required resource gets available.
 
@@ -71,7 +71,7 @@
     that is relevant for the whole request:
 
     - the tape storage pools the migration is targeted to
-    - the final migration state (premigrated or migrated)
+    - the target migration state (premigrated or migrated)
 
     Thereafter the file names of the files to be migrated are sent to the backend.
     When receiving this information corresponding entries are added to the SQL
@@ -80,7 +80,8 @@
     to the SQL table REQUEST_QUEUE. For each storage pool being specified a
     corresponding entry is added to that table.
 
-    This an example of the two tables when migrating four files to two pools:
+    The following is an example of the two tables when migrating four files to
+    two pools:
 
     @verbatim
     sqlite> select * from JOB_QUEUE;
@@ -118,13 +119,13 @@
         - MessageParser::getObjects: retrieving file names to migrate
             - Migration::addJob: add migration information the the SQLite table JOB_QUEUE
         - Migration::addRequest: add a request to the SQLite table REQUEST_QUEUE
-        - MessageParser::reqStatusMessage: provide updates to the migration processing to the client
+        - MessageParser::reqStatusMessage: provide updates of the migration processing to the client
 
     </TT>
 
     ## 2. Scheduling migration jobs
 
-    After a migration request has been added to the REQUEST_QUEUE and and
+    After a migration request has been added to the REQUEST_QUEUE and
     there is a free tape and drive resource available to schedule this
     migration request the following will happen:
 
@@ -253,7 +254,7 @@
 
     For premigration each file needs to be written continuously on tape.
     Since the copy of data from disk to tape is performed in a loop by
-    doing one or more reads and writes this loop is serialized by
+    doing the reads and writes this loop is serialized by
     a std::mutex LTFSDMDrive::mtx.
 
     ### Migration::stub
@@ -267,10 +268,10 @@
 
     It is required that the attributes are changed before the file
     is truncated. It needs to be avoided that a file is truncated
-    before it changes to migrated state. A recall of a premigrated
-    file just change the file state from premigrated to resident
-    assuming the data is already on disk.
-
+    before it changes to migrated state. Otherwise: in an error case
+    it could happen that the file is truncated but still in premigrated
+    state. A recall of this "premigrated" file just changes the file
+    state from premigrated to resident assuming the data is still on disk.
 
  */
 
