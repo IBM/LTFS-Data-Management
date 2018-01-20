@@ -73,22 +73,22 @@
     @dot
     digraph start_command {
         compound=true;
-        fontname="fixed";
+        fontname="courier";
         fontsize=11;
         labeljust=l;
-        node [shape=record, width=2, fontname="fixed", fontsize=11, fillcolor=white, style=filled];
-        do_command [fontname="fixed bold", fontcolor=dodgerblue4, label="StartCommand::doCommand", URL="@ref StartCommand::doCommand"];
+        node [shape=record, width=2, fontname="courier", fontsize=11, fillcolor=white, style=filled];
+        do_command [fontname="courier bold", fontcolor=dodgerblue4, label="StartCommand::doCommand", URL="@ref StartCommand::doCommand"];
         subgraph cluster_do_command {
             label="StartCommand::doCommand";
-            determine_server_path [fontname="fixed bold", fontcolor=dodgerblue4, label="StartCommand::determineServerPath", URL="@ref StartCommand::determineServerPath"];
-            start_server [fontname="fixed bold", fontcolor=dodgerblue4, label="StartCommand::startServer", URL="@ref StartCommand::startServer"];
-            wait_for_response [fontname="fixed bold", fontcolor=dodgerblue4, label="StartCommand::waitForResponse", URL="@ref StartCommand::waitForResponse"];
+            determine_server_path [fontname="courier bold", fontcolor=dodgerblue4, label="StartCommand::determineServerPath", URL="@ref StartCommand::determineServerPath"];
+            start_server [fontname="courier bold", fontcolor=dodgerblue4, label="StartCommand::startServer", URL="@ref StartCommand::startServer"];
+            wait_for_response [fontname="courier bold", fontcolor=dodgerblue4, label="StartCommand::waitForResponse", URL="@ref StartCommand::waitForResponse"];
         }
         subgraph cluster_wait_for_response {
             label="StartCommand::waitForResponse";
             subgraph cluster_loop {
                 label="while not connected and retry<10";
-                connect [fontname="fixed bold", fontcolor=dodgerblue4, label="LTFSDmCommClient::connect", URL="@ref LTFSDmCommClient::connect"];
+                connect [fontname="courier bold", fontcolor=dodgerblue4, label="LTFSDmCommClient::connect", URL="@ref LTFSDmCommClient::connect"];
                 sleep [label="sleep 1"];
             }
             subgraph cluster_condition {
@@ -96,8 +96,8 @@
                 exit [label="exit with failue"];
             }
             create_message [label="create statusrequest message"];
-            send [fontname="fixed bold", fontcolor=dodgerblue4, label="LTFSDmCommClient::send", URL="@ref LTFSDmCommClient::send"];
-            recv [fontname="fixed bold", fontcolor=dodgerblue4, label="LTFSDmCommClient::recv", URL="@ref LTFSDmCommClient::recv"];
+            send [fontname="courier bold", fontcolor=dodgerblue4, label="LTFSDmCommClient::send", URL="@ref LTFSDmCommClient::send"];
+            recv [fontname="courier bold", fontcolor=dodgerblue4, label="LTFSDmCommClient::recv", URL="@ref LTFSDmCommClient::recv"];
             response [label="evaluate response"];
         }
         do_command -> determine_server_path [lhead=cluster_do_command,minlen=2];

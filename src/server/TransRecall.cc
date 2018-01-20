@@ -13,10 +13,10 @@
     @dot
     digraph ltfsdm_processes {
         compound=true;
-        fontname="fixed";
+        fontname="courier";
         fontsize=11;
         labeljust=l;
-        node [shape=record, width=2, fontname="fixed", fontsize=11, fillcolor=white, style=filled];
+        node [shape=record, width=2, fontname="courier", fontsize=11, fillcolor=white, style=filled];
         ltfsdmd [label="ltfsdmd (backend)"];
         ltfsdmd_fs1 [label="ltfsdmd.ofs -m /mnt/fs1"];
         ltfsdmd_fs2 [label="ltfsdmd.ofs -m /mnt/fs2"];
@@ -43,17 +43,17 @@
     @dot
     digraph trec_communication {
         compound=true;
-        fontname="fixed";
+        fontname="courier";
         fontsize=11;
         labeljust=l;
         rankdir=LR;
-        node [shape=record, width=2, fontname="fixed", fontsize=11, fillcolor=white, style=filled];
+        node [shape=record, width=2, fontname="courier", fontsize=11, fillcolor=white, style=filled];
         ltfsdmd_fs1 [label="ltfsdmd.ofs -m /mnt/fs1"];
         ltfsdmd [label="ltfsdmd (backend)"];
-        ltfsdmd_fs1 -> ltfsdmd [fontname="fixed", fontsize=8, fontcolor=dodgerblue4,
+        ltfsdmd_fs1 -> ltfsdmd [fontname="courier", fontsize=8, fontcolor=dodgerblue4,
             label="1) Connector::getEvents()\nLTFSDmProtocol::LTFSDmTransRecRequest",
             URL="@ref Connector::getEvents"];
-        ltfsdmd -> ltfsdmd_fs1 [fontname="fixed", fontsize=8, fontcolor=dodgerblue4,
+        ltfsdmd -> ltfsdmd_fs1 [fontname="courier", fontsize=8, fontcolor=dodgerblue4,
             label="2) Connector::respondRecallEvent()\nLTFSDmProtocol::LTFSDmTransRecResp",
             URL="@ref Connector::respondRecallEvent" ];
     }
@@ -83,10 +83,10 @@
     @dot
     digraph trans_recall {
         compound=true;
-        fontname="fixed";
+        fontname="courier";
         fontsize=11;
         labeljust=l;
-        node [shape=record, width=2, fontname="fixed", fontsize=11, fillcolor=white, style=filled];
+        node [shape=record, width=2, fontname="courier", fontsize=11, fillcolor=white, style=filled];
         subgraph cluster_first {
             label="first phase";
             recv [label="receive event"];
@@ -103,16 +103,16 @@
                     rec_exec [label="{read from tape\n\nordered by starting block|respond event}"];
                 }
             }
-            scheduler -> rec_exec [label="schedule\nrecall request", fontname="fixed", fontsize=8, lhead=cluster_rec_exec];
+            scheduler -> rec_exec [label="schedule\nrecall request", fontname="courier", fontsize=8, lhead=cluster_rec_exec];
         }
         subgraph cluster_tables {
             label="SQLite tables";
             tables [label="<rq> REQUEST_QUEUE|<jq> JOB_QUEUE"];
         }
-        ajr ->  tables [color=darkgreen, fontcolor=darkgreen, label="add", fontname="fixed", fontsize=8, headport=w, lhead=cluster_tables];
-        scheduler -> tables:rq [color=darkgreen, fontcolor=darkgreen, label="check for requests to schedule", fontname="fixed", fontsize=8, tailport=e];
-        rec_exec -> tables [color=darkgreen, fontcolor=darkgreen, label="read and update", fontname="fixed", fontsize=8, lhead=cluster_tables, ltail=cluster_rec_exec];
-        ajr -> scheduler [color=blue, fontcolor=blue, label="condition", fontname="fixed", fontsize=8];
+        ajr ->  tables [color=darkgreen, fontcolor=darkgreen, label="add", fontname="courier", fontsize=8, headport=w, lhead=cluster_tables];
+        scheduler -> tables:rq [color=darkgreen, fontcolor=darkgreen, label="check for requests to schedule", fontname="courier", fontsize=8, tailport=e];
+        rec_exec -> tables [color=darkgreen, fontcolor=darkgreen, label="read and update", fontname="courier", fontsize=8, lhead=cluster_tables, ltail=cluster_rec_exec];
+        ajr -> scheduler [color=blue, fontcolor=blue, label="condition", fontname="courier", fontsize=8];
         scheduler -> ajr [style=invis]; // just for the correct order of the subgraphs
     }
     @enddot
@@ -228,10 +228,10 @@
        @dot
        digraph step_1 {
             compound=true;
-            fontname="fixed";
+            fontname="courier";
             fontsize=11;
             rankdir=LR;
-            node [shape=record, width=2, fontname="fixed", fontsize=11, fillcolor=white, style=filled];
+            node [shape=record, width=2, fontname="courier", fontsize=11, fillcolor=white, style=filled];
             before [label="file.1: FsObj::MIGRATED|file.2: FsObj::PREMIGRATED|file.3: FsObj::MIGRATED|file.4: FsObj::PREMIGRATED|file.5: FsObj::MIGRATED|file.6: FsObj::PREMIGRATED"];
             after [label="file.1: FsObj::RECALLING_MIG|file.2: FsObj::RECALLING_PREMIG|file.3: FsObj::RECALLING_MIG|file.4: FsObj::RECALLING_PREMIG|file.5: FsObj::RECALLING_MIG|file.6: FsObj::RECALLING_PREMIG"];
             before -> after [];
@@ -245,10 +245,10 @@
        @dot
        digraph step_1 {
             compound=true;
-            fontname="fixed";
+            fontname="courier";
             fontsize=11;
             rankdir=LR;
-            node [shape=record, width=2, fontname="fixed", fontsize=11, fillcolor=white, style=filled];
+            node [shape=record, width=2, fontname="courier", fontsize=11, fillcolor=white, style=filled];
             before [label="file.1: FsObj::RECALLING_MIG|file.2: FsObj::RECALLING_PREMIG|file.3: FsObj::RECALLING_MIG|file.4: FsObj::RECALLING_PREMIG|file.5: FsObj::RECALLING_MIG|file.6: FsObj::RECALLING_PREMIG"];
             after [label="file.1: FsObj::RECALLING_MIG|file.2: FsObj::RECALLING_PREMIG|file.3: FsObj::RECALLING_MIG|file.4: FsObj::RECALLING_PREMIG|file.5: FsObj::RECALLING_MIG|file.6: FsObj::RECALLING_PREMIG"];
             before -> after [];
@@ -258,10 +258,10 @@
        @dot
        digraph step_1 {
             compound=true;
-            fontname="fixed";
+            fontname="courier";
             fontsize=11;
             rankdir=LR;
-            node [shape=record, width=2, fontname="fixed", fontsize=11, fillcolor=white, style=filled];
+            node [shape=record, width=2, fontname="courier", fontsize=11, fillcolor=white, style=filled];
             before [label="file.1: FsObj::RECALLING_MIG|file.2: FsObj::RECALLING_PREMIG|file.3: FsObj::RECALLING_MIG|file.4: FsObj::FAILED|file.5: FsObj::RECALLING_MIG|file.6: FsObj::RECALLING_PREMIG"];
             after [fontcolor=lightgrey, label="file.1: FsObj::RECALLING_MIG|file.2: FsObj::RECALLING_PREMIG|file.3: FsObj::RECALLING_MIG|file.4: FsObj::FAILED|file.5: FsObj::RECALLING_MIG|file.6: FsObj::RECALLING_PREMIG"];
             before -> after [];

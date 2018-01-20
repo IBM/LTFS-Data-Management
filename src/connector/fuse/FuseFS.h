@@ -23,16 +23,16 @@
     @dot
     digraph fuse {
         compound=true;
-        fontname="fixed";
+        fontname="courier";
         fontsize=11;
-        node [shape=record, width=3, fontname="fixed", fontsize=11, fillcolor=white, style=filled];
+        node [shape=record, width=3, fontname="courier", fontsize=11, fillcolor=white, style=filled];
         subgraph cluster_userspace {
             label="user space";
             bgcolor=lightgrey;
             subgraph cluster_fuse {
                 bgcolor=grey;
                 label="Fuse overlay file system";
-                ltfsdm [fontname="fixed bold", fontcolor=dodgerblue4, label="FuseFS::ltfsdm_getattr()", URL="@ref FuseFS::ltfsdm_getattr"];
+                ltfsdm [fontname="courier bold", fontcolor=dodgerblue4, label="FuseFS::ltfsdm_getattr()", URL="@ref FuseFS::ltfsdm_getattr"];
                 libfuse [label="libfuse"];
             }
             subgraph cluster_application {

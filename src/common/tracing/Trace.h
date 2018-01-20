@@ -77,13 +77,13 @@
     @dot
     digraph tracing {
         compound=true;
-        fontname="fixed";
+        fontname="courier";
         fontsize=11;
         labeljust=l;
-        node [shape=record, width=2, fontname="fixed", fontsize=11, fillcolor=white, style=filled];
-        macro [ fontname="fixed bold", fontcolor=dodgerblue4, label="TRACE(tracelevel, args ...)", URL="@ref TRACE()"];
-        trace [ fontname="fixed bold", fontcolor=dodgerblue4, label="traceObject.trace", URL="@ref Trace::trace"];
-        add_parameter [ fontname="fixed bold", fontcolor=dodgerblue4, label="Trace::processParms", URL="@ref Trace::processParms"];
+        node [shape=record, width=2, fontname="courier", fontsize=11, fillcolor=white, style=filled];
+        macro [ fontname="courier bold", fontcolor=dodgerblue4, label="TRACE(tracelevel, args ...)", URL="@ref TRACE()"];
+        trace [ fontname="courier bold", fontcolor=dodgerblue4, label="traceObject.trace", URL="@ref Trace::trace"];
+        add_parameter [ fontname="courier bold", fontcolor=dodgerblue4, label="Trace::processParms", URL="@ref Trace::processParms"];
         subgraph cluster_trace {
             label="traceObject.trace";
             write_msg [ label="create message|<addparamemeter> add parameter|write message" ];

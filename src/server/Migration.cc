@@ -21,10 +21,10 @@
     @dot
     digraph migration {
         compound=true;
-        fontname="fixed";
+        fontname="courier";
         fontsize=11;
         labeljust=l;
-        node [shape=record, width=2, fontname="fixed", fontsize=11, fillcolor=white, style=filled];
+        node [shape=record, width=2, fontname="courier", fontsize=11, fillcolor=white, style=filled];
         subgraph cluster_first {
             label="first phase";
             recv [label="Receiver"];
@@ -38,17 +38,17 @@
                 label="Migration::execRequest";
                 mig_exec [label="{ <write_to_tape> write to tape\n(Migration::preMigrate)|<sync_index> sync index|<stub> stub files\n(Migration::stub)}"];
             }
-            scheduler -> mig_exec [label="schedule\nmigration request", fontname="fixed", fontsize=8, lhead=cluster_mig_exec];
+            scheduler -> mig_exec [label="schedule\nmigration request", fontname="courier", fontsize=8, lhead=cluster_mig_exec];
         }
         subgraph cluster_tables {
             label="SQLite tables";
             tables [label="<rq> REQUEST_QUEUE|<jq> JOB_QUEUE"];
         }
-        msgparser -> scheduler [color=blue, fontcolor=blue, label="condition", fontname="fixed", fontsize=8];
+        msgparser -> scheduler [color=blue, fontcolor=blue, label="condition", fontname="courier", fontsize=8];
         scheduler -> msgparser [style=invis]; // just for the correct order of the subgraphs
-        msgparser -> tables [color=darkgreen, fontcolor=darkgreen, label="add", fontname="fixed", fontsize=8, headport=w, lhead=cluster_tables];
-        scheduler -> tables:rq [color=darkgreen, fontcolor=darkgreen, label="check for requests to schedule", fontname="fixed", fontsize=8, tailport=e];
-        mig_exec -> tables [color=darkgreen, fontcolor=darkgreen, label="read and update", fontname="fixed", fontsize=8, lhead=cluster_tables, ltail=cluster_mig_exec];
+        msgparser -> tables [color=darkgreen, fontcolor=darkgreen, label="add", fontname="courier", fontsize=8, headport=w, lhead=cluster_tables];
+        scheduler -> tables:rq [color=darkgreen, fontcolor=darkgreen, label="check for requests to schedule", fontname="courier", fontsize=8, tailport=e];
+        mig_exec -> tables [color=darkgreen, fontcolor=darkgreen, label="read and update", fontname="courier", fontsize=8, lhead=cluster_tables, ltail=cluster_mig_exec];
     }
     @enddot
 
@@ -166,10 +166,10 @@
        @dot
        digraph step_1 {
             compound=true;
-            fontname="fixed";
+            fontname="courier";
             fontsize=11;
             rankdir=LR;
-            node [shape=record, width=2, fontname="fixed", fontsize=11, fillcolor=white, style=filled];
+            node [shape=record, width=2, fontname="courier", fontsize=11, fillcolor=white, style=filled];
             before [label="file.1: FsObj::RESIDENT|file.2: FsObj::RESIDENT|file.3: FsObj::RESIDENT|file.4: FsObj::RESIDENT|file.5: FsObj::RESIDENT|file.6: FsObj::RESIDENT"];
             after [label="file.1: FsObj::PREMIGRATING|file.2: FsObj::PREMIGRATING|file.3: FsObj::PREMIGRATING|file.4: FsObj::PREMIGRATING|file.5: FsObj::PREMIGRATING|file.6: FsObj::PREMIGRATING"];
             before -> after [];
@@ -181,10 +181,10 @@
        @dot
        digraph step_1 {
             compound=true;
-            fontname="fixed";
+            fontname="courier";
             fontsize=11;
             rankdir=LR;
-            node [shape=record, width=2, fontname="fixed", fontsize=11, fillcolor=white, style=filled];
+            node [shape=record, width=2, fontname="courier", fontsize=11, fillcolor=white, style=filled];
             before [label="file.1: FsObj::PREMIGRATING|file.2: FsObj::PREMIGRATING|file.3: FsObj::PREMIGRATING|file.4: FsObj::PREMIGRATING|file.5: FsObj::PREMIGRATING|file.6: FsObj::PREMIGRATING"];
             after [label="file.1: FsObj::PREMIGRATING|file.2: FsObj::PREMIGRATING|file.3: FsObj::PREMIGRATING|file.4: FsObj::FAILED|file.5: FsObj::PREMIGRATING|file.6: FsObj::PREMIGRATING"];
             before -> after [];
@@ -198,10 +198,10 @@
        @dot
        digraph step_1 {
             compound=true;
-            fontname="fixed";
+            fontname="courier";
             fontsize=11;
             rankdir=LR;
-            node [shape=record, width=2, fontname="fixed", fontsize=11, fillcolor=white, style=filled];
+            node [shape=record, width=2, fontname="courier", fontsize=11, fillcolor=white, style=filled];
             before [label="file.1: FsObj::PREMIGRATING|file.2: FsObj::PREMIGRATING|file.3: FsObj::PREMIGRATING|file.4: FsObj::FAILED|file.5: FsObj::PREMIGRATING|file.6: FsObj::PREMIGRATING"];
             after [label="file.1: FsObj::PREMIGRATED|file.2: FsObj::PREMIGRATED|file.3: FsObj::PREMIGRATED|file.4: FsObj::FAILED|file.5: FsObj::PREMIGRATING|file.6: FsObj::PREMIGRATING"];
             before -> after [];
@@ -218,10 +218,10 @@
        @dot
        digraph step_1 {
             compound=true;
-            fontname="fixed";
+            fontname="courier";
             fontsize=11;
             rankdir=LR;
-            node [shape=record, width=2, fontname="fixed", fontsize=11, fillcolor=white, style=filled];
+            node [shape=record, width=2, fontname="courier", fontsize=11, fillcolor=white, style=filled];
             before [label="file.1: FsObj::PREMIGRATED|file.2: FsObj::PREMIGRATED|file.3: FsObj::PREMIGRATED|file.4: FsObj::FAILED|file.5: FsObj::PREMIGRATING|file.6: FsObj::PREMIGRATING"];
             after [label="file.1: FsObj::PREMIGRATED|file.2: FsObj::PREMIGRATED|file.3: FsObj::PREMIGRATED|file.4: FsObj::FAILED|file.5: FsObj::RESIDENT|file.6: FsObj::RESIDENT"];
             before -> after [];

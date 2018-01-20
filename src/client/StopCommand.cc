@@ -64,25 +64,25 @@
     @dot
     digraph start_command {
         compound=true;
-        fontname="fixed";
+        fontname="courier";
         fontsize=11;
         labeljust=l;
-        node [shape=record, width=2, fontname="fixed", fontsize=11, fillcolor=white, style=filled];
-        do_command [fontname="fixed bold", fontcolor=dodgerblue4, label="StopCommand::doCommand", URL="@ref StopCommand::doCommand"];
+        node [shape=record, width=2, fontname="courier", fontsize=11, fillcolor=white, style=filled];
+        do_command [fontname="courier bold", fontcolor=dodgerblue4, label="StopCommand::doCommand", URL="@ref StopCommand::doCommand"];
         subgraph cluster_do_command {
             label="StopCommand::doCommand";
-            process_options [fontname="fixed bold", fontcolor=dodgerblue4, label="LTFSDMCommand::processOptions", URL="@ref LTFSDMCommand::processOptions"];
-            connect1 [fontname="fixed bold", fontcolor=dodgerblue4, label="LTFSDMCommand::connect", URL="@ref LTFSDMCommand::connect"];
+            process_options [fontname="courier bold", fontcolor=dodgerblue4, label="LTFSDMCommand::processOptions", URL="@ref LTFSDMCommand::processOptions"];
+            connect1 [fontname="courier bold", fontcolor=dodgerblue4, label="LTFSDMCommand::connect", URL="@ref LTFSDMCommand::connect"];
             subgraph cluster_connect {
                 label="LTFSDMCommand::connect";
-                connect2 [fontname="fixed bold", fontcolor=dodgerblue4, label="LTFSDmCommClient::connect", URL="@ref LTFSDmCommClient::connect"];
-                get_req_num [fontname="fixed bold", fontcolor=dodgerblue4, label="LTFSDMCommand::getRequestNumber", URL="@ref LTFSDMCommand::getRequestNumber"];
+                connect2 [fontname="courier bold", fontcolor=dodgerblue4, label="LTFSDmCommClient::connect", URL="@ref LTFSDmCommClient::connect"];
+                get_req_num [fontname="courier bold", fontcolor=dodgerblue4, label="LTFSDMCommand::getRequestNumber", URL="@ref LTFSDMCommand::getRequestNumber"];
             }
             subgraph cluster_loop_1 {
                 label="do until stopped == false";
                 create_message [label="create stoprequest message"];
-                send [fontname="fixed bold", fontcolor=dodgerblue4, label="LTFSDmCommClient::send", URL="@ref LTFSDmCommClient::send"];
-                recv [fontname="fixed bold", fontcolor=dodgerblue4, label="LTFSDmCommClient::recv", URL="@ref LTFSDmCommClient::recv"];
+                send [fontname="courier bold", fontcolor=dodgerblue4, label="LTFSDmCommClient::send", URL="@ref LTFSDmCommClient::send"];
+                recv [fontname="courier bold", fontcolor=dodgerblue4, label="LTFSDmCommClient::recv", URL="@ref LTFSDmCommClient::recv"];
                 subgraph cluster_condition {
                     label="if stopped == false";
                     sleep_1 [label="sleep 1"];

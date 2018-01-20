@@ -1,2 +1,2 @@
 #pragma once
-#define LTFSDM_VERSION "0.0.660-master.2018-01-19T23.56.18"
+#define LTFSDM_VERSION "0.0.661-master.2018-01-20T12.32.23"

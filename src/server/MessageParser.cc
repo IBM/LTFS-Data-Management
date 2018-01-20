@@ -47,23 +47,23 @@
     @dot
     digraph message_processing {
         compound=yes;
-        fontname="fixed";
+        fontname="courier";
         fontsize=11;
         labeljust=l;
-        node [shape=record, width=1, fontname="fixed", fontsize=11, fillcolor=white, style=filled];
-        listen [fontname="fixed bold", fontcolor=dodgerblue4, label="command.listen", URL="@ref LTFSDmCommServer::listen"];
+        node [shape=record, width=1, fontname="courier", fontsize=11, fillcolor=white, style=filled];
+        listen [fontname="courier bold", fontcolor=dodgerblue4, label="command.listen", URL="@ref LTFSDmCommServer::listen"];
         subgraph cluster_loop {
             label="while not terminated"
-            accept [fontname="fixed bold", fontcolor=dodgerblue4, label="command.accept", URL="@ref LTFSDmCommServer::accept"];
-            run [fontname="fixed bold", fontcolor=dodgerblue4, label="MessageParser::run", URL="@ref MessageParser::run"];
+            accept [fontname="courier bold", fontcolor=dodgerblue4, label="command.accept", URL="@ref LTFSDmCommServer::accept"];
+            run [fontname="courier bold", fontcolor=dodgerblue4, label="MessageParser::run", URL="@ref MessageParser::run"];
             msg [label="MessageParser::...Message"];
-            mig_msg [fontname="fixed bold", fontcolor=dodgerblue4, label="MessageParser::migrationMessage", URL="@ref MessageParser::migrationMessage"];
-            rec_msg [fontname="fixed bold", fontcolor=dodgerblue4, label="MessageParser::selRecallMessage", URL="@ref MessageParser::selRecallMessage"];
-            get_objects [fontname="fixed bold", fontcolor=dodgerblue4, label="MessageParser::getObjects", URL="@ref MessageParser::getObjects"];
-            req_status_msg [fontname="fixed bold", fontcolor=dodgerblue4, label="MessageParser::reqStatusMessage", URL="@ref MessageParser::reqStatusMessage"];
+            mig_msg [fontname="courier bold", fontcolor=dodgerblue4, label="MessageParser::migrationMessage", URL="@ref MessageParser::migrationMessage"];
+            rec_msg [fontname="courier bold", fontcolor=dodgerblue4, label="MessageParser::selRecallMessage", URL="@ref MessageParser::selRecallMessage"];
+            get_objects [fontname="courier bold", fontcolor=dodgerblue4, label="MessageParser::getObjects", URL="@ref MessageParser::getObjects"];
+            req_status_msg [fontname="courier bold", fontcolor=dodgerblue4, label="MessageParser::reqStatusMessage", URL="@ref MessageParser::reqStatusMessage"];
         }
         listen -> accept [lhead=cluster_loop, minlen=2];
-        accept -> run [fontname="fixed bold", fontsize=8, fontcolor=dodgerblue4, label="wqm.enqueue", URL="@ref ThreadPool::enqueue"];
+        accept -> run [fontname="courier bold", fontsize=8, fontcolor=dodgerblue4, label="wqm.enqueue", URL="@ref ThreadPool::enqueue"];
         run -> msg [];
         run -> mig_msg [];
         run -> rec_msg [];

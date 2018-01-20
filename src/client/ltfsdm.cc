@@ -59,8 +59,8 @@
      fontsize=11;
      rankdir=RL;
      node [shape=record, fontsize=11, fillcolor=white, style=filled];
-     open_ltfs_command [fontname="fixed bold", fontcolor=dodgerblue4, width=2, label="LTFSDMCommand" URL="@ref LTFSDMCommand"];
-     command [fontname="fixed", fontcolor=black, label="ltfsdm X Y &rarr; class XYCommand"];
+     open_ltfs_command [fontname="courier bold", fontcolor=dodgerblue4, width=2, label="LTFSDMCommand" URL="@ref LTFSDMCommand"];
+     command [fontname="courier", fontcolor=black, label="ltfsdm X Y &rarr; class XYCommand"];
      command -> open_ltfs_command;
  }
  @enddot
@@ -73,11 +73,11 @@
      fontname=default;
      fontsize=11;
      rankdir=RL;
-     node [shape=record, fontname="fixed bold", fontcolor=dodgerblue4, fontsize=11, fillcolor=white, style=filled, width=2];
+     node [shape=record, fontname="courier bold", fontcolor=dodgerblue4, fontsize=11, fillcolor=white, style=filled, width=2];
      open_ltfs_command [label="LTFSDMCommand" URL="@ref LTFSDMCommand"];
      migrate_command [label="MigrateCommand" URL="@ref MigrateCommand"];
      recall_command [label="RecallCommand" URL="@ref RecallCommand"];
-     other_commands [fontname="fixed", fontcolor=black, label="..."];
+     other_commands [fontname="courier", fontcolor=black, label="..."];
      migrate_command -> open_ltfs_command;
      recall_command -> open_ltfs_command;
      other_commands -> open_ltfs_command;
@@ -103,7 +103,7 @@
     fontsize=11;
     color=white;
     fillcolor=white;
-    node [shape=record, fontname=fixed, fontsize=11, style=filled, color=white, fillcolor=white];
+    node [shape=record, fontname=courier, fontsize=11, style=filled, color=white, fillcolor=white];
     subgraph cluster_command_line {
         ranktype=max;
         ltfsdm [color=white, label="ltfsdm"];

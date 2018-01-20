@@ -66,20 +66,20 @@
     <td>
         @dot digraph resident_1 {
             compound=true;
-            fontname="fixed";
+            fontname="courier";
             fontsize=11;
             labeljust=l;
-            node [shape=record, fontname="fixed", fontsize=11, fillcolor=white, style=filled];
+            node [shape=record, fontname="courier", fontsize=11, fillcolor=white, style=filled];
             fuse [label="meta\ndata|------- data -------"];
         } @enddot
     </td>
     <td>
         @dot digraph migrated_1 {
             compound=true;
-            fontname="fixed";
+            fontname="courier";
             fontsize=11;
             labeljust=l;
-            node [shape=record, fontname="fixed", fontsize=11, fillcolor=white, style=filled];
+            node [shape=record, fontname="courier", fontsize=11, fillcolor=white, style=filled];
             fuse [label="meta\ndata|------- data -------"];
         } @enddot
     </td>
@@ -89,20 +89,20 @@
     <td>
         @dot digraph resident_2 {
             compound=true;
-            fontname="fixed";
+            fontname="courier";
             fontsize=11;
             labeljust=l;
-            node [shape=record, fontname="fixed", fontsize=11, fillcolor=white, style=filled];
+            node [shape=record, fontname="courier", fontsize=11, fillcolor=white, style=filled];
             orig [label="meta\ndata|------- data -------"];
         } @enddot
     </td>
     <td>
         @dot digraph migrated_2 {
             compound=true;
-            fontname="fixed";
+            fontname="courier";
             fontsize=11;
             labeljust=l;
-            node [shape=record, fontname="fixed", fontsize=11, fillcolor=white, style=filled];
+            node [shape=record, fontname="courier", fontsize=11, fillcolor=white, style=filled];
             orig [label="meta\ndata"];
         } @enddot
     </td>

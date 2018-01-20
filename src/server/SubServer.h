@@ -28,12 +28,12 @@
     @dot
     digraph sub_server {
         compound=yes;
-        fontname="fixed";
+        fontname="courier";
         fontsize=11;
         labeljust=l;
-        node [shape=record, width=1, fontname="fixed", fontsize=11, fillcolor=white, style=filled];
+        node [shape=record, width=1, fontname="courier", fontsize=11, fillcolor=white, style=filled];
         style=solid;
-        sub_server [fontname="fixed bold", fontcolor=dodgerblue4, label="SubServer", URL="@ref SubServer"];
+        sub_server [fontname="courier bold", fontcolor=dodgerblue4, label="SubServer", URL="@ref SubServer"];
         subgraph cluster_1 {
             thread_1 [label="thread 1"];
             waiter_1 [label="waiter 1"];
@@ -51,9 +51,9 @@
             waiter_n [label="..."];
         }
         thread_1 -> waiter_1 -> thread_2 -> waiter_2 -> thread_3 -> waiter_3 -> thread_n -> waiter_n [style=invis]; // work around
-        sub_server:s -> thread_1:n [lhead=cluster_1, fontname="fixed", fontsize=8, fontcolor=dodgerblue4, label="enqueue", URL="@ref SubServer::enqueue"];
-        sub_server:s -> thread_2:n [lhead=cluster_2, fontname="fixed", fontsize=8, fontcolor=dodgerblue4, label="enqueue", URL="@ref SubServer::enqueue"];
-        sub_server:s -> thread_3:n [lhead=cluster_3, fontname="fixed", fontsize=8, fontcolor=dodgerblue4, label="enqueue", URL="@ref SubServer::enqueue"];
+        sub_server:s -> thread_1:n [lhead=cluster_1, fontname="courier", fontsize=8, fontcolor=dodgerblue4, label="enqueue", URL="@ref SubServer::enqueue"];
+        sub_server:s -> thread_2:n [lhead=cluster_2, fontname="courier", fontsize=8, fontcolor=dodgerblue4, label="enqueue", URL="@ref SubServer::enqueue"];
+        sub_server:s -> thread_3:n [lhead=cluster_3, fontname="courier", fontsize=8, fontcolor=dodgerblue4, label="enqueue", URL="@ref SubServer::enqueue"];
         sub_server:s -> thread_n:n [lhead=cluster_n, style=dotted];
         waiter_1 -> thread_1 [label="join"];
         waiter_2 -> thread_2 [label="1st join"];

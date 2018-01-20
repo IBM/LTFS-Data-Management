@@ -96,24 +96,24 @@
 
     @dot
     digraph message {
-        fontname="fixed";
+        fontname="courier";
         fontsize=11;
         labeljust=l;
-        node [shape=record, width=2, fontname="fixed", fontsize=11, fillcolor=white, style=filled];
-        msg [ fontname="fixed bold", fontcolor=dodgerblue4, label="MSG()", URL="@ref MSG()" ];
-        message [ fontname="fixed bold", fontcolor=dodgerblue4, label="messageObject.message", URL="@ref Message::message" ];
+        node [shape=record, width=2, fontname="courier", fontsize=11, fillcolor=white, style=filled];
+        msg [ fontname="courier bold", fontcolor=dodgerblue4, label="MSG()", URL="@ref MSG()" ];
+        message [ fontname="courier bold", fontcolor=dodgerblue4, label="messageObject.message", URL="@ref Message::message" ];
         condition [shape=diamond, label="stdout?"];
-        process_parms [ fontname="fixed bold", fontcolor=dodgerblue4, label="processParms", URL="@ref Message::processParms" ];
+        process_parms [ fontname="courier bold", fontcolor=dodgerblue4, label="processParms", URL="@ref Message::processParms" ];
         subgraph cluster_to_log {
             label="to log file";
-            msg_log [ fontname="fixed bold", fontcolor=dodgerblue4, label="msgLog", URL="@ref Message::msgLog"];
-            write_log [ fontname="fixed bold", fontcolor=dodgerblue4, label="writeLog", URL="@ref Message::writeLog"];
+            msg_log [ fontname="courier bold", fontcolor=dodgerblue4, label="msgLog", URL="@ref Message::msgLog"];
+            write_log [ fontname="courier bold", fontcolor=dodgerblue4, label="writeLog", URL="@ref Message::writeLog"];
             result_log [ label="write to log" ];
         }
         subgraph cluster_to_stdout {
             label="to stdout";
-            msg_out [ fontname="fixed bold", fontcolor=dodgerblue4, label="msgOut", URL="@ref Message::msgOut"];
-            write_out [ fontname="fixed bold", fontcolor=dodgerblue4, label="writeOut", URL="@ref Message::writeOut"];
+            msg_out [ fontname="courier bold", fontcolor=dodgerblue4, label="msgOut", URL="@ref Message::msgOut"];
+            write_out [ fontname="courier bold", fontcolor=dodgerblue4, label="writeOut", URL="@ref Message::writeOut"];
             result_out [ label="write to stdout" ];
         }
         msg -> message [];

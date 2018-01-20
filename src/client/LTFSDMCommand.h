@@ -34,32 +34,32 @@
  digraph client_processing {
      compound=true;
      rankdir=LR;
-     fontname="fixed";
+     fontname="courier";
      fontsize=11;
      labeljust=l;
-     node [shape=record, width=2, fontname="fixed", fontsize=11, fillcolor=white, style=filled];
+     node [shape=record, width=2, fontname="courier", fontsize=11, fillcolor=white, style=filled];
      do_command [ label="doCommand" ];
      subgraph cluster_do_command {
          label="doCommand";
-         process_options [ fontname="fixed bold", fontcolor=dodgerblue4, label="processOptions", URL="@ref LTFSDMCommand::processOptions" ];
-         check_options [ fontname="fixed bold", fontcolor=dodgerblue4, label="checkOptions", URL="@ref LTFSDMCommand::checkOptions" ];
+         process_options [ fontname="courier bold", fontcolor=dodgerblue4, label="processOptions", URL="@ref LTFSDMCommand::processOptions" ];
+         check_options [ fontname="courier bold", fontcolor=dodgerblue4, label="checkOptions", URL="@ref LTFSDMCommand::checkOptions" ];
          talk_to_backend [ label="talkToBackend" ];
      }
      subgraph cluster_talk_to_backend {
          label="talkToBackend";
          node [width=3];
-         connect_1 [ fontname="fixed bold", fontcolor=dodgerblue4, label="LTFSDMCommand::connect", URL="@ref LTFSDMCommand::connect" ];
+         connect_1 [ fontname="courier bold", fontcolor=dodgerblue4, label="LTFSDMCommand::connect", URL="@ref LTFSDMCommand::connect" ];
          create_message [ label="create message" ];
-         send [ fontname="fixed bold", fontcolor=dodgerblue4, label="LTFSDmCommClient::send", URL="@ref LTFSDmCommClient::send" ];
-         receive [ fontname="fixed bold", fontcolor=dodgerblue4, label="LTFSDmCommClient::recv", URL="@ref LTFSDmCommClient::recv" ];
+         send [ fontname="courier bold", fontcolor=dodgerblue4, label="LTFSDmCommClient::send", URL="@ref LTFSDmCommClient::send" ];
+         receive [ fontname="courier bold", fontcolor=dodgerblue4, label="LTFSDmCommClient::recv", URL="@ref LTFSDmCommClient::recv" ];
          eval_result [ label="evaluate result" ];
      }
 
      subgraph cluster_connect_i {
          label="LTFSDMCommand::connect";
          node [ width=3.5 ];
-         connect_2 [ fontname="fixed bold", fontcolor=dodgerblue4, label="LTFSDmCommClient::connect", URL="@ref LTFSDmCommClient::connect" ];
-         get_reqnum [ fontname="fixed bold", fontcolor=dodgerblue4, label="LTFSDMCommand::getRequestNumber", URL="@ref LTFSDMCommand::getRequestNumber" ];
+         connect_2 [ fontname="courier bold", fontcolor=dodgerblue4, label="LTFSDmCommClient::connect", URL="@ref LTFSDmCommClient::connect" ];
+         get_reqnum [ fontname="courier bold", fontcolor=dodgerblue4, label="LTFSDMCommand::getRequestNumber", URL="@ref LTFSDMCommand::getRequestNumber" ];
      }
      do_command -> check_options [lhead=cluster_do_command];
      talk_to_backend -> send [lhead=cluster_talk_to_backend];

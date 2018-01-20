@@ -19,16 +19,16 @@
     @dot
     digraph receiver {
         compound=yes;
-        fontname="fixed";
+        fontname="courier";
         fontsize=11;
         labeljust=l;
-        node [shape=record, width=1, fontname="fixed", fontsize=11, fillcolor=white, style=filled];
-        listen [fontname="fixed bold", fontcolor=dodgerblue4, label="command.listen", URL="@ref LTFSDmCommServer::listen"];
+        node [shape=record, width=1, fontname="courier", fontsize=11, fillcolor=white, style=filled];
+        listen [fontname="courier bold", fontcolor=dodgerblue4, label="command.listen", URL="@ref LTFSDmCommServer::listen"];
         subgraph cluster_loop {
             label="while not terminated"
-            accept [fontname="fixed bold", fontcolor=dodgerblue4, label="command.accept", URL="@ref LTFSDmCommServer::accept"];
+            accept [fontname="courier bold", fontcolor=dodgerblue4, label="command.accept", URL="@ref LTFSDmCommServer::accept"];
             subgraph cluster_thread_pool {
-                fontname="fixed bold";
+                fontname="courier bold";
                 fontcolor=dodgerblue4;
                 label="ThreadPool wqm";
                 URL="@ref ThreadPool";
@@ -36,7 +36,7 @@
             }
         }
         listen -> accept [lhead=cluster_loop, minlen=2];
-        accept -> wqm:mpo[fontname="fixed bold", fontsize=8, fontcolor=dodgerblue4, label="wqm.enqueue", URL="@ref ThreadPool::enqueue"];
+        accept -> wqm:mpo[fontname="courier bold", fontsize=8, fontcolor=dodgerblue4, label="wqm.enqueue", URL="@ref ThreadPool::enqueue"];
     }
     @enddot
 

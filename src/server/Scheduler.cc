@@ -45,15 +45,15 @@
     @dot
     digraph scheduler {
         compound=true;
-        fontname="fixed";
+        fontname="courier";
         fontsize=11;
         labeljust=l;
-        node [shape=record, width=2, fontname="fixed", fontsize=11, fillcolor=white, style=filled];
+        node [shape=record, width=2, fontname="courier", fontsize=11, fillcolor=white, style=filled];
         wait [label="wait for a new request or a free resource"];
         subgraph cluster_res_avail {
-            res_avail [fontname="fixed bold", fontcolor=dodgerblue4, label="Scheduler::resAvail", URL="@ref Scheduler::resAvail"];
-            tape_res_avail [fontname="fixed bold", fontcolor=dodgerblue4, label="Scheduler::tapeResAvail", URL="@ref Scheduler::tapeResAvail"];
-            pool_res_avail [fontname="fixed bold", fontcolor=dodgerblue4, label="Scheduler::poolResAvail", URL="@ref Scheduler::poolResAvail"];
+            res_avail [fontname="courier bold", fontcolor=dodgerblue4, label="Scheduler::resAvail", URL="@ref Scheduler::resAvail"];
+            tape_res_avail [fontname="courier bold", fontcolor=dodgerblue4, label="Scheduler::tapeResAvail", URL="@ref Scheduler::tapeResAvail"];
+            pool_res_avail [fontname="courier bold", fontcolor=dodgerblue4, label="Scheduler::poolResAvail", URL="@ref Scheduler::poolResAvail"];
         }
         schedule_mig [label="schedule migration"];
         schedule_rec [label="{<srec> schedule selective recall|<trec> schedule transparent recall}"];

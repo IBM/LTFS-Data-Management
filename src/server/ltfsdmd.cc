@@ -219,13 +219,13 @@
     @dot
     digraph startup {
         compound=true;
-        fontname="fixed";
+        fontname="courier";
         fontsize=11;
         labeljust=l;
         rankdir=LR;
-        node [shape=record, width=2, fontname="fixed", fontsize=11, fillcolor=white, style=filled];
+        node [shape=record, width=2, fontname="courier", fontsize=11, fillcolor=white, style=filled];
         subgraph cluster_main {
-            fontname="fixed bold";
+            fontname="courier bold";
             fontcolor=dodgerblue4;
             label="main";
             URL="@ref main";
@@ -236,7 +236,7 @@
             style=invis;
             subgraph cluster_init {
                 style=solid;
-                fontname="fixed bold";
+                fontname="courier bold";
                 fontcolor=dodgerblue4;
                 label="LTFSDM::init";
                 URL="@ref LTFSDM::init"
@@ -244,7 +244,7 @@
             }
             subgraph cluster_init_server {
                 style=solid;
-                fontname="fixed bold";
+                fontname="courier bold";
                 fontcolor=dodgerblue4;
                 label="initialize server:\nltfsdmd.initialize";
                 URL="@ref Server::initialize"
@@ -252,7 +252,7 @@
             }
             subgraph cluster_run_server {
                 style=solid;
-                fontname="fixed bold";
+                fontname="courier bold";
                 fontcolor=dodgerblue4;
                 label="run server:\nltfsdmd.run";
                 URL="@ref Server::run"
