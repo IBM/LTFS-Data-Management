@@ -1,5 +1,5 @@
 msgdefs.h
-messages.dot
+messages.dox
 *~
 *.o
 src/common/comm/test
