@@ -1261,13 +1261,6 @@ int FuseFS::ltfsdm_ioctl(const char *path, int cmd, void *arg,
             if (getshrd()->rootFd == -1)
                 return (-1 * errno);
             return 0;
-        case FuseFS::LTFSDM_STOP:
-	    // do not close root fd @todo need to be checked if this is finally OK
-            // if (getshrd()->rootFd != Const::UNSET) {
-            //     close(getshrd()->rootFd);
-            //     setRootFd(Const::UNSET);
-            // }
-            return 0;
             // the lock ioctls currently not used
         case FuseFS::LTFSDM_LOCK:
             fhp = (FuseFS::FuseHandle *) data;
@@ -1316,6 +1309,16 @@ void *FuseFS::ltfsdm_init(struct fuse_conn_info *conn)
     return fc->private_data;
 }
 
+void FuseFS::ltfsdm_destroy(void *ptr)
+
+{
+    MSG(LTFSDMF0063I);
+    if (getshrd()->rootFd != Const::UNSET) {
+        close(getshrd()->rootFd);
+        setRootFd(Const::UNSET);
+    }
+}
+
 struct fuse_operations FuseFS::init_operations()
 
 {
@@ -1360,6 +1363,7 @@ struct fuse_operations FuseFS::init_operations()
     ops.listxattr = FuseFS::ltfsdm_listxattr;
     ops.removexattr = FuseFS::ltfsdm_removexattr;
     ops.ioctl = FuseFS::ltfsdm_ioctl;
+    ops.destroy = FuseFS::ltfsdm_destroy;
 
     return ops;
 }
@@ -1634,11 +1638,6 @@ FuseFS::~FuseFS()
 {
     try {
         FileSystems fss;
-
-        if (init_status.ROOTFD_FUSE == true) {
-            if (ioctl(FuseFS::ioctlFd, FuseFS::LTFSDM_STOP) == -1)
-                MSG(LTFSDMF0052E, mountpt, errno);
-        }
 
         if (rootFd != Const::UNSET)
             close(rootFd);

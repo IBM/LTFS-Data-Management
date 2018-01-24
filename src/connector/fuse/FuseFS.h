@@ -98,8 +98,7 @@ public:
         LTFSDM_PREMOUNT = _IO('l', 1),                      // synchronization when adding a file system
         LTFSDM_POSTMOUNT = _IO('l', 2),                     // set the root file descriptor when adding
                                                             // management to a file system
-        LTFSDM_STOP = _IO('l', 3),                          // close the root file descriptor when stopping
-                                                            // file system management
+        LTFSDM_STOP = _IO('l', 3),                          // not used
         LTFSDM_LOCK = _IOWR('l', 4, FuseFS::FuseHandle),    // not used
         LTFSDM_TRYLOCK = _IOWR('l', 5, FuseFS::FuseHandle), // not used
         LTFSDM_UNLOCK = _IOW('l', 6, FuseFS::FuseHandle),   // not used
@@ -216,6 +215,7 @@ private:
     static int ltfsdm_ioctl(const char *path, int cmd, void *arg,
             struct fuse_file_info *fi, unsigned int flags, void *data);
     static void *ltfsdm_init(struct fuse_conn_info *conn);
+    static void ltfsdm_destroy(void *ptr);
     //! [fuse callback]
 
     static void execute(std::string sourcedir, std::string mountpt,
