@@ -1262,10 +1262,11 @@ int FuseFS::ltfsdm_ioctl(const char *path, int cmd, void *arg,
                 return (-1 * errno);
             return 0;
         case FuseFS::LTFSDM_STOP:
-            if (getshrd()->rootFd != Const::UNSET) {
-                close(getshrd()->rootFd);
-                setRootFd(Const::UNSET);
-            }
+	    // do not close root fd @todo need to be checked if this is finally OK
+            // if (getshrd()->rootFd != Const::UNSET) {
+            //     close(getshrd()->rootFd);
+            //     setRootFd(Const::UNSET);
+            // }
             return 0;
             // the lock ioctls currently not used
         case FuseFS::LTFSDM_LOCK:
