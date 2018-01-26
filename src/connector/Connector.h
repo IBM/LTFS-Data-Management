@@ -238,20 +238,20 @@ public:
     {
         switch (migstate) {
             case RESIDENT:
-                return messages[LTFSDMX0012I];
+                return ltfsdm_messages[LTFSDMX0012I];
             case PREMIGRATED:
-                return messages[LTFSDMX0011I];
+                return ltfsdm_messages[LTFSDMX0011I];
             case MIGRATED:
-                return messages[LTFSDMX0010I];
+                return ltfsdm_messages[LTFSDMX0010I];
             case FAILED:
-                return messages[LTFSDMX0019I];
+                return ltfsdm_messages[LTFSDMX0019I];
             case PREMIGRATING:
-                return messages[LTFSDMX0026I];
+                return ltfsdm_messages[LTFSDMX0026I];
             case STUBBING:
-                return messages[LTFSDMX0027I];
+                return ltfsdm_messages[LTFSDMX0027I];
             case RECALLING_MIG:
             case RECALLING_PREMIG:
-                return messages[LTFSDMX0028I];
+                return ltfsdm_messages[LTFSDMX0028I];
             default:
                 return "";
         }

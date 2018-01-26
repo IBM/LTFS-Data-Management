@@ -114,10 +114,10 @@ int main(int argc, char **argv)
 	// create the header file
 	outfile << "#pragma once" << std::endl;
 	outfile << std::endl;
-	outfile << "typedef std::string message_t[];" << std::endl;
-	outfile << "typedef std::string msgname_t[];" << std::endl;
+	outfile << "typedef std::string ltfsdm_message_t[];" << std::endl;
+	outfile << "typedef std::string ltfsdm_msgname_t[];" << std::endl;
 	outfile << std::endl;
-	outfile << "enum msg_id {" << std::endl;
+	outfile << "enum ltfsdm_msg_id {" << std::endl;
 	for (it = messages.begin(); it != messages.end(); ++it) {
 		if (it + 1 != messages.end())
 			outfile << "    " << it->msgname << "," << std::endl;
@@ -127,7 +127,7 @@ int main(int argc, char **argv)
 	outfile << "};" << std::endl;
 	outfile << std::endl;
 
-	outfile << "const message_t messages = {" << std::endl;
+	outfile << "const ltfsdm_message_t ltfsdm_messages = {" << std::endl;
 	for (it = messages.begin(); it != messages.end(); ++it) {
 		if (it + 1 != messages.end())
 			outfile << "    " << "/* " << it->msgname << " */  " << it->msgtxt
@@ -139,7 +139,7 @@ int main(int argc, char **argv)
 	outfile << "};" << std::endl;
 	outfile << std::endl;
 
-	outfile << "const msgname_t msgname = {" << std::endl;
+	outfile << "const ltfsdm_msgname_t ltfsdm_msgname = {" << std::endl;
 	for (it = messages.begin(); it != messages.end(); ++it) {
 		if (it + 1 != messages.end())
 			outfile << "    " << "\"" << it->msgname << "\"," << std::endl;

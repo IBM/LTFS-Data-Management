@@ -94,7 +94,7 @@ void InfoDrivesCommand::doCommand(int argc, char **argv)
         bool busy = infodrivesresp.busy();
         if (id.compare("") != 0)
             INFO(LTFSDMC0070I, id, devname, slot, status,
-                    busy ? messages[LTFSDMC0071I] : messages[LTFSDMC0072I]);
+                    busy ? ltfsdm_messages[LTFSDMC0071I] : ltfsdm_messages[LTFSDMC0072I]);
     } while (id.compare("") != 0);
 
     return;

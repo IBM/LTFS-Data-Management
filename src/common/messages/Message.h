@@ -167,10 +167,10 @@ private:
     void writeLog(std::string msgstr);
 
     template<typename ... Args>
-    void msgOut(msg_id msg, char *filename, int linenr, Args ... args)
+    void msgOut(ltfsdm_msg_id msg, char *filename, int linenr, Args ... args)
 
     {
-        std::string fmtstr = msgname[msg] + "(%04d): " + messages[msg];
+        std::string fmtstr = ltfsdm_msgname[msg] + "(%04d): " + ltfsdm_messages[msg];
         boost::format fmter(fmtstr);
         fmter.exceptions(boost::io::all_error_bits);
 
@@ -179,15 +179,15 @@ private:
             processParms(&fmter, args ...);
             writeOut(fmter.str());
         } catch (const std::exception& e) {
-            std::cerr << messages[LTFSDMX0005E] << " (" << msgname[msg] << ":"
+            std::cerr << ltfsdm_messages[LTFSDMX0005E] << " (" << ltfsdm_msgname[msg] << ":"
                     << filename << ":" << std::setfill('0') << std::setw(4)
                     << linenr << ")" << std::endl;
         }
     }
     template<typename ... Args>
-    void msgLog(msg_id msg, char *filename, int linenr, Args ... args)
+    void msgLog(ltfsdm_msg_id msg, char *filename, int linenr, Args ... args)
     {
-        std::string fmtstr = msgname[msg] + "(%04d): " + messages[msg];
+        std::string fmtstr = ltfsdm_msgname[msg] + "(%04d): " + ltfsdm_messages[msg];
         boost::format fmter(fmtstr);
         fmter.exceptions(boost::io::all_error_bits);
 
@@ -196,7 +196,7 @@ private:
             processParms(&fmter, args ...);
             writeLog(fmter.str());
         } catch (const std::exception& e) {
-            std::cerr << messages[LTFSDMX0005E] << " (" << msgname[msg] << ":"
+            std::cerr << ltfsdm_messages[LTFSDMX0005E] << " (" << ltfsdm_msgname[msg] << ":"
                     << filename << ":" << std::setfill('0') << std::setw(4)
                     << linenr << ")" << std::endl;
         }
@@ -223,7 +223,7 @@ public:
     }
 
     template<typename ... Args>
-    void message(msg_id msg, char *filename, int linenr, Args ... args)
+    void message(ltfsdm_msg_id msg, char *filename, int linenr, Args ... args)
     {
         if (logType == Message::STDOUT)
             msgOut(msg, filename, linenr, args ...);
@@ -232,16 +232,16 @@ public:
     }
 
     template<typename ... Args>
-    void info(msg_id msg, char *filename, int linenr, Args ... args)
+    void info(ltfsdm_msg_id msg, char *filename, int linenr, Args ... args)
     {
-        boost::format fmter(messages[msg]);
+        boost::format fmter(ltfsdm_messages[msg]);
         fmter.exceptions(boost::io::all_error_bits);
 
         try {
             processParms(&fmter, args ...);
             writeOut(fmter.str());
         } catch (const std::exception& e) {
-            std::cerr << messages[LTFSDMX0005E] << " (" << filename << ":"
+            std::cerr << ltfsdm_messages[LTFSDMX0005E] << " (" << filename << ":"
                     << std::setfill('0') << std::setw(4) << linenr << ")"
                     << std::endl;
             exit((int) Error::GENERAL_ERROR);

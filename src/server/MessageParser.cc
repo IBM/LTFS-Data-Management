@@ -793,22 +793,22 @@ void MessageParser::infoTapesMessage(long key, LTFSDmCommServer *command)
             infotapesresp->set_pool(c->getPool());
             switch (c->getState()) {
                 case LTFSDMCartridge::TAPE_INUSE:
-                    state = messages[LTFSDMS0055I];
+                    state = ltfsdm_messages[LTFSDMS0055I];
                     break;
                 case LTFSDMCartridge::TAPE_MOUNTED:
-                    state = messages[LTFSDMS0056I];
+                    state = ltfsdm_messages[LTFSDMS0056I];
                     break;
                 case LTFSDMCartridge::TAPE_MOVING:
-                    state = messages[LTFSDMS0057I];
+                    state = ltfsdm_messages[LTFSDMS0057I];
                     break;
                 case LTFSDMCartridge::TAPE_UNMOUNTED:
-                    state = messages[LTFSDMS0058I];
+                    state = ltfsdm_messages[LTFSDMS0058I];
                     break;
                 case LTFSDMCartridge::TAPE_INVALID:
-                    state = messages[LTFSDMS0059I];
+                    state = ltfsdm_messages[LTFSDMS0059I];
                     break;
                 case LTFSDMCartridge::TAPE_UNKNOWN:
-                    state = messages[LTFSDMS0060I];
+                    state = ltfsdm_messages[LTFSDMS0060I];
                     break;
                 default:
                     state = "-";

@@ -98,7 +98,7 @@ void InfoTapesCommand::doCommand(int argc, char **argv)
         unsigned long inprogress = infotapesresp.inprogress();
         std::string pool = infotapesresp.pool();
         if (pool.compare("") == 0)
-            pool = messages[LTFSDMC0090I];
+            pool = ltfsdm_messages[LTFSDMC0090I];
         std::string state = infotapesresp.state();
         if (id.compare("") != 0)
             INFO(LTFSDMC0067I, id, slot, totalcap, remaincap, status,

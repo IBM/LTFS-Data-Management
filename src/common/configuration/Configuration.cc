@@ -73,7 +73,7 @@ void Configuration::write()
     {
         std::ofstream conffiletmp(Const::TMP_CONFIG_FILE, conffiletmp.trunc);
 
-        conffiletmp << messages[LTFSDMX0032I] << std::endl;
+        conffiletmp << ltfsdm_messages[LTFSDMX0032I] << std::endl;
 
         for (std::pair<std::string, std::set<std::string>> pool : stgplist) {
             conffiletmp << "pool: " << encode(pool.first);

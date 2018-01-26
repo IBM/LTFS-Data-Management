@@ -110,11 +110,11 @@ std::string DataBase::opStr(DataBase::operation op)
 {
     switch (op) {
         case TRARECALL:
-            return messages[LTFSDMX0015I];
+            return ltfsdm_messages[LTFSDMX0015I];
         case SELRECALL:
-            return messages[LTFSDMX0014I];
+            return ltfsdm_messages[LTFSDMX0014I];
         case MIGRATION:
-            return messages[LTFSDMX0013I];
+            return ltfsdm_messages[LTFSDMX0013I];
         default:
             return "";
     }
@@ -125,11 +125,11 @@ std::string DataBase::reqStateStr(DataBase::req_state reqs)
 {
     switch (reqs) {
         case REQ_NEW:
-            return messages[LTFSDMX0016I];
+            return ltfsdm_messages[LTFSDMX0016I];
         case REQ_INPROGRESS:
-            return messages[LTFSDMX0017I];
+            return ltfsdm_messages[LTFSDMX0017I];
         case REQ_COMPLETED:
-            return messages[LTFSDMX0018I];
+            return ltfsdm_messages[LTFSDMX0018I];
         default:
             return "";
     }

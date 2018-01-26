@@ -334,7 +334,7 @@ int main(int argc, char **argv)
                 }
                 break;
             default:
-                std::cerr << messages[LTFSDMC0013E] << std::endl;
+                std::cerr << ltfsdm_messages[LTFSDMC0013E] << std::endl;
                 err = static_cast<int>(Error::GENERAL_ERROR);
                 goto end;
         }

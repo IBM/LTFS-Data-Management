@@ -57,7 +57,7 @@ void Message::writeLog(std::string msgstr)
 
 {
     if (write(fd, msgstr.c_str(), msgstr.size()) != (long) msgstr.size()) {
-        std::cerr << messages[LTFSDMX0004E];
+        std::cerr << ltfsdm_messages[LTFSDMX0004E];
         exit((int) Error::GENERAL_ERROR);
     }
 }
