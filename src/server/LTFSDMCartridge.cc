@@ -1,6 +1,6 @@
 #include "ServerIncludes.h"
 
-void LTFSDMCartridge::update(std::shared_ptr<LTFSAdminSession> sess)
+void LTFSDMCartridge::update(boost::shared_ptr<LTFSAdminSession> sess)
 
 {
     std::lock_guard<std::recursive_mutex> lock(LTFSDMInventory::mtx);

@@ -6,8 +6,8 @@ std::recursive_mutex LTFSDMInventory::mtx;
 void LTFSDMInventory::inventorize()
 
 {
-    std::list<std::shared_ptr<Drive> > drvs;
-    std::list<std::shared_ptr<Cartridge>> crts;
+    std::list<boost::shared_ptr<Drive> > drvs;
+    std::list<boost::shared_ptr<Cartridge>> crts;
     std::ifstream conffile(Const::CONFIG_FILE);
     std::string line;
     int i = 0;
@@ -33,7 +33,7 @@ void LTFSDMInventory::inventorize()
         THROW(Error::GENERAL_ERROR);
     }
 
-    for (std::shared_ptr<Drive> i : drvs) {
+    for (boost::shared_ptr<Drive> i : drvs) {
         TRACE(Trace::always, i->GetObjectID());
         MSG(LTFSDMS0052I, i->GetObjectID());
         drives.push_back(std::make_shared<LTFSDMDrive>(LTFSDMDrive(*i)));
@@ -47,7 +47,7 @@ void LTFSDMInventory::inventorize()
         THROW(Error::GENERAL_ERROR);
     }
 
-    for (std::shared_ptr<Cartridge> c : crts) {
+    for (boost::shared_ptr<Cartridge> c : crts) {
         if (c->get_status().compare("Not Supported") == 0)
             continue;
         TRACE(Trace::always, c->GetObjectID());
@@ -57,7 +57,7 @@ void LTFSDMInventory::inventorize()
     }
 
     cartridges.sort(
-            [] (const std::shared_ptr<Cartridge> c1, const std::shared_ptr<Cartridge> c2)
+            [] (const std::shared_ptr<LTFSDMCartridge> c1, const std::shared_ptr<LTFSDMCartridge> c2)
             {   return (c1->GetObjectID().compare(c2->GetObjectID()) < 0);});
 
     for (std::string poolname : Server::conf.getPools()) {
@@ -102,7 +102,7 @@ LTFSDMInventory::LTFSDMInventory()
 
 {
     std::lock_guard<std::recursive_mutex> lock(LTFSDMInventory::mtx);
-    std::shared_ptr<ltfsadmin::LTFSNode> nodeInfo;
+    boost::shared_ptr<ltfsadmin::LTFSNode> nodeInfo;
     struct stat statbuf;
 
     try {
@@ -330,7 +330,13 @@ void LTFSDMInventory::mount(std::string driveid, std::string cartridgeid)
     assert(drive->isBusy() == true);
     assert(cartridge->getState() == LTFSDMCartridge::TAPE_MOVING);
 
-    cartridge->Mount(driveid);
+    try {
+        cartridge->Mount(driveid);
+    } catch (AdminLibException& e) {
+        std::string type = cartridge->GetObjectID() + "(" + cartridgeid + ")";
+        MSG(LTFSDMS0100E, cartridgeid, e.what());
+        THROW(Error::GENERAL_ERROR, cartridgeid);
+    }
 
     {
         std::lock_guard<std::recursive_mutex> lock(LTFSDMInventory::mtx);

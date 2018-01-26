@@ -12,7 +12,7 @@ public:
             std::shared_ptr<std::list<unsigned long>>, std::shared_ptr<bool>> *wqp;
     LTFSDMDrive(ltfsadmin::Drive drive);
     ~LTFSDMDrive();
-    void update(std::shared_ptr<LTFSAdminSession> sess);
+    void update(boost::shared_ptr<LTFSAdminSession> sess);
     bool isBusy();
     void setBusy();
     void setFree();
@@ -45,7 +45,7 @@ public:
                     false), state(LTFSDMCartridge::TAPE_UNKNOWN)
     {
     }
-    void update(std::shared_ptr<LTFSAdminSession> sess);
+    void update(boost::shared_ptr<LTFSAdminSession> sess);
     void setInProgress(unsigned long size);
     unsigned long getInProgress();
     void setPool(std::string _pool);
@@ -62,7 +62,7 @@ class LTFSDMInventory
 private:
     std::list<std::shared_ptr<LTFSDMDrive>> drives;
     std::list<std::shared_ptr<LTFSDMCartridge>> cartridges;
-    std::shared_ptr<ltfsadmin::LTFSAdminSession> sess;
+    boost::shared_ptr<ltfsadmin::LTFSAdminSession> sess;
     std::string mountPoint;
 public:
     LTFSDMInventory();

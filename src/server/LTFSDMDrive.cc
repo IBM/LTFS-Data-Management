@@ -11,7 +11,7 @@ LTFSDMDrive::~LTFSDMDrive()
     delete (mtx);
 }
 
-void LTFSDMDrive::update(std::shared_ptr<LTFSAdminSession> sess)
+void LTFSDMDrive::update(boost::shared_ptr<LTFSAdminSession> sess)
 
 {
     std::lock_guard<std::recursive_mutex> lock(LTFSDMInventory::mtx);

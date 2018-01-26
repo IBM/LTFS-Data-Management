@@ -30,10 +30,10 @@ enum {
 	FORMAT_JAG5W = 0x75,
 };
 
-std::shared_ptr<LTFSAdminSession> LEControl::Connect(std::string node_addr, uint16_t port_num)
+boost::shared_ptr<LTFSAdminSession> LEControl::Connect(std::string node_addr, uint16_t port_num)
 {
-	std::shared_ptr<LTFSAdminSession> s =
-		std::shared_ptr<LTFSAdminSession>(new LTFSAdminSession(node_addr, port_num));
+	boost::shared_ptr<LTFSAdminSession> s =
+		boost::shared_ptr<LTFSAdminSession>(new LTFSAdminSession(node_addr, port_num));
 
 	if (s) {
 		MSG(LTFSDML0700I, node_addr.c_str(), port_num);
@@ -43,14 +43,14 @@ std::shared_ptr<LTFSAdminSession> LEControl::Connect(std::string node_addr, uint
 			MSG(LTFSDML0701I, node_addr.c_str(), port_num, s->get_fd());
 		} catch (AdminLibException& e) {
 			MSG(LTFSDML0186E, node_addr.c_str());
-			s = std::shared_ptr<LTFSAdminSession>();
+			s = boost::shared_ptr<LTFSAdminSession>();
 		}
 	}
 
 	return s;
 }
 
-std::shared_ptr<LTFSAdminSession> LEControl::Reconnect(std::shared_ptr<LTFSAdminSession> s)
+boost::shared_ptr<LTFSAdminSession> LEControl::Reconnect(boost::shared_ptr<LTFSAdminSession> s)
 {
 	if (s) {
 		MSG(LTFSDML0702I, s->get_server().c_str(), s->get_port());
@@ -61,14 +61,14 @@ std::shared_ptr<LTFSAdminSession> LEControl::Reconnect(std::shared_ptr<LTFSAdmin
 					s->get_fd());
 		} catch (AdminLibException& e) {
 			MSG(LTFSDML0186E, s->get_server().c_str());
-			s = std::shared_ptr<LTFSAdminSession>();
+			s = boost::shared_ptr<LTFSAdminSession>();
 		}
 	}
 
 	return s;
 }
 
-void LEControl::Disconnect(std::shared_ptr<LTFSAdminSession> s)
+void LEControl::Disconnect(boost::shared_ptr<LTFSAdminSession> s)
 {
 	if (s) {
 		MSG(LTFSDML0704I, s->get_server().c_str(), s->get_port(), s->get_fd());
@@ -88,9 +88,9 @@ void LEControl::Disconnect(std::shared_ptr<LTFSAdminSession> s)
 	return;
 }
 
-std::shared_ptr<LTFSNode> LEControl::InventoryNode(std::shared_ptr<LTFSAdminSession> s)
+boost::shared_ptr<LTFSNode> LEControl::InventoryNode(boost::shared_ptr<LTFSAdminSession> s)
 {
-	std::shared_ptr<LTFSNode> n = std::shared_ptr<LTFSNode>();
+	boost::shared_ptr<LTFSNode> n = boost::shared_ptr<LTFSNode>();
 
 	if (s && s->is_alived()) {
 		/*
@@ -100,43 +100,43 @@ std::shared_ptr<LTFSNode> LEControl::InventoryNode(std::shared_ptr<LTFSAdminSess
 		 */
 		//MSG(LTFSDML0706I, "node", s->get_server().c_str(), s->get_port(), s->get_fd());
 		try {
-			std::list<std::shared_ptr <LTFSNode> > node_list;
+			std::list<boost::shared_ptr <LTFSNode> > node_list;
 			s->SessionInventory(node_list);
 
 			if (node_list.size() == 1) {
 				//MSG(LTFSDML0707I, "node", s->get_server().c_str(), s->get_port(), s->get_fd());
-				std::list<std::shared_ptr <LTFSNode> >::iterator it = node_list.begin();
+				std::list<boost::shared_ptr <LTFSNode> >::iterator it = node_list.begin();
 				n = *it;
 			} else
 				MSG(LTFSDML0708E, node_list.size(), s->get_server().c_str(), s->get_port(), s->get_fd());
 		} catch ( AdminLibException& e ) {
 			MSG(LTFSDML0709E, "Inventory", "node", s->get_server().c_str(), s->get_port(), s->get_fd(), e.what());
-			n = std::shared_ptr<LTFSNode>();
+			n = boost::shared_ptr<LTFSNode>();
 		}
 	}
 
 	return n;
 }
 
-std::shared_ptr<Drive> LEControl::InventoryDrive(std::string id,
-											std::shared_ptr<LTFSAdminSession> s,
+boost::shared_ptr<Drive> LEControl::InventoryDrive(std::string id,
+											boost::shared_ptr<LTFSAdminSession> s,
 											bool force)
 {
-	std::shared_ptr<Drive> d = std::shared_ptr<Drive>();
+	boost::shared_ptr<Drive> d = boost::shared_ptr<Drive>();
 
 	if (s && s->is_alived()) {
 		std::string type = "drive (" + id + ")";
 		MSG(LTFSDML0706I, type.c_str(), s->get_server().c_str(), s->get_port(),
 				s->get_fd());
 		try {
-			std::list<std::shared_ptr <Drive> > drive_list;
+			std::list<boost::shared_ptr <Drive> > drive_list;
 			s->SessionInventory(drive_list, id, force);
 
 			/*
 			 * FIXME (Atsushi Abe): currently LE does not support filter function
 			 * against the drive object. So that get all drives and search the target linearly.
 			 */
-			std::list<std::shared_ptr<Drive> >::iterator it;
+			std::list<boost::shared_ptr<Drive> >::iterator it;
 			for (it = drive_list.begin(); it != drive_list.end(); ++it) {
 				try {
 					if (id == (*it)->GetObjectID()) {
@@ -154,15 +154,15 @@ std::shared_ptr<Drive> LEControl::InventoryDrive(std::string id,
 				MSG(LTFSDML0710W, type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd());
 		} catch ( AdminLibException& e ) {
 			MSG(LTFSDML0709E, "Inventory", type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd(), e.what());
-			d = std::shared_ptr<Drive>();
+			d = boost::shared_ptr<Drive>();
 		}
 	}
 
 	return d;
 }
 
-int LEControl::InventoryDrive(std::list<std::shared_ptr<Drive> > &drives,
-							  std::shared_ptr<LTFSAdminSession> s,
+int LEControl::InventoryDrive(std::list<boost::shared_ptr<Drive> > &drives,
+							  boost::shared_ptr<LTFSAdminSession> s,
 							  bool assigned_only, bool force)
 {
 	if (s && s->is_alived()) {
@@ -188,7 +188,7 @@ int LEControl::InventoryDrive(std::list<std::shared_ptr<Drive> > &drives,
 	return -1;
 }
 
-int LEControl::AssignDrive(std::string serial, std::shared_ptr<LTFSAdminSession> s)
+int LEControl::AssignDrive(std::string serial, boost::shared_ptr<LTFSAdminSession> s)
 {
 	int rc = -1;
 
@@ -196,7 +196,7 @@ int LEControl::AssignDrive(std::string serial, std::shared_ptr<LTFSAdminSession>
 		std::string type = "drive (" + serial + ")";
 		MSG(LTFSDML0711I, type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd());
 		try {
-			std::shared_ptr<Drive> d = InventoryDrive(serial, s);
+			boost::shared_ptr<Drive> d = InventoryDrive(serial, s);
 			if (!d) {
 				/* Refresh inventory and retry */
 				d = InventoryDrive(serial, s);
@@ -218,7 +218,7 @@ int LEControl::AssignDrive(std::string serial, std::shared_ptr<LTFSAdminSession>
 	return rc;
 }
 
-int LEControl::UnassignDrive(std::shared_ptr<Drive> drive)
+int LEControl::UnassignDrive(boost::shared_ptr<Drive> drive)
 {
 	int rc = -1;
 
@@ -249,36 +249,36 @@ int LEControl::UnassignDrive(std::shared_ptr<Drive> drive)
 	return rc;
 }
 
-std::shared_ptr<Cartridge> LEControl::InventoryCartridge(std::string id,
-													std::shared_ptr<LTFSAdminSession> s,
+boost::shared_ptr<Cartridge> LEControl::InventoryCartridge(std::string id,
+													boost::shared_ptr<LTFSAdminSession> s,
 													bool force)
 {
-	std::shared_ptr<Cartridge> c = std::shared_ptr<Cartridge>();
+	boost::shared_ptr<Cartridge> c = boost::shared_ptr<Cartridge>();
 
 	if (s && s->is_alived()) {
 		std::string type = "tape (" + id + ")";
 		MSG(LTFSDML0706I, type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd());
 		try {
-			std::list<std::shared_ptr <Cartridge> > cartridge_list;
+			std::list<boost::shared_ptr <Cartridge> > cartridge_list;
 			s->SessionInventory(cartridge_list, id);
 
 			if (cartridge_list.size() == 1) {
 				MSG(LTFSDML0707I, type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd());
-				std::list<std::shared_ptr <Cartridge> >::iterator it = cartridge_list.begin();
+				std::list<boost::shared_ptr <Cartridge> >::iterator it = cartridge_list.begin();
 				c = *it;
 			} else
 				MSG(LTFSDML0716E, s->get_server().c_str(), s->get_port(), s->get_fd());
 		} catch ( AdminLibException& e ) {
 			MSG(LTFSDML0709E, "Inventory", type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd(), e.what());
-			c = std::shared_ptr<Cartridge>();
+			c = boost::shared_ptr<Cartridge>();
 		}
 	}
 
 	return c;
 }
 
-int LEControl::InventoryCartridge(std::list<std::shared_ptr<Cartridge> > &cartridges,
-								  std::shared_ptr<LTFSAdminSession> s,
+int LEControl::InventoryCartridge(std::list<boost::shared_ptr<Cartridge> > &cartridges,
+								  boost::shared_ptr<LTFSAdminSession> s,
 								  bool assigned_only, bool force)
 {
 	if (s && s->is_alived()) {
@@ -304,7 +304,7 @@ int LEControl::InventoryCartridge(std::list<std::shared_ptr<Cartridge> > &cartri
 	return -1;
 }
 
-int LEControl::AssignCartridge(std::string barcode, std::shared_ptr<LTFSAdminSession> s, std::string drive_serial)
+int LEControl::AssignCartridge(std::string barcode, boost::shared_ptr<LTFSAdminSession> s, std::string drive_serial)
 {
 	int rc = -1;
 
@@ -312,7 +312,7 @@ int LEControl::AssignCartridge(std::string barcode, std::shared_ptr<LTFSAdminSes
 		std::string type = "tape (" + barcode + ")";
 		MSG(LTFSDML0711I, type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd());
 		try {
-			std::shared_ptr<Cartridge> c = InventoryCartridge(barcode, s);
+			boost::shared_ptr<Cartridge> c = InventoryCartridge(barcode, s);
 			if (!c) {
 				/* Refresh inventory and retry */
 				c = InventoryCartridge(barcode, s);
@@ -342,7 +342,7 @@ int LEControl::AssignCartridge(std::string barcode, std::shared_ptr<LTFSAdminSes
 	return rc;
 }
 
-int LEControl::UnassignCartridge(std::shared_ptr<Cartridge> cartridge, bool keep_on_drive)
+int LEControl::UnassignCartridge(boost::shared_ptr<Cartridge> cartridge, bool keep_on_drive)
 {
 	int rc = -1;
 
@@ -371,7 +371,7 @@ int LEControl::UnassignCartridge(std::shared_ptr<Cartridge> cartridge, bool keep
 	return rc;
 }
 
-int LEControl::MountCartridge(std::shared_ptr<Cartridge> cartridge, std::string drive_serial)
+int LEControl::MountCartridge(boost::shared_ptr<Cartridge> cartridge, std::string drive_serial)
 {
 	int rc = -1;
 	LTFSAdminSession *s = cartridge->get_session();
@@ -386,13 +386,16 @@ int LEControl::MountCartridge(std::shared_ptr<Cartridge> cartridge, std::string 
 			std::string type = cartridge->GetObjectID() + "(" + drive_serial + ")";
 			MSG(LTFSDML0709E, "Mount", type.c_str(), s->get_server().c_str(), s->get_port(), s->get_fd(), e.what());
 			return -1;
+		} catch (std::exception& e) {
+		    std::cout << "error performing tape mount: " << e.what() << std::endl;
+		    return -1;
 		}
 	}
 
 	return rc;
 }
 
-int LEControl::UnmountCartridge(std::shared_ptr<Cartridge> cartridge)
+int LEControl::UnmountCartridge(boost::shared_ptr<Cartridge> cartridge)
 {
 	int rc = -1;
 	std::string type = cartridge->GetObjectID();
@@ -412,7 +415,7 @@ int LEControl::UnmountCartridge(std::shared_ptr<Cartridge> cartridge)
 	return rc;
 }
 
-int LEControl::SyncCartridge(std::shared_ptr<Cartridge> cartridge)
+int LEControl::SyncCartridge(boost::shared_ptr<Cartridge> cartridge)
 {
 	int rc = -1;
 	std::string type = cartridge->GetObjectID();
@@ -447,7 +450,7 @@ const std::unordered_map<std::string, int> LEControl::format_errors_ = {
 	{ std::string("LTFSI1088E"), -static_cast<int>(Error::TAPE_STATE_ERR) }};
 
 
-int LEControl::FormatCartridge(std::shared_ptr<Cartridge> cartridge, std::string drive_serial, uint8_t density_code, bool force)
+int LEControl::FormatCartridge(boost::shared_ptr<Cartridge> cartridge, std::string drive_serial, uint8_t density_code, bool force)
 {
 	int rc = -1;
 
@@ -498,7 +501,7 @@ int LEControl::FormatCartridge(std::shared_ptr<Cartridge> cartridge, std::string
 	return rc;
 }
 
-int LEControl::CheckCartridge(std::shared_ptr<Cartridge> cartridge, std::string drive_serial, bool deep)
+int LEControl::CheckCartridge(boost::shared_ptr<Cartridge> cartridge, std::string drive_serial, bool deep)
 {
 	int rc = -1;
 
@@ -527,7 +530,7 @@ int LEControl::CheckCartridge(std::shared_ptr<Cartridge> cartridge, std::string 
 	return rc;
 }
 
-int LEControl::MoveCartridge(std::shared_ptr<Cartridge> cartridge, ltfs_slot_t slot_type, std::string drive_serial)
+int LEControl::MoveCartridge(boost::shared_ptr<Cartridge> cartridge, ltfs_slot_t slot_type, std::string drive_serial)
 {
 	int rc = -1;
 

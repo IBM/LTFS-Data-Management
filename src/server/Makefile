@@ -1,6 +1,6 @@
 RELPATH = ../..
 
-LDFLAGS := -lprotobuf -lpthread -lsqlite3 -lconnector -latomic -lxml2
+LDFLAGS := -lprotobuf -lpthread -lsqlite3 -lconnector -latomic -lxml2 -lboost_system -lboost_thread -lltfsadminlib
 
 ARC_SRC_FILES := SQLStatements.cc
 ARC_SRC_FILES += Server.cc

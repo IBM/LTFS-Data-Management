@@ -43,7 +43,6 @@
 #include "src/connector/Connector.h"
 
 #include "LEControl/LEControl.h"
-#include "LEControl/ltfsadminlib/Cartridge.h"
 
 #include "SubServer.h"
 #include "ThreadPool.h"

@@ -37,8 +37,24 @@
 							</tool>
 						</toolChain>
 					</folderInfo>
+					<folderInfo id="cdt.managedbuild.toolchain.gnu.base.963339460.1937580699" name="/" resourcePath="src/server/LEControl">
+						<toolChain id="cdt.managedbuild.toolchain.gnu.base.1827154247" name="Linux GCC" superClass="cdt.managedbuild.toolchain.gnu.base" unusedChildren="">
+							<tool id="cdt.managedbuild.tool.gnu.archiver.base.1701771860" name="GCC Archiver" superClass="cdt.managedbuild.tool.gnu.archiver.base.738493455"/>
+							<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.437970834" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.159005382">
+								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.808564608" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+							</tool>
+							<tool id="cdt.managedbuild.tool.gnu.c.compiler.base.1619235051" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.base.128338586">
+								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.293620613" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
+							</tool>
+							<tool id="cdt.managedbuild.tool.gnu.c.linker.base.1900681190" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.base.840805098"/>
+							<tool id="cdt.managedbuild.tool.gnu.cpp.linker.base.1342035109" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.base.71486049"/>
+							<tool id="cdt.managedbuild.tool.gnu.assembler.base.1209446050" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.base.2029591868">
+								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.824091531" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
+							</tool>
+						</toolChain>
+					</folderInfo>
 					<sourceEntries>
-						<entry excluding="src/common/msgcompiler/msgcompiler.cc|src/connector/dmapi|src/server/LEControl" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="src/common/msgcompiler/msgcompiler.cc|src/connector/dmapi" flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>

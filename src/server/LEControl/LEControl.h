@@ -2,12 +2,12 @@
 
 #include <syslog.h>
 
-#include "./ltfsadminlib/LTFSAdminLog.h"
-#include "./ltfsadminlib/LTFSAdminSession.h"
-#include "./ltfsadminlib/InternalError.h"
-#include "./ltfsadminlib/Drive.h"
-#include "./ltfsadminlib/Cartridge.h"
-#include "./ltfsadminlib/LTFSNode.h"
+#include <ltfs/ltfsadminlib/LTFSAdminLog.h>
+#include <ltfs/ltfsadminlib/LTFSAdminSession.h>
+#include <ltfs/ltfsadminlib/InternalError.h>
+#include <ltfs/ltfsadminlib/Drive.h>
+#include <ltfs/ltfsadminlib/Cartridge.h>
+#include <ltfs/ltfsadminlib/LTFSNode.h>
 
 using namespace ltfsadmin;
 
@@ -57,36 +57,36 @@ enum ltfsle_tape_location {
 
 class LEControl {
 public:
-	static std::shared_ptr<LTFSAdminSession> Connect(std::string ip_address, uint16_t port);
-	static std::shared_ptr<LTFSAdminSession> Reconnect(std::shared_ptr<LTFSAdminSession> session);
-	static void Disconnect(std::shared_ptr<LTFSAdminSession> session);
-	static std::shared_ptr<LTFSNode> InventoryNode(std::shared_ptr<LTFSAdminSession> session);
-	static std::shared_ptr<Drive> InventoryDrive(std::string id,
-												   std::shared_ptr<LTFSAdminSession> session,
+	static boost::shared_ptr<LTFSAdminSession> Connect(std::string ip_address, uint16_t port);
+	static boost::shared_ptr<LTFSAdminSession> Reconnect(boost::shared_ptr<LTFSAdminSession> session);
+	static void Disconnect(boost::shared_ptr<LTFSAdminSession> session);
+	static boost::shared_ptr<LTFSNode> InventoryNode(boost::shared_ptr<LTFSAdminSession> session);
+	static boost::shared_ptr<Drive> InventoryDrive(std::string id,
+												   boost::shared_ptr<LTFSAdminSession> session,
 												   bool force = false);
-	static int InventoryDrive(std::list<std::shared_ptr<Drive> > &drives,
-							  std::shared_ptr<LTFSAdminSession> session,
+	static int InventoryDrive(std::list<boost::shared_ptr<Drive> > &drives,
+							  boost::shared_ptr<LTFSAdminSession> session,
 							  bool assigned_only = true,
 							  bool force = false);
-	static std::shared_ptr<Cartridge> InventoryCartridge(std::string id,
-														   std::shared_ptr<LTFSAdminSession> session,
+	static boost::shared_ptr<Cartridge> InventoryCartridge(std::string id,
+														   boost::shared_ptr<LTFSAdminSession> session,
 														   bool force = false);
-	static int InventoryCartridge(std::list<std::shared_ptr<Cartridge> > &cartridges,
-								  std::shared_ptr<LTFSAdminSession> session,
+	static int InventoryCartridge(std::list<boost::shared_ptr<Cartridge> > &cartridges,
+								  boost::shared_ptr<LTFSAdminSession> session,
 								  bool assigned_only = true,
 								  bool force = false);
-	static int AssignDrive(std::string serial, std::shared_ptr<LTFSAdminSession> session);
-	static int UnassignDrive(std::shared_ptr<Drive> drive);
-	static int AssignCartridge(std::string barcode, std::shared_ptr<LTFSAdminSession> session, std::string drive_serial = "");
-	static int UnassignCartridge(std::shared_ptr<Cartridge> cartridge, bool keep_on_drive = false);
+	static int AssignDrive(std::string serial, boost::shared_ptr<LTFSAdminSession> session);
+	static int UnassignDrive(boost::shared_ptr<Drive> drive);
+	static int AssignCartridge(std::string barcode, boost::shared_ptr<LTFSAdminSession> session, std::string drive_serial = "");
+	static int UnassignCartridge(boost::shared_ptr<Cartridge> cartridge, bool keep_on_drive = false);
 
-	static int MountCartridge(std::shared_ptr<Cartridge> cartridge, std::string drive_serial);
-	static int UnmountCartridge(std::shared_ptr<Cartridge> cartridge);
-	static int SyncCartridge(std::shared_ptr<Cartridge> cartridge);
-	static int FormatCartridge(std::shared_ptr<Cartridge> cartridge, std::string drive_serial, uint8_t density_code = 0, bool force = false);
-	static int CheckCartridge(std::shared_ptr<Cartridge> cartridge, std::string drive_serial, bool deep = false);
+	static int MountCartridge(boost::shared_ptr<Cartridge> cartridge, std::string drive_serial);
+	static int UnmountCartridge(boost::shared_ptr<Cartridge> cartridge);
+	static int SyncCartridge(boost::shared_ptr<Cartridge> cartridge);
+	static int FormatCartridge(boost::shared_ptr<Cartridge> cartridge, std::string drive_serial, uint8_t density_code = 0, bool force = false);
+	static int CheckCartridge(boost::shared_ptr<Cartridge> cartridge, std::string drive_serial, bool deep = false);
 
-	static int MoveCartridge(std::shared_ptr<Cartridge> cartridge,
+	static int MoveCartridge(boost::shared_ptr<Cartridge> cartridge,
 						  ltfs_slot_t slot_type, std::string drive_serial = "");
 
 	// Move Cartridge Assign
