@@ -1,12 +1,12 @@
 #include "ServerIncludes.h"
 
-void LTFSDMCartridge::update(boost::shared_ptr<LTFSAdminSession> sess)
+void LTFSDMCartridge::update()
 
 {
     std::lock_guard<std::recursive_mutex> lock(LTFSDMInventory::mtx);
 
     Cartridge *cartridge = dynamic_cast<Cartridge*>(this);
-    *cartridge = *(LEControl::InventoryCartridge(GetObjectID(), sess));
+    *cartridge = *(inventory->getCartridge(GetObjectID()));
 }
 
 void LTFSDMCartridge::setInProgress(unsigned long size)

@@ -42,8 +42,6 @@
 
 #include "src/connector/Connector.h"
 
-#include "LEControl/LEControl.h"
-
 #include "SubServer.h"
 #include "ThreadPool.h"
 #include "Status.h"

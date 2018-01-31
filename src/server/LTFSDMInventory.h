@@ -1,6 +1,15 @@
 #pragma once
 
-class LTFSDMDrive: public ltfsadmin::Drive
+#include <ltfs/ltfsadminlib/LTFSAdminLog.h>
+#include <ltfs/ltfsadminlib/LTFSAdminSession.h>
+#include <ltfs/ltfsadminlib/InternalError.h>
+#include <ltfs/ltfsadminlib/Drive.h>
+#include <ltfs/ltfsadminlib/Cartridge.h>
+#include <ltfs/ltfsadminlib/LTFSNode.h>
+
+using namespace ltfsadmin;
+
+class LTFSDMDrive: public Drive
 {
 private:
     bool busy;
@@ -10,9 +19,9 @@ public:
     std::mutex *mtx;
     ThreadPool<std::string, std::string, long, long, Migration::mig_info_t,
             std::shared_ptr<std::list<unsigned long>>, std::shared_ptr<bool>> *wqp;
-    LTFSDMDrive(ltfsadmin::Drive drive);
+    LTFSDMDrive(Drive drive);
     ~LTFSDMDrive();
-    void update(boost::shared_ptr<LTFSAdminSession> sess);
+    void update();
     bool isBusy();
     void setBusy();
     void setFree();
@@ -24,7 +33,7 @@ public:
     void clearToUnblock();
 };
 
-class LTFSDMCartridge: public ltfsadmin::Cartridge
+class LTFSDMCartridge: public Cartridge
 {
 private:
     unsigned long inProgress;
@@ -40,12 +49,12 @@ public:
         TAPE_INVALID,
         TAPE_UNKNOWN
     } state;
-    LTFSDMCartridge(ltfsadmin::Cartridge cartridge) :
-            ltfsadmin::Cartridge(cartridge), inProgress(0), pool(""), requested(
+    LTFSDMCartridge(Cartridge cartridge) :
+            Cartridge(cartridge), inProgress(0), pool(""), requested(
                     false), state(LTFSDMCartridge::TAPE_UNKNOWN)
     {
     }
-    void update(boost::shared_ptr<LTFSAdminSession> sess);
+    void update();
     void setInProgress(unsigned long size);
     unsigned long getInProgress();
     void setPool(std::string _pool);
@@ -62,8 +71,22 @@ class LTFSDMInventory
 private:
     std::list<std::shared_ptr<LTFSDMDrive>> drives;
     std::list<std::shared_ptr<LTFSDMCartridge>> cartridges;
-    boost::shared_ptr<ltfsadmin::LTFSAdminSession> sess;
+    boost::shared_ptr<LTFSAdminSession> sess;
+    boost::shared_ptr<LTFSNode> node;
     std::string mountPoint;
+
+    void connect(std::string node_addr, uint16_t port_num);
+    void disconnect();
+    void getNode();
+
+    boost::shared_ptr<Drive> lookupDrive(std::string id, bool force = false);
+    void addDrive(std::string serial);
+    void remDrive(boost::shared_ptr<Drive> drive);
+    void lookupDrives(bool assigned_only = true, bool force = false);
+    boost::shared_ptr<Cartridge> lookupCartridge(std::string id, bool force = false);
+    void addCartridge(std::string barcode, std::string drive_serial);
+    void remCartridge(boost::shared_ptr<Cartridge> cartridge, bool keep_on_drive = false);
+    void lookupCartridges(bool assigned_only = true, bool force = false);
 public:
     LTFSDMInventory();
     ~LTFSDMInventory();

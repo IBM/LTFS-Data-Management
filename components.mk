@@ -7,7 +7,6 @@ COMMONDIRS += src/common/configuration
 
 CLIENTDIRS := src/client
 
-SERVERDIRS += src/server/LEControl
 SERVERDIRS += src/server
 
 CONNECDIRS := src/connector/fuse

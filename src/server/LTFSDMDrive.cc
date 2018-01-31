@@ -11,13 +11,14 @@ LTFSDMDrive::~LTFSDMDrive()
     delete (mtx);
 }
 
-void LTFSDMDrive::update(boost::shared_ptr<LTFSAdminSession> sess)
+void LTFSDMDrive::update()
 
 {
     std::lock_guard<std::recursive_mutex> lock(LTFSDMInventory::mtx);
 
+
     Drive *drive = dynamic_cast<Drive*>(this);
-    *drive = *(LEControl::InventoryDrive(GetObjectID(), sess));
+    *drive = *(inventory->getDrive(GetObjectID()));
 }
 
 bool LTFSDMDrive::isBusy()
