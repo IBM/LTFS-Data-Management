@@ -729,10 +729,10 @@ void MessageParser::infoDrivesMessage(long key, LTFSDmCommServer *command)
             LTFSDmProtocol::LTFSDmInfoDrivesResp *infodrivesresp =
                     command->mutable_infodrivesresp();
 
-            infodrivesresp->set_id(d->GetObjectID());
-            infodrivesresp->set_devname(d->get_devname());
-            infodrivesresp->set_slot(d->get_slot());
-            infodrivesresp->set_status(d->get_status());
+            infodrivesresp->set_id(d->get()->GetObjectID());
+            infodrivesresp->set_devname(d->get()->get_devname());
+            infodrivesresp->set_slot(d->get()->get_slot());
+            infodrivesresp->set_status(d->get()->get_status());
             infodrivesresp->set_busy(d->isBusy());
 
             try {
@@ -784,11 +784,11 @@ void MessageParser::infoTapesMessage(long key, LTFSDmCommServer *command)
             LTFSDmProtocol::LTFSDmInfoTapesResp *infotapesresp =
                     command->mutable_infotapesresp();
 
-            infotapesresp->set_id(c->GetObjectID());
-            infotapesresp->set_slot(c->get_slot());
-            infotapesresp->set_totalcap(c->get_total_cap());
-            infotapesresp->set_remaincap(c->get_remaining_cap());
-            infotapesresp->set_status(c->get_status());
+            infotapesresp->set_id(c->get()->GetObjectID());
+            infotapesresp->set_slot(c->get()->get_slot());
+            infotapesresp->set_totalcap(c->get()->get_total_cap());
+            infotapesresp->set_remaincap(c->get()->get_remaining_cap());
+            infotapesresp->set_status(c->get()->get_status());
             infotapesresp->set_inprogress(c->getInProgress());
             infotapesresp->set_pool(c->getPool());
             switch (c->getState()) {
@@ -1066,8 +1066,8 @@ void MessageParser::infoPoolsMessage(long key, LTFSDmCommServer *command)
                     Server::conf.poolRemove(poolname, cartridgeid);
                 } else {
                     numCartridges++;
-                    total += c->get_total_cap();
-                    free += c->get_remaining_cap();
+                    total += c->get()->get_total_cap();
+                    free += c->get()->get_remaining_cap();
                 }
                 // unref?
             }

@@ -434,7 +434,7 @@ bool needsTape)
 
     if (needsTape) {
         for (std::shared_ptr<LTFSDMDrive> d : inventory->getDrives()) {
-            if (d->get_slot() == inventory->getCartridge(tapeId)->get_slot()) {
+            if (d->get()->get_slot() == inventory->getCartridge(tapeId)->get()->get_slot()) {
                 drive = d;
                 break;
             }
@@ -553,8 +553,8 @@ void SelRecall::execRequest(std::string tapeId, bool needsTape)
                 LTFSDMCartridge::TAPE_MOUNTED);
         bool found = false;
         for (std::shared_ptr<LTFSDMDrive> d : inventory->getDrives()) {
-            if (d->get_slot() == inventory->getCartridge(tapeId)->get_slot()) {
-                TRACE(Trace::always, d->GetObjectID());
+            if (d->get()->get_slot() == inventory->getCartridge(tapeId)->get()->get_slot()) {
+                TRACE(Trace::always, d->get()->GetObjectID());
                 d->setFree();
                 d->clearToUnblock();
                 found = true;

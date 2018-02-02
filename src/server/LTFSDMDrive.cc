@@ -1,10 +1,8 @@
 #include "ServerIncludes.h"
 
-LTFSDMDrive::LTFSDMDrive(ltfsadmin::Drive drive) :
-        ltfsadmin::Drive(drive), busy(false), umountReqNum(Const::UNSET), toUnBlock(
-                DataBase::NOOP), mtx(nullptr), wqp(nullptr)
-{
-}
+LTFSDMDrive::LTFSDMDrive(boost::shared_ptr<Drive> d) :
+        drive(d), busy(false), umountReqNum(Const::UNSET),
+        toUnBlock(DataBase::NOOP), mtx(nullptr), wqp(nullptr) {}
 
 LTFSDMDrive::~LTFSDMDrive()
 {
@@ -16,9 +14,7 @@ void LTFSDMDrive::update()
 {
     std::lock_guard<std::recursive_mutex> lock(LTFSDMInventory::mtx);
 
-
-    Drive *drive = dynamic_cast<Drive*>(this);
-    *drive = *(inventory->getDrive(GetObjectID()));
+    drive = inventory->lookupDrive(drive->GetObjectID());
 }
 
 bool LTFSDMDrive::isBusy()

@@ -1,12 +1,17 @@
 #include "ServerIncludes.h"
 
+LTFSDMCartridge::LTFSDMCartridge(boost::shared_ptr<Cartridge> c) :
+            cart(c), inProgress(0), pool(""), requested(false),
+            state(LTFSDMCartridge::TAPE_UNKNOWN)
+{
+}
+
 void LTFSDMCartridge::update()
 
 {
     std::lock_guard<std::recursive_mutex> lock(LTFSDMInventory::mtx);
 
-    Cartridge *cartridge = dynamic_cast<Cartridge*>(this);
-    *cartridge = *(inventory->getCartridge(GetObjectID()));
+    cart = inventory->lookupCartridge(cart->GetObjectID());
 }
 
 void LTFSDMCartridge::setInProgress(unsigned long size)

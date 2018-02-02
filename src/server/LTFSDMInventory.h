@@ -9,9 +9,10 @@
 
 using namespace ltfsadmin;
 
-class LTFSDMDrive: public Drive
+class LTFSDMDrive
 {
 private:
+    boost::shared_ptr<Drive> drive;
     bool busy;
     int umountReqNum;
     DataBase::operation toUnBlock;
@@ -19,8 +20,9 @@ public:
     std::mutex *mtx;
     ThreadPool<std::string, std::string, long, long, Migration::mig_info_t,
             std::shared_ptr<std::list<unsigned long>>, std::shared_ptr<bool>> *wqp;
-    LTFSDMDrive(Drive drive);
+    LTFSDMDrive(boost::shared_ptr<Drive> d);
     ~LTFSDMDrive();
+    boost::shared_ptr<Drive> get() { return drive; }
     void update();
     bool isBusy();
     void setBusy();
@@ -33,9 +35,10 @@ public:
     void clearToUnblock();
 };
 
-class LTFSDMCartridge: public Cartridge
+class LTFSDMCartridge
 {
 private:
+    boost::shared_ptr<Cartridge> cart;
     unsigned long inProgress;
     std::string pool;
     bool requested;
@@ -49,11 +52,8 @@ public:
         TAPE_INVALID,
         TAPE_UNKNOWN
     } state;
-    LTFSDMCartridge(Cartridge cartridge) :
-            Cartridge(cartridge), inProgress(0), pool(""), requested(
-                    false), state(LTFSDMCartridge::TAPE_UNKNOWN)
-    {
-    }
+    LTFSDMCartridge(boost::shared_ptr<Cartridge> c);
+    boost::shared_ptr<Cartridge> get() { return cart; }
     void update();
     void setInProgress(unsigned long size);
     unsigned long getInProgress();
@@ -79,11 +79,9 @@ private:
     void disconnect();
     void getNode();
 
-    boost::shared_ptr<Drive> lookupDrive(std::string id, bool force = false);
     void addDrive(std::string serial);
     void remDrive(boost::shared_ptr<Drive> drive);
     void lookupDrives(bool assigned_only = true, bool force = false);
-    boost::shared_ptr<Cartridge> lookupCartridge(std::string id, bool force = false);
     void addCartridge(std::string barcode, std::string drive_serial);
     void remCartridge(boost::shared_ptr<Cartridge> cartridge, bool keep_on_drive = false);
     void lookupCartridges(bool assigned_only = true, bool force = false);
@@ -93,6 +91,8 @@ public:
 
     static std::recursive_mutex mtx;
 
+    boost::shared_ptr<Drive> lookupDrive(std::string id, bool force = false);
+    boost::shared_ptr<Cartridge> lookupCartridge(std::string id, bool force = false);
     void inventorize();
 
     std::list<std::shared_ptr<LTFSDMDrive>> getDrives();
