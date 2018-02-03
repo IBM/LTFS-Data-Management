@@ -356,7 +356,7 @@ void LTFSDMInventory::inventorize()
 
     cartridges.sort(
             [] (const std::shared_ptr<LTFSDMCartridge> c1, const std::shared_ptr<LTFSDMCartridge> c2)
-            {   return (c1->get()->GetObjectID().compare(c2->get()->GetObjectID()) < 0);});
+            {   return (c1->get_le()->GetObjectID().compare(c2->get_le()->GetObjectID()) < 0);});
 
     for (std::string poolname : Server::conf.getPools()) {
         for (std::string cartridgeid : Server::conf.getPool(poolname)) {
@@ -376,7 +376,7 @@ void LTFSDMInventory::inventorize()
     for (std::shared_ptr<LTFSDMCartridge> c : cartridges) {
         c->setState(LTFSDMCartridge::TAPE_UNMOUNTED);
         for (std::shared_ptr<LTFSDMDrive> d : drives) {
-            if (c->get()->get_slot() == d->get()->get_slot()) {
+            if (c->get_le()->get_slot() == d->get_le()->get_slot()) {
                 c->setState(LTFSDMCartridge::TAPE_MOUNTED);
                 break;
             }
@@ -466,7 +466,7 @@ std::shared_ptr<LTFSDMDrive> LTFSDMInventory::getDrive(std::string driveid)
     std::lock_guard<std::recursive_mutex> lock(LTFSDMInventory::mtx);
 
     for (std::shared_ptr<LTFSDMDrive> drive : drives)
-        if (drive->get()->GetObjectID().compare(driveid) == 0)
+        if (drive->get_le()->GetObjectID().compare(driveid) == 0)
             return drive;
 
     return nullptr;
@@ -487,7 +487,7 @@ std::shared_ptr<LTFSDMCartridge> LTFSDMInventory::getCartridge(
     std::lock_guard<std::recursive_mutex> lock(LTFSDMInventory::mtx);
 
     for (std::shared_ptr<LTFSDMCartridge> cartridge : cartridges)
-        if (cartridge->get()->GetObjectID().compare(cartridgeid) == 0)
+        if (cartridge->get_le()->GetObjectID().compare(cartridgeid) == 0)
             return cartridge;
 
     return nullptr;
@@ -628,21 +628,21 @@ void LTFSDMInventory::mount(std::string driveid, std::string cartridgeid)
     assert(cartridge->getState() == LTFSDMCartridge::TAPE_MOVING);
 
     try {
-        cartridge->get()->Mount(driveid);
+        cartridge->get_le()->Mount(driveid);
 
         std::lock_guard<std::recursive_mutex> lock(LTFSDMInventory::mtx);
 
         cartridge->update();
         cartridge->setState(LTFSDMCartridge::TAPE_MOUNTED);
-        TRACE(Trace::always, drive->get()->GetObjectID());
+        TRACE(Trace::always, drive->get_le()->GetObjectID());
         drive->setFree();
         drive->unsetUnmountReqNum();
     } catch (AdminLibException& e) {
-        std::string type = cartridge->get()->GetObjectID() + "(" + cartridgeid + ")";
+        std::string type = cartridge->get_le()->GetObjectID() + "(" + cartridgeid + ")";
         MSG(LTFSDMS0100E, cartridgeid, e.what());
         THROW(Error::GENERAL_ERROR, cartridgeid);
     } catch (std::exception& e) {
-           std::string type = cartridge->get()->GetObjectID() + "(" + cartridgeid + ")";
+           std::string type = cartridge->get_le()->GetObjectID() + "(" + cartridgeid + ")";
            MSG(LTFSDMS0100E, cartridgeid, e.what());
            THROW(Error::GENERAL_ERROR, cartridgeid);
     }
@@ -667,24 +667,24 @@ void LTFSDMInventory::unmount(std::string driveid, std::string cartridgeid)
 
     assert(drive->isBusy() == true);
     assert(cartridge->getState() == LTFSDMCartridge::TAPE_MOVING);
-    assert(drive->get()->get_slot() == cartridge->get()->get_slot());
+    assert(drive->get_le()->get_slot() == cartridge->get_le()->get_slot());
 
     try {
-        cartridge->get()->Unmount();
+        cartridge->get_le()->Unmount();
 
         std::lock_guard<std::recursive_mutex> lock(LTFSDMInventory::mtx);
 
         cartridge->update();
         cartridge->setState(LTFSDMCartridge::TAPE_UNMOUNTED);
-        TRACE(Trace::always, drive->get()->GetObjectID());
+        TRACE(Trace::always, drive->get_le()->GetObjectID());
         drive->setFree();
         drive->unsetUnmountReqNum();
     } catch (AdminLibException& e) {
-            std::string type = cartridge->get()->GetObjectID() + "(" + cartridgeid + ")";
+            std::string type = cartridge->get_le()->GetObjectID() + "(" + cartridgeid + ")";
             MSG(LTFSDMS0100E, cartridgeid, e.what());
             THROW(Error::GENERAL_ERROR, cartridgeid);
     } catch (std::exception& e) {
-           std::string type = cartridge->get()->GetObjectID() + "(" + cartridgeid + ")";
+           std::string type = cartridge->get_le()->GetObjectID() + "(" + cartridgeid + ")";
            MSG(LTFSDMS0100E, cartridgeid, e.what());
            THROW(Error::GENERAL_ERROR, cartridgeid);
     }

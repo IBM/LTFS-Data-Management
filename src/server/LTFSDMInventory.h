@@ -22,7 +22,7 @@ public:
             std::shared_ptr<std::list<unsigned long>>, std::shared_ptr<bool>> *wqp;
     LTFSDMDrive(boost::shared_ptr<Drive> d);
     ~LTFSDMDrive();
-    boost::shared_ptr<Drive> get() { return drive; }
+    boost::shared_ptr<Drive> get_le() { return drive; }
     void update();
     bool isBusy();
     void setBusy();
@@ -53,7 +53,7 @@ public:
         TAPE_UNKNOWN
     } state;
     LTFSDMCartridge(boost::shared_ptr<Cartridge> c);
-    boost::shared_ptr<Cartridge> get() { return cart; }
+    boost::shared_ptr<Cartridge> get_le() { return cart; }
     void update();
     void setInProgress(unsigned long size);
     unsigned long getInProgress();

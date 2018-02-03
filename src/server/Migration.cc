@@ -665,7 +665,7 @@ Migration::req_return_t Migration::processFiles(int replNum, std::string tapeId,
 
     if (toState == FsObj::PREMIGRATED) {
         for (std::shared_ptr<LTFSDMDrive> d : inventory->getDrives()) {
-            if (d->get()->get_slot() == inventory->getCartridge(tapeId)->get()->get_slot()) {
+            if (d->get_le()->get_slot() == inventory->getCartridge(tapeId)->get_le()->get_slot()) {
                 drive = d;
                 break;
             }
@@ -679,7 +679,7 @@ Migration::req_return_t Migration::processFiles(int replNum, std::string tapeId,
 
     if (toState == FsObj::PREMIGRATED) {
         freeSpace = 1024 * 1024
-                * inventory->getCartridge(tapeId)->get()->get_remaining_cap();
+                * inventory->getCartridge(tapeId)->get_le()->get_remaining_cap();
         stmt(Migration::SET_PREMIGRATING) << state << tapeId << reqNumber
                 << fromState << replNum << (unsigned long) &freeSpace
                 << (unsigned long) &num_found << (unsigned long) &total;
@@ -715,7 +715,7 @@ Migration::req_return_t Migration::processFiles(int replNum, std::string tapeId,
                     break;
                 }
                 TRACE(Trace::full, secs, nsecs);
-                drive->wqp->enqueue(reqNumber, tapeId, drive->get()->GetObjectID(),
+                drive->wqp->enqueue(reqNumber, tapeId, drive->get_le()->GetObjectID(),
                         secs, nsecs, mig_info, inumList, suspended);
             } else {
                 Server::wqs->enqueue(reqNumber, mig_info, inumList);
@@ -828,8 +828,8 @@ bool needsTape)
                 LTFSDMCartridge::TAPE_MOUNTED);
         bool found = false;
         for (std::shared_ptr<LTFSDMDrive> d : inventory->getDrives()) {
-            if (d->get()->get_slot() == inventory->getCartridge(tapeId)->get()->get_slot()) {
-                TRACE(Trace::always, d->get()->GetObjectID());
+            if (d->get_le()->get_slot() == inventory->getCartridge(tapeId)->get_le()->get_slot()) {
+                TRACE(Trace::always, d->get_le()->GetObjectID());
                 d->setFree();
                 d->clearToUnblock();
                 found = true;

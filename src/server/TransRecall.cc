@@ -689,8 +689,8 @@ void TransRecall::execRequest(int reqNum, std::string tapeId)
                 LTFSDMCartridge::TAPE_MOUNTED);
         bool found = false;
         for (std::shared_ptr<LTFSDMDrive> d : inventory->getDrives()) {
-            if (d->get()->get_slot() == inventory->getCartridge(tapeId)->get()->get_slot()) {
-                TRACE(Trace::normal, d->get()->GetObjectID());
+            if (d->get_le()->get_slot() == inventory->getCartridge(tapeId)->get_le()->get_slot()) {
+                TRACE(Trace::normal, d->get_le()->GetObjectID());
                 d->setFree();
                 found = true;
                 break;
