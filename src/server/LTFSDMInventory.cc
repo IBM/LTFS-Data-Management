@@ -45,20 +45,13 @@ void LTFSDMInventory::getNode()
     node = boost::shared_ptr<LTFSNode>();
 
     if (sess && sess->is_alived()) {
-        /*
-         *  Remove LTFSDML0007I and LTFSDML0008I because the scheduler calls this function so much periodically
-         *  It is a stupid implementation to check the every node status every 1 second but we don't have
-         *  enough time to correct it... Now just remove the messages to overflow the messages.
-         */
-        //MSG(LTFSDML0007I, "node", s->get_server().c_str(), s->get_port(), s->get_fd());
         try {
             std::list<boost::shared_ptr <LTFSNode> > node_list;
             sess->SessionInventory(node_list);
-
+            MSG(LTFSDML0007I, "node", sess->get_server().c_str(), sess->get_port(), sess->get_fd());
             if (node_list.size() == 1) {
-                //MSG(LTFSDML0008I, "node", s->get_server().c_str(), s->get_port(), s->get_fd());
-                std::list<boost::shared_ptr <LTFSNode> >::iterator it = node_list.begin();
-                node = *it;
+                MSG(LTFSDML0008I, "node", sess->get_server().c_str(), sess->get_port(), sess->get_fd());
+                node = *(node_list.begin());
             } else
                 MSG(LTFSDML0009E, node_list.size(), sess->get_server().c_str(), sess->get_port(), sess->get_fd());
         } catch ( AdminLibException& e ) {
@@ -80,15 +73,10 @@ boost::shared_ptr<Drive> LTFSDMInventory::lookupDrive(std::string id, bool force
             std::list<boost::shared_ptr <Drive> > drive_list;
             sess->SessionInventory(drive_list, id, force);
 
-            /*
-             * FIXME (Atsushi Abe): currently LE does not support filter function
-             * against the drive object. So that get all drives and search the target linearly.
-             */
-            std::list<boost::shared_ptr<Drive> >::iterator it;
-            for (it = drive_list.begin(); it != drive_list.end(); ++it) {
+            for (boost::shared_ptr<Drive> d : drive_list) {
                 try {
-                    if (id == (*it)->GetObjectID()) {
-                        drive = (*it);
+                    if (id == d->GetObjectID()) {
+                        drive = d;
                         MSG(LTFSDML0008I, type.c_str(), sess->get_server().c_str(), sess->get_port(), sess->get_fd());
                     }
                 } catch ( InternalError& ie ) {
@@ -188,10 +176,10 @@ void LTFSDMInventory::lookupDrives(bool assigned_only, bool force)
             THROW(Error::GENERAL_ERROR);
         }
 
-        for (boost::shared_ptr<Drive> i : drvs) {
-            TRACE(Trace::always, i->GetObjectID());
-            MSG(LTFSDMS0052I, i->GetObjectID());
-            drives.push_back(std::make_shared<LTFSDMDrive>(i));
+        for (boost::shared_ptr<Drive> d : drvs) {
+            TRACE(Trace::always, d->GetObjectID());
+            MSG(LTFSDMS0052I, d->GetObjectID());
+            drives.push_back(std::make_shared<LTFSDMDrive>(d));
         }
 
         return;
@@ -214,8 +202,7 @@ boost::shared_ptr<Cartridge> LTFSDMInventory::lookupCartridge(std::string id, bo
 
             if (cartridge_list.size() == 1) {
                 MSG(LTFSDML0008I, type.c_str(), sess->get_server().c_str(), sess->get_port(), sess->get_fd());
-                std::list<boost::shared_ptr <Cartridge> >::iterator it = cartridge_list.begin();
-                cart = *it;
+                cart = *(cartridge_list.begin());
             } else
                 MSG(LTFSDML0017E, sess->get_server().c_str(), sess->get_port(), sess->get_fd());
         } catch ( AdminLibException& e ) {
