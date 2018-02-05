@@ -784,9 +784,9 @@ bool needsTape)
     TRACE(Trace::full, __PRETTY_FUNCTION__);
 
     SQLStatement stmt;
-    std::stringstream tapePath;
     Migration::req_return_t retval = (Migration::req_return_t ) { false, false };
     bool failed = false;
+    int rc;
 
     mrStatus.add(reqNumber);
 
@@ -796,29 +796,27 @@ bool needsTape)
         retval = processFiles(replNum, tapeId, FsObj::RESIDENT,
                 FsObj::PREMIGRATED);
 
-        tapePath << inventory->getMountPoint() << "/" << tapeId;
+        try {
+            if ((rc = inventory->getCartridge(tapeId)->get_le()->Sync()) != 0 )
+                THROW(Error::GENERAL_ERROR, rc);
+        }
+        catch (const std::exception& e) {
+            TRACE(Trace::error, errno);
+            MSG(LTFSDMS0024E, tapeId);
 
-        if (setxattr(tapePath.str().c_str(), Const::LTFS_SYNC_ATTR.c_str(),
-                Const::LTFS_SYNC_VAL.c_str(), Const::LTFS_SYNC_VAL.length(), 0)
-                == -1) {
-            if ( errno != ENODATA) {
-                TRACE(Trace::error, errno);
-                MSG(LTFSDMS0024E, tapeId);
+            stmt(Migration::FAIL_PREMIGRATED) << FsObj::FAILED << reqNumber
+                    << FsObj::PREMIGRATED << tapeId << replNum;
 
-                stmt(Migration::FAIL_PREMIGRATED) << FsObj::FAILED << reqNumber
-                        << FsObj::PREMIGRATED << tapeId << replNum;
+            TRACE(Trace::error, stmt.str());
 
-                TRACE(Trace::error, stmt.str());
+            stmt.doall();
 
-                stmt.doall();
+            std::unique_lock<std::mutex> lock(Scheduler::updmtx);
+            TRACE(Trace::error, reqNumber);
+            Scheduler::updReq[reqNumber] = true;
+            Scheduler::updcond.notify_all();
 
-                std::unique_lock<std::mutex> lock(Scheduler::updmtx);
-                TRACE(Trace::error, reqNumber);
-                Scheduler::updReq[reqNumber] = true;
-                Scheduler::updcond.notify_all();
-
-                failed = true;
-            }
+            failed = true;
         }
 
         inventory->update(inventory->getCartridge(tapeId));
