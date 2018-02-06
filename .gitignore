@@ -23,6 +23,7 @@ cscope.out
 src/common/comm/client
 src/common/comm/server
 bin
+src/connector/fuse/ltfsdmd.ofs
 ~*.docx
 ~*.pptx
 *.so
