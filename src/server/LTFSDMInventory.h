@@ -75,7 +75,7 @@ private:
     boost::shared_ptr<LTFSNode> node;
     std::string mountPoint;
 
-    void connect(std::string node_addr, uint16_t port_num);
+    void connect(std::string node_addr, unsigned short int  port_num);
     void disconnect();
     void getNode();
 

@@ -30,12 +30,13 @@
 
     @verbatim
     [root@visp ~]# ltfsdm info tapes
-    id           slot         total cap.   rem. cap.    status       in progress  pool         state
-    D01298L5     4121         0            0            Unknown      0            n/a          not mounted
-    D01299L5     4134         0            0            Unknown      0            n/a          not mounted
-    D01300L5     4129         0            0            Unknown      0            n/a          not mounted
-    D01301L5     256          1358985      1357007      Valid LTFS   0            pool1        mounted
-    D01302L5     259          1358985      1357300      Valid LTFS   0            pool2        mounted
+    id              slot            total cap.      rem. cap.       status          in progress     pool            state
+    DV1462L6        257             2296532         2296328         writable        0               pool1           mounted
+    DV1463L6        256             2296532         2296300         writable        0               pool2           mounted
+    DV1464L6        4098            2296532         2296300         writable        0               pool3           not mounted
+    DV1465L6        4102            2296532         2296529         writable        0               pool4           not mounted
+    DV1466L6        4115            2296532         2296529         writable        0               pool5           not mounted
+    DV1467L6        4110            0               0               not mounted yet 0               n/a             not mounted
     @endverbatim
 
     The corresponding class is @ref InfoTapesCommand.
@@ -95,6 +96,8 @@ void InfoTapesCommand::doCommand(int argc, char **argv)
         unsigned long totalcap = infotapesresp.totalcap();
         unsigned long remaincap = infotapesresp.remaincap();
         std::string status = infotapesresp.status();
+        std::replace(status.begin(), status.end(), '_', ' ');
+        std::transform(status.begin(), status.end(), status.begin(), ::tolower);
         unsigned long inprogress = infotapesresp.inprogress();
         std::string pool = infotapesresp.pool();
         if (pool.compare("") == 0)

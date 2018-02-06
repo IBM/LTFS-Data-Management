@@ -5,7 +5,7 @@ using namespace ltfsadmin;
 LTFSDMInventory *inventory = NULL;
 std::recursive_mutex LTFSDMInventory::mtx;
 
-void LTFSDMInventory::connect(std::string node_addr, uint16_t port_num)
+void LTFSDMInventory::connect(std::string node_addr, unsigned short int port_num)
 {
     sess = boost::shared_ptr<LTFSAdminSession>(new LTFSAdminSession(node_addr, port_num));
 
@@ -30,12 +30,12 @@ void LTFSDMInventory::disconnect()
             try {
                 sess->SessionLogout();
             } catch (AdminLibException& e) {
-                MSG(LTFSDML0019E); // LTFS logout failed
+                MSG(LTFSDML0019E);
             }
             sess->Disconnect();
             MSG(LTFSDML0006I, sess->get_server().c_str(), sess->get_port());
         } catch ( AdminLibException& e ) {
-            MSG(LTFSDML0019E); // LTFS logout failed
+            MSG(LTFSDML0019E);
         }
     }
 }
@@ -390,7 +390,7 @@ LTFSDMInventory::LTFSDMInventory()
     struct stat statbuf;
 
     try {
-        connect("127.0.0.1", 7600);
+        connect(Const::LTFSLE_HOST, Const::LTFSLE_PORT);
     } catch (const std::exception& e) {
         TRACE(Trace::error, e.what());
         MSG(LTFSDMS0072E);
