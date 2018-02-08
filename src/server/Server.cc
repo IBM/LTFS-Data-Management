@@ -97,6 +97,10 @@ void Server::createDir(std::string path)
                     MSG(LTFSDMS0093E, path, errno);
                     THROW(Error::GENERAL_ERROR, errno);
                 }
+            } else if ( errno == EBUSY) {
+                sleep(1);
+                retry--;
+                continue;
             } else {
                 MSG(LTFSDMS0094E, path, errno);
                 THROW(Error::GENERAL_ERROR, errno);
