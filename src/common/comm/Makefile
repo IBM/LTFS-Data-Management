@@ -23,5 +23,5 @@ POSTTARGET :=
 
 include $(RELPATH)/definitions.mk
 
-ltfsdm.pb.cc: $(RELPATH)/ltfsdm.proto
-	protoc --proto_path=$(RELPATH) --cpp_out=$(CURDIR) $(RELPATH)/ltfsdm.proto
+ltfsdm.pb.cc: $(RELPATH)/src/ltfsdm.proto
+	protoc --proto_path=$(RELPATH)/src --cpp_out=$(CURDIR) $(RELPATH)/src/ltfsdm.proto

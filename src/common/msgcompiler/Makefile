@@ -17,7 +17,7 @@ RELPATH = ../../..
 MSGDIR := ../messages
 
 ARC_SRC_FILES :=
-CLEANUP_FILES := msgcompiler msgdefs.h
+CLEANUP_FILES := msgcompiler msgdefs.h $(RELPATH)/messages.dox
 BINARY := msgcompiler
 POSTTARGET := $(MSGDIR)/msgdefs.h
 
@@ -29,5 +29,5 @@ include $(RELPATH)/definitions.mk
 
 # for the message compiler do not use any library
 
-$(MSGDIR)/msgdefs.h: $(RELPATH)/messages.cfg msgcompiler
-	msgcompiler $(RELPATH)/messages.cfg $(MSGDIR)/msgdefs.h $(RELPATH)/messages.dox
+$(MSGDIR)/msgdefs.h: $(RELPATH)/src/messages.cfg msgcompiler
+	msgcompiler $(RELPATH)/src/messages.cfg $(MSGDIR)/msgdefs.h $(RELPATH)/messages.dox
