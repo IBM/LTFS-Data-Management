@@ -84,7 +84,7 @@ void Server::createDir(std::string path)
     int retry = Const::LTFS_OPERATION_RETRY;
 
     while (retry > 0) {
-        if (stat(path.c_str(), &statbuf) == -1) {
+        if (LTFSDM::stat_retry(path.c_str(), &statbuf) == -1) {
             if ( errno == ENOENT) {
                 if (mkdir(path.c_str(), 0600) == -1) {
                     if ( errno == EBUSY) {
@@ -97,10 +97,6 @@ void Server::createDir(std::string path)
                     MSG(LTFSDMS0093E, path, errno);
                     THROW(Error::GENERAL_ERROR, errno);
                 }
-            } else if ( errno == EBUSY) {
-                sleep(1);
-                retry--;
-                continue;
             } else {
                 MSG(LTFSDMS0094E, path, errno);
                 THROW(Error::GENERAL_ERROR, errno);

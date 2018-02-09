@@ -90,3 +90,49 @@ long LTFSDM::getkey()
 
     return key;
 }
+
+int LTFSDM::stat_retry(const char *pathname, struct stat *buf)
+
+{
+    int rc;
+    int retry = 0;
+
+    while ((rc = stat(pathname, buf)) == -1 && errno == EBUSY && retry < 10) {
+        TRACE(Trace::error, pathname);
+        retry++;
+        sleep(1);
+    }
+
+    return rc;
+}
+
+int LTFSDM::open_retry(const char *pathname, int flags)
+
+{
+    int rc;
+    int retry = 0;
+
+    while ((rc = open(pathname, flags)) == -1 && errno == EBUSY && retry < 10) {
+        TRACE(Trace::error, pathname);
+        retry++;
+        sleep(1);
+    }
+
+    return rc;
+}
+
+int LTFSDM::open_retry(const char *pathname, int flags, mode_t mode)
+
+{
+    int rc;
+    int retry = 0;
+
+    while ((rc = open(pathname, flags, mode)) == -1 && errno == EBUSY && retry < 10) {
+        TRACE(Trace::error, pathname);
+        retry++;
+        sleep(1);
+    }
+
+    return rc;
+}
+

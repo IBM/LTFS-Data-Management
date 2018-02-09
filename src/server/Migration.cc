@@ -478,7 +478,7 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId,
 
         Server::createDataDir(tapeId);
 
-        fd = open(tapeName.c_str(), O_RDWR | O_CREAT | O_TRUNC | O_CLOEXEC);
+        fd = LTFSDM::open_retry(tapeName.c_str(), O_RDWR | O_CREAT | O_TRUNC | O_CLOEXEC);
 
         if (fd == -1) {
             TRACE(Trace::error, errno);

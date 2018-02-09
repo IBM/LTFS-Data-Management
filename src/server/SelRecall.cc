@@ -367,7 +367,7 @@ unsigned long SelRecall::recall(std::string fileName, std::string tapeId,
             return 0;
         } else if (state == FsObj::MIGRATED) {
             tapeName = Server::getTapeName(&target, tapeId);
-            fd = open(tapeName.c_str(), O_RDWR | O_CLOEXEC);
+            fd = LTFSDM::open_retry(tapeName.c_str(), O_RDWR | O_CLOEXEC);
 
             if (fd == -1) {
                 TRACE(Trace::error, errno);

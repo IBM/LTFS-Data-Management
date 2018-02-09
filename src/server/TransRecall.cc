@@ -554,7 +554,7 @@ unsigned long TransRecall::recall(Connector::rec_info_t recinfo,
             tapeName = Server::getTapeName(recinfo.fuid.fsid_h,
                     recinfo.fuid.fsid_l, recinfo.fuid.igen, recinfo.fuid.inum,
                     tapeId);
-            fd = open(tapeName.c_str(), O_RDWR | O_CLOEXEC);
+            fd = LTFSDM::open_retry(tapeName.c_str(), O_RDWR | O_CLOEXEC);
 
             if (fd == -1) {
                 TRACE(Trace::error, errno);

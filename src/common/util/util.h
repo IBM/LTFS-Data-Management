@@ -24,4 +24,7 @@
 namespace LTFSDM {
 void init(std::string ident = "");
 long getkey();
+int stat_retry(const char *pathname, struct stat *buf);
+int open_retry(const char *pathname, int flags);
+int open_retry(const char *pathname, int flags, mode_t mode);
 }
