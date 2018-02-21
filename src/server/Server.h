@@ -32,7 +32,7 @@ public:
     static Configuration conf;
 
     static ThreadPool<Migration::mig_info_t,
-            std::shared_ptr<std::list<unsigned long>>> *wqs;
+            std::shared_ptr<std::list<unsigned long>>, FsObj::file_state> *wqs;
 
     static std::string getTapeName(FsObj *diskfile, std::string tapeId);
     static std::string getTapeName(unsigned long fsid_h, unsigned long fsid_l,

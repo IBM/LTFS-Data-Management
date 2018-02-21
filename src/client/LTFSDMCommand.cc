@@ -262,6 +262,7 @@ void LTFSDMCommand::queryResults()
 
 {
     long resident = 0;
+    long transferred = 0;
     long premigrated = 0;
     long migrated = 0;
     long failed = 0;
@@ -309,6 +310,7 @@ void LTFSDMCommand::queryResults()
                 THROW(Error::GENERAL_ERROR);
             }
             resident = reqstatusresp.resident();
+            transferred = reqstatusresp.transferred();
             premigrated = reqstatusresp.premigrated();
             migrated = reqstatusresp.migrated();
             failed = reqstatusresp.failed();
@@ -321,7 +323,7 @@ void LTFSDMCommand::queryResults()
                 INFO(LTFSDMC0046I);
                 first = false;
             }
-            INFO(LTFSDMC0045I, curctime, resident, premigrated, migrated,
+            INFO(LTFSDMC0045I, curctime, resident, transferred, premigrated, migrated,
                     failed);
         } else {
             MSG(LTFSDMC0029E);

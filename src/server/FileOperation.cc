@@ -34,7 +34,7 @@ std::string FileOperation::genInumString(std::list<unsigned long> inumList)
 }
 
 bool FileOperation::queryResult(long reqNumber, long *resident,
-        long *premigrated, long *migrated, long *failed)
+        long *transferred, long *premigrated, long *migrated, long *failed)
 
 {
     SQLStatement stmt;
@@ -68,7 +68,7 @@ bool FileOperation::queryResult(long reqNumber, long *resident,
         }
     } while (!done && time(NULL) - starttime < 10);
 
-    mrStatus.get(reqNumber, resident, premigrated, migrated, failed);
+    mrStatus.get(reqNumber, resident, transferred, premigrated, migrated, failed);
 
     if (done) {
         mrStatus.remove(reqNumber);

@@ -26,12 +26,12 @@
        within the MessageParser::migrationMessage method. During this
        processing migration jobs and migration requests are added to
        the internal queues.
-    2. The Scheduler identifies a migration request to get scheduled.\n
+    2. The Scheduler identifies a migration request to scheduled this request.\n
        The migration happens within the following sequence:
        - The corresponding data is written to the selected tape.
        - The tape index is synchronized.
-       - The corresponding files on disk are stubbed (only for migration
-         state as target).
+       - The corresponding files on disk are stubbed (for migrated
+         state as target only) and the migration state is changed.
 
 
     @dot
@@ -52,7 +52,7 @@
             scheduler [label="Scheduler"];
             subgraph cluster_mig_exec {
                 label="Migration::execRequest";
-                mig_exec [label="{ <write_to_tape> write to tape\n(Migration::preMigrate)|<sync_index> sync index|<stub> stub files\n(Migration::stub)}"];
+                mig_exec [label="{ <write_to_tape> write to tape\n(Migration::transferData)|<sync_index> sync index|<stub> stub files\n(Migration::changeFileState)}"];
             }
             scheduler -> mig_exec [label="schedule\nmigration request", fontname="courier", fontsize=8, lhead=cluster_mig_exec];
         }
@@ -76,9 +76,6 @@
     available: e.g. a corresponding cartridge is mounted on a tape drive.
     The second phase may start immediately after the first phase but it also
     can take a longer time depending when a required resource gets available.
-
-    If the premigration state is chosen as the target migration state the third
-    item - the stubbing phase - of the second step is skipped.
 
     ## 1. adding jobs and requests to the internal tables
 
@@ -150,12 +147,17 @@
     - if a migration request is ready do be scheduled:
         - update record in request queue to mark it as DataBase::REQ_INPROGRESS
         - Migration::execRequest
-            - add status: @ref Status::add "mrStatus.add"
             - if @ref Migration::needsTape "needsTape" is true:
-                - Migration::processFiles: premigrate all files according this request
-                - synchronize tape index
-                - release tape for further operations since for stubbing files there is nothing written to tape
-            - Migration::processFiles: stub all files according this request
+                - Migration::processFiles to transfer data to tape
+                    - Migration::transferData: transfer the data to tape of
+                      all files according this request
+                    - synchronize tape index
+                    - release tape for further operations since for stubbing
+                      files there is nothing written to tape
+            - Migration::processFiles to change the file state
+                - Migration::changeFileState: stub all corresponding files
+                  (for migrated state as target only) and perform the change
+                  of the migration state
             - update record in request queue to mark it as DataBase::REQ_COMPLETED
 
     </TT>
@@ -166,19 +168,20 @@
 
     ### Migration::processFiles
 
-    The Migration::processFiles method is called twice first to premigrate
-    files and a second time to stub them if necessary. If all files
+    The Migration::processFiles method is called twice first to transfer the
+    file data and a second time to stub them if necessary and to perform
+    the change of the migration state . If all files
     to be processed are already premigrated there is no need to mount a
-    cartridge. In this case the premigration step is skipped. If the
-    target state is LTFSDmProtocol::LTFSDmMigRequest::PREMIGRATED the
-    step to stub files is skipped.
+    cartridge. In this case the data transfer step is skipped. If the
+    target state is LTFSDmProtocol::LTFSDmMigRequest::PREMIGRATED files
+    are not stubbed and only the migration state is changed to premigrated.
 
     The Migration::processFiles method in general perform the following
     steps:
 
-    -# All corresponding jobs are changed to FsObj::PREMIGRATING or FsObj::STUBBING
-       depending if it is called for premigration or stubbing. The following
-       example shows this change for a primigration phase of six files:
+    -# All corresponding jobs are changed to FsObj::TRANSFERRING or
+       FsObj::CHANGINGFSTATE depending on the migration phase. The following
+       example shows this change for the first phase of six files:
        @dot
        digraph step_1 {
             compound=true;
@@ -187,13 +190,13 @@
             rankdir=LR;
             node [shape=record, width=2, fontname="courier", fontsize=11, fillcolor=white, style=filled];
             before [label="file.1: FsObj::RESIDENT|file.2: FsObj::RESIDENT|file.3: FsObj::RESIDENT|file.4: FsObj::RESIDENT|file.5: FsObj::RESIDENT|file.6: FsObj::RESIDENT"];
-            after [label="file.1: FsObj::PREMIGRATING|file.2: FsObj::PREMIGRATING|file.3: FsObj::PREMIGRATING|file.4: FsObj::PREMIGRATING|file.5: FsObj::PREMIGRATING|file.6: FsObj::PREMIGRATING"];
+            after [label="file.1: FsObj::TRANSFERRING|file.2: FsObj::TRANSFERRING|file.3: FsObj::TRANSFERRING|file.4: FsObj::TRANSFERRING|file.5: FsObj::TRANSFERRING|file.6: FsObj::TRANSFERRING"];
             before -> after [];
        }
        @enddot
-    -# Process all these jobs in FsObj::PREMIGRATING or FsObj::STUBBING state
-       which results in the premigration or stubbing of all corresponding files.
-       The following change indicates that the premigration of file file.4 failed:
+    -# Process all these jobs in FsObj::TRANSFERRING or FsObj::CHANGINGFSTATE state
+       which results in the data transfer or stubbing of all corresponding files.
+       The following change indicates that the data transfer of file file.4 failed:
        @dot
        digraph step_1 {
             compound=true;
@@ -201,15 +204,15 @@
             fontsize=11;
             rankdir=LR;
             node [shape=record, width=2, fontname="courier", fontsize=11, fillcolor=white, style=filled];
-            before [label="file.1: FsObj::PREMIGRATING|file.2: FsObj::PREMIGRATING|file.3: FsObj::PREMIGRATING|file.4: FsObj::PREMIGRATING|file.5: FsObj::PREMIGRATING|file.6: FsObj::PREMIGRATING"];
-            after [label="file.1: FsObj::PREMIGRATING|file.2: FsObj::PREMIGRATING|file.3: FsObj::PREMIGRATING|file.4: FsObj::FAILED|file.5: FsObj::PREMIGRATING|file.6: FsObj::PREMIGRATING"];
+            before [label="file.1: FsObj::TRANSFERRING|file.2: FsObj::TRANSFERRING|file.3: FsObj::TRANSFERRING|file.4: FsObj::TRANSFERRING|file.5: FsObj::TRANSFERRING|file.6: FsObj::TRANSFERRING"];
+            after [label="file.1: FsObj::TRANSFERRING|file.2: FsObj::TRANSFERRING|file.3: FsObj::TRANSFERRING|file.4: FsObj::FAILED|file.5: FsObj::TRANSFERRING|file.6: FsObj::TRANSFERRING"];
             before -> after [];
        }
        @enddot
     -# A list is returned containing the inode numbers of these files where
        the previous operation was successful. Change all corresponding jobs
-       to FsObj::PREMIGRATED or FsObj::MIGRATED depending of the migration
-       phase. The following changed indicates that premigration stopped
+       to FsObj::TRANSFERRED or FsObj::MIGRATED depending of the migration
+       phase. The following changed indicates that data transfer stopped
        before file file.5:
        @dot
        digraph step_1 {
@@ -218,15 +221,15 @@
             fontsize=11;
             rankdir=LR;
             node [shape=record, width=2, fontname="courier", fontsize=11, fillcolor=white, style=filled];
-            before [label="file.1: FsObj::PREMIGRATING|file.2: FsObj::PREMIGRATING|file.3: FsObj::PREMIGRATING|file.4: FsObj::FAILED|file.5: FsObj::PREMIGRATING|file.6: FsObj::PREMIGRATING"];
-            after [label="file.1: FsObj::PREMIGRATED|file.2: FsObj::PREMIGRATED|file.3: FsObj::PREMIGRATED|file.4: FsObj::FAILED|file.5: FsObj::PREMIGRATING|file.6: FsObj::PREMIGRATING"];
+            before [label="file.1: FsObj::TRANSFERRING|file.2: FsObj::TRANSFERRING|file.3: FsObj::TRANSFERRING|file.4: FsObj::FAILED|file.5: FsObj::TRANSFERRING|file.6: FsObj::TRANSFERRING"];
+            after [label="file.1: FsObj::TRANSFERRED|file.2: FsObj::TRANSFERRED|file.3: FsObj::TRANSFERRED|file.4: FsObj::FAILED|file.5: FsObj::TRANSFERRING|file.6: FsObj::TRANSFERRING"];
             before -> after [];
        }
        @enddot
     -# The remaining jobs (those where no corresponding inode numbers were
        in the list) have not been processed and need to be changed to the
-       original state if these were still in FsObj::PREMIGRATING or
-       FsObj::STUBBING state. Jobs that failed in the second step already
+       original state if these were still in FsObj::TRANSFERRING or
+       FsObj::CHANGINGFSTATE state. Jobs that failed in the second step already
        have been marked as FsObj::FAILED. A reason for remaining jobs left
        over from the second step could be that a request with a higher
        priority (e.g. recall) required the same tape resource. This
@@ -238,27 +241,29 @@
             fontsize=11;
             rankdir=LR;
             node [shape=record, width=2, fontname="courier", fontsize=11, fillcolor=white, style=filled];
-            before [label="file.1: FsObj::PREMIGRATED|file.2: FsObj::PREMIGRATED|file.3: FsObj::PREMIGRATED|file.4: FsObj::FAILED|file.5: FsObj::PREMIGRATING|file.6: FsObj::PREMIGRATING"];
-            after [label="file.1: FsObj::PREMIGRATED|file.2: FsObj::PREMIGRATED|file.3: FsObj::PREMIGRATED|file.4: FsObj::FAILED|file.5: FsObj::RESIDENT|file.6: FsObj::RESIDENT"];
+            before [label="file.1: FsObj::TRANSFERRED|file.2: FsObj::TRANSFERRED|file.3: FsObj::TRANSFERRED|file.4: FsObj::FAILED|file.5: FsObj::TRANSFERRING|file.6: FsObj::TRANSFERRING"];
+            after [label="file.1: FsObj::TRANSFERRED|file.2: FsObj::TRANSFERRED|file.3: FsObj::TRANSFERRED|file.4: FsObj::FAILED|file.5: FsObj::RESIDENT|file.6: FsObj::RESIDENT"];
             before -> after [];
        }
        @enddot
 
-    If more than one job is processed the premigration
-    or stubbing operations can be performed in parallel. For premigration each
+    If more than one job is processed the data transfer or migration state
+    change operations can be performed in parallel. For data transfer each
     file needs to be written continuously on tape and therefore the writes
-    are serialized . For this purpose two or more ThreadPool objects exists:
+    are serialized. For this purpose two or more ThreadPool objects exists:
 
-    - one ThreadPool object for stubbing: Server::wqs
+    - one ThreadPool object for migration state change: Server::wqs
     - for each LTFSDMDrive object one ThreadPool object: LTFSDMDrive::wqp
+      to transfer data to tape.
 
-    In the premigration case the Migration::preMigrate method is executed
-    and the stubbing case it is the Migration::stub method. Each of these
-    methods operate on a single file.
+    In the data transfer case the Migration::transferData method is executed
+    and in case of changing the migration state it is the
+    Migration::changeFileState method. Each of these methods operate on a
+    single file.
 
-    ### Migration::preMigrate
+    ### Migration::transferData
 
-    For premigration the following steps are performed:
+    For data transfer the following steps are performed:
 
     -# In a loop the data is read from disk and written to tape.
     -# The FILE_PATH attribute is set on the data file on tape.
@@ -266,28 +271,29 @@
        full path on tape pointing to the corresponding data file.
     -# The status object @ref Status "mrStatus" gets updated
        for the output statistics.
-    -# The attributes on the disk file are updated.
+    -# The tape is added to the attribute of the data file on tape.
 
-    For premigration each file needs to be written continuously on tape.
+    For data transfer each file needs to be written continuously on tape.
     Since the copy of data from disk to tape is performed in a loop by
     doing the reads and writes this loop is serialized by
     a std::mutex LTFSDMDrive::mtx.
 
-    ### Migration::stub
+    ### Migration::changeFileState
 
-    For stubbing the following steps are performed:
+    For the change of the migration state (includes stubbing in the case that
+    the migrated state is the target) the following steps are performed:
 
     -# The attributes on the disk file are changed accordingly.
-    -# The file is truncated to zero size.
+    -# The file is truncated to zero size (only if the migrated state is the
+       target).
     -# The status object @ref Status "mrStatus" gets updated
        for the output statistics.
 
     It is required that the attributes are changed before the file
     is truncated. It needs to be avoided that a file is truncated
     before it changes to migrated state. Otherwise: in an error case
-    it could happen that the file is truncated but still in premigrated
-    state. A recall of this "premigrated" file just changes the file
-    state from premigrated to resident assuming the data is still on disk.
+    it could happen that the file is truncated but still in transferred
+    state which indicates that the data locally is available.
 
  */
 
@@ -453,7 +459,7 @@ void Migration::addRequest()
     swq.waitCompletion(reqNumber);
 }
 
-unsigned long Migration::preMigrate(std::string tapeId, std::string driveId,
+unsigned long Migration::transferData(std::string tapeId, std::string driveId,
         long secs, long nsecs, Migration::mig_info_t mig_info,
         std::shared_ptr<std::list<unsigned long>> inumList,
         std::shared_ptr<bool> suspended)
@@ -575,8 +581,6 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId,
         strncpy(attr.tapeId[attr.copies], tapeId.c_str(), Const::tapeIdLength);
         attr.copies++;
         source.addAttribute(attr);
-        if (attr.copies == mig_info.numRepl)
-            source.finishPremigration();
 
         std::lock_guard<std::mutex> lock(Migration::pmigmtx);
         inumList->push_back(mig_info.inum);
@@ -607,8 +611,8 @@ unsigned long Migration::preMigrate(std::string tapeId, std::string driveId,
     return statbuf.st_size;
 }
 
-void Migration::stub(Migration::mig_info_t mig_info,
-        std::shared_ptr<std::list<unsigned long>> inumList)
+void Migration::changeFileState(Migration::mig_info_t mig_info,
+        std::shared_ptr<std::list<unsigned long>> inumList, FsObj::file_state toState)
 
 {
     try {
@@ -619,10 +623,13 @@ void Migration::stub(Migration::mig_info_t mig_info,
 
         std::lock_guard<FsObj> fsolock(source);
         attr = source.getAttribute();
-        if ((source.getMigState() != FsObj::MIGRATED)
-                && (mig_info.numRepl == 0 || attr.copies == mig_info.numRepl)) {
-            source.prepareStubbing();
-            source.stub();
+        if (mig_info.numRepl == 0 || attr.copies == mig_info.numRepl) {
+            if ( toState == FsObj::MIGRATED) {
+                source.prepareStubbing();
+                source.stub();
+            } else {
+                source.finishPremigration();
+            }
             TRACE(Trace::full, mig_info.fileName);
         } else {
             TRACE(Trace::always, mig_info.fileName, source.getMigState());
@@ -668,7 +675,7 @@ Migration::req_return_t Migration::processFiles(int replNum, std::string tapeId,
     unsigned long freeSpace = 0;
     int num_found = 0;
     int total = 0;
-    FsObj::file_state state;
+    FsObj::file_state newState;
     std::shared_ptr<LTFSDMDrive> drive = nullptr;
 
     TRACE(Trace::always, reqNumber);
@@ -679,7 +686,7 @@ Migration::req_return_t Migration::processFiles(int replNum, std::string tapeId,
         Scheduler::updcond.notify_all();
     }
 
-    if (toState == FsObj::PREMIGRATED) {
+    if (toState == FsObj::TRANSFERRED) {
         for (std::shared_ptr<LTFSDMDrive> d : inventory->getDrives()) {
             if (d->get_le()->get_slot() == inventory->getCartridge(tapeId)->get_le()->get_slot()) {
                 drive = d;
@@ -689,18 +696,18 @@ Migration::req_return_t Migration::processFiles(int replNum, std::string tapeId,
         assert(drive != nullptr);
     }
 
-    state = (
-            (toState == FsObj::PREMIGRATED) ?
-                    FsObj::PREMIGRATING : FsObj::STUBBING);
+    newState = (
+            (toState == FsObj::TRANSFERRED) ?
+                    FsObj::TRANSFERRING : FsObj::CHANGINGFSTATE);
 
-    if (toState == FsObj::PREMIGRATED) {
+    if (toState == FsObj::TRANSFERRED) {
         freeSpace = 1024 * 1024
                 * inventory->getCartridge(tapeId)->get_le()->get_remaining_cap();
-        stmt(Migration::SET_PREMIGRATING) << state << tapeId << reqNumber
+        stmt(Migration::SET_TRANSFERRING) << newState << tapeId << reqNumber
                 << fromState << replNum << (unsigned long) &freeSpace
                 << (unsigned long) &num_found << (unsigned long) &total;
     } else {
-        stmt(Migration::SET_STUBBING) << state << reqNumber << fromState
+        stmt(Migration::SET_CHANGE_STATE) << newState << reqNumber << fromState
                 << tapeId << replNum;
     }
     TRACE(Trace::normal, stmt.str());
@@ -711,7 +718,7 @@ Migration::req_return_t Migration::processFiles(int replNum, std::string tapeId,
     if (total > num_found)
         retval.remaining = true;
 
-    stmt(Migration::SELECT_JOBS) << reqNumber << state << tapeId;
+    stmt(Migration::SELECT_JOBS) << reqNumber << newState << tapeId;
     TRACE(Trace::normal, stmt.str());
     stmt.prepare();
     start = time(NULL);
@@ -725,7 +732,7 @@ Migration::req_return_t Migration::processFiles(int replNum, std::string tapeId,
 
             TRACE(Trace::always, fileName, reqNumber);
 
-            if (toState == FsObj::PREMIGRATED) {
+            if (toState == FsObj::TRANSFERRED) {
                 if (drive->getToUnblock() < DataBase::MIGRATION) {
                     retval.suspended = true;
                     break;
@@ -734,7 +741,7 @@ Migration::req_return_t Migration::processFiles(int replNum, std::string tapeId,
                 drive->wqp->enqueue(reqNumber, tapeId, drive->get_le()->GetObjectID(),
                         secs, nsecs, mig_info, inumList, suspended);
             } else {
-                Server::wqs->enqueue(reqNumber, mig_info, inumList);
+                Server::wqs->enqueue(reqNumber, mig_info, inumList, toState);
             }
         } catch (const std::exception& e) {
             TRACE(Trace::error, e.what());
@@ -757,7 +764,7 @@ Migration::req_return_t Migration::processFiles(int replNum, std::string tapeId,
     }
     stmt.finalize();
 
-    if (toState == FsObj::PREMIGRATED) {
+    if (toState == FsObj::TRANSFERRED) {
         drive->wqp->waitCompletion(reqNumber);
     } else {
         Server::wqs->waitCompletion(reqNumber);
@@ -766,14 +773,14 @@ Migration::req_return_t Migration::processFiles(int replNum, std::string tapeId,
     if (*suspended == true)
         retval.suspended = true;
 
-    stmt(Migration::SET_JOB_SUCCESS) << toState << reqNumber << state << tapeId
+    stmt(Migration::SET_JOB_SUCCESS) << toState << reqNumber << newState << tapeId
             << genInumString(*inumList);
     TRACE(Trace::normal, stmt.str());
     steptime = time(NULL);
     stmt.doall();
     TRACE(Trace::always, time(NULL) - steptime);
 
-    stmt(Migration::RESET_JOB_STATE) << fromState << reqNumber << state
+    stmt(Migration::RESET_JOB_STATE) << fromState << reqNumber << newState
             << tapeId;
     TRACE(Trace::normal, stmt.str());
     steptime = time(NULL);
@@ -810,7 +817,7 @@ bool needsTape)
 
     if (needsTape) {
         retval = processFiles(replNum, tapeId, FsObj::RESIDENT,
-                FsObj::PREMIGRATED);
+                FsObj::TRANSFERRED);
 
         try {
             if ((rc = inventory->getCartridge(tapeId)->get_le()->Sync()) != 0 )
@@ -854,8 +861,18 @@ bool needsTape)
         Scheduler::cond.notify_one();
     }
 
-    if (!failed && targetState != LTFSDmProtocol::LTFSDmMigRequest::PREMIGRATED)
-        processFiles(replNum, tapeId, FsObj::PREMIGRATED, FsObj::MIGRATED);
+    if (!failed) {
+        if ( targetState == LTFSDmProtocol::LTFSDmMigRequest::MIGRATED ) {
+            if ( needsTape )
+                processFiles(replNum, tapeId, FsObj::TRANSFERRED, FsObj::MIGRATED);
+            else
+                processFiles(replNum, tapeId, FsObj::PREMIGRATED, FsObj::MIGRATED);
+        }
+        else {
+            if ( needsTape )
+                processFiles(replNum, tapeId, FsObj::TRANSFERRED, FsObj::PREMIGRATED);
+        }
+    }
 
     std::unique_lock<std::mutex> updlock(Scheduler::updmtx);
 

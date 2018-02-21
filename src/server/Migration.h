@@ -39,8 +39,8 @@ private:
     static const std::string ADD_REQUEST;
     static const std::string FAIL_PREMIGRATION;
     static const std::string FAIL_STUBBING;
-    static const std::string SET_PREMIGRATING;
-    static const std::string SET_STUBBING;
+    static const std::string SET_TRANSFERRING;
+    static const std::string SET_CHANGE_STATE;
     static const std::string SELECT_JOBS;
     static const std::string SET_JOB_SUCCESS;
     static const std::string RESET_JOB_STATE;
@@ -66,12 +66,12 @@ public:
     };
     static std::mutex pmigmtx;
 
-    static unsigned long preMigrate(std::string tapeId, std::string driveId,
+    static unsigned long transferData(std::string tapeId, std::string driveId,
             long secs, long nsecs, mig_info_t miginfo,
             std::shared_ptr<std::list<unsigned long>> inumList,
             std::shared_ptr<bool>);
-    static void stub(mig_info_t mig_info,
-            std::shared_ptr<std::list<unsigned long>> inumList);
+    static void changeFileState(mig_info_t mig_info,
+            std::shared_ptr<std::list<unsigned long>> inumList, FsObj::file_state toState);
 
     Migration(unsigned long _pid, long _reqNumber, std::set<std::string> _pools,
             int _numReplica, int _targetState) :

@@ -245,12 +245,13 @@ public:
         PREMIGRATED,  /**< 1 */
         MIGRATED,  /**< 2 */
         FAILED,  /**< 3 */
-        PREMIGRATING,  /**< 4 */
-        STUBBING,  /**< 5 */
-        RECALLING_MIG,  /**< 6 */
-        RECALLING_PREMIG  /**< 7 */
+        TRANSFERRING,  /**< 4 */
+        TRANSFERRED, /**< 5 */
+        CHANGINGFSTATE,  /**< 6 */
+        RECALLING_MIG,  /**< 7 */
+        RECALLING_PREMIG  /**< 8 */
     };
-    static std::string migStateStr(file_state migstate)
+    static std::string migStateStr(long migstate)
     {
         switch (migstate) {
             case RESIDENT:
@@ -261,9 +262,11 @@ public:
                 return ltfsdm_messages[LTFSDMX0010I];
             case FAILED:
                 return ltfsdm_messages[LTFSDMX0019I];
-            case PREMIGRATING:
+            case TRANSFERRING:
                 return ltfsdm_messages[LTFSDMX0026I];
-            case STUBBING:
+            case TRANSFERRED:
+                return ltfsdm_messages[LTFSDMX0037I];
+            case CHANGINGFSTATE:
                 return ltfsdm_messages[LTFSDMX0027I];
             case RECALLING_MIG:
             case RECALLING_PREMIG:

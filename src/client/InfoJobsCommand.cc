@@ -15,10 +15,13 @@
  *
  *******************************************************************************/
 #include <sys/resource.h>
+#include <blkid/blkid.h>
 
 #include <unistd.h>
 #include <string>
 #include <list>
+#include <map>
+#include <set>
 #include <sstream>
 #include <exception>
 
@@ -26,9 +29,13 @@
 #include "src/common/exception/LTFSDMException.h"
 #include "src/common/messages/Message.h"
 #include "src/common/tracing/Trace.h"
+#include "src/common/util/FileSystems.h"
+#include "src/common/configuration/Configuration.h"
 
 #include "src/common/comm/ltfsdm.pb.h"
 #include "src/common/comm/LTFSDmComm.h"
+
+#include "src/connector/Connector.h"
 
 #include "LTFSDMCommand.h"
 #include "InfoJobsCommand.h"
@@ -45,18 +52,18 @@
     Example:
 
     @verbatim
-    [root@visp ~]# ltfsdm info jobs -n 19
+    [root@visp ~]# ltfsdm info jobs -n 2
     operation            state                request number       tape pool            tape id              size                 file name
-    migration            premigrating         19                   pool1                D01301L5             32768                /mnt/lxfs/test2/file.0
-    migration            premigrating         19                   pool1                D01301L5             32768                /mnt/lxfs/test2/file.1
-    migration            premigrating         19                   pool1                D01301L5             32768                /mnt/lxfs/test2/file.2
-    migration            premigrating         19                   pool1                D01301L5             32768                /mnt/lxfs/test2/file.3
-    migration            premigrating         19                   pool1                D01301L5             32768                /mnt/lxfs/test2/file.4
-    migration            premigrating         19                   pool1                D01301L5             32768                /mnt/lxfs/test2/file.5
-    migration            premigrating         19                   pool1                D01301L5             32768                /mnt/lxfs/test2/file.6
-    migration            premigrating         19                   pool1                D01301L5             32768                /mnt/lxfs/test2/file.7
-    migration            premigrating         19                   pool1                D01301L5             32768                /mnt/lxfs/test2/file.8
-    migration            premigrating         19                   pool1                D01301L5             32768                /mnt/lxfs/test2/file.9
+    migration            transferring         2                    pool1                DV1462L6             1073741824           /mnt/lxfs/test1/file.0
+    migration            transferring         2                    pool1                DV1462L6             1073741824           /mnt/lxfs/test1/file.1
+    migration            transferring         2                    pool1                DV1462L6             1073741824           /mnt/lxfs/test1/file.2
+    migration            transferring         2                    pool1                DV1462L6             1073741824           /mnt/lxfs/test1/file.3
+    migration            transferring         2                    pool1                DV1462L6             1073741824           /mnt/lxfs/test1/file.4
+    migration            transferring         2                    pool1                DV1462L6             1073741824           /mnt/lxfs/test1/file.5
+    migration            transferring         2                    pool1                DV1462L6             1073741824           /mnt/lxfs/test1/file.6
+    migration            transferring         2                    pool1                DV1462L6             1073741824           /mnt/lxfs/test1/file.7
+    migration            transferring         2                    pool1                DV1462L6             1073741824           /mnt/lxfs/test1/file.8
+    migration            transferring         2                    pool1                DV1462L6             1073741824           /mnt/lxfs/test1/file.9
     @endverbatim
 
     The corresponding class is @ref InfoJobsCommand.
@@ -124,7 +131,7 @@ void InfoJobsCommand::doCommand(int argc, char **argv)
         std::string pool = infojobsresp.pool();
         unsigned long size = infojobsresp.filesize();
         std::string tapeid = infojobsresp.tapeid();
-        std::string state = infojobsresp.state();
+        std::string state = FsObj::migStateStr(infojobsresp.state());
         if (recnum != Const::UNSET)
             INFO(LTFSDMC0063I, operation, state, recnum, pool, tapeid, size,
                     filename);

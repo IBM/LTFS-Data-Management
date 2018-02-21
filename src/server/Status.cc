@@ -38,11 +38,14 @@ void Status::add(int reqNumber)
     while (stmt.step(&migState, &num)) {
         switch (migState) {
             case FsObj::RESIDENT:
-            case FsObj::PREMIGRATING:
+            case FsObj::TRANSFERRING:
                 state.resident = num;
                 break;
+            case FsObj::TRANSFERRED:
+                state.transferred = num;
+                break;
             case FsObj::PREMIGRATED:
-            case FsObj::STUBBING:
+            case FsObj::CHANGINGFSTATE:
             case FsObj::RECALLING_PREMIG:
                 state.premigrated = num;
                 break;
@@ -83,6 +86,9 @@ void Status::updateSuccess(int reqNumber, FsObj::file_state from,
         case FsObj::RESIDENT:
             state.resident--;
             break;
+        case FsObj::TRANSFERRED:
+            state.transferred--;
+            break;
         case FsObj::PREMIGRATED:
             state.premigrated--;
             break;
@@ -96,6 +102,9 @@ void Status::updateSuccess(int reqNumber, FsObj::file_state from,
     switch (to) {
         case FsObj::RESIDENT:
             state.resident++;
+            break;
+        case FsObj::TRANSFERRED:
+            state.transferred++;
             break;
         case FsObj::PREMIGRATED:
             state.premigrated++;
@@ -136,13 +145,14 @@ void Status::updateFailed(int reqNumber, FsObj::file_state from)
     allStates[reqNumber] = state;
 }
 
-void Status::get(int reqNumber, long *resident, long *premigrated,
+void Status::get(int reqNumber, long *resident, long *transferred, long *premigrated,
         long *migrated, long *failed)
 
 {
     std::lock_guard<std::mutex> lock(Status::mtx);
 
     *resident = allStates[reqNumber].resident;
+    *transferred = allStates[reqNumber].transferred;
     *premigrated = allStates[reqNumber].premigrated;
     *migrated = allStates[reqNumber].migrated;
     *failed = allStates[reqNumber].failed;

@@ -108,10 +108,11 @@ message LTFSDmReqStatusResp {
 	required int64 reqNumber = 2;
 	required int64 pid = 3;
 	required int64 resident = 4;
-	required int64 premigrated = 5;
-	required int64 migrated = 6;
-	required int64 failed = 7;
-	required bool done = 8;
+	required int64 transferred = 5;
+	required int64 premigrated = 6;
+	required int64 migrated = 7;
+	required int64 failed = 8;
+	required bool done = 9;
 }
 
 message LTFSDmAddRequest {
@@ -155,7 +156,7 @@ message LTFSDmInfoJobsResp {
 	required bytes pool = 4;
 	required int64 filesize = 5;
 	required bytes tapeid = 6;
-	required bytes state = 7;
+	required int64 state = 7;
 }
 
 message LTFSDmInfoDrivesRequest {

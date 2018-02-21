@@ -34,6 +34,6 @@ public:
     virtual void start()
     {
     }
-    bool queryResult(long reqNumber, long *resident, long *premigrated,
+    bool queryResult(long reqNumber, long *resident, long *transferred, long *premigrated,
             long *migrated, long *failed);
 };

@@ -173,6 +173,7 @@ void MessageParser::reqStatusMessage(long key, LTFSDmCommServer *command,
     TRACE(Trace::always, __PRETTY_FUNCTION__);
 
     long resident = 0;
+    long transferred = 0;
     long premigrated = 0;
     long migrated = 0;
     long failed = 0;
@@ -202,7 +203,7 @@ void MessageParser::reqStatusMessage(long key, LTFSDmCommServer *command,
         requestNumber = reqstatus.reqnumber();
         pid = reqstatus.pid();
 
-        done = fopt->queryResult(requestNumber, &resident, &premigrated,
+        done = fopt->queryResult(requestNumber, &resident, &transferred, &premigrated,
                 &migrated, &failed);
 
         LTFSDmProtocol::LTFSDmReqStatusResp *reqstatusresp =
@@ -212,6 +213,7 @@ void MessageParser::reqStatusMessage(long key, LTFSDmCommServer *command,
         reqstatusresp->set_reqnumber(requestNumber);
         reqstatusresp->set_pid(pid);
         reqstatusresp->set_resident(resident);
+        reqstatusresp->set_transferred(transferred);
         reqstatusresp->set_premigrated(premigrated);
         reqstatusresp->set_migrated(migrated);
         reqstatusresp->set_failed(failed);
@@ -693,7 +695,7 @@ void MessageParser::infoJobsMessage(long key, LTFSDmCommServer *command,
         infojobsresp->set_pool(pool);
         infojobsresp->set_filesize(fileSize);
         infojobsresp->set_tapeid(tapeId);
-        infojobsresp->set_state(FsObj::migStateStr(state));
+        infojobsresp->set_state(state);
 
         try {
             command->send();
@@ -714,7 +716,7 @@ void MessageParser::infoJobsMessage(long key, LTFSDmCommServer *command,
     infojobsresp->set_pool("");
     infojobsresp->set_filesize(Const::UNSET);
     infojobsresp->set_tapeid("");
-    infojobsresp->set_state("");
+    infojobsresp->set_state(Const::UNSET);
 
     try {
         command->send();

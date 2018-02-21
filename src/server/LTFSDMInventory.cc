@@ -393,7 +393,7 @@ void LTFSDMInventory::inventorize()
                 new ThreadPool<std::string, std::string, long, long,
                         Migration::mig_info_t,
                         std::shared_ptr<std::list<unsigned long>>,
-                        std::shared_ptr<bool>>(&Migration::preMigrate,
+                        std::shared_ptr<bool>>(&Migration::transferData,
                         Const::MAX_PREMIG_THREADS, threadName.str());
         drive->mtx = new std::mutex();
     }

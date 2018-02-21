@@ -169,7 +169,7 @@ const std::string Migration::FAIL_STUBBING =
                 " WHERE REQ_NUM=%2%"
                 " AND FILE_NAME='%3%'";
 
-const std::string Migration::SET_PREMIGRATING =
+const std::string Migration::SET_TRANSFERRING =
         "UPDATE JOB_QUEUE SET FILE_STATE=%1%,"
                 " TAPE_ID='%2%'"
                 " WHERE REQ_NUM=%3%"
@@ -177,7 +177,7 @@ const std::string Migration::SET_PREMIGRATING =
                 " AND REPL_NUM=%5%"
                 " AND FITS(I_NUM, FILE_SIZE, %6%, %7%, %8%)=1";
 
-const std::string Migration::SET_STUBBING =
+const std::string Migration::SET_CHANGE_STATE =
         "UPDATE JOB_QUEUE SET FILE_STATE=%1%"
                 " WHERE REQ_NUM=%2%"
                 " AND FILE_STATE=%3%"

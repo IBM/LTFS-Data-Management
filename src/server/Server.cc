@@ -23,7 +23,7 @@ std::mutex Server::termmtx;
 std::condition_variable Server::termcond;
 Configuration Server::conf;
 
-ThreadPool<Migration::mig_info_t, std::shared_ptr<std::list<unsigned long>>> *Server::wqs;
+ThreadPool<Migration::mig_info_t, std::shared_ptr<std::list<unsigned long>>, FsObj::file_state> *Server::wqs;
 
 std::string Server::getTapeName(FsObj *diskFile, std::string tapeId)
 
@@ -386,7 +386,7 @@ void Server::run(sigset_t set)
 
     //! [thread pool for stubbing]
     Server::wqs = new ThreadPool<Migration::mig_info_t,
-            std::shared_ptr<std::list<unsigned long>>>(&Migration::stub,
+            std::shared_ptr<std::list<unsigned long>>, FsObj::file_state>(&Migration::changeFileState,
             Const::MAX_STUBBING_THREADS, "stub1-wq");
     //! [thread pool for stubbing]
 
