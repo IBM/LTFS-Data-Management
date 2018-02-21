@@ -143,22 +143,21 @@
     migration request the following will happen:
 
     <TT>
-    Scheduler::run:
-    - if a migration request is ready do be scheduled:
-        - update record in request queue to mark it as DataBase::REQ_INPROGRESS
-        - Migration::execRequest
-            - if @ref Migration::needsTape "needsTape" is true:
-                - Migration::processFiles to transfer data to tape
-                    - Migration::transferData: transfer the data to tape of
-                      all files according this request
-                    - synchronize tape index
-                    - release tape for further operations since for stubbing
-                      files there is nothing written to tape
-            - Migration::processFiles to change the file state
-                - Migration::changeFileState: stub all corresponding files
-                  (for migrated state as target only) and perform the change
-                  of the migration state
-            - update record in request queue to mark it as DataBase::REQ_COMPLETED
+    In Scheduler::run if a migration request is ready do be scheduled:
+      - update record in request queue to mark it as DataBase::REQ_INPROGRESS
+      - Migration::execRequest
+          - if @ref Migration::needsTape "needsTape" is true:
+              - Migration::processFiles to transfer data to tape
+                  - Migration::transferData: transfer the data to tape of
+                    all files according this request
+                  - synchronize tape index
+                  - release tape for further operations since for stubbing
+                    files there is nothing written to tape
+          - Migration::processFiles to change the file state
+              - Migration::changeFileState: stub all corresponding files
+                (for migrated state as target only) and perform the change
+                of the migration state
+          - update record in request queue to mark it as DataBase::REQ_COMPLETED
 
     </TT>
 
