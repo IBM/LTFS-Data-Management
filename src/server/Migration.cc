@@ -260,6 +260,58 @@
     Migration::changeFileState method. Each of these methods operate on a
     single file.
 
+    The following table provides a sequence of changes of different items
+    that are changing during the migration of a resident file:
+
+    &nbsp; | JOB_QUEUE <BR> %FsObj::file_state | attribute on disk: <BR> %FuseFS::mig_info::state_num <BR> and tape id | tape index<BR>synchronized | data on disk | data on tape
+    ---|---|---|---|---|---
+    1.  | RESIDENT       | no attributes           | - | + | -
+    2.  | TRANSFERRING   | no attributes           | - | + | -
+    3.  | TRANSFERRING   | IN_MIGRATION            | - | + | -
+    4.  | TRANSFERRING   | IN_MIGRATION            | - | + | +
+    5.  | TRANSFERRING   | IN_MIGRATION && tape id | - | + | +
+    6.  | TRANSFERRED    | IN_MIGRATION && tape id | - | + | +
+    7.  | TRANSFERRED    | IN_MIGRATION && tape id | + | + | +
+    8.  | CHANGINGFSTATE | IN_MIGRATION && tape id | + | + | +
+    9.  | CHANGINGFSTATE | STUBBING && tape id     | + | + | +
+    10. | CHANGINGFSTATE | STUBBING && tape id     | + | - | +
+    11. | CHANGINGFSTATE | MIGRATED && tape id     | + | - | +
+
+    Each of these steps have a reason:
+
+    -# This is the initial state when a resident file is newly added to the
+       JOB_QUEUE table.
+    -# The migration is split into three phases:
+           -# transfer file data to a tape
+           -# The the tape index stored on disk is written to the tape
+           -# stub the file and mark it as migrated
+       In a first step all files that should be transferred to tape are
+       marked according that operation to see which were left over in
+       case the transfer has been suspended e.g. by a recall request on
+       the same tape.
+    -# The file attribute is changing to IN_MIGRATION. This intermediate
+       state is to perform a proper cleanup in case the back end process
+       terminates unexpectedly. See FuseFS::recoverState for recovery of
+       a migration state.
+    -# The file data is transferred to tape.
+    -# The corresponding tape id is added to the attributes of the file.
+    -# The state in the JOB_QUEUE table is changed to TRANSFERRED since
+       that data transfer was successful.
+    -# The the tape index stored on disk is written to the tape (migration
+       phase 2 of 3).
+    -# The last (third) migration phase is to stub the file and to mark it
+       as migrated. It starts to change the state in the JOB_QUEUE table
+       for all files that are targeted for this phase to CHANGINGFSTATE.
+       Even the stubbing operation cannot be suspended it is to keep the
+       the first and the third phase similar.
+    -# The file attribute is changed to STUBBING. Like previously this
+       intermediate state is to perform a proper cleanup in case the back
+       end process terminates unexpectedly. See FuseFS::recoverState for
+       recovery of a migration state.
+    -# The file is truncated to zero.
+    -# The attribute is changed to MIGRATED.
+
+
     ### Migration::transferData
 
     For data transfer the following steps are performed:
