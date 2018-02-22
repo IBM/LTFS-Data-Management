@@ -285,6 +285,7 @@
            -# transfer file data to a tape
            -# The the tape index stored on disk is written to the tape
            -# stub the file and mark it as migrated
+           .
        In a first step all files that should be transferred to tape are
        marked according that operation to see which were left over in
        case the transfer has been suspended e.g. by a recall request on
