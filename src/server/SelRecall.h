@@ -44,5 +44,5 @@ public:
     }
     void addJob(std::string fileName);
     void addRequest();
-    void execRequest(std::string tapeId, bool needsTape);
+    void execRequest(std::string driveId, std::string tapeId, bool needsTape);
 };

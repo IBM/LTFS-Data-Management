@@ -554,7 +554,7 @@ unsigned long TransRecall::recall(Connector::rec_info_t recinfo,
             tapeName = Server::getTapeName(recinfo.fuid.fsid_h,
                     recinfo.fuid.fsid_l, recinfo.fuid.igen, recinfo.fuid.inum,
                     tapeId);
-            fd = LTFSDM::open_retry(tapeName.c_str(), O_RDWR | O_CLOEXEC);
+            fd = Server::openTapeRetry(tapeId, tapeName.c_str(), O_RDWR | O_CLOEXEC);
 
             if (fd == -1) {
                 TRACE(Trace::error, errno);
@@ -686,7 +686,7 @@ void TransRecall::processFiles(int reqNum, std::string tapeId)
         Connector::respondRecallEvent(respinfo.recinfo, respinfo.succeeded);
 }
 
-void TransRecall::execRequest(int reqNum, std::string tapeId)
+void TransRecall::execRequest(int reqNum, std::string driveId, std::string tapeId)
 
 {
     SQLStatement stmt;
@@ -701,18 +701,10 @@ void TransRecall::execRequest(int reqNum, std::string tapeId)
     {
         std::lock_guard<std::recursive_mutex> inventorylock(
                 LTFSDMInventory::mtx);
-        inventory->getCartridge(tapeId)->setState(
-                LTFSDMCartridge::TAPE_MOUNTED);
-        bool found = false;
-        for (std::shared_ptr<LTFSDMDrive> d : inventory->getDrives()) {
-            if (d->get_le()->get_slot() == inventory->getCartridge(tapeId)->get_le()->get_slot()) {
-                TRACE(Trace::normal, d->get_le()->GetObjectID());
-                d->setFree();
-                found = true;
-                break;
-            }
-        }
-        assert(found == true);
+        if ( inventory->getCartridge(tapeId)->getState() == LTFSDMCartridge::TAPE_INUSE)
+            inventory->getCartridge(tapeId)->setState(LTFSDMCartridge::TAPE_MOUNTED);
+
+        inventory->getDrive(driveId)->setFree();
     }
 
     stmt(TransRecall::COUNT_REMAINING_JOBS) << reqNum << tapeId;

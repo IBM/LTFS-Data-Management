@@ -1141,6 +1141,7 @@ void MessageParser::retrieveMessage(long key, LTFSDmCommServer *command)
     try {
         inventory->inventorize();
     } catch (const LTFSDMException& e) {
+        MSG(LTFSDMS0101E, e.what());
         error = static_cast<int>(e.getError());
     } catch (const std::exception& e) {
         error = static_cast<int>(Error::GENERAL_ERROR);

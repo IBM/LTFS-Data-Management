@@ -351,7 +351,7 @@
 
 std::mutex Migration::pmigmtx;
 
-ThreadPool<Migration, int, std::string, std::string, bool> Migration::swq(
+ThreadPool<Migration, int, std::string, std::string, std::string, bool> Migration::swq(
         &Migration::execRequest, Const::MAX_STUBBING_THREADS, "stub2-wq");
 
 FsObj::file_state Migration::checkState(std::string fileName, FsObj *fso)
@@ -504,7 +504,7 @@ void Migration::addRequest()
         } else {
             swq.enqueue(reqNumber,
                     Migration(getpid(), reqNumber, { }, numReplica,
-                            targetState), replNum, pool, "", needsTape);
+                            targetState), replNum, "", pool, "", needsTape);
         }
     }
 
@@ -536,7 +536,7 @@ unsigned long Migration::transferData(std::string tapeId, std::string driveId,
 
         Server::createDataDir(tapeId);
 
-        fd = LTFSDM::open_retry(tapeName.c_str(), O_RDWR | O_CREAT | O_TRUNC | O_CLOEXEC);
+        fd = Server::openTapeRetry(tapeId, tapeName.c_str(), O_RDWR | O_CREAT | O_TRUNC | O_CLOEXEC);
 
         if (fd == -1) {
             TRACE(Trace::error, errno);
@@ -852,7 +852,7 @@ Migration::req_return_t Migration::processFiles(int replNum, std::string tapeId,
  * @bug needsTape vs. Migration::needsTape
  *
  */
-void Migration::execRequest(int replNum, std::string pool, std::string tapeId,
+void Migration::execRequest(int replNum, std::string driveId, std::string pool, std::string tapeId,
 bool needsTape)
 
 {
@@ -897,19 +897,12 @@ bool needsTape)
         inventory->update(inventory->getCartridge(tapeId));
 
         std::lock_guard<std::recursive_mutex> lock(LTFSDMInventory::mtx);
-        inventory->getCartridge(tapeId)->setState(
-                LTFSDMCartridge::TAPE_MOUNTED);
-        bool found = false;
-        for (std::shared_ptr<LTFSDMDrive> d : inventory->getDrives()) {
-            if (d->get_le()->get_slot() == inventory->getCartridge(tapeId)->get_le()->get_slot()) {
-                TRACE(Trace::always, d->get_le()->GetObjectID());
-                d->setFree();
-                d->clearToUnblock();
-                found = true;
-                break;
-            }
-        }
-        assert(found == true);
+        if ( inventory->getCartridge(tapeId)->getState() == LTFSDMCartridge::TAPE_INUSE)
+            inventory->getCartridge(tapeId)->setState(LTFSDMCartridge::TAPE_MOUNTED);
+
+        inventory->getDrive(driveId)->setFree();
+        inventory->getDrive(driveId)->clearToUnblock();
+
         Scheduler::cond.notify_one();
     }
 

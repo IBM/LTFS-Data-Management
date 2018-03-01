@@ -26,6 +26,7 @@ private:
     int replNum;
     int tgtState;
     std::string tapeId;
+    std::string driveId;
     std::string pool;
     SubServer subs;
 

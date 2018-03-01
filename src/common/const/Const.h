@@ -74,4 +74,5 @@ const std::string LTFSDM_LOCK_DIR = LTFSDM_CACHE_DIR + "/locks";
 const std::string TMP_DIR_TEMPLATE = "/tmp/ltfsdm.XXXXXX";
 const std::string LTFSLE_HOST = "127.0.0.1";
 const unsigned short int LTFSLE_PORT = 7600;
+const int WAIT_TAPE_MOUNT = 60;
 }

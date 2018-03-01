@@ -25,6 +25,43 @@ Configuration Server::conf;
 
 ThreadPool<Migration::mig_info_t, std::shared_ptr<std::list<unsigned long>>, FsObj::file_state> *Server::wqs;
 
+int Server::statTapeRetry(std::string tapeId, const char *pathname, struct stat *buf)
+
+{
+    int rc;
+    int retry = 0;
+
+    while ((rc = stat(pathname, buf)) == -1 && errno == EBUSY && retry < 10) {
+        TRACE(Trace::error, pathname);
+        retry++;
+        sleep(1);
+    }
+
+    if (rc == -1 && errno == EBUSY)
+        inventory->updateCartridge(tapeId);
+
+    return rc;
+}
+
+int Server::openTapeRetry(std::string tapeId, const char *pathname, int flags)
+
+{
+    int rc;
+    int retry = 0;
+
+    while ((rc = open(pathname, flags)) == -1 && errno == EBUSY && retry < 10) {
+        TRACE(Trace::error, pathname);
+        retry++;
+        sleep(1);
+    }
+
+    if (rc == -1 && errno == EBUSY)
+        inventory->updateCartridge(tapeId);
+
+    return rc;
+}
+
+
 std::string Server::getTapeName(FsObj *diskFile, std::string tapeId)
 
 {
@@ -78,13 +115,13 @@ long Server::getStartBlock(std::string tapeName)
         return startBlock;
 }
 
-void Server::createDir(std::string path)
+void Server::createDir(std::string tapeId, std::string path)
 {
     struct stat statbuf;
     int retry = Const::LTFS_OPERATION_RETRY;
 
     while (retry > 0) {
-        if (LTFSDM::stat_retry(path.c_str(), &statbuf) == -1) {
+        if (Server::statTapeRetry(tapeId, path.c_str(), &statbuf) == -1) {
             if ( errno == ENOENT) {
                 if (mkdir(path.c_str(), 0600) == -1) {
                     if ( errno == EBUSY) {
@@ -128,7 +165,7 @@ void Server::createLink(std::string tapeId, std::string origPath,
 
     while ((next = link.str().find('/', pos)) < link.str().size()) {
         std::string subs = link.str().substr(0, next);
-        createDir(subs);
+        createDir(tapeId, subs);
         pos = next + 1;
         relPath.append("../");
     }
@@ -157,7 +194,7 @@ void Server::createDataDir(std::string tapeId)
 
     tapeDir << inventory->getMountPoint() << Const::DELIM << tapeId
             << Const::DELIM << Const::LTFSDM_DATA_DIR;
-    createDir(tapeDir.str());
+    createDir(tapeId, tapeDir.str());
 }
 
 void Server::signalHandler(sigset_t set, long key)

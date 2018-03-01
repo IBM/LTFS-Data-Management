@@ -167,6 +167,7 @@ bool Scheduler::poolResAvail(unsigned long minFileSize)
                     cart->setState(LTFSDMCartridge::TAPE_INUSE);
                     TRACE(Trace::always, drive->get_le()->GetObjectID());
                     drive->setBusy();
+                    driveId = drive->get_le()->GetObjectID();
                     found = true;
                     break;
                 }
@@ -282,6 +283,7 @@ bool Scheduler::tapeResAvail()
                         LTFSDMCartridge::TAPE_INUSE);
                 assert(drive->isBusy() == false);
                 TRACE(Trace::always, drive->get_le()->GetObjectID());
+                driveId = drive->get_le()->GetObjectID();
                 drive->setBusy();
                 found = true;
                 break;
@@ -403,6 +405,8 @@ void Scheduler::run(long key)
                 &tapeId)) {
             std::lock_guard<std::recursive_mutex> lock(LTFSDMInventory::mtx);
 
+            driveId = "";
+
             if (op == DataBase::MIGRATION)
                 minFileSize = smallestMigJob(reqNum, replNum);
             else
@@ -427,7 +431,7 @@ void Scheduler::run(long key)
 
                     subs.enqueue(thrdinfo.str(), &Migration::execRequest,
                             Migration(getpid(), reqNum, { }, numRepl, tgtState),
-                            replNum, pool, tapeId, true /* needsTape */);
+                            replNum, driveId, pool, tapeId, true /* needsTape */);
                     break;
                 case DataBase::SELRECALL:
                     updstmt(Scheduler::UPDATE_REC_REQUEST)
@@ -436,7 +440,7 @@ void Scheduler::run(long key)
 
                     thrdinfo << "SR(" << reqNum << ")";
                     subs.enqueue(thrdinfo.str(), &SelRecall::execRequest,
-                            SelRecall(getpid(), reqNum, tgtState), tapeId,
+                            SelRecall(getpid(), reqNum, tgtState), driveId, tapeId,
                             true /* needsTape */);
                     break;
                 case DataBase::TRARECALL:
@@ -446,7 +450,7 @@ void Scheduler::run(long key)
 
                     thrdinfo << "TR(" << reqNum << ")";
                     subs.enqueue(thrdinfo.str(), &TransRecall::execRequest,
-                            TransRecall(), reqNum, tapeId);
+                            TransRecall(), reqNum, driveId, tapeId);
                     break;
                 default:
                     TRACE(Trace::error, op);

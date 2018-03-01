@@ -48,7 +48,7 @@ private:
     static const std::string UPDATE_REQUEST;
     static const std::string UPDATE_REQUEST_RESET_TAPE;
 
-    static ThreadPool<Migration, int, std::string, std::string, bool> swq;
+    static ThreadPool<Migration, int, std::string, std::string, std::string, bool> swq;
 
     req_return_t processFiles(int replNum, std::string tapeId,
             FsObj::file_state fromState, FsObj::file_state toState);
@@ -81,6 +81,6 @@ public:
     }
     void addJob(std::string fileName);
     void addRequest();
-    void execRequest(int replNum, std::string pool, std::string tapeId,
+    void execRequest(int replNum, std::string driveId, std::string pool, std::string tapeId,
             bool needsTape);
 };

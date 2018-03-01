@@ -334,6 +334,40 @@ void LTFSDMInventory::lookupCartridges(bool assigned_only, bool force)
     THROW(Error::GENERAL_ERROR);
 }
 
+void LTFSDMInventory::updateCartridge(std::string tapeId)
+
+{
+    if (sess && sess->is_alived()) {
+        try {
+            std::lock_guard<std::recursive_mutex> lock(LTFSDMInventory::mtx);
+
+            for ( std::shared_ptr<LTFSDMCartridge> c : cartridges) {
+                if ( c->get_le()->GetObjectID().compare(tapeId) == 0 ) {
+                    MSG(LTFSDMS0106I, tapeId);
+
+                    c->update();
+
+                    c->setState(LTFSDMCartridge::TAPE_UNMOUNTED);
+                    for (std::shared_ptr<LTFSDMDrive> d : drives) {
+                        TRACE(Trace::always, tapeId, c->get_le()->get_slot(), d->get_le()->get_slot());
+                        if (c->get_le()->get_slot() == d->get_le()->get_slot()) {
+                            c->setState(LTFSDMCartridge::TAPE_MOUNTED);
+                            break;
+                        }
+                    }
+
+                    break;
+                }
+            }
+
+        } catch (const LTFSDMException& e) {
+            MSG(LTFSDMS0108E, tapeId, e.what());
+        } catch (const std::exception& e) {
+            MSG(LTFSDMS0108E, tapeId, e.what());
+        }
+    }
+}
+
 void LTFSDMInventory::inventorize()
 
 {
@@ -343,9 +377,12 @@ void LTFSDMInventory::inventorize()
 
     std::lock_guard<std::recursive_mutex> lock(LTFSDMInventory::mtx);
 
-    for (std::shared_ptr<LTFSDMDrive> d : drives)
-        if (d->isBusy() == true)
+    for (std::shared_ptr<LTFSDMDrive> d : drives) {
+        if (d->isBusy() == true) {
+            MSG(LTFSDMS0103I, d->get_le()->GetObjectID());
             THROW(Error::DRIVE_BUSY);
+        }
+    }
 
     for (std::shared_ptr<LTFSDMDrive> d : drives)
         delete (d->wqp);
@@ -450,6 +487,7 @@ LTFSDMInventory::LTFSDMInventory()
         inventorize();
     } catch (const std::exception& e) {
         TRACE(Trace::error, e.what());
+        MSG(LTFSDMS0101E, e.what());
         disconnect();
         THROW(Error::GENERAL_ERROR);
     }
@@ -618,6 +656,8 @@ void LTFSDMInventory::poolRemove(std::string poolname,
 void LTFSDMInventory::mount(std::string driveid, std::string cartridgeid)
 
 {
+    std::string error;
+
     MSG(LTFSDMS0068I, cartridgeid, driveid);
 
     std::shared_ptr<LTFSDMDrive> drive = inventory->getDrive(driveid);
@@ -640,17 +680,33 @@ void LTFSDMInventory::mount(std::string driveid, std::string cartridgeid)
         TRACE(Trace::always, drive->get_le()->GetObjectID());
         drive->setFree();
         drive->unsetUnmountReqNum();
+        MSG(LTFSDMS0069I, cartridgeid, driveid);
     } catch (AdminLibException& e) {
-        std::string type = cartridge->get_le()->GetObjectID() + "(" + cartridgeid + ")";
+        error = e.GetID();
         MSG(LTFSDMS0100E, cartridgeid, e.what());
-        THROW(Error::GENERAL_ERROR, cartridgeid);
+        drive->setFree();
+        try {
+            inventorize();
+        } catch (const LTFSDMException& e) {
+            MSG(LTFSDMS0101E, e.what());
+        } catch (const std::exception& e) {
+            MSG(LTFSDMS0101E, e.what());
+        }
+        if ( error.compare("076E") == 0 ) {
+            MSG(LTFSDMS0107I, Const::WAIT_TAPE_MOUNT);
+            sleep(Const::WAIT_TAPE_MOUNT);
+        }
     } catch (std::exception& e) {
-           std::string type = cartridge->get_le()->GetObjectID() + "(" + cartridgeid + ")";
            MSG(LTFSDMS0100E, cartridgeid, e.what());
-           THROW(Error::GENERAL_ERROR, cartridgeid);
+           drive->setFree();
+           try {
+               inventorize();
+           } catch (const LTFSDMException& e) {
+               MSG(LTFSDMS0101E, e.what());
+           } catch (const std::exception& e) {
+               MSG(LTFSDMS0101E, e.what());
+           }
     }
-
-    MSG(LTFSDMS0069I, cartridgeid, driveid);
 
     std::unique_lock<std::mutex> updlock(Scheduler::mtx);
     Scheduler::cond.notify_one();
@@ -682,17 +738,30 @@ void LTFSDMInventory::unmount(std::string driveid, std::string cartridgeid)
         TRACE(Trace::always, drive->get_le()->GetObjectID());
         drive->setFree();
         drive->unsetUnmountReqNum();
+        MSG(LTFSDMS0071I, cartridgeid);
     } catch (AdminLibException& e) {
-            std::string type = cartridge->get_le()->GetObjectID() + "(" + cartridgeid + ")";
             MSG(LTFSDMS0100E, cartridgeid, e.what());
-            THROW(Error::GENERAL_ERROR, cartridgeid);
+            sleep(1);
+            drive->setFree();
+            try {
+                inventorize();
+            } catch (const LTFSDMException& e) {
+                MSG(LTFSDMS0101E, e.what());
+            } catch (const std::exception& e) {
+                MSG(LTFSDMS0101E, e.what());
+            }
     } catch (std::exception& e) {
-           std::string type = cartridge->get_le()->GetObjectID() + "(" + cartridgeid + ")";
            MSG(LTFSDMS0100E, cartridgeid, e.what());
-           THROW(Error::GENERAL_ERROR, cartridgeid);
+           sleep(1);
+           drive->setFree();
+           try {
+               inventorize();
+           } catch (const LTFSDMException& e) {
+               MSG(LTFSDMS0101E, e.what());
+           } catch (const std::exception& e) {
+               MSG(LTFSDMS0101E, e.what());
+           }
     }
-
-    MSG(LTFSDMS0071I, cartridgeid);
 
     std::unique_lock<std::mutex> updlock(Scheduler::mtx);
     Scheduler::cond.notify_one();

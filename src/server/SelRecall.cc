@@ -327,7 +327,7 @@ void SelRecall::addRequest()
         } else {
             thrdinfo << "SR(" << reqNumber << ")";
             subs.enqueue(thrdinfo.str(), &SelRecall::execRequest,
-                    SelRecall(getpid(), reqNumber, targetState), tapeId, false);
+                    SelRecall(getpid(), reqNumber, targetState), "", tapeId, false);
         }
     }
 
@@ -367,7 +367,7 @@ unsigned long SelRecall::recall(std::string fileName, std::string tapeId,
             return 0;
         } else if (state == FsObj::MIGRATED) {
             tapeName = Server::getTapeName(&target, tapeId);
-            fd = LTFSDM::open_retry(tapeName.c_str(), O_RDWR | O_CLOEXEC);
+            fd = Server::openTapeRetry(tapeId, tapeName.c_str(), O_RDWR | O_CLOEXEC);
 
             if (fd == -1) {
                 TRACE(Trace::error, errno);
@@ -546,7 +546,7 @@ bool needsTape)
     return suspended;
 }
 
-void SelRecall::execRequest(std::string tapeId, bool needsTape)
+void SelRecall::execRequest(std::string driveId, std::string tapeId, bool needsTape)
 
 {
     SQLStatement stmt;
@@ -565,19 +565,11 @@ void SelRecall::execRequest(std::string tapeId, bool needsTape)
 
     if (needsTape) {
         std::lock_guard<std::recursive_mutex> lock(LTFSDMInventory::mtx);
-        inventory->getCartridge(tapeId)->setState(
-                LTFSDMCartridge::TAPE_MOUNTED);
-        bool found = false;
-        for (std::shared_ptr<LTFSDMDrive> d : inventory->getDrives()) {
-            if (d->get_le()->get_slot() == inventory->getCartridge(tapeId)->get_le()->get_slot()) {
-                TRACE(Trace::always, d->get_le()->GetObjectID());
-                d->setFree();
-                d->clearToUnblock();
-                found = true;
-                break;
-            }
-        }
-        assert(found == true);
+        if ( inventory->getCartridge(tapeId)->getState() == LTFSDMCartridge::TAPE_INUSE)
+            inventory->getCartridge(tapeId)->setState(LTFSDMCartridge::TAPE_MOUNTED);
+
+        inventory->getDrive(driveId)->setFree();
+        inventory->getDrive(driveId)->clearToUnblock();
     }
 
     std::unique_lock<std::mutex> updlock(Scheduler::updmtx);

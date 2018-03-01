@@ -109,6 +109,7 @@ public:
 
     boost::shared_ptr<Drive> lookupDrive(std::string id, bool force = false);
     boost::shared_ptr<Cartridge> lookupCartridge(std::string id, bool force = false);
+    void updateCartridge(std::string tapeId);
     void inventorize();
 
     std::list<std::shared_ptr<LTFSDMDrive>> getDrives();
