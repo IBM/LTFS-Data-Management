@@ -90,7 +90,7 @@ std::string Server::getTapeName(unsigned long fsid_h, unsigned long fsid_l,
     return tapeName.str();
 }
 
-long Server::getStartBlock(std::string tapeName)
+long Server::getStartBlock(std::string tapeName, int fd)
 
 {
     long size;
@@ -99,11 +99,13 @@ long Server::getStartBlock(std::string tapeName)
 
     memset(startBlockStr, 0, sizeof(startBlockStr));
 
-    size = getxattr(tapeName.c_str(), Const::LTFS_START_BLOCK.c_str(),
+    fsync(fd);
+
+    size = fgetxattr(fd, Const::LTFS_START_BLOCK.c_str(),
             startBlockStr, sizeof(startBlockStr));
 
     if (size == -1) {
-        TRACE(Trace::error, tapeName.c_str(), errno);
+        TRACE(Trace::error, tapeName, errno);
         return Const::UNSET;
     }
 

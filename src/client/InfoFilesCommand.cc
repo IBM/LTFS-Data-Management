@@ -144,7 +144,7 @@ void InfoFilesCommand::doCommand(int argc, char **argv)
                 for (int i = 0; i < attr.copies; i++) {
                     if (i != 0)
                         tapeIds << ",";
-                    tapeIds << attr.tapeId[i];
+                    tapeIds << attr.tapeInfo[i].tapeId;
                 }
             }
             if (!S_ISREG(statbuf.st_mode)) {

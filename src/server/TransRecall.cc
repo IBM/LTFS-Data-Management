@@ -351,7 +351,7 @@ void TransRecall::addJob(Connector::rec_info_t recinfo, std::string tapeId,
             << Const::UNSET << statbuf.st_size << recinfo.fuid.fsid_h
             << recinfo.fuid.fsid_l << recinfo.fuid.igen << recinfo.fuid.inum
             << statbuf.st_mtime << 0 << time(NULL) << state << tapeId
-            << Server::getStartBlock(tapeName)
+            << attr.tapeInfo[0].startBlock
             << (std::intptr_t) recinfo.conn_info;
 
     TRACE(Trace::normal, stmt.str());
@@ -381,7 +381,7 @@ void TransRecall::addJob(Connector::rec_info_t recinfo, std::string tapeId,
         Scheduler::cond.notify_one();
     } else {
         stmt(TransRecall::ADD_REQUEST) << DataBase::TRARECALL << reqNum
-                << attr.tapeId[0] << time(NULL) << DataBase::REQ_NEW;
+                << attr.tapeInfo[0].tapeId << time(NULL) << DataBase::REQ_NEW;
         TRACE(Trace::normal, stmt.str());
         stmt.doall();
         Scheduler::cond.notify_one();
@@ -487,7 +487,7 @@ void TransRecall::run(std::shared_ptr<Connector> connector)
                 continue;
             }
 
-            tapeId = fso.getAttribute().tapeId[0];
+            tapeId = fso.getAttribute().tapeInfo[0].tapeId;
         } catch (const LTFSDMException& e) {
             TRACE(Trace::error, e.what());
             if (e.getError() == Error::ATTR_FORMAT)

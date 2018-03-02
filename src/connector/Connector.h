@@ -237,7 +237,10 @@ public:
         unsigned long typeId;
         bool added;
         int copies;
-        char tapeId[Const::maxReplica][Const::tapeIdLength + 1];
+        struct {
+            char tapeId[Const::tapeIdLength + 1];
+            long startBlock;
+        } tapeInfo[Const::maxReplica];
     };
     enum file_state
     {

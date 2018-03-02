@@ -257,17 +257,17 @@ void SelRecall::addJob(std::string fileName)
         attr = fso.getAttribute();
 
         if (state == FsObj::MIGRATED) {
-            needsTape.insert(attr.tapeId[0]);
+            needsTape.insert(attr.tapeInfo[0].tapeId);
         }
 
-        tapeName = Server::getTapeName(&fso, attr.tapeId[0]);
+        tapeName = Server::getTapeName(&fso, attr.tapeInfo[0].tapeId);
 
         fuid = fso.getfuid();
         stmt(SelRecall::ADD_JOB) << DataBase::SELRECALL << fileName << reqNumber
                 << targetState << statbuf.st_size << fuid.fsid_h << fuid.fsid_l
                 << fuid.igen << fuid.inum << statbuf.st_mtim.tv_sec
                 << statbuf.st_mtim.tv_nsec << time(NULL) << state
-                << attr.tapeId[0] << Server::getStartBlock(tapeName);
+                << attr.tapeInfo[0].tapeId << attr.tapeInfo[0].startBlock;
     } catch (const std::exception& e) {
         TRACE(Trace::error, e.what());
         stmt(SelRecall::ADD_JOB) << DataBase::SELRECALL << fileName << reqNumber
@@ -281,7 +281,7 @@ void SelRecall::addJob(std::string fileName)
 
     stmt.doall();
 
-    TRACE(Trace::always, fileName, attr.tapeId[0]);
+    TRACE(Trace::always, fileName, attr.tapeInfo[0].tapeId, attr.tapeInfo[0].startBlock);
 
     return;
 }

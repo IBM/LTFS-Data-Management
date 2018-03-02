@@ -372,7 +372,7 @@ FsObj::file_state Migration::checkState(std::string fileName, FsObj *fso)
         if (numReplica != 0) {
             FsObj::mig_attr_t attr = fso->getAttribute();
             for (int i = 0; i < 3; i++) {
-                if (std::string("").compare(attr.tapeId[i]) == 0) {
+                if (std::string("").compare(attr.tapeInfo[i].tapeId) == 0) {
                     if (i == 0) {
                         MSG(LTFSDMS0066E, fileName);
                         state = FsObj::FAILED;
@@ -386,7 +386,7 @@ FsObj::file_state Migration::checkState(std::string fileName, FsObj *fso)
                     std::lock_guard<std::recursive_mutex> lock(
                             LTFSDMInventory::mtx);
                     for (std::string cart : Server::conf.getPool(pool)) {
-                        if (cart.compare(attr.tapeId[i]) == 0) {
+                        if (cart.compare(attr.tapeInfo[i].tapeId) == 0) {
                             tapeFound = true;
                             break;
                         }
@@ -395,7 +395,7 @@ FsObj::file_state Migration::checkState(std::string fileName, FsObj *fso)
                         break;
                 }
                 if (!tapeFound) {
-                    MSG(LTFSDMS0067E, fileName, attr.tapeId[i]);
+                    MSG(LTFSDMS0067E, fileName, attr.tapeInfo[i].tapeId);
                     state = FsObj::FAILED;
                     break;
                 }
@@ -629,8 +629,10 @@ unsigned long Migration::transferData(std::string tapeId, std::string driveId,
 
         fsolock.lock();
         attr = source.getAttribute();
-        memset(attr.tapeId[attr.copies], 0, Const::tapeIdLength + 1);
-        strncpy(attr.tapeId[attr.copies], tapeId.c_str(), Const::tapeIdLength);
+        memset(attr.tapeInfo[attr.copies].tapeId, 0, Const::tapeIdLength + 1);
+        strncpy(attr.tapeInfo[attr.copies].tapeId, tapeId.c_str(), Const::tapeIdLength);
+        attr.tapeInfo[attr.copies].startBlock = Server::getStartBlock(tapeName, fd);
+        TRACE(Trace::always, attr.tapeInfo[attr.copies].startBlock);
         attr.copies++;
         source.addAttribute(attr);
 
