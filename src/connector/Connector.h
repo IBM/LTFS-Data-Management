@@ -228,10 +228,6 @@ private:
     bool isLocked;
     bool handleFree;
 public:
-    struct fs_attr_t
-    {
-        bool managed;
-    };
     struct mig_attr_t
     {
         unsigned long typeId;
