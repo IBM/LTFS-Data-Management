@@ -272,8 +272,9 @@ void SelRecall::addJob(std::string fileName)
         TRACE(Trace::error, e.what());
         stmt(SelRecall::ADD_JOB) << DataBase::SELRECALL << fileName << reqNumber
                 << targetState << Const::UNSET << Const::UNSET << Const::UNSET
-                << Const::UNSET << Const::UNSET << Const::UNSET << time(NULL)
-                << FsObj::FAILED << Const::FAILED_TAPE_ID << 0;
+                << Const::UNSET << Const::UNSET << 0
+                << 0 << time(NULL) << FsObj::FAILED
+                << Const::FAILED_TAPE_ID << 0;
         MSG(LTFSDMS0017E, fileName.c_str());
     }
 
