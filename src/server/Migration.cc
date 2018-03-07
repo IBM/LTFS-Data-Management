@@ -435,8 +435,8 @@ void Migration::addJob(std::string fileName)
         TRACE(Trace::error, e.what());
         stmt(Migration::ADD_JOB) << DataBase::MIGRATION << fileName << reqNumber
                 << targetState << Const::UNSET << Const::UNSET << Const::UNSET
-                << Const::UNSET << Const::UNSET << Const::UNSET << time(NULL)
-                << FsObj::FAILED;
+                << Const::UNSET << Const::UNSET << 0
+                << 0 << time(NULL) << FsObj::FAILED;
     }
 
     replNum = Const::UNSET;
@@ -524,7 +524,6 @@ unsigned long Migration::transferData(std::string tapeId, std::string driveId,
     long wsize;
     int fd = -1;
     long offset = 0;
-    FsObj::mig_attr_t attr;
     bool failed = false;
 
     try {
@@ -627,14 +626,7 @@ unsigned long Migration::transferData(std::string tapeId, std::string driveId,
         mrStatus.updateSuccess(mig_info.reqNumber, mig_info.fromState,
                 mig_info.toState);
 
-        fsolock.lock();
-        attr = source.getAttribute();
-        memset(attr.tapeInfo[attr.copies].tapeId, 0, Const::tapeIdLength + 1);
-        strncpy(attr.tapeInfo[attr.copies].tapeId, tapeId.c_str(), Const::tapeIdLength);
-        attr.tapeInfo[attr.copies].startBlock = Server::getStartBlock(tapeName, fd);
-        TRACE(Trace::always, attr.tapeInfo[attr.copies].startBlock);
-        attr.copies++;
-        source.addAttribute(attr);
+        source.addTapeAttr(tapeId, Server::getStartBlock(tapeName, fd));
 
         std::lock_guard<std::mutex> lock(Migration::pmigmtx);
         inumList->push_back(mig_info.inum);

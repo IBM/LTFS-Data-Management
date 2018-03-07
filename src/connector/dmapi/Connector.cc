@@ -866,22 +866,32 @@ long FsObj::write(long offset, unsigned long size, char *buffer)
 	return wsize;
 }
 
-void FsObj::addAttribute(mig_attr_t value)
+void FsObj::addTapeAttr(std::string tapeId, long startBlock)
 
 {
-	int rc;
+    int rc;
 
-	value.typeId = typeid(mig_attr_t).hash_code();
-	value.added = true;
+    FsObj::mig_attr_t attr;
+    std::unique_lock<FsObj> fsolock(*this);
 
-	rc = dm_set_dmattr(dmapiSession, handle, handleLength, dmapiToken,
-			(dm_attrname_t *) Const::DMAPI_ATTR_MIG.c_str(), 0,
-			sizeof(mig_attr_t), (void *) &value);
+    fsolock.lock();
+    attr = getAttribute();
+    attr.typeId = typeid(mig_attr_t).hash_code();
+    attr.added = true;
+    memset(attr.tapeInfo[attr.copies].tapeId, 0, Const::tapeIdLength + 1);
+    strncpy(attr.tapeInfo[attr.copies].tapeId, tapeId.c_str(), Const::tapeIdLength);
+    attr.tapeInfo[attr.copies].startBlock = startBlock;
+    TRACE(Trace::always, attr.tapeInfo[attr.copies].startBlock);
+    attr.copies++;
 
-	if (rc == -1) {
-		TRACE(Trace::error, errno);
-		THROW(Error::GENERAL_ERROR, errno, (unsigned long ) handle);
-	}
+    rc = dm_set_dmattr(dmapiSession, handle, handleLength, dmapiToken,
+            (dm_attrname_t *) Const::DMAPI_ATTR_MIG.c_str(), 0,
+            sizeof(mig_attr_t), (void *) &attr);
+
+    if (rc == -1) {
+        TRACE(Trace::error, errno);
+        THROW(Error::GENERAL_ERROR, errno, (unsigned long ) handle);
+    }
 }
 
 void FsObj::remAttribute()

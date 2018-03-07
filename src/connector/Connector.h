@@ -292,7 +292,7 @@ public:
     void unlock();
     long read(long offset, unsigned long size, char *buffer);
     long write(long offset, unsigned long size, char *buffer);
-    void addAttribute(mig_attr_t value);
+    void addTapeAttr(std::string tapeId, long startBlock);
     void remAttribute();
     mig_attr_t getAttribute();
     void preparePremigration();

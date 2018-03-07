@@ -89,7 +89,9 @@ public:
             MIGRATED = 4,
             IN_RECALL = 5
         } state;
-        struct stat statinfo;
+        unsigned long size;
+        struct timespec atime;
+        struct timespec mtime;
         struct timespec changed;
     };
     struct FuseHandle

@@ -100,14 +100,18 @@ FuseFS::mig_info FuseFS::genMigInfoAt(int fd, FuseFS::mig_info::state_num state)
 
 {
     FuseFS::mig_info miginfo;
+    struct stat statbuf;
 
     memset(&miginfo, 0, sizeof(miginfo));
 
-    if (fstat(fd, &miginfo.statinfo)) {
+    if (fstat(fd, &statbuf)) {
         TRACE(Trace::error, errno);
         THROW(Error::GENERAL_ERROR, errno, fd);
     }
 
+    miginfo.size = statbuf.st_size;
+    miginfo.atime = statbuf.st_atim;
+    miginfo.mtime = statbuf.st_mtim;
     miginfo.state = state;
 
     clock_gettime(CLOCK_REALTIME, &miginfo.changed);
@@ -128,7 +132,7 @@ void FuseFS::setMigInfoAt(int fd, FuseFS::mig_info::state_num state)
 
     miginfo_new = genMigInfoAt(fd, state);
 
-    if ((size = fgetxattr(fd, Const::LTFSDM_EA_MIGINFO_INT.c_str(),
+    if ((size = fgetxattr(fd, Const::LTFSDM_EA_MIGSTATE.c_str(),
             (void *) &miginfo, sizeof(miginfo))) == -1) {
         if ( errno != ENODATA) {
             THROW(Error::GENERAL_ERROR, errno, fd);
@@ -139,12 +143,13 @@ void FuseFS::setMigInfoAt(int fd, FuseFS::mig_info::state_num state)
     }
 
     if (miginfo.state != FuseFS::mig_info::state_num::NO_STATE) {
-        miginfo_new.statinfo.st_size = miginfo.statinfo.st_size;
-        miginfo_new.statinfo.st_atim = miginfo.statinfo.st_atim;
-        miginfo_new.statinfo.st_mtim = miginfo.statinfo.st_mtim;
+        // keep the previous settings
+        miginfo_new.size = miginfo.size;
+        miginfo_new.atime = miginfo.atime;
+        miginfo_new.mtime = miginfo.mtime;
     }
 
-    if (fsetxattr(fd, Const::LTFSDM_EA_MIGINFO_INT.c_str(),
+    if (fsetxattr(fd, Const::LTFSDM_EA_MIGSTATE.c_str(),
             (void *) &miginfo_new, sizeof(miginfo_new), 0) == -1) {
         THROW(Error::GENERAL_ERROR, errno, fd);
     }
@@ -155,12 +160,12 @@ int FuseFS::remMigInfoAt(int fd)
 {
     TRACE(Trace::full, fd);
 
-    if (fremovexattr(fd, Const::LTFSDM_EA_MIGINFO_INT.c_str()) == -1) {
+    if (fremovexattr(fd, Const::LTFSDM_EA_MIGSTATE.c_str()) == -1) {
         TRACE(Trace::error, errno);
         return errno;
     }
 
-    if (fremovexattr(fd, Const::LTFSDM_EA_MIGINFO_EXT.c_str()) == -1) {
+    if (fremovexattr(fd, Const::LTFSDM_EA_MIGINFO.c_str()) == -1) {
         TRACE(Trace::error, errno);
         return errno;
     }
@@ -176,7 +181,7 @@ FuseFS::mig_info FuseFS::getMigInfoAt(int fd)
 
     memset(&miginfo, 0, sizeof(miginfo));
 
-    if ((size = fgetxattr(fd, Const::LTFSDM_EA_MIGINFO_INT.c_str(),
+    if ((size = fgetxattr(fd, Const::LTFSDM_EA_MIGSTATE.c_str(),
             (void *) &miginfo, sizeof(miginfo))) == -1) {
         // TODO
         /* check for errno */
@@ -228,17 +233,17 @@ void FuseFS::recoverState(const char *path, FuseFS::mig_info::state_num state)
     switch (state) {
         case FuseFS::mig_info::state_num::IN_MIGRATION:
             MSG(LTFSDMF0013W, fusepath);
-            if (fremovexattr(fd, Const::LTFSDM_EA_MIGINFO_EXT.c_str())
+            if (fremovexattr(fd, Const::LTFSDM_EA_MIGINFO.c_str())
                     == -1) {
                 TRACE(Trace::error, errno);
                 if ( errno != ENODATA)
-                    MSG(LTFSDMF0018W, Const::LTFSDM_EA_MIGINFO_EXT);
+                    MSG(LTFSDMF0018W, Const::LTFSDM_EA_MIGINFO);
             }
-            if (fremovexattr(fd, Const::LTFSDM_EA_MIGINFO_INT.c_str())
+            if (fremovexattr(fd, Const::LTFSDM_EA_MIGSTATE.c_str())
                     == -1) {
                 TRACE(Trace::error, errno);
                 if ( errno != ENODATA)
-                    MSG(LTFSDMF0018W, Const::LTFSDM_EA_MIGINFO_INT);
+                    MSG(LTFSDMF0018W, Const::LTFSDM_EA_MIGSTATE);
             }
             break;
         case FuseFS::mig_info::state_num::STUBBING:
@@ -447,9 +452,9 @@ int FuseFS::ltfsdm_getattr(const char *path, struct stat *statbuf)
             FuseFS::recoverState(path, miginfo.state);
         close(fd);
         if (miginfo.state != FuseFS::mig_info::state_num::NO_STATE) {
-            statbuf->st_size = miginfo.statinfo.st_size;
-            statbuf->st_atim = miginfo.statinfo.st_atim;
-            statbuf->st_mtim = miginfo.statinfo.st_mtim;
+            statbuf->st_size = miginfo.size;
+            statbuf->st_atim = miginfo.atime;
+            statbuf->st_mtim = miginfo.mtime;
         }
         goto end;
     }
@@ -554,7 +559,7 @@ int FuseFS::ltfsdm_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
             if (miginfo.state != FuseFS::mig_info::state_num::NO_STATE
                     && miginfo.state
                             != FuseFS::mig_info::state_num::IN_MIGRATION)
-                statbuf.st_size = miginfo.statinfo.st_size;
+                statbuf.st_size = miginfo.size;
         }
 
         if (filler(buf, dirinfo->dentry->d_name, &statbuf, next))
@@ -709,7 +714,7 @@ int FuseFS::ltfsdm_truncate(const char *path, off_t size)
         std::lock_guard<FuseLock> treclock(trec_lock);
 
         if ((attrsize = fgetxattr(linfo.fd,
-                Const::LTFSDM_EA_MIGINFO_INT.c_str(), (void *) &migInfo,
+                Const::LTFSDM_EA_MIGSTATE.c_str(), (void *) &migInfo,
                 sizeof(migInfo))) == -1) {
             if ( errno != ENODATA) {
                 close(linfo.fd);
@@ -730,12 +735,12 @@ int FuseFS::ltfsdm_truncate(const char *path, off_t size)
             }
             mainlock.lock();
         } else if (attrsize != -1) {
-            if (fremovexattr(linfo.fd, Const::LTFSDM_EA_MIGINFO_INT.c_str())
+            if (fremovexattr(linfo.fd, Const::LTFSDM_EA_MIGSTATE.c_str())
                     == -1) {
                 close(linfo.fd);
                 return (-1 * EIO);
             }
-            if (fremovexattr(linfo.fd, Const::LTFSDM_EA_MIGINFO_EXT.c_str())
+            if (fremovexattr(linfo.fd, Const::LTFSDM_EA_MIGINFO.c_str())
                     == -1) {
                 close(linfo.fd);
                 return (-1 * EIO);
@@ -855,7 +860,7 @@ int FuseFS::ltfsdm_ftruncate(const char *path, off_t size,
             std::lock_guard<FuseLock> treclock(*(linfo->trec_lock));
 
             if ((attrsize = fgetxattr(linfo->fd,
-                    Const::LTFSDM_EA_MIGINFO_INT.c_str(), (void *) &migInfo,
+                    Const::LTFSDM_EA_MIGSTATE.c_str(), (void *) &migInfo,
                     sizeof(migInfo))) == -1) {
                 if ( errno != ENODATA) {
                     TRACE(Trace::error, fuse_get_context()->pid);
@@ -875,10 +880,10 @@ int FuseFS::ltfsdm_ftruncate(const char *path, off_t size,
                 mainlock.lock();
             } else if (attrsize != -1) {
                 if (fremovexattr(linfo->fd,
-                        Const::LTFSDM_EA_MIGINFO_INT.c_str()) == -1)
+                        Const::LTFSDM_EA_MIGSTATE.c_str()) == -1)
                     return (-1 * EIO);
                 if (fremovexattr(linfo->fd,
-                        Const::LTFSDM_EA_MIGINFO_EXT.c_str()) == -1)
+                        Const::LTFSDM_EA_MIGINFO.c_str()) == -1)
                     return (-1 * EIO);
             }
         } catch (const std::exception& e) {
@@ -920,7 +925,7 @@ int FuseFS::ltfsdm_read_buf(const char *path, struct fuse_bufvec **bufferp,
         std::lock_guard<FuseLock> treclock(*(linfo->trec_lock));
 
         if ((attrsize = fgetxattr(linfo->fd,
-                Const::LTFSDM_EA_MIGINFO_INT.c_str(), (void *) &migInfo,
+                Const::LTFSDM_EA_MIGSTATE.c_str(), (void *) &migInfo,
                 sizeof(migInfo))) == -1) {
             if ( errno != ENODATA) {
                 TRACE(Trace::error, fuse_get_context()->pid, errno);
@@ -979,7 +984,7 @@ int FuseFS::ltfsdm_write_buf(const char *path, struct fuse_bufvec *buf,
         std::lock_guard<FuseLock> treclock(*(linfo->trec_lock));
 
         if ((attrsize = fgetxattr(linfo->fd,
-                Const::LTFSDM_EA_MIGINFO_INT.c_str(), (void *) &migInfo,
+                Const::LTFSDM_EA_MIGSTATE.c_str(), (void *) &migInfo,
                 sizeof(migInfo))) == -1) {
             if ( errno != ENODATA) {
                 TRACE(Trace::error, errno);
@@ -996,12 +1001,12 @@ int FuseFS::ltfsdm_write_buf(const char *path, struct fuse_bufvec *buf,
             }
             mainlock.lock();
         } else if (migInfo.state == FuseFS::mig_info::state_num::PREMIGRATED) {
-            if (fremovexattr(linfo->fd, Const::LTFSDM_EA_MIGINFO_INT.c_str())
+            if (fremovexattr(linfo->fd, Const::LTFSDM_EA_MIGSTATE.c_str())
                     == -1) {
                 TRACE(Trace::error, errno);
                 return (-1 * EIO);
             }
-            if (fremovexattr(linfo->fd, Const::LTFSDM_EA_MIGINFO_EXT.c_str())
+            if (fremovexattr(linfo->fd, Const::LTFSDM_EA_MIGINFO.c_str())
                     == -1) {
                 TRACE(Trace::error, errno);
                 return (-1 * EIO);

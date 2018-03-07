@@ -222,17 +222,17 @@ struct stat FsObj::stat()
 
     miginfo = FuseFS::getMigInfoAt(fh->fd);
 
-    if (miginfo.state != FuseFS::mig_info::state_num::NO_STATE
-            && miginfo.state != FuseFS::mig_info::state_num::IN_MIGRATION) {
-        statbuf = miginfo.statinfo;
-    } else {
-        memset(&statbuf, 0, sizeof(statbuf));
-        if (fstat(fh->fd, &statbuf) == -1) {
-            TRACE(Trace::error, errno);
-            THROW(Error::GENERAL_ERROR, errno, fh->fusepath);
-        }
+    if (fstat(fh->fd, &statbuf) == -1) {
+        TRACE(Trace::error, errno);
+        THROW(Error::GENERAL_ERROR, errno, fh->fusepath);
     }
 
+    if (miginfo.state != FuseFS::mig_info::state_num::NO_STATE
+            && miginfo.state != FuseFS::mig_info::state_num::IN_MIGRATION) {
+        statbuf.st_size = miginfo.size;
+        statbuf.st_atim = miginfo.atime;
+        statbuf.st_mtim = miginfo.mtime;
+    }
     return statbuf;
 }
 
@@ -355,13 +355,21 @@ long FsObj::write(long offset, unsigned long size, char *buffer)
     return wsize;
 }
 
-void FsObj::addAttribute(mig_attr_t value)
+void FsObj::addTapeAttr(std::string tapeId, long startBlock)
 
 {
+    FsObj::mig_attr_t attr;
     FuseFS::FuseHandle *fh = (FuseFS::FuseHandle *) handle;
+    std::unique_lock<FsObj> fsolock(*this);
 
-    if (fsetxattr(fh->fd, Const::LTFSDM_EA_MIGINFO_EXT.c_str(),
-            (void *) &value, sizeof(value), 0) == -1) {
+    attr = getAttribute();
+    memset(attr.tapeInfo[attr.copies].tapeId, 0, Const::tapeIdLength + 1);
+    strncpy(attr.tapeInfo[attr.copies].tapeId, tapeId.c_str(), Const::tapeIdLength);
+    attr.tapeInfo[attr.copies].startBlock = startBlock;
+    attr.copies++;
+
+    if (fsetxattr(fh->fd, Const::LTFSDM_EA_MIGINFO.c_str(),
+            (void *) &attr, sizeof(attr), 0) == -1) {
         TRACE(Trace::error, errno);
         THROW(Error::GENERAL_ERROR, errno, fh->fusepath);
     }
@@ -372,16 +380,16 @@ void FsObj::remAttribute()
 {
     FuseFS::FuseHandle *fh = (FuseFS::FuseHandle *) handle;
 
-    if (fremovexattr(fh->fd, Const::LTFSDM_EA_MIGINFO_EXT.c_str()) == -1) {
+    if (fremovexattr(fh->fd, Const::LTFSDM_EA_MIGINFO.c_str()) == -1) {
         TRACE(Trace::error, errno);
-        MSG(LTFSDMF0018W, Const::LTFSDM_EA_MIGINFO_EXT);
+        MSG(LTFSDMF0018W, Const::LTFSDM_EA_MIGINFO);
         if ( errno != ENODATA)
             THROW(Error::GENERAL_ERROR, errno, fh->fusepath);
     }
 
-    if (fremovexattr(fh->fd, Const::LTFSDM_EA_MIGINFO_INT.c_str()) == -1) {
+    if (fremovexattr(fh->fd, Const::LTFSDM_EA_MIGSTATE.c_str()) == -1) {
         TRACE(Trace::error, errno);
-        MSG(LTFSDMF0018W, Const::LTFSDM_EA_MIGINFO_INT);
+        MSG(LTFSDMF0018W, Const::LTFSDM_EA_MIGSTATE);
         if ( errno != ENODATA)
             THROW(Error::GENERAL_ERROR, errno, fh->fusepath);
     }
@@ -394,12 +402,21 @@ FsObj::mig_attr_t FsObj::getAttribute()
     FsObj::mig_attr_t value;
     memset(&value, 0, sizeof(mig_attr_t));
 
-    if (fgetxattr(fh->fd, Const::LTFSDM_EA_MIGINFO_EXT.c_str(),
+    if (fgetxattr(fh->fd, Const::LTFSDM_EA_MIGINFO.c_str(),
             (void *) &value, sizeof(value)) == -1) {
         if ( errno != ENODATA) {
             TRACE(Trace::error, errno);
             THROW(Error::GENERAL_ERROR, errno, fh->fusepath);
         }
+
+        value.typeId = typeid(value).hash_code();
+
+        return value;
+    }
+
+    if (value.typeId != typeid(value).hash_code()) {
+        TRACE(Trace::error, value.typeId);
+        THROW(Error::ATTR_FORMAT, (unsigned long ) handle);
     }
 
     return value;
@@ -439,8 +456,8 @@ void FsObj::finishRecall(FsObj::file_state fstate)
         FuseFS::setMigInfoAt(fh->fd, FuseFS::mig_info::state_num::PREMIGRATED);
     } else {
         miginfo = FuseFS::getMigInfoAt(fh->fd);
-        const timespec timestamp[2] = { miginfo.statinfo.st_atim,
-                miginfo.statinfo.st_mtim };
+        const timespec timestamp[2] = { miginfo.atime,
+                miginfo.mtime };
 
         if (futimens(fh->fd, timestamp) == -1)
             MSG(LTFSDMF0017E, fh->fusepath);
