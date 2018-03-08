@@ -82,7 +82,7 @@ public:
     {
         enum state_num
         {
-            NO_STATE = 0,
+            RESIDENT = 0,
             IN_MIGRATION = 1,
             PREMIGRATED = 2,
             STUBBING = 3,

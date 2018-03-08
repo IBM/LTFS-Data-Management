@@ -227,7 +227,7 @@ struct stat FsObj::stat()
         THROW(Error::GENERAL_ERROR, errno, fh->fusepath);
     }
 
-    if (miginfo.state != FuseFS::mig_info::state_num::NO_STATE
+    if (miginfo.state != FuseFS::mig_info::state_num::RESIDENT
             && miginfo.state != FuseFS::mig_info::state_num::IN_MIGRATION) {
         statbuf.st_size = miginfo.size;
         statbuf.st_atim = miginfo.atime;
@@ -462,7 +462,7 @@ void FsObj::finishRecall(FsObj::file_state fstate)
         if (futimens(fh->fd, timestamp) == -1)
             MSG(LTFSDMF0017E, fh->fusepath);
 
-        FuseFS::setMigInfoAt(fh->fd, FuseFS::mig_info::state_num::NO_STATE);
+        FuseFS::setMigInfoAt(fh->fd, FuseFS::mig_info::state_num::RESIDENT);
     }
 }
 
@@ -536,7 +536,7 @@ FsObj::file_state FsObj::getMigState()
     miginfo = FuseFS::getMigInfoAt(fh->fd);
 
     switch (miginfo.state) {
-        case FuseFS::mig_info::state_num::NO_STATE:
+        case FuseFS::mig_info::state_num::RESIDENT:
         case FuseFS::mig_info::state_num::IN_MIGRATION:
             state = FsObj::RESIDENT;
             break;

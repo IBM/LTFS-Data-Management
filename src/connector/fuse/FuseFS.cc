@@ -142,7 +142,7 @@ void FuseFS::setMigInfoAt(int fd, FuseFS::mig_info::state_num state)
         THROW(Error::GENERAL_ERROR, size, sizeof(miginfo), fd);
     }
 
-    if (miginfo.state != FuseFS::mig_info::state_num::NO_STATE) {
+    if (miginfo.state != FuseFS::mig_info::state_num::RESIDENT) {
         // keep the previous settings
         miginfo_new.size = miginfo.size;
         miginfo_new.atime = miginfo.atime;
@@ -232,6 +232,7 @@ void FuseFS::recoverState(const char *path, FuseFS::mig_info::state_num state)
 
     switch (state) {
         case FuseFS::mig_info::state_num::IN_MIGRATION:
+        case FuseFS::mig_info::state_num::RESIDENT:
             MSG(LTFSDMF0013W, fusepath);
             if (fremovexattr(fd, Const::LTFSDM_EA_MIGINFO.c_str())
                     == -1) {
@@ -451,7 +452,7 @@ int FuseFS::ltfsdm_getattr(const char *path, struct stat *statbuf)
         if (FuseFS::needsRecovery(miginfo) == true)
             FuseFS::recoverState(path, miginfo.state);
         close(fd);
-        if (miginfo.state != FuseFS::mig_info::state_num::NO_STATE) {
+        if (miginfo.state != FuseFS::mig_info::state_num::RESIDENT) {
             statbuf->st_size = miginfo.size;
             statbuf->st_atim = miginfo.atime;
             statbuf->st_mtim = miginfo.mtime;
@@ -556,7 +557,7 @@ int FuseFS::ltfsdm_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
                 return (-1 * EIO);
             }
             close(fd);
-            if (miginfo.state != FuseFS::mig_info::state_num::NO_STATE
+            if (miginfo.state != FuseFS::mig_info::state_num::RESIDENT
                     && miginfo.state
                             != FuseFS::mig_info::state_num::IN_MIGRATION)
                 statbuf.st_size = miginfo.size;
