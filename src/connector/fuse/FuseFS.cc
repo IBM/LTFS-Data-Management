@@ -109,6 +109,7 @@ FuseFS::mig_info FuseFS::genMigInfoAt(int fd, FuseFS::mig_info::state_num state)
         THROW(Error::GENERAL_ERROR, errno, fd);
     }
 
+    miginfo.typeId = typeid(FuseFS::mig_info).hash_code();
     miginfo.size = statbuf.st_size;
     miginfo.atime = statbuf.st_atim;
     miginfo.mtime = statbuf.st_mtim;
@@ -137,9 +138,11 @@ void FuseFS::setMigInfoAt(int fd, FuseFS::mig_info::state_num state)
         if ( errno != ENODATA) {
             THROW(Error::GENERAL_ERROR, errno, fd);
         }
-    } else if (size != sizeof(miginfo)) {
+    } else if (size != sizeof(miginfo) ||
+            miginfo.typeId != typeid(FuseFS::mig_info).hash_code()) {
         errno = EIO;
-        THROW(Error::GENERAL_ERROR, size, sizeof(miginfo), fd);
+        THROW(Error::GENERAL_ERROR, size, sizeof(miginfo), miginfo.typeId,
+                typeid(FuseFS::mig_info).hash_code(), fd);
     }
 
     if (miginfo.state != FuseFS::mig_info::state_num::RESIDENT) {
@@ -188,9 +191,11 @@ FuseFS::mig_info FuseFS::getMigInfoAt(int fd)
         return miginfo;
     }
 
-    if (size != sizeof(miginfo)) {
+    if (size != sizeof(miginfo) ||
+            miginfo.typeId != typeid(FuseFS::mig_info).hash_code()) {
         errno = EIO;
-        THROW(Error::GENERAL_ERROR, size, sizeof(miginfo), fd);
+        THROW(Error::ATTR_FORMAT, size, sizeof(miginfo), miginfo.typeId,
+                typeid(FuseFS::mig_info).hash_code(), fd);
     }
 
     return miginfo;
@@ -551,7 +556,18 @@ int FuseFS::ltfsdm_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
                 return (-1 * errno);
             try {
                 miginfo = getMigInfoAt(fd);
+            } catch (const LTFSDMException &e) {
+                TRACE(Trace::error, e.what());
+                MSG(LTFSDMF0057E, path);
+                if ( e.getError() != Error::ATTR_FORMAT ) {
+                    close(fd);
+                    return (-1 * EIO);
+                }
+                else {
+                    memset(&miginfo, 0, sizeof(miginfo));
+                }
             } catch (const std::exception& e) {
+                TRACE(Trace::error, e.what());
                 MSG(LTFSDMF0057E, path);
                 close(fd);
                 return (-1 * EIO);

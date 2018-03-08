@@ -432,6 +432,7 @@ void Migration::addJob(std::string fileName)
                 << fuid.igen << fuid.inum << statbuf.st_mtim.tv_sec
                 << statbuf.st_mtim.tv_nsec << time(NULL) << state;
     } catch (const std::exception& e) {
+        MSG(LTFSDMS0077E, fileName);
         TRACE(Trace::error, e.what());
         stmt(Migration::ADD_JOB) << DataBase::MIGRATION << fileName << reqNumber
                 << targetState << Const::UNSET << Const::UNSET << Const::UNSET

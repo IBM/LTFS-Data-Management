@@ -533,7 +533,15 @@ FsObj::file_state FsObj::getMigState()
     FsObj::file_state state = FsObj::RESIDENT;
     FuseFS::mig_info miginfo;
 
-    miginfo = FuseFS::getMigInfoAt(fh->fd);
+    try {
+        miginfo = FuseFS::getMigInfoAt(fh->fd);
+    }
+    catch ( const LTFSDMException& e) {
+        if ( e.getError() == Error::ATTR_FORMAT ) {
+            MSG(LTFSDMF0034E, fh->mountpoint, fh->fusepath);
+        }
+        THROW(Error::GENERAL_ERROR, fh->fusepath);
+    }
 
     switch (miginfo.state) {
         case FuseFS::mig_info::state_num::RESIDENT:

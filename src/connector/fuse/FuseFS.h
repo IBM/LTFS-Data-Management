@@ -80,6 +80,7 @@ class FuseFS
 public:
     struct mig_info
     {
+        unsigned long typeId;
         enum state_num
         {
             RESIDENT = 0,
