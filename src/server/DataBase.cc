@@ -157,10 +157,18 @@ int DataBase::lastUpdates()
     return sqlite3_changes(db);
 }
 
-SQLStatement& SQLStatement::operator()(std::string fmtstr)
+SQLStatement& SQLStatement::operator()(std::string _fmtstr)
 
 {
-    fmt = boost::format(fmtstr);
+    fmtstr = _fmtstr;
+
+    try {
+        fmt = boost::format(fmtstr);
+    }
+    catch (const std::exception& e) {
+        THROW(Error::GENERAL_ERROR, e.what(), fmtstr);
+    }
+
     return *this;
 }
 
@@ -283,7 +291,16 @@ void SQLStatement::getColumn(std::string *result, int column)
 std::string SQLStatement::str()
 
 {
-    return fmt.str();
+    std::string str;
+
+    try {
+        str = fmt.str();
+    }
+    catch (const std::exception& e) {
+        THROW(Error::GENERAL_ERROR, e.what(), fmtstr);
+    }
+
+    return str;
 }
 
 void SQLStatement::bind(int num, int value)

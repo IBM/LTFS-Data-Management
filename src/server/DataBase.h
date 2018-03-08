@@ -61,6 +61,7 @@ extern DataBase DB;
 class SQLStatement
 {
 private:
+    std::string fmtstr;
     sqlite3_stmt *stmt;
     boost::format fmt;
     int stmt_rc;
@@ -97,14 +98,14 @@ private:
 
 public:
     SQLStatement() :
-            stmt(nullptr), fmt(""), stmt_rc(0)
+        fmtstr(""), stmt(nullptr), fmt(""), stmt_rc(0)
     {
     }
-    SQLStatement(std::string fmtstr) :
-            stmt(nullptr), fmt(boost::format(fmtstr)), stmt_rc(0)
+    SQLStatement(std::string _fmtstr) :
+        fmtstr(_fmtstr), stmt(nullptr), fmt(boost::format(fmtstr)), stmt_rc(0)
     {
     }
-    SQLStatement& operator()(std::string fmtstr);
+    SQLStatement& operator()(std::string _fmtstr);
     ~SQLStatement()
     {
     }
@@ -112,32 +113,61 @@ public:
     // convert unsigned to signed since there is unsigned in SQLite
     SQLStatement& operator<<(unsigned long long llu)
     {
-        fmt % static_cast<long>(llu);
+        try {
+            fmt % static_cast<long>(llu);
+        }
+        catch (const std::exception& e) {
+            THROW(Error::GENERAL_ERROR, e.what(), fmtstr);
+        }
         return *this;
     }
 
     SQLStatement& operator<<(unsigned long lu)
     {
-        fmt % static_cast<long>(lu);
+        try {
+            fmt % static_cast<long>(lu);
+        }
+        catch (const std::exception& e) {
+            THROW(Error::GENERAL_ERROR, e.what(), fmtstr);
+        }
+
         return *this;
     }
 
     SQLStatement& operator<<(std::string s)
     {
-        fmt % encode(s);
+        try {
+            fmt % encode(s);
+        }
+        catch (const std::exception& e) {
+            THROW(Error::GENERAL_ERROR, e.what(), fmtstr);
+        }
+
         return *this;
     }
 
     SQLStatement& operator<<(unsigned int u)
     {
-        fmt % static_cast<int>(u);
+        try {
+            fmt % static_cast<int>(u);
+        }
+        catch (const std::exception& e) {
+            THROW(Error::GENERAL_ERROR, e.what(), fmtstr);
+        }
+
         return *this;
     }
 
     template<typename T>
     SQLStatement& operator<<(T s)
     {
-        fmt % (s);
+        try {
+            fmt % (s);
+        }
+        catch (const std::exception& e) {
+            THROW(Error::GENERAL_ERROR, e.what(), fmtstr);
+        }
+
         return *this;
     }
 
