@@ -370,7 +370,7 @@ FsObj::file_state Migration::checkState(std::string fileName, FsObj *fso)
         }
     } else {
         if (numReplica != 0) {
-            FsObj::mig_tape_attr_t attr = fso->getAttribute();
+            FsObj::mig_target_attr_t attr = fso->getAttribute();
             for (int i = 0; i < 3; i++) {
                 if (std::string("").compare(attr.tapeInfo[i].tapeId) == 0) {
                     if (i == 0) {
@@ -666,7 +666,7 @@ void Migration::changeFileState(Migration::mig_info_t mig_info,
 {
     try {
         FsObj source(mig_info.fileName);
-        FsObj::mig_tape_attr_t attr;
+        FsObj::mig_target_attr_t attr;
 
         TRACE(Trace::always, mig_info.fileName);
 

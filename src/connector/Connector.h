@@ -121,33 +121,36 @@
 
     The two attributes that exist are the following:
 
-    - The migration target attribute the provides information where the data
-      is on tape:
-      @snippet connector/Connector.h migration target attribute
-      The purpose of the components is the following:
-      component | purpose
-      ---|---
-      typeId | To verify the that data type has not changed. After a code change it can happen that the attribute becomes invalid.
-      added | Workaround only used for the dmapi connector.
-      copies | The number of tapes the data has been copied.
-      tapeInfo | The tape ID and the starting block number of all tapes the data has been copied to.
+    ### The migration target attribute
 
-    - The migration state attribute provides the information about the
-      migration state of a file including some of the original stat data:
-      @snippet connector/fuse/FuseFS.h migration state attribute
-      The purpose of the components is the following:
-      component | purpose
-      ---|---
-      typeId | To verify the that data type has not changed. After a code change it can happen that the attribute becomes invalid.
-      state | The migration state.
-      size | The file size before migration. To keep it and show it after (pre)migration.
-      atime | The atime before migration. To keep it and show it after (pre)migration.
-      mtime | The mtime before migration. To keep it and show it after (pre)migration.
-      changed | The time stamp when this attribute has been last updated.
+    The migration target attribute the provides information where the data
+    is on tape:
+    @snippet connector/Connector.h migration target attribute
+    The purpose of the components is the following:
+    component | purpose
+    ---|---
+    typeId | To verify the that data type has not changed. After a code change it can happen that the attribute becomes invalid.
+    added | Workaround only used for the dmapi connector.
+    copies | The number of tapes the data has been copied.
+    tapeInfo | The tape ID and the starting block number of all tapes the data has been copied to.
 
-      This attribute is not used for the dmapi connector since the migration
-      state is determined by so call dmapi managed regions. The size and the
-      time stamps are not necessary to store in the dmapi case.
+    ### The migration state attribute
+    The migration state attribute provides the information about the
+    migration state of a file including some of the original stat data:
+    @snippet connector/fuse/FuseFS.h migration state attribute
+    The purpose of the components is the following:
+    component | purpose
+    ---|---
+    typeId | To verify the that data type has not changed. After a code change it can happen that the attribute becomes invalid.
+    state | The migration state.
+    size | The file size before migration. To keep it and show it after (pre)migration.
+    atime | The atime before migration. To keep it and show it after (pre)migration.
+    mtime | The mtime before migration. To keep it and show it after (pre)migration.
+    changed | The time stamp when this attribute has been last updated.
+
+    This attribute is not used for the dmapi connector since the migration
+    state is determined by so call dmapi managed regions. The size and the
+    time stamps are not necessary to store in the dmapi case.
 
  */
 

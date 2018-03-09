@@ -360,7 +360,7 @@ long FsObj::write(long offset, unsigned long size, char *buffer)
 void FsObj::addTapeAttr(std::string tapeId, long startBlock)
 
 {
-    FsObj::mig_tape_attr_t attr;
+    FsObj::mig_target_attr_t attr;
     FuseFS::FuseHandle *fh = (FuseFS::FuseHandle *) handle;
     std::unique_lock<FsObj> fsolock(*this);
 
@@ -398,12 +398,12 @@ void FsObj::remAttribute()
     }
 }
 
-FsObj::mig_tape_attr_t FsObj::getAttribute()
+FsObj::mig_target_attr_t FsObj::getAttribute()
 
 {
     FuseFS::FuseHandle *fh = (FuseFS::FuseHandle *) handle;
-    FsObj::mig_tape_attr_t value;
-    memset(&value, 0, sizeof(mig_tape_attr_t));
+    FsObj::mig_target_attr_t value;
+    memset(&value, 0, sizeof(mig_target_attr_t));
 
     if (fgetxattr(fh->fd, Const::LTFSDM_EA_MIGINFO.c_str(), (void *) &value,
             sizeof(value)) == -1) {

@@ -307,7 +307,7 @@ void TransRecall::addJob(Connector::rec_info_t recinfo, std::string tapeId,
     SQLStatement stmt;
     std::string tapeName;
     int state;
-    FsObj::mig_tape_attr_t attr;
+    FsObj::mig_target_attr_t attr;
     std::string filename;
     bool reqExists = false;
 
