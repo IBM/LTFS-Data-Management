@@ -672,19 +672,29 @@ void Migration::changeFileState(Migration::mig_info_t mig_info,
 
         std::lock_guard<FsObj> fsolock(source);
         attr = source.getAttribute();
-        if ((source.getMigState() != FsObj::MIGRATED
-                && source.getMigState() != FsObj::PREMIGRATED)
-                && (mig_info.numRepl == 0 || attr.copies == mig_info.numRepl)) {
-            if (toState == FsObj::MIGRATED) {
-                source.prepareStubbing();
-                source.stub();
-            } else {
-                source.finishPremigration();
-            }
-            TRACE(Trace::full, mig_info.fileName);
-        } else {
-            TRACE(Trace::always, mig_info.fileName, source.getMigState());
+
+        TRACE(Trace::always, mig_info.fileName, source.getMigState());
+
+        // file already migrated
+        if (source.getMigState() == FsObj::MIGRATED)
             return;
+
+        // file already premigrated
+        if (source.getMigState() == FsObj::PREMIGRATED
+                && toState == FsObj::PREMIGRATED)
+            return;
+
+        // if not all replicas are completed
+        // mig_info.numRepl != 0 is necessary for premigrated files to migrate
+        // without specifying tape storage pools
+        if ( mig_info.numRepl != 0 && attr.copies != mig_info.numRepl )
+            return;
+
+        if (toState == FsObj::MIGRATED) {
+            source.prepareStubbing();
+            source.stub();
+        } else {
+            source.finishPremigration();
         }
 
         std::lock_guard<std::mutex> lock(Migration::pmigmtx);
