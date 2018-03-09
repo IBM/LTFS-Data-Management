@@ -48,7 +48,8 @@ private:
     static const std::string UPDATE_REQUEST;
     static const std::string UPDATE_REQUEST_RESET_TAPE;
 
-    static ThreadPool<Migration, int, std::string, std::string, std::string, bool> swq;
+    static ThreadPool<Migration, int, std::string, std::string, std::string,
+            bool> swq;
 
     req_return_t processFiles(int replNum, std::string tapeId,
             FsObj::file_state fromState, FsObj::file_state toState);
@@ -71,7 +72,8 @@ public:
             std::shared_ptr<std::list<unsigned long>> inumList,
             std::shared_ptr<bool>);
     static void changeFileState(mig_info_t mig_info,
-            std::shared_ptr<std::list<unsigned long>> inumList, FsObj::file_state toState);
+            std::shared_ptr<std::list<unsigned long>> inumList,
+            FsObj::file_state toState);
 
     Migration(unsigned long _pid, long _reqNumber, std::set<std::string> _pools,
             int _numReplica, int _targetState) :
@@ -81,6 +83,6 @@ public:
     }
     void addJob(std::string fileName);
     void addRequest();
-    void execRequest(int replNum, std::string driveId, std::string pool, std::string tapeId,
-            bool needsTape);
+    void execRequest(int replNum, std::string driveId, std::string pool,
+            std::string tapeId, bool needsTape);
 };

@@ -40,8 +40,8 @@ public:
     void updateSuccess(int reqNumber, FsObj::file_state from,
             FsObj::file_state to);
     void updateFailed(int reqNumber, FsObj::file_state from);
-    void get(int reqNumber, long *resident, long *transferred, long *premigrated, long *migrated,
-            long *failed);
+    void get(int reqNumber, long *resident, long *transferred,
+            long *premigrated, long *migrated, long *failed);
 };
 
 extern Status mrStatus;

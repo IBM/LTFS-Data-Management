@@ -96,7 +96,8 @@ public:
         return exception_info.errnum;
     }
 
-    const char* what() const noexcept {
+    const char* what() const noexcept
+    {
         return exception_info.infostr.c_str();
     }
 };

@@ -23,9 +23,11 @@ std::mutex Server::termmtx;
 std::condition_variable Server::termcond;
 Configuration Server::conf;
 
-ThreadPool<Migration::mig_info_t, std::shared_ptr<std::list<unsigned long>>, FsObj::file_state> *Server::wqs;
+ThreadPool<Migration::mig_info_t, std::shared_ptr<std::list<unsigned long>>,
+        FsObj::file_state> *Server::wqs;
 
-int Server::statTapeRetry(std::string tapeId, const char *pathname, struct stat *buf)
+int Server::statTapeRetry(std::string tapeId, const char *pathname,
+        struct stat *buf)
 
 {
     int rc;
@@ -60,7 +62,6 @@ int Server::openTapeRetry(std::string tapeId, const char *pathname, int flags)
 
     return rc;
 }
-
 
 std::string Server::getTapeName(FsObj *diskFile, std::string tapeId)
 
@@ -101,8 +102,8 @@ long Server::getStartBlock(std::string tapeName, int fd)
 
     fsync(fd);
 
-    size = fgetxattr(fd, Const::LTFS_START_BLOCK.c_str(),
-            startBlockStr, sizeof(startBlockStr));
+    size = fgetxattr(fd, Const::LTFS_START_BLOCK.c_str(), startBlockStr,
+            sizeof(startBlockStr));
 
     if (size == -1) {
         TRACE(Trace::error, tapeName, errno);
@@ -416,7 +417,8 @@ void Server::run(sigset_t set)
         inventory = new LTFSDMInventory();
         //! [inventorize]
         //! [connector]
-        connector = std::shared_ptr<Connector>(new Connector(true, &Server::conf));
+        connector = std::shared_ptr<Connector>(
+                new Connector(true, &Server::conf));
         //! [connector]
     } catch (const std::exception& e) {
         TRACE(Trace::error, e.what());
@@ -425,8 +427,9 @@ void Server::run(sigset_t set)
 
     //! [thread pool for stubbing]
     Server::wqs = new ThreadPool<Migration::mig_info_t,
-            std::shared_ptr<std::list<unsigned long>>, FsObj::file_state>(&Migration::changeFileState,
-            Const::MAX_STUBBING_THREADS, "stub1-wq");
+            std::shared_ptr<std::list<unsigned long>>, FsObj::file_state>(
+            &Migration::changeFileState, Const::MAX_STUBBING_THREADS,
+            "stub1-wq");
     //! [thread pool for stubbing]
 
     subs.enqueue("Scheduler", &Scheduler::run, &sched, key);

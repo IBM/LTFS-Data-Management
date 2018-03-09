@@ -272,9 +272,8 @@ void SelRecall::addJob(std::string fileName)
         TRACE(Trace::error, e.what());
         stmt(SelRecall::ADD_JOB) << DataBase::SELRECALL << fileName << reqNumber
                 << targetState << Const::UNSET << Const::UNSET << Const::UNSET
-                << Const::UNSET << Const::UNSET << 0
-                << 0 << time(NULL) << FsObj::FAILED
-                << Const::FAILED_TAPE_ID << 0;
+                << Const::UNSET << Const::UNSET << 0 << 0 << time(NULL)
+                << FsObj::FAILED << Const::FAILED_TAPE_ID << 0;
         MSG(LTFSDMS0017E, fileName.c_str());
     }
 
@@ -282,7 +281,8 @@ void SelRecall::addJob(std::string fileName)
 
     stmt.doall();
 
-    TRACE(Trace::always, fileName, attr.tapeInfo[0].tapeId, attr.tapeInfo[0].startBlock);
+    TRACE(Trace::always, fileName, attr.tapeInfo[0].tapeId,
+            attr.tapeInfo[0].startBlock);
 
     return;
 }
@@ -328,7 +328,8 @@ void SelRecall::addRequest()
         } else {
             thrdinfo << "SR(" << reqNumber << ")";
             subs.enqueue(thrdinfo.str(), &SelRecall::execRequest,
-                    SelRecall(getpid(), reqNumber, targetState), "", tapeId, false);
+                    SelRecall(getpid(), reqNumber, targetState), "", tapeId,
+                    false);
         }
     }
 
@@ -368,7 +369,8 @@ unsigned long SelRecall::recall(std::string fileName, std::string tapeId,
             return 0;
         } else if (state == FsObj::MIGRATED) {
             tapeName = Server::getTapeName(&target, tapeId);
-            fd = Server::openTapeRetry(tapeId, tapeName.c_str(), O_RDWR | O_CLOEXEC);
+            fd = Server::openTapeRetry(tapeId, tapeName.c_str(),
+                    O_RDWR | O_CLOEXEC);
 
             if (fd == -1) {
                 TRACE(Trace::error, errno);
@@ -451,7 +453,8 @@ bool needsTape)
 
     if (needsTape) {
         for (std::shared_ptr<LTFSDMDrive> d : inventory->getDrives()) {
-            if (d->get_le()->get_slot() == inventory->getCartridge(tapeId)->get_le()->get_slot()) {
+            if (d->get_le()->get_slot()
+                    == inventory->getCartridge(tapeId)->get_le()->get_slot()) {
                 drive = d;
                 break;
             }
@@ -547,7 +550,8 @@ bool needsTape)
     return suspended;
 }
 
-void SelRecall::execRequest(std::string driveId, std::string tapeId, bool needsTape)
+void SelRecall::execRequest(std::string driveId, std::string tapeId,
+        bool needsTape)
 
 {
     SQLStatement stmt;
@@ -566,8 +570,10 @@ void SelRecall::execRequest(std::string driveId, std::string tapeId, bool needsT
 
     if (needsTape) {
         std::lock_guard<std::recursive_mutex> lock(LTFSDMInventory::mtx);
-        if ( inventory->getCartridge(tapeId)->getState() == LTFSDMCartridge::TAPE_INUSE)
-            inventory->getCartridge(tapeId)->setState(LTFSDMCartridge::TAPE_MOUNTED);
+        if (inventory->getCartridge(tapeId)->getState()
+                == LTFSDMCartridge::TAPE_INUSE)
+            inventory->getCartridge(tapeId)->setState(
+                    LTFSDMCartridge::TAPE_MOUNTED);
 
         inventory->getDrive(driveId)->setFree();
         inventory->getDrive(driveId)->clearToUnblock();

@@ -139,7 +139,8 @@ void MessageParser::getObjects(LTFSDmCommServer *command, long localReqNumber,
                             || e.getErrno() == SQLITE_CONSTRAINT_UNIQUE)
                         MSG(LTFSDMS0019E, filename.filename().c_str());
                     else
-                        MSG(LTFSDMS0015E, filename.filename().c_str(), e.what());
+                        MSG(LTFSDMS0015E, filename.filename().c_str(),
+                                e.what());
                 } catch (const std::exception& e) {
                     TRACE(Trace::error, e.what());
                 }
@@ -202,8 +203,8 @@ void MessageParser::reqStatusMessage(long key, LTFSDmCommServer *command,
         requestNumber = reqstatus.reqnumber();
         pid = reqstatus.pid();
 
-        done = fopt->queryResult(requestNumber, &resident, &transferred, &premigrated,
-                &migrated, &failed);
+        done = fopt->queryResult(requestNumber, &resident, &transferred,
+                &premigrated, &migrated, &failed);
 
         LTFSDmProtocol::LTFSDmReqStatusResp *reqstatusresp =
                 command->mutable_reqstatusresp();

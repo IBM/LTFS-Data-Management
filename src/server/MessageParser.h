@@ -61,5 +61,6 @@ public:
     ~MessageParser()
     {
     }
-    static void run(long key, LTFSDmCommServer command, std::shared_ptr<Connector> connector);
+    static void run(long key, LTFSDmCommServer command,
+            std::shared_ptr<Connector> connector);
 };

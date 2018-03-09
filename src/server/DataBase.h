@@ -98,11 +98,12 @@ private:
 
 public:
     SQLStatement() :
-        fmtstr(""), stmt(nullptr), fmt(""), stmt_rc(0)
+            fmtstr(""), stmt(nullptr), fmt(""), stmt_rc(0)
     {
     }
     SQLStatement(std::string _fmtstr) :
-        fmtstr(_fmtstr), stmt(nullptr), fmt(boost::format(fmtstr)), stmt_rc(0)
+            fmtstr(_fmtstr), stmt(nullptr), fmt(boost::format(fmtstr)), stmt_rc(
+                    0)
     {
     }
     SQLStatement& operator()(std::string _fmtstr);
@@ -115,8 +116,7 @@ public:
     {
         try {
             fmt % static_cast<long>(llu);
-        }
-        catch (const std::exception& e) {
+        } catch (const std::exception& e) {
             MSG(LTFSDMS0102E);
             THROW(Error::GENERAL_ERROR, e.what(), fmtstr);
         }
@@ -127,8 +127,7 @@ public:
     {
         try {
             fmt % static_cast<long>(lu);
-        }
-        catch (const std::exception& e) {
+        } catch (const std::exception& e) {
             MSG(LTFSDMS0102E);
             THROW(Error::GENERAL_ERROR, e.what(), fmtstr);
         }
@@ -140,8 +139,7 @@ public:
     {
         try {
             fmt % encode(s);
-        }
-        catch (const std::exception& e) {
+        } catch (const std::exception& e) {
             MSG(LTFSDMS0102E);
             THROW(Error::GENERAL_ERROR, e.what(), fmtstr);
         }
@@ -153,8 +151,7 @@ public:
     {
         try {
             fmt % static_cast<int>(u);
-        }
-        catch (const std::exception& e) {
+        } catch (const std::exception& e) {
             MSG(LTFSDMS0102E);
             THROW(Error::GENERAL_ERROR, e.what(), fmtstr);
         }
@@ -167,8 +164,7 @@ public:
     {
         try {
             fmt % (s);
-        }
-        catch (const std::exception& e) {
+        } catch (const std::exception& e) {
             MSG(LTFSDMS0102E);
             THROW(Error::GENERAL_ERROR, e.what(), fmtstr);
         }

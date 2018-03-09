@@ -145,8 +145,8 @@ void Status::updateFailed(int reqNumber, FsObj::file_state from)
     allStates[reqNumber] = state;
 }
 
-void Status::get(int reqNumber, long *resident, long *transferred, long *premigrated,
-        long *migrated, long *failed)
+void Status::get(int reqNumber, long *resident, long *transferred,
+        long *premigrated, long *migrated, long *failed)
 
 {
     std::lock_guard<std::mutex> lock(Status::mtx);

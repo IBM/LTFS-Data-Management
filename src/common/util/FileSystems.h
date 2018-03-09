@@ -55,6 +55,7 @@ public:
     ~FileSystems();
     std::vector<FileSystems::fsinfo> getAll();
     FileSystems::fsinfo getByTarget(std::string target);
-    void mount(std::string source, std::string target, std::string options, mountflag flag);
+    void mount(std::string source, std::string target, std::string options,
+            mountflag flag);
     void umount(std::string target, umountflag flag);
 };

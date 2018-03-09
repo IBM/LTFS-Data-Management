@@ -38,7 +38,10 @@ public:
             std::shared_ptr<std::list<unsigned long>>, std::shared_ptr<bool>> *wqp;
     LTFSDMDrive(boost::shared_ptr<Drive> d);
     ~LTFSDMDrive();
-    boost::shared_ptr<Drive> get_le() { return drive; }
+    boost::shared_ptr<Drive> get_le()
+    {
+        return drive;
+    }
     void update();
     bool isBusy();
     void setBusy();
@@ -69,7 +72,10 @@ public:
         TAPE_UNKNOWN
     } state;
     LTFSDMCartridge(boost::shared_ptr<Cartridge> c);
-    boost::shared_ptr<Cartridge> get_le() { return cart; }
+    boost::shared_ptr<Cartridge> get_le()
+    {
+        return cart;
+    }
     void update();
     void setInProgress(unsigned long size);
     unsigned long getInProgress();
@@ -91,7 +97,7 @@ private:
     boost::shared_ptr<LTFSNode> node;
     std::string mountPoint;
 
-    void connect(std::string node_addr, unsigned short int  port_num);
+    void connect(std::string node_addr, unsigned short int port_num);
     void disconnect();
     void getNode();
 
@@ -99,7 +105,8 @@ private:
     void remDrive(boost::shared_ptr<Drive> drive);
     void lookupDrives(bool assigned_only = true, bool force = false);
     void addCartridge(std::string barcode, std::string drive_serial);
-    void remCartridge(boost::shared_ptr<Cartridge> cartridge, bool keep_on_drive = false);
+    void remCartridge(boost::shared_ptr<Cartridge> cartridge,
+            bool keep_on_drive = false);
     void lookupCartridges(bool assigned_only = true, bool force = false);
 public:
     LTFSDMInventory();
@@ -108,7 +115,8 @@ public:
     static std::recursive_mutex mtx;
 
     boost::shared_ptr<Drive> lookupDrive(std::string id, bool force = false);
-    boost::shared_ptr<Cartridge> lookupCartridge(std::string id, bool force = false);
+    boost::shared_ptr<Cartridge> lookupCartridge(std::string id, bool force =
+            false);
     void updateCartridge(std::string tapeId);
     void inventorize();
 

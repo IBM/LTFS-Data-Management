@@ -68,7 +68,8 @@ bool FileOperation::queryResult(long reqNumber, long *resident,
         }
     } while (!done && time(NULL) - starttime < 10);
 
-    mrStatus.get(reqNumber, resident, transferred, premigrated, migrated, failed);
+    mrStatus.get(reqNumber, resident, transferred, premigrated, migrated,
+            failed);
 
     if (done) {
         mrStatus.remove(reqNumber);

@@ -17,8 +17,8 @@
 #include "ServerIncludes.h"
 
 LTFSDMCartridge::LTFSDMCartridge(boost::shared_ptr<Cartridge> c) :
-            cart(c), inProgress(0), pool(""), requested(false),
-            state(LTFSDMCartridge::TAPE_UNKNOWN)
+        cart(c), inProgress(0), pool(""), requested(false), state(
+                LTFSDMCartridge::TAPE_UNKNOWN)
 {
 }
 

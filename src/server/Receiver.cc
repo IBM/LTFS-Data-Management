@@ -67,8 +67,8 @@ void Receiver::run(long key, std::shared_ptr<Connector> connector)
 {
     MessageParser mproc;
     std::unique_lock<std::mutex> lock(Server::termmtx);
-    ThreadPool<long, LTFSDmCommServer, std::shared_ptr<Connector>> wqm(&MessageParser::run,
-            Const::MAX_RECEIVER_THREADS, "msg-wq");
+    ThreadPool<long, LTFSDmCommServer, std::shared_ptr<Connector>> wqm(
+            &MessageParser::run, Const::MAX_RECEIVER_THREADS, "msg-wq");
     LTFSDmCommServer command(Const::CLIENT_SOCKET_FILE);
 
     TRACE(Trace::full, __PRETTY_FUNCTION__);

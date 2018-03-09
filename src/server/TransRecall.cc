@@ -351,8 +351,7 @@ void TransRecall::addJob(Connector::rec_info_t recinfo, std::string tapeId,
             << Const::UNSET << statbuf.st_size << recinfo.fuid.fsid_h
             << recinfo.fuid.fsid_l << recinfo.fuid.igen << recinfo.fuid.inum
             << statbuf.st_mtime << 0 << time(NULL) << state << tapeId
-            << attr.tapeInfo[0].startBlock
-            << (std::intptr_t) recinfo.conn_info;
+            << attr.tapeInfo[0].startBlock << (std::intptr_t) recinfo.conn_info;
 
     TRACE(Trace::normal, stmt.str());
 
@@ -554,7 +553,8 @@ unsigned long TransRecall::recall(Connector::rec_info_t recinfo,
             tapeName = Server::getTapeName(recinfo.fuid.fsid_h,
                     recinfo.fuid.fsid_l, recinfo.fuid.igen, recinfo.fuid.inum,
                     tapeId);
-            fd = Server::openTapeRetry(tapeId, tapeName.c_str(), O_RDWR | O_CLOEXEC);
+            fd = Server::openTapeRetry(tapeId, tapeName.c_str(),
+                    O_RDWR | O_CLOEXEC);
 
             if (fd == -1) {
                 TRACE(Trace::error, errno);
@@ -686,7 +686,8 @@ void TransRecall::processFiles(int reqNum, std::string tapeId)
         Connector::respondRecallEvent(respinfo.recinfo, respinfo.succeeded);
 }
 
-void TransRecall::execRequest(int reqNum, std::string driveId, std::string tapeId)
+void TransRecall::execRequest(int reqNum, std::string driveId,
+        std::string tapeId)
 
 {
     SQLStatement stmt;
@@ -701,8 +702,10 @@ void TransRecall::execRequest(int reqNum, std::string driveId, std::string tapeI
     {
         std::lock_guard<std::recursive_mutex> inventorylock(
                 LTFSDMInventory::mtx);
-        if ( inventory->getCartridge(tapeId)->getState() == LTFSDMCartridge::TAPE_INUSE)
-            inventory->getCartridge(tapeId)->setState(LTFSDMCartridge::TAPE_MOUNTED);
+        if (inventory->getCartridge(tapeId)->getState()
+                == LTFSDMCartridge::TAPE_INUSE)
+            inventory->getCartridge(tapeId)->setState(
+                    LTFSDMCartridge::TAPE_MOUNTED);
 
         inventory->getDrive(driveId)->setFree();
     }

@@ -233,22 +233,23 @@ public:
         unsigned long typeId;
         bool added;
         int copies;
-        struct {
+        struct
+        {
             char tapeId[Const::tapeIdLength + 1];
             long startBlock;
         } tapeInfo[Const::maxReplica];
     };
     enum file_state
     {
-        RESIDENT,  /**< 0 */
-        PREMIGRATED,  /**< 1 */
-        MIGRATED,  /**< 2 */
-        FAILED,  /**< 3 */
-        TRANSFERRING,  /**< 4 */
+        RESIDENT, /**< 0 */
+        PREMIGRATED, /**< 1 */
+        MIGRATED, /**< 2 */
+        FAILED, /**< 3 */
+        TRANSFERRING, /**< 4 */
         TRANSFERRED, /**< 5 */
-        CHANGINGFSTATE,  /**< 6 */
-        RECALLING_MIG,  /**< 7 */
-        RECALLING_PREMIG  /**< 8 */
+        CHANGINGFSTATE, /**< 6 */
+        RECALLING_MIG, /**< 7 */
+        RECALLING_PREMIG /**< 8 */
     };
     static std::string migStateStr(long migstate)
     {
@@ -275,8 +276,8 @@ public:
         }
     }
     FsObj(void *_handle, unsigned long _handleLength) :
-            handle(_handle), handleLength(_handleLength),
-            isLocked(false), handleFree(false)
+            handle(_handle), handleLength(_handleLength), isLocked(false), handleFree(
+                    false)
     {
     }
     FsObj(std::string fileName);

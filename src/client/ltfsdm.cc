@@ -59,7 +59,6 @@
 #include "VersionCommand.h"
 
 
-
 /**
  @page client_code Client Code
 
@@ -154,7 +153,7 @@ void signalHandler(sigset_t set)
 
     while ( true) {
         if (sigwait(&set, &sig)) {
-            if ( sig == SIGUSR1 )
+            if (sig == SIGUSR1)
                 return;
             continue;
         }
@@ -208,8 +207,7 @@ int main(int argc, char *argv[])
     } else if (AddCommand().compare(command)) {
         ltfsdmCommand = std::unique_ptr<LTFSDMCommand>(new AddCommand);
     } else if (MigrateCommand().compare(command)) {
-        ltfsdmCommand =
-                std::unique_ptr<LTFSDMCommand>(new MigrateCommand);
+        ltfsdmCommand = std::unique_ptr<LTFSDMCommand>(new MigrateCommand);
     } else if (RecallCommand().compare(command)) {
         ltfsdmCommand = std::unique_ptr<LTFSDMCommand>(new RecallCommand);
     } else if (HelpCommand().compare(command)) {
@@ -232,26 +230,24 @@ int main(int argc, char *argv[])
         command = argv[1];
         TRACE(Trace::normal, command.c_str());
         if (InfoRequestsCommand().compare(command)) {
-            ltfsdmCommand =
-                    std::unique_ptr<LTFSDMCommand>(new InfoRequestsCommand);
+            ltfsdmCommand = std::unique_ptr<LTFSDMCommand>(
+                    new InfoRequestsCommand);
         } else if (InfoJobsCommand().compare(command)) {
-            ltfsdmCommand =
-                    std::unique_ptr<LTFSDMCommand>(new InfoJobsCommand);
+            ltfsdmCommand = std::unique_ptr<LTFSDMCommand>(new InfoJobsCommand);
         } else if (InfoFilesCommand().compare(command)) {
-            ltfsdmCommand =
-                    std::unique_ptr<LTFSDMCommand>(new InfoFilesCommand);
+            ltfsdmCommand = std::unique_ptr<LTFSDMCommand>(
+                    new InfoFilesCommand);
         } else if (InfoFsCommand().compare(command)) {
-            ltfsdmCommand =
-                    std::unique_ptr<LTFSDMCommand>(new InfoFsCommand);
+            ltfsdmCommand = std::unique_ptr<LTFSDMCommand>(new InfoFsCommand);
         } else if (InfoDrivesCommand().compare(command)) {
-            ltfsdmCommand =
-                    std::unique_ptr<LTFSDMCommand>(new InfoDrivesCommand);
+            ltfsdmCommand = std::unique_ptr<LTFSDMCommand>(
+                    new InfoDrivesCommand);
         } else if (InfoTapesCommand().compare(command)) {
-            ltfsdmCommand =
-                    std::unique_ptr<LTFSDMCommand>(new InfoTapesCommand);
+            ltfsdmCommand = std::unique_ptr<LTFSDMCommand>(
+                    new InfoTapesCommand);
         } else if (InfoPoolsCommand().compare(command)) {
-            ltfsdmCommand =
-                    std::unique_ptr<LTFSDMCommand>(new InfoPoolsCommand);
+            ltfsdmCommand = std::unique_ptr<LTFSDMCommand>(
+                    new InfoPoolsCommand);
         } else {
             MSG(LTFSDMC0012E, command.c_str());
             ltfsdmCommand = std::unique_ptr<LTFSDMCommand>(new HelpCommand);
@@ -270,17 +266,16 @@ int main(int argc, char *argv[])
         command = argv[1];
         TRACE(Trace::normal, command.c_str());
         if (PoolCreateCommand().compare(command)) {
-            ltfsdmCommand =
-                    std::unique_ptr<LTFSDMCommand>(new PoolCreateCommand);
+            ltfsdmCommand = std::unique_ptr<LTFSDMCommand>(
+                    new PoolCreateCommand);
         } else if (PoolDeleteCommand().compare(command)) {
-            ltfsdmCommand =
-                    std::unique_ptr<LTFSDMCommand>(new PoolDeleteCommand);
+            ltfsdmCommand = std::unique_ptr<LTFSDMCommand>(
+                    new PoolDeleteCommand);
         } else if (PoolAddCommand().compare(command)) {
-            ltfsdmCommand =
-                    std::unique_ptr<LTFSDMCommand>(new PoolAddCommand);
+            ltfsdmCommand = std::unique_ptr<LTFSDMCommand>(new PoolAddCommand);
         } else if (PoolRemoveCommand().compare(command)) {
-            ltfsdmCommand =
-                    std::unique_ptr<LTFSDMCommand>(new PoolRemoveCommand);
+            ltfsdmCommand = std::unique_ptr<LTFSDMCommand>(
+                    new PoolRemoveCommand);
         } else {
             MSG(LTFSDMC0012E, command.c_str());
             ltfsdmCommand = std::unique_ptr<LTFSDMCommand>(new HelpCommand);

@@ -186,7 +186,8 @@ private:
     void msgOut(ltfsdm_msg_id msg, char *filename, int linenr, Args ... args)
 
     {
-        std::string fmtstr = ltfsdm_msgname[msg] + "(%04d): " + ltfsdm_messages[msg];
+        std::string fmtstr = ltfsdm_msgname[msg] + "(%04d): "
+                + ltfsdm_messages[msg];
         boost::format fmter(fmtstr);
         fmter.exceptions(boost::io::all_error_bits);
 
@@ -195,15 +196,17 @@ private:
             processParms(&fmter, args ...);
             writeOut(fmter.str());
         } catch (const std::exception& e) {
-            std::cerr << ltfsdm_messages[LTFSDMX0005E] << " (" << ltfsdm_msgname[msg] << ":"
-                    << filename << ":" << std::setfill('0') << std::setw(4)
-                    << linenr << ")" << std::endl;
+            std::cerr << ltfsdm_messages[LTFSDMX0005E] << " ("
+                    << ltfsdm_msgname[msg] << ":" << filename << ":"
+                    << std::setfill('0') << std::setw(4) << linenr << ")"
+                    << std::endl;
         }
     }
     template<typename ... Args>
     void msgLog(ltfsdm_msg_id msg, char *filename, int linenr, Args ... args)
     {
-        std::string fmtstr = ltfsdm_msgname[msg] + "(%04d): " + ltfsdm_messages[msg];
+        std::string fmtstr = ltfsdm_msgname[msg] + "(%04d): "
+                + ltfsdm_messages[msg];
         boost::format fmter(fmtstr);
         fmter.exceptions(boost::io::all_error_bits);
 
@@ -212,9 +215,10 @@ private:
             processParms(&fmter, args ...);
             writeLog(fmter.str());
         } catch (const std::exception& e) {
-            std::cerr << ltfsdm_messages[LTFSDMX0005E] << " (" << ltfsdm_msgname[msg] << ":"
-                    << filename << ":" << std::setfill('0') << std::setw(4)
-                    << linenr << ")" << std::endl;
+            std::cerr << ltfsdm_messages[LTFSDMX0005E] << " ("
+                    << ltfsdm_msgname[msg] << ":" << filename << ":"
+                    << std::setfill('0') << std::setw(4) << linenr << ")"
+                    << std::endl;
         }
     }
 
@@ -257,8 +261,8 @@ public:
             processParms(&fmter, args ...);
             writeOut(fmter.str());
         } catch (const std::exception& e) {
-            std::cerr << ltfsdm_messages[LTFSDMX0005E] << " (" << filename << ":"
-                    << std::setfill('0') << std::setw(4) << linenr << ")"
+            std::cerr << ltfsdm_messages[LTFSDMX0005E] << " (" << filename
+                    << ":" << std::setfill('0') << std::setw(4) << linenr << ")"
                     << std::endl;
             exit((int) Error::GENERAL_ERROR);
         }

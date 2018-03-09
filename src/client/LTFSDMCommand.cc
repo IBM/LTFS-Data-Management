@@ -323,8 +323,8 @@ void LTFSDMCommand::queryResults()
                 INFO(LTFSDMC0046I);
                 first = false;
             }
-            INFO(LTFSDMC0045I, curctime, resident, transferred, premigrated, migrated,
-                    failed);
+            INFO(LTFSDMC0045I, curctime, resident, transferred, premigrated,
+                    migrated, failed);
         } else {
             MSG(LTFSDMC0029E);
             THROW(Error::GENERAL_ERROR);

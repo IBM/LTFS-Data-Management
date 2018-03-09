@@ -197,13 +197,15 @@ void FsObj::manageFs(bool setDispo, struct timespec starttime)
 
     TRACE(Trace::always, fh->mountpoint);
 
-    FuseConnector::managedFss.emplace(fh->mountpoint, std::unique_ptr<FuseFS>(new FuseFS(fh->mountpoint)));
+    FuseConnector::managedFss.emplace(fh->mountpoint,
+            std::unique_ptr<FuseFS>(new FuseFS(fh->mountpoint)));
 
     try {
         FuseConnector::managedFss[fh->mountpoint]->init(starttime);
     } catch (const std::exception& e) {
         TRACE(Trace::error, e.what());
-        FuseConnector::managedFss.erase(FuseConnector::managedFss.find(fh->mountpoint));
+        FuseConnector::managedFss.erase(
+                FuseConnector::managedFss.find(fh->mountpoint));
         THROW(Error::GENERAL_ERROR);
     }
 
@@ -364,12 +366,13 @@ void FsObj::addTapeAttr(std::string tapeId, long startBlock)
 
     attr = getAttribute();
     memset(attr.tapeInfo[attr.copies].tapeId, 0, Const::tapeIdLength + 1);
-    strncpy(attr.tapeInfo[attr.copies].tapeId, tapeId.c_str(), Const::tapeIdLength);
+    strncpy(attr.tapeInfo[attr.copies].tapeId, tapeId.c_str(),
+            Const::tapeIdLength);
     attr.tapeInfo[attr.copies].startBlock = startBlock;
     attr.copies++;
 
-    if (fsetxattr(fh->fd, Const::LTFSDM_EA_MIGINFO.c_str(),
-            (void *) &attr, sizeof(attr), 0) == -1) {
+    if (fsetxattr(fh->fd, Const::LTFSDM_EA_MIGINFO.c_str(), (void *) &attr,
+            sizeof(attr), 0) == -1) {
         TRACE(Trace::error, errno);
         THROW(Error::GENERAL_ERROR, errno, fh->fusepath);
     }
@@ -402,8 +405,8 @@ FsObj::mig_attr_t FsObj::getAttribute()
     FsObj::mig_attr_t value;
     memset(&value, 0, sizeof(mig_attr_t));
 
-    if (fgetxattr(fh->fd, Const::LTFSDM_EA_MIGINFO.c_str(),
-            (void *) &value, sizeof(value)) == -1) {
+    if (fgetxattr(fh->fd, Const::LTFSDM_EA_MIGINFO.c_str(), (void *) &value,
+            sizeof(value)) == -1) {
         if ( errno != ENODATA) {
             TRACE(Trace::error, errno);
             THROW(Error::GENERAL_ERROR, errno, fh->fusepath);
@@ -456,8 +459,7 @@ void FsObj::finishRecall(FsObj::file_state fstate)
         FuseFS::setMigInfoAt(fh->fd, FuseFS::mig_info::state_num::PREMIGRATED);
     } else {
         miginfo = FuseFS::getMigInfoAt(fh->fd);
-        const timespec timestamp[2] = { miginfo.atime,
-                miginfo.mtime };
+        const timespec timestamp[2] = { miginfo.atime, miginfo.mtime };
 
         if (futimens(fh->fd, timestamp) == -1)
             MSG(LTFSDMF0017E, fh->fusepath);
@@ -535,9 +537,8 @@ FsObj::file_state FsObj::getMigState()
 
     try {
         miginfo = FuseFS::getMigInfoAt(fh->fd);
-    }
-    catch ( const LTFSDMException& e) {
-        if ( e.getError() == Error::ATTR_FORMAT ) {
+    } catch (const LTFSDMException& e) {
+        if (e.getError() == Error::ATTR_FORMAT) {
             MSG(LTFSDMF0034E, fh->mountpoint, fh->fusepath);
         }
         THROW(Error::GENERAL_ERROR, fh->fusepath);

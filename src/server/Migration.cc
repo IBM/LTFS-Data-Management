@@ -436,8 +436,8 @@ void Migration::addJob(std::string fileName)
         TRACE(Trace::error, e.what());
         stmt(Migration::ADD_JOB) << DataBase::MIGRATION << fileName << reqNumber
                 << targetState << Const::UNSET << Const::UNSET << Const::UNSET
-                << Const::UNSET << Const::UNSET << 0
-                << 0 << time(NULL) << FsObj::FAILED;
+                << Const::UNSET << Const::UNSET << 0 << 0 << time(NULL)
+                << FsObj::FAILED;
     }
 
     replNum = Const::UNSET;
@@ -536,7 +536,8 @@ unsigned long Migration::transferData(std::string tapeId, std::string driveId,
 
         Server::createDataDir(tapeId);
 
-        fd = Server::openTapeRetry(tapeId, tapeName.c_str(), O_RDWR | O_CREAT | O_TRUNC | O_CLOEXEC);
+        fd = Server::openTapeRetry(tapeId, tapeName.c_str(),
+                O_RDWR | O_CREAT | O_TRUNC | O_CLOEXEC);
 
         if (fd == -1) {
             TRACE(Trace::error, errno);
@@ -659,7 +660,8 @@ unsigned long Migration::transferData(std::string tapeId, std::string driveId,
 }
 
 void Migration::changeFileState(Migration::mig_info_t mig_info,
-        std::shared_ptr<std::list<unsigned long>> inumList, FsObj::file_state toState)
+        std::shared_ptr<std::list<unsigned long>> inumList,
+        FsObj::file_state toState)
 
 {
     try {
@@ -670,9 +672,10 @@ void Migration::changeFileState(Migration::mig_info_t mig_info,
 
         std::lock_guard<FsObj> fsolock(source);
         attr = source.getAttribute();
-        if ((source.getMigState() != FsObj::MIGRATED && source.getMigState() != FsObj::PREMIGRATED)
+        if ((source.getMigState() != FsObj::MIGRATED
+                && source.getMigState() != FsObj::PREMIGRATED)
                 && (mig_info.numRepl == 0 || attr.copies == mig_info.numRepl)) {
-            if ( toState == FsObj::MIGRATED) {
+            if (toState == FsObj::MIGRATED) {
                 source.prepareStubbing();
                 source.stub();
             } else {
@@ -736,7 +739,8 @@ Migration::req_return_t Migration::processFiles(int replNum, std::string tapeId,
 
     if (toState == FsObj::TRANSFERRED) {
         for (std::shared_ptr<LTFSDMDrive> d : inventory->getDrives()) {
-            if (d->get_le()->get_slot() == inventory->getCartridge(tapeId)->get_le()->get_slot()) {
+            if (d->get_le()->get_slot()
+                    == inventory->getCartridge(tapeId)->get_le()->get_slot()) {
                 drive = d;
                 break;
             }
@@ -749,8 +753,9 @@ Migration::req_return_t Migration::processFiles(int replNum, std::string tapeId,
                     FsObj::TRANSFERRING : FsObj::CHANGINGFSTATE);
 
     if (toState == FsObj::TRANSFERRED) {
-        freeSpace = 1024 * 1024
-                * inventory->getCartridge(tapeId)->get_le()->get_remaining_cap();
+        freeSpace =
+                1024 * 1024
+                        * inventory->getCartridge(tapeId)->get_le()->get_remaining_cap();
         stmt(Migration::SET_TRANSFERRING) << newState << tapeId << reqNumber
                 << fromState << replNum << (unsigned long) &freeSpace
                 << (unsigned long) &num_found << (unsigned long) &total;
@@ -786,8 +791,9 @@ Migration::req_return_t Migration::processFiles(int replNum, std::string tapeId,
                     break;
                 }
                 TRACE(Trace::full, secs, nsecs);
-                drive->wqp->enqueue(reqNumber, tapeId, drive->get_le()->GetObjectID(),
-                        secs, nsecs, mig_info, inumList, suspended);
+                drive->wqp->enqueue(reqNumber, tapeId,
+                        drive->get_le()->GetObjectID(), secs, nsecs, mig_info,
+                        inumList, suspended);
             } else {
                 Server::wqs->enqueue(reqNumber, mig_info, inumList, toState);
             }
@@ -821,8 +827,8 @@ Migration::req_return_t Migration::processFiles(int replNum, std::string tapeId,
     if (*suspended == true)
         retval.suspended = true;
 
-    stmt(Migration::SET_JOB_SUCCESS) << toState << reqNumber << newState << tapeId
-            << genInumString(*inumList);
+    stmt(Migration::SET_JOB_SUCCESS) << toState << reqNumber << newState
+            << tapeId << genInumString(*inumList);
     TRACE(Trace::normal, stmt.str());
     steptime = time(NULL);
     stmt.doall();
@@ -848,8 +854,9 @@ Migration::req_return_t Migration::processFiles(int replNum, std::string tapeId,
  * @bug needsTape vs. Migration::needsTape
  *
  */
-void Migration::execRequest(int replNum, std::string driveId, std::string pool, std::string tapeId,
-bool needsTape)
+void Migration::execRequest(int replNum, std::string driveId, std::string pool,
+        std::string tapeId,
+        bool needsTape)
 
 {
     TRACE(Trace::full, __PRETTY_FUNCTION__);
@@ -868,10 +875,9 @@ bool needsTape)
                 FsObj::TRANSFERRED);
 
         try {
-            if ((rc = inventory->getCartridge(tapeId)->get_le()->Sync()) != 0 )
+            if ((rc = inventory->getCartridge(tapeId)->get_le()->Sync()) != 0)
                 THROW(Error::GENERAL_ERROR, rc);
-        }
-        catch (const std::exception& e) {
+        } catch (const std::exception& e) {
             TRACE(Trace::error, errno);
             MSG(LTFSDMS0024E, tapeId);
 
@@ -893,8 +899,10 @@ bool needsTape)
         inventory->update(inventory->getCartridge(tapeId));
 
         std::lock_guard<std::recursive_mutex> lock(LTFSDMInventory::mtx);
-        if ( inventory->getCartridge(tapeId)->getState() == LTFSDMCartridge::TAPE_INUSE)
-            inventory->getCartridge(tapeId)->setState(LTFSDMCartridge::TAPE_MOUNTED);
+        if (inventory->getCartridge(tapeId)->getState()
+                == LTFSDMCartridge::TAPE_INUSE)
+            inventory->getCartridge(tapeId)->setState(
+                    LTFSDMCartridge::TAPE_MOUNTED);
 
         inventory->getDrive(driveId)->setFree();
         inventory->getDrive(driveId)->clearToUnblock();
@@ -903,15 +911,17 @@ bool needsTape)
     }
 
     if (!failed) {
-        if ( targetState == LTFSDmProtocol::LTFSDmMigRequest::MIGRATED ) {
-            if ( needsTape )
-                processFiles(replNum, tapeId, FsObj::TRANSFERRED, FsObj::MIGRATED);
+        if (targetState == LTFSDmProtocol::LTFSDmMigRequest::MIGRATED) {
+            if (needsTape)
+                processFiles(replNum, tapeId, FsObj::TRANSFERRED,
+                        FsObj::MIGRATED);
             else
-                processFiles(replNum, tapeId, FsObj::PREMIGRATED, FsObj::MIGRATED);
-        }
-        else {
-            if ( needsTape )
-                processFiles(replNum, tapeId, FsObj::TRANSFERRED, FsObj::PREMIGRATED);
+                processFiles(replNum, tapeId, FsObj::PREMIGRATED,
+                        FsObj::MIGRATED);
+        } else {
+            if (needsTape)
+                processFiles(replNum, tapeId, FsObj::TRANSFERRED,
+                        FsObj::PREMIGRATED);
         }
     }
 

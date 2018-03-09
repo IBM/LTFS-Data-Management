@@ -209,8 +209,10 @@ bool Scheduler::poolResAvail(unsigned long minFileSize)
                     drive->setBusy();
                     drive->setUnmountReqNum(reqNum);
                     cart->setState(LTFSDMCartridge::TAPE_MOVING);
-                    subs.enqueue(std::string("m:") + cart->get_le()->GetObjectID(), mount,
-                            drive->get_le()->GetObjectID(), cart->get_le()->GetObjectID());
+                    subs.enqueue(
+                            std::string("m:") + cart->get_le()->GetObjectID(),
+                            mount, drive->get_le()->GetObjectID(),
+                            cart->get_le()->GetObjectID());
                     return false;
                 }
             }
@@ -236,8 +238,10 @@ bool Scheduler::poolResAvail(unsigned long minFileSize)
                 drive->setBusy();
                 drive->setUnmountReqNum(reqNum);
                 card->setState(LTFSDMCartridge::TAPE_MOVING);
-                subs.enqueue(std::string("unm:") + card->get_le()->GetObjectID(), unmount,
-                        drive->get_le()->GetObjectID(), card->get_le()->GetObjectID());
+                subs.enqueue(
+                        std::string("unm:") + card->get_le()->GetObjectID(),
+                        unmount, drive->get_le()->GetObjectID(),
+                        card->get_le()->GetObjectID());
                 return false;
             }
         }
@@ -332,8 +336,10 @@ bool Scheduler::tapeResAvail()
                 drive->setUnmountReqNum(reqNum);
                 card->setState(LTFSDMCartridge::TAPE_MOVING);
                 inventory->getCartridge(tapeId)->unsetRequested();
-                subs.enqueue(std::string("unm:") + card->get_le()->GetObjectID(), unmount,
-                        drive->get_le()->GetObjectID(), card->get_le()->GetObjectID());
+                subs.enqueue(
+                        std::string("unm:") + card->get_le()->GetObjectID(),
+                        unmount, drive->get_le()->GetObjectID(),
+                        card->get_le()->GetObjectID());
                 return false;
             }
         }
@@ -431,7 +437,8 @@ void Scheduler::run(long key)
 
                     subs.enqueue(thrdinfo.str(), &Migration::execRequest,
                             Migration(getpid(), reqNum, { }, numRepl, tgtState),
-                            replNum, driveId, pool, tapeId, true /* needsTape */);
+                            replNum, driveId, pool, tapeId,
+                            true /* needsTape */);
                     break;
                 case DataBase::SELRECALL:
                     updstmt(Scheduler::UPDATE_REC_REQUEST)
@@ -440,7 +447,8 @@ void Scheduler::run(long key)
 
                     thrdinfo << "SR(" << reqNum << ")";
                     subs.enqueue(thrdinfo.str(), &SelRecall::execRequest,
-                            SelRecall(getpid(), reqNum, tgtState), driveId, tapeId,
+                            SelRecall(getpid(), reqNum, tgtState), driveId,
+                            tapeId,
                             true /* needsTape */);
                     break;
                 case DataBase::TRARECALL:

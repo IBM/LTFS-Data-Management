@@ -21,9 +21,11 @@ using namespace ltfsadmin;
 LTFSDMInventory *inventory = NULL;
 std::recursive_mutex LTFSDMInventory::mtx;
 
-void LTFSDMInventory::connect(std::string node_addr, unsigned short int port_num)
+void LTFSDMInventory::connect(std::string node_addr,
+        unsigned short int port_num)
 {
-    sess = boost::shared_ptr<LTFSAdminSession>(new LTFSAdminSession(node_addr, port_num));
+    sess = boost::shared_ptr<LTFSAdminSession>(
+            new LTFSAdminSession(node_addr, port_num));
 
     if (sess) {
         MSG(LTFSDML0001I, node_addr.c_str(), port_num);
@@ -41,7 +43,8 @@ void LTFSDMInventory::connect(std::string node_addr, unsigned short int port_num
 void LTFSDMInventory::disconnect()
 {
     if (sess) {
-        MSG(LTFSDML0005I, sess->get_server().c_str(), sess->get_port(), sess->get_fd());
+        MSG(LTFSDML0005I, sess->get_server().c_str(), sess->get_port(),
+                sess->get_fd());
         try {
             try {
                 sess->SessionLogout();
@@ -50,7 +53,7 @@ void LTFSDMInventory::disconnect()
             }
             sess->Disconnect();
             MSG(LTFSDML0006I, sess->get_server().c_str(), sess->get_port());
-        } catch ( AdminLibException& e ) {
+        } catch (AdminLibException& e) {
             MSG(LTFSDML0019E);
         }
     }
@@ -62,40 +65,47 @@ void LTFSDMInventory::getNode()
 
     if (sess && sess->is_alived()) {
         try {
-            std::list<boost::shared_ptr <LTFSNode> > node_list;
+            std::list<boost::shared_ptr<LTFSNode> > node_list;
             sess->SessionInventory(node_list);
-            MSG(LTFSDML0007I, "node", sess->get_server().c_str(), sess->get_port(), sess->get_fd());
+            MSG(LTFSDML0007I, "node", sess->get_server().c_str(),
+                    sess->get_port(), sess->get_fd());
             if (node_list.size() == 1) {
-                MSG(LTFSDML0008I, "node", sess->get_server().c_str(), sess->get_port(), sess->get_fd());
+                MSG(LTFSDML0008I, "node", sess->get_server().c_str(),
+                        sess->get_port(), sess->get_fd());
                 node = *(node_list.begin());
             } else
-                MSG(LTFSDML0009E, node_list.size(), sess->get_server().c_str(), sess->get_port(), sess->get_fd());
-        } catch ( AdminLibException& e ) {
-            MSG(LTFSDML0010E, "Inventory", "node", sess->get_server().c_str(), sess->get_port(), sess->get_fd(), e.what());
+                MSG(LTFSDML0009E, node_list.size(), sess->get_server().c_str(),
+                        sess->get_port(), sess->get_fd());
+        } catch (AdminLibException& e) {
+            MSG(LTFSDML0010E, "Inventory", "node", sess->get_server().c_str(),
+                    sess->get_port(), sess->get_fd(), e.what());
             node = boost::shared_ptr<LTFSNode>();
         }
     }
 }
 
-boost::shared_ptr<Drive> LTFSDMInventory::lookupDrive(std::string id, bool force)
+boost::shared_ptr<Drive> LTFSDMInventory::lookupDrive(std::string id,
+        bool force)
 {
     boost::shared_ptr<Drive> drive = boost::shared_ptr<Drive>();
 
     if (sess && sess->is_alived()) {
         std::string type = "drive (" + id + ")";
-        MSG(LTFSDML0007I, type.c_str(), sess->get_server().c_str(), sess->get_port(),
-                sess->get_fd());
+        MSG(LTFSDML0007I, type.c_str(), sess->get_server().c_str(),
+                sess->get_port(), sess->get_fd());
         try {
-            std::list<boost::shared_ptr <Drive> > drive_list;
+            std::list<boost::shared_ptr<Drive> > drive_list;
             sess->SessionInventory(drive_list, id, force);
 
             for (boost::shared_ptr<Drive> d : drive_list) {
                 try {
                     if (id == d->GetObjectID()) {
                         drive = d;
-                        MSG(LTFSDML0008I, type.c_str(), sess->get_server().c_str(), sess->get_port(), sess->get_fd());
+                        MSG(LTFSDML0008I, type.c_str(),
+                                sess->get_server().c_str(), sess->get_port(),
+                                sess->get_fd());
                     }
-                } catch ( InternalError& ie ) {
+                } catch (InternalError& ie) {
                     if (ie.GetID() != "031E") {
                         throw(ie);
                     }
@@ -103,9 +113,12 @@ boost::shared_ptr<Drive> LTFSDMInventory::lookupDrive(std::string id, bool force
                 }
             }
             if (!drive)
-                MSG(LTFSDML0011W, type.c_str(), sess->get_server().c_str(), sess->get_port(), sess->get_fd());
-        } catch ( AdminLibException& e ) {
-            MSG(LTFSDML0010E, "Inventory", type.c_str(), sess->get_server().c_str(), sess->get_port(), sess->get_fd(), e.what());
+                MSG(LTFSDML0011W, type.c_str(), sess->get_server().c_str(),
+                        sess->get_port(), sess->get_fd());
+        } catch (AdminLibException& e) {
+            MSG(LTFSDML0010E, "Inventory", type.c_str(),
+                    sess->get_server().c_str(), sess->get_port(),
+                    sess->get_fd(), e.what());
             drive = boost::shared_ptr<Drive>();
         }
     }
@@ -117,7 +130,8 @@ void LTFSDMInventory::addDrive(std::string serial)
 {
     if (sess && sess->is_alived()) {
         std::string type = "drive (" + serial + ")";
-        MSG(LTFSDML0012I, type.c_str(), sess->get_server().c_str(), sess->get_port(), sess->get_fd());
+        MSG(LTFSDML0012I, type.c_str(), sess->get_server().c_str(),
+                sess->get_port(), sess->get_fd());
         try {
             boost::shared_ptr<Drive> d = lookupDrive(serial);
             if (!d) {
@@ -127,13 +141,16 @@ void LTFSDMInventory::addDrive(std::string serial)
 
             if (d) {
                 d->Add();
-                MSG(LTFSDML0013I, type.c_str(), sess->get_server().c_str(), sess->get_port(), sess->get_fd());
+                MSG(LTFSDML0013I, type.c_str(), sess->get_server().c_str(),
+                        sess->get_port(), sess->get_fd());
                 return;
             } else
                 MSG(LTFSDML0011W, type.c_str(), sess->get_server().c_str(),
                         sess->get_port(), sess->get_fd());
-        } catch ( AdminLibException& e ) {
-            MSG(LTFSDML0010E, "Assign", type.c_str(), sess->get_server().c_str(), sess->get_port(), sess->get_fd(), e.what());
+        } catch (AdminLibException& e) {
+            MSG(LTFSDML0010E, "Assign", type.c_str(),
+                    sess->get_server().c_str(), sess->get_port(),
+                    sess->get_fd(), e.what());
             THROW(Error::GENERAL_ERROR);
         }
     }
@@ -145,18 +162,23 @@ void LTFSDMInventory::remDrive(boost::shared_ptr<Drive> drive)
 {
     if (drive) {
         std::string type = "drive (" + drive->GetObjectID() + ")";
-        MSG(LTFSDML0014I, type.c_str(), sess->get_server().c_str(), sess->get_port(), sess->get_fd());
+        MSG(LTFSDML0014I, type.c_str(), sess->get_server().c_str(),
+                sess->get_port(), sess->get_fd());
         try {
             drive->Remove();
-            MSG(LTFSDML0015I, type.c_str(), sess->get_server().c_str(), sess->get_port(), sess->get_fd());
+            MSG(LTFSDML0015I, type.c_str(), sess->get_server().c_str(),
+                    sess->get_port(), sess->get_fd());
             return;
-        } catch ( AdminLibException& e ) {
+        } catch (AdminLibException& e) {
             std::string msg_oob = e.GetOOBError();
             if (msg_oob == "LTFSI1090E") {
-                MSG(LTFSDML0016I, type.c_str(), sess->get_server().c_str(), sess->get_port(), sess->get_fd());
+                MSG(LTFSDML0016I, type.c_str(), sess->get_server().c_str(),
+                        sess->get_port(), sess->get_fd());
                 return;
             } else {
-                MSG(LTFSDML0010E, "Unassign", type.c_str(), sess->get_server().c_str(), sess->get_port(), sess->get_fd(), e.what());
+                MSG(LTFSDML0010E, "Unassign", type.c_str(),
+                        sess->get_server().c_str(), sess->get_port(),
+                        sess->get_fd(), e.what());
                 THROW(Error::GENERAL_ERROR);
             }
         }
@@ -172,16 +194,21 @@ void LTFSDMInventory::lookupDrives(bool assigned_only, bool force)
     if (sess && sess->is_alived()) {
         try {
             if (assigned_only) {
-                MSG(LTFSDML0007I, "assigned drive", sess->get_server().c_str(), sess->get_port(), sess->get_fd());
+                MSG(LTFSDML0007I, "assigned drive", sess->get_server().c_str(),
+                        sess->get_port(), sess->get_fd());
                 sess->SessionInventory(drvs, "__ACTIVE_ONLY__", force);
-                MSG(LTFSDML0008I, "assigned drive", sess->get_server().c_str(), sess->get_port(), sess->get_fd());
+                MSG(LTFSDML0008I, "assigned drive", sess->get_server().c_str(),
+                        sess->get_port(), sess->get_fd());
             } else {
-                MSG(LTFSDML0007I, "drive", sess->get_server().c_str(), sess->get_port(), sess->get_fd());
+                MSG(LTFSDML0007I, "drive", sess->get_server().c_str(),
+                        sess->get_port(), sess->get_fd());
                 sess->SessionInventory(drvs, "", force);
-                MSG(LTFSDML0008I, "drive", sess->get_server().c_str(), sess->get_port(), sess->get_fd());
+                MSG(LTFSDML0008I, "drive", sess->get_server().c_str(),
+                        sess->get_port(), sess->get_fd());
             }
-        } catch ( AdminLibException& e ) {
-            MSG(LTFSDML0010E, "Inventory", "drive", sess->get_server().c_str(), sess->get_port(), sess->get_fd(), e.what());
+        } catch (AdminLibException& e) {
+            MSG(LTFSDML0010E, "Inventory", "drive", sess->get_server().c_str(),
+                    sess->get_port(), sess->get_fd(), e.what());
             drives.clear();
             THROW(Error::GENERAL_ERROR);
         }
@@ -204,25 +231,30 @@ void LTFSDMInventory::lookupDrives(bool assigned_only, bool force)
     THROW(Error::GENERAL_ERROR);
 }
 
-
-boost::shared_ptr<Cartridge> LTFSDMInventory::lookupCartridge(std::string id, bool force)
+boost::shared_ptr<Cartridge> LTFSDMInventory::lookupCartridge(std::string id,
+        bool force)
 {
     boost::shared_ptr<Cartridge> cart = boost::shared_ptr<Cartridge>();
 
     if (sess && sess->is_alived()) {
         std::string type = "tape (" + id + ")";
-        MSG(LTFSDML0007I, type.c_str(), sess->get_server().c_str(), sess->get_port(), sess->get_fd());
+        MSG(LTFSDML0007I, type.c_str(), sess->get_server().c_str(),
+                sess->get_port(), sess->get_fd());
         try {
-            std::list<boost::shared_ptr <Cartridge> > cartridge_list;
+            std::list<boost::shared_ptr<Cartridge> > cartridge_list;
             sess->SessionInventory(cartridge_list, id);
 
             if (cartridge_list.size() == 1) {
-                MSG(LTFSDML0008I, type.c_str(), sess->get_server().c_str(), sess->get_port(), sess->get_fd());
+                MSG(LTFSDML0008I, type.c_str(), sess->get_server().c_str(),
+                        sess->get_port(), sess->get_fd());
                 cart = *(cartridge_list.begin());
             } else
-                MSG(LTFSDML0017E, sess->get_server().c_str(), sess->get_port(), sess->get_fd());
-        } catch ( AdminLibException& e ) {
-            MSG(LTFSDML0010E, "Inventory", type.c_str(), sess->get_server().c_str(), sess->get_port(), sess->get_fd(), e.what());
+                MSG(LTFSDML0017E, sess->get_server().c_str(), sess->get_port(),
+                        sess->get_fd());
+        } catch (AdminLibException& e) {
+            MSG(LTFSDML0010E, "Inventory", type.c_str(),
+                    sess->get_server().c_str(), sess->get_port(),
+                    sess->get_fd(), e.what());
             cart = boost::shared_ptr<Cartridge>();
         }
     }
@@ -230,11 +262,13 @@ boost::shared_ptr<Cartridge> LTFSDMInventory::lookupCartridge(std::string id, bo
     return cart;
 }
 
-void LTFSDMInventory::addCartridge(std::string barcode, std::string drive_serial)
+void LTFSDMInventory::addCartridge(std::string barcode,
+        std::string drive_serial)
 {
     if (sess && sess->is_alived()) {
         std::string type = "tape (" + barcode + ")";
-        MSG(LTFSDML0012I, type.c_str(), sess->get_server().c_str(), sess->get_port(), sess->get_fd());
+        MSG(LTFSDML0012I, type.c_str(), sess->get_server().c_str(),
+                sess->get_port(), sess->get_fd());
         try {
             boost::shared_ptr<Cartridge> cart = lookupCartridge(barcode);
             if (!cart) {
@@ -242,23 +276,29 @@ void LTFSDMInventory::addCartridge(std::string barcode, std::string drive_serial
                 cart = lookupCartridge(barcode);
             }
 
-            if (cart) cart->Add();
+            if (cart)
+                cart->Add();
 
             /* Refresh inventory and mount if it is UNKNOWN status */
             cart = lookupCartridge(barcode);
             if (cart) {
-                if (drive_serial.length() && cart->get_status().compare("NOT_MOUNTED_YET") == 0 ) {
+                if (drive_serial.length()
+                        && cart->get_status().compare("NOT_MOUNTED_YET") == 0) {
                     //StatusConv::get_cart_value(c->get_status()) == "NOT_MOUNTED_YET" ) {  /* needs to be checked */
                     cart->Mount(drive_serial);
                     cart->Unmount();
                 }
-                MSG(LTFSDML0013I, type.c_str(), sess->get_server().c_str(), sess->get_port(), sess->get_fd());
+                MSG(LTFSDML0013I, type.c_str(), sess->get_server().c_str(),
+                        sess->get_port(), sess->get_fd());
                 return;
             } else
-                MSG(LTFSDML0011W, type.c_str(), sess->get_server().c_str(), sess->get_port(), sess->get_fd());
+                MSG(LTFSDML0011W, type.c_str(), sess->get_server().c_str(),
+                        sess->get_port(), sess->get_fd());
 
-        } catch ( AdminLibException& e ) {
-            MSG(LTFSDML0010E, "Assign", type.c_str(), sess->get_server().c_str(), sess->get_port(), sess->get_fd(), e.what());
+        } catch (AdminLibException& e) {
+            MSG(LTFSDML0010E, "Assign", type.c_str(),
+                    sess->get_server().c_str(), sess->get_port(),
+                    sess->get_fd(), e.what());
             THROW(Error::GENERAL_ERROR);
         }
     }
@@ -266,23 +306,29 @@ void LTFSDMInventory::addCartridge(std::string barcode, std::string drive_serial
     THROW(Error::GENERAL_ERROR);
 }
 
-void LTFSDMInventory::remCartridge(boost::shared_ptr<Cartridge> cart, bool keep_on_drive)
+void LTFSDMInventory::remCartridge(boost::shared_ptr<Cartridge> cart,
+        bool keep_on_drive)
 {
     if (cart) {
         if (sess && sess->is_alived()) {
             std::string type = "tape (" + cart->GetObjectID() + ")";
-            MSG(LTFSDML0014I, type.c_str(), sess->get_server().c_str(), sess->get_port(), sess->get_fd());
+            MSG(LTFSDML0014I, type.c_str(), sess->get_server().c_str(),
+                    sess->get_port(), sess->get_fd());
             try {
                 cart->Remove(true, keep_on_drive);
-                MSG(LTFSDML0015I, type.c_str(), sess->get_server().c_str(), sess->get_port(), sess->get_fd());
+                MSG(LTFSDML0015I, type.c_str(), sess->get_server().c_str(),
+                        sess->get_port(), sess->get_fd());
                 return;
-            } catch ( AdminLibException& e ) {
+            } catch (AdminLibException& e) {
                 std::string msg_oob = e.GetOOBError();
                 if (msg_oob == "LTFSI1090E") {
-                    MSG(LTFSDML0016I, type.c_str(), sess->get_server().c_str(), sess->get_port(), sess->get_fd());
+                    MSG(LTFSDML0016I, type.c_str(), sess->get_server().c_str(),
+                            sess->get_port(), sess->get_fd());
                     return;
                 } else {
-                    MSG(LTFSDML0010E, "Unassign", type.c_str(), sess->get_server().c_str(), sess->get_port(), sess->get_fd(), e.what());
+                    MSG(LTFSDML0010E, "Unassign", type.c_str(),
+                            sess->get_server().c_str(), sess->get_port(),
+                            sess->get_fd(), e.what());
                     THROW(Error::GENERAL_ERROR);
                 }
             }
@@ -292,7 +338,6 @@ void LTFSDMInventory::remCartridge(boost::shared_ptr<Cartridge> cart, bool keep_
     THROW(Error::GENERAL_ERROR);
 }
 
-
 void LTFSDMInventory::lookupCartridges(bool assigned_only, bool force)
 {
     std::list<boost::shared_ptr<Cartridge>> crts;
@@ -300,16 +345,21 @@ void LTFSDMInventory::lookupCartridges(bool assigned_only, bool force)
     if (sess && sess->is_alived()) {
         try {
             if (assigned_only) {
-                MSG(LTFSDML0007I, "assigned tape", sess->get_server().c_str(), sess->get_port(), sess->get_fd());
+                MSG(LTFSDML0007I, "assigned tape", sess->get_server().c_str(),
+                        sess->get_port(), sess->get_fd());
                 sess->SessionInventory(crts, "__ACTIVE_ONLY__", force);
-                MSG(LTFSDML0008I, "assigned tape", sess->get_server().c_str(), sess->get_port(), sess->get_fd());
+                MSG(LTFSDML0008I, "assigned tape", sess->get_server().c_str(),
+                        sess->get_port(), sess->get_fd());
             } else {
-                MSG(LTFSDML0007I, "tape", sess->get_server().c_str(), sess->get_port(), sess->get_fd());
+                MSG(LTFSDML0007I, "tape", sess->get_server().c_str(),
+                        sess->get_port(), sess->get_fd());
                 sess->SessionInventory(crts, "", force);
-                MSG(LTFSDML0008I, "tape", sess->get_server().c_str(), sess->get_port(), sess->get_fd());
+                MSG(LTFSDML0008I, "tape", sess->get_server().c_str(),
+                        sess->get_port(), sess->get_fd());
             }
-        } catch ( AdminLibException& e ) {
-            MSG(LTFSDML0010E, "Inventory", "tape", sess->get_server().c_str(), sess->get_port(), sess->get_fd(), e.what());
+        } catch (AdminLibException& e) {
+            MSG(LTFSDML0010E, "Inventory", "tape", sess->get_server().c_str(),
+                    sess->get_port(), sess->get_fd(), e.what());
             cartridges.clear();
             THROW(Error::GENERAL_ERROR);
         }
@@ -341,16 +391,18 @@ void LTFSDMInventory::updateCartridge(std::string tapeId)
         try {
             std::lock_guard<std::recursive_mutex> lock(LTFSDMInventory::mtx);
 
-            for ( std::shared_ptr<LTFSDMCartridge> c : cartridges) {
-                if ( c->get_le()->GetObjectID().compare(tapeId) == 0 ) {
+            for (std::shared_ptr<LTFSDMCartridge> c : cartridges) {
+                if (c->get_le()->GetObjectID().compare(tapeId) == 0) {
                     MSG(LTFSDMS0106I, tapeId);
 
                     c->update();
 
                     c->setState(LTFSDMCartridge::TAPE_UNMOUNTED);
                     for (std::shared_ptr<LTFSDMDrive> d : drives) {
-                        TRACE(Trace::always, tapeId, c->get_le()->get_slot(), d->get_le()->get_slot());
-                        if (c->get_le()->get_slot() == d->get_le()->get_slot()) {
+                        TRACE(Trace::always, tapeId, c->get_le()->get_slot(),
+                                d->get_le()->get_slot());
+                        if (c->get_le()->get_slot()
+                                == d->get_le()->get_slot()) {
                             c->setState(LTFSDMCartridge::TAPE_MOUNTED);
                             break;
                         }
@@ -619,8 +671,7 @@ void LTFSDMInventory::poolAdd(std::string poolname, std::string cartridgeid)
     cartridge->setPool(poolname);
 }
 
-void LTFSDMInventory::poolRemove(std::string poolname,
-        std::string cartridgeid)
+void LTFSDMInventory::poolRemove(std::string poolname, std::string cartridgeid)
 
 {
     std::lock_guard<std::recursive_mutex> lock(LTFSDMInventory::mtx);
@@ -692,20 +743,20 @@ void LTFSDMInventory::mount(std::string driveid, std::string cartridgeid)
         } catch (const std::exception& e) {
             MSG(LTFSDMS0101E, e.what());
         }
-        if ( error.compare("076E") == 0 ) {
+        if (error.compare("076E") == 0) {
             MSG(LTFSDMS0107I, Const::WAIT_TAPE_MOUNT);
             sleep(Const::WAIT_TAPE_MOUNT);
         }
     } catch (std::exception& e) {
-           MSG(LTFSDMS0100E, cartridgeid, e.what());
-           drive->setFree();
-           try {
-               inventorize();
-           } catch (const LTFSDMException& e) {
-               MSG(LTFSDMS0101E, e.what());
-           } catch (const std::exception& e) {
-               MSG(LTFSDMS0101E, e.what());
-           }
+        MSG(LTFSDMS0100E, cartridgeid, e.what());
+        drive->setFree();
+        try {
+            inventorize();
+        } catch (const LTFSDMException& e) {
+            MSG(LTFSDMS0101E, e.what());
+        } catch (const std::exception& e) {
+            MSG(LTFSDMS0101E, e.what());
+        }
     }
 
     std::unique_lock<std::mutex> updlock(Scheduler::mtx);
@@ -740,27 +791,27 @@ void LTFSDMInventory::unmount(std::string driveid, std::string cartridgeid)
         drive->unsetUnmountReqNum();
         MSG(LTFSDMS0071I, cartridgeid);
     } catch (AdminLibException& e) {
-            MSG(LTFSDMS0100E, cartridgeid, e.what());
-            sleep(1);
-            drive->setFree();
-            try {
-                inventorize();
-            } catch (const LTFSDMException& e) {
-                MSG(LTFSDMS0101E, e.what());
-            } catch (const std::exception& e) {
-                MSG(LTFSDMS0101E, e.what());
-            }
+        MSG(LTFSDMS0100E, cartridgeid, e.what());
+        sleep(1);
+        drive->setFree();
+        try {
+            inventorize();
+        } catch (const LTFSDMException& e) {
+            MSG(LTFSDMS0101E, e.what());
+        } catch (const std::exception& e) {
+            MSG(LTFSDMS0101E, e.what());
+        }
     } catch (std::exception& e) {
-           MSG(LTFSDMS0100E, cartridgeid, e.what());
-           sleep(1);
-           drive->setFree();
-           try {
-               inventorize();
-           } catch (const LTFSDMException& e) {
-               MSG(LTFSDMS0101E, e.what());
-           } catch (const std::exception& e) {
-               MSG(LTFSDMS0101E, e.what());
-           }
+        MSG(LTFSDMS0100E, cartridgeid, e.what());
+        sleep(1);
+        drive->setFree();
+        try {
+            inventorize();
+        } catch (const LTFSDMException& e) {
+            MSG(LTFSDMS0101E, e.what());
+        } catch (const std::exception& e) {
+            MSG(LTFSDMS0101E, e.what());
+        }
     }
 
     std::unique_lock<std::mutex> updlock(Scheduler::mtx);

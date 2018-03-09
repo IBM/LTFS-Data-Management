@@ -329,7 +329,7 @@ Connector::Connector(bool _cleanup, Configuration *_conf) :
 Connector::~Connector()
 
 {
-    if ( cleanup ) {
+    if (cleanup) {
         try {
             std::string mountpt;
 
