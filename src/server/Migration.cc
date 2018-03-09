@@ -670,7 +670,8 @@ void Migration::changeFileState(Migration::mig_info_t mig_info,
 
         std::lock_guard<FsObj> fsolock(source);
         attr = source.getAttribute();
-        if (mig_info.numRepl == 0 || attr.copies == mig_info.numRepl) {
+        if ((source.getMigState() != FsObj::MIGRATED && source.getMigState() != FsObj::PREMIGRATED)
+                && (mig_info.numRepl == 0 || attr.copies == mig_info.numRepl)) {
             if ( toState == FsObj::MIGRATED) {
                 source.prepareStubbing();
                 source.stub();
