@@ -107,6 +107,48 @@
     - additionally to the three approaches discussed here - for doing data
     management it should be possible to integrate that by using the connector.
 
+    ## The attributes
+
+    If a file is premigrated or migrated it is necessary persistently to
+    store some information about the migration state and where to find
+    the corresponding data on tape. It is possible to use a database for
+    this purpose with the disadvantage to perform costly lookups. A more
+    appropriate way is to store this information together with the files.
+    Extended attributes provide a possibility to store these specifications
+    outside the file data. For extended attributes there also exists a
+    POSIX compliant interface for the file system types that are supported
+    with LTFS Data Management.
+
+    The two attributes that exist are the following:
+
+    - The migration target attribute the provides information where the data
+      is on tape:
+      @snippet connector/Connector.h migration target attribute
+      The purpose of the components is the following:
+      component | purpose
+      ---|---
+      typeId | To verify the that data type has not changed. After a code change it can happen that the attribute becomes invalid.
+      added | Workaround only used for the dmapi connector.
+      copies | The number of tapes the data has been copied.
+      tapeInfo | The tape ID and the starting block number of all tapes the data has been copied to.
+
+    - The migration state attribute provides the information about the
+      migration state of a file including some of the original stat data:
+      @snippet connector/fuse/FuseFS.h migration state attribute
+      The purpose of the components is the following:
+      component | purpose
+      ---|---
+      typeId | To verify the that data type has not changed. After a code change it can happen that the attribute becomes invalid.
+      state | The migration state.
+      size | The file size before migration. To keep it and show it after (pre)migration.
+      atime | The atime before migration. To keep it and show it after (pre)migration.
+      mtime | The mtime before migration. To keep it and show it after (pre)migration.
+      changed | The time stamp when this attribute has been last updated.
+
+      This attribute is not used for the dmapi connector since the migration
+      state is determined by so call dmapi managed regions. The size and the
+      time stamps are not necessary to store in the dmapi case.
+
  */
 
 struct fuid_t
@@ -228,7 +270,8 @@ private:
     bool isLocked;
     bool handleFree;
 public:
-    struct mig_attr_t
+    //! [migration target attribute]
+    struct mig_target_attr_t
     {
         unsigned long typeId;
         bool added;
@@ -239,6 +282,7 @@ public:
             long startBlock;
         } tapeInfo[Const::maxReplica];
     };
+    //! [migration target attribute]
     enum file_state
     {
         RESIDENT, /**< 0 */
@@ -295,7 +339,7 @@ public:
     long write(long offset, unsigned long size, char *buffer);
     void addTapeAttr(std::string tapeId, long startBlock);
     void remAttribute();
-    mig_attr_t getAttribute();
+    mig_target_attr_t getAttribute();
     void preparePremigration();
     void finishPremigration();
     void prepareRecall();

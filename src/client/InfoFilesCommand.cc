@@ -95,7 +95,7 @@ void InfoFilesCommand::doCommand(int argc, char **argv)
     std::string line;
     char *file_name;
     std::stringstream tapeIds;
-    FsObj::mig_attr_t attr;
+    FsObj::mig_tape_attr_t attr;
 
     if (argc == 1) {
         INFO(LTFSDMC0018E);

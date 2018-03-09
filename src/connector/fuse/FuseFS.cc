@@ -96,10 +96,10 @@ std::string FuseFS::lockPath(std::string path)
     return lpath.str();
 }
 
-FuseFS::mig_info FuseFS::genMigInfoAt(int fd, FuseFS::mig_info::state_num state)
+FuseFS::mig_state_attr_t FuseFS::genMigInfoAt(int fd, FuseFS::mig_state_attr_t::state_num state)
 
 {
-    FuseFS::mig_info miginfo;
+    FuseFS::mig_state_attr_t miginfo;
     struct stat statbuf;
 
     memset(&miginfo, 0, sizeof(miginfo));
@@ -109,7 +109,7 @@ FuseFS::mig_info FuseFS::genMigInfoAt(int fd, FuseFS::mig_info::state_num state)
         THROW(Error::GENERAL_ERROR, errno, fd);
     }
 
-    miginfo.typeId = typeid(FuseFS::mig_info).hash_code();
+    miginfo.typeId = typeid(FuseFS::mig_state_attr_t).hash_code();
     miginfo.size = statbuf.st_size;
     miginfo.atime = statbuf.st_atim;
     miginfo.mtime = statbuf.st_mtim;
@@ -120,12 +120,12 @@ FuseFS::mig_info FuseFS::genMigInfoAt(int fd, FuseFS::mig_info::state_num state)
     return miginfo;
 }
 
-void FuseFS::setMigInfoAt(int fd, FuseFS::mig_info::state_num state)
+void FuseFS::setMigInfoAt(int fd, FuseFS::mig_state_attr_t::state_num state)
 
 {
     ssize_t size;
-    FuseFS::mig_info miginfo_new;
-    FuseFS::mig_info miginfo;
+    FuseFS::mig_state_attr_t miginfo_new;
+    FuseFS::mig_state_attr_t miginfo;
 
     TRACE(Trace::full, fd, state);
 
@@ -139,13 +139,13 @@ void FuseFS::setMigInfoAt(int fd, FuseFS::mig_info::state_num state)
             THROW(Error::GENERAL_ERROR, errno, fd);
         }
     } else if (size != sizeof(miginfo)
-            || miginfo.typeId != typeid(FuseFS::mig_info).hash_code()) {
+            || miginfo.typeId != typeid(FuseFS::mig_state_attr_t).hash_code()) {
         errno = EIO;
         THROW(Error::GENERAL_ERROR, size, sizeof(miginfo), miginfo.typeId,
-                typeid(FuseFS::mig_info).hash_code(), fd);
+                typeid(FuseFS::mig_state_attr_t).hash_code(), fd);
     }
 
-    if (miginfo.state != FuseFS::mig_info::state_num::RESIDENT) {
+    if (miginfo.state != FuseFS::mig_state_attr_t::state_num::RESIDENT) {
         // keep the previous settings
         miginfo_new.size = miginfo.size;
         miginfo_new.atime = miginfo.atime;
@@ -176,11 +176,11 @@ int FuseFS::remMigInfoAt(int fd)
     return 0;
 }
 
-FuseFS::mig_info FuseFS::getMigInfoAt(int fd)
+FuseFS::mig_state_attr_t FuseFS::getMigInfoAt(int fd)
 
 {
     ssize_t size;
-    FuseFS::mig_info miginfo;
+    FuseFS::mig_state_attr_t miginfo;
 
     memset(&miginfo, 0, sizeof(miginfo));
 
@@ -192,21 +192,21 @@ FuseFS::mig_info FuseFS::getMigInfoAt(int fd)
     }
 
     if (size != sizeof(miginfo)
-            || miginfo.typeId != typeid(FuseFS::mig_info).hash_code()) {
+            || miginfo.typeId != typeid(FuseFS::mig_state_attr_t).hash_code()) {
         errno = EIO;
         THROW(Error::ATTR_FORMAT, size, sizeof(miginfo), miginfo.typeId,
-                typeid(FuseFS::mig_info).hash_code(), fd);
+                typeid(FuseFS::mig_state_attr_t).hash_code(), fd);
     }
 
     return miginfo;
 }
 
-bool FuseFS::needsRecovery(FuseFS::mig_info miginfo)
+bool FuseFS::needsRecovery(FuseFS::mig_state_attr_t miginfo)
 
 {
-    if ((miginfo.state == FuseFS::mig_info::state_num::IN_MIGRATION)
-            | (miginfo.state == FuseFS::mig_info::state_num::STUBBING)
-            | (miginfo.state == FuseFS::mig_info::state_num::IN_RECALL)) {
+    if ((miginfo.state == FuseFS::mig_state_attr_t::state_num::IN_MIGRATION)
+            | (miginfo.state == FuseFS::mig_state_attr_t::state_num::STUBBING)
+            | (miginfo.state == FuseFS::mig_state_attr_t::state_num::IN_RECALL)) {
 
         if (getshrd()->starttime.tv_sec < miginfo.changed.tv_sec)
             return false;
@@ -220,7 +220,7 @@ bool FuseFS::needsRecovery(FuseFS::mig_info miginfo)
     return false;
 }
 
-void FuseFS::recoverState(const char *path, FuseFS::mig_info::state_num state)
+void FuseFS::recoverState(const char *path, FuseFS::mig_state_attr_t::state_num state)
 
 {
     int fd;
@@ -236,8 +236,8 @@ void FuseFS::recoverState(const char *path, FuseFS::mig_info::state_num state)
     TRACE(Trace::error, fusepath, state);
 
     switch (state) {
-        case FuseFS::mig_info::state_num::IN_MIGRATION:
-        case FuseFS::mig_info::state_num::RESIDENT:
+        case FuseFS::mig_state_attr_t::state_num::IN_MIGRATION:
+        case FuseFS::mig_state_attr_t::state_num::RESIDENT:
             MSG(LTFSDMF0013W, fusepath);
             if (fremovexattr(fd, Const::LTFSDM_EA_MIGINFO.c_str()) == -1) {
                 TRACE(Trace::error, errno);
@@ -250,10 +250,10 @@ void FuseFS::recoverState(const char *path, FuseFS::mig_info::state_num state)
                     MSG(LTFSDMF0018W, Const::LTFSDM_EA_MIGSTATE);
             }
             break;
-        case FuseFS::mig_info::state_num::STUBBING:
+        case FuseFS::mig_state_attr_t::state_num::STUBBING:
             MSG(LTFSDMF0014W, fusepath);
             try {
-                FuseFS::setMigInfoAt(fd, FuseFS::mig_info::state_num::MIGRATED);
+                FuseFS::setMigInfoAt(fd, FuseFS::mig_state_attr_t::state_num::MIGRATED);
             } catch (const std::exception& e) {
                 MSG(LTFSDMF0056E, fusepath);
             }
@@ -262,16 +262,16 @@ void FuseFS::recoverState(const char *path, FuseFS::mig_info::state_num state)
                 MSG(LTFSDMF0016E, fusepath);
                 try {
                     FuseFS::setMigInfoAt(fd,
-                            FuseFS::mig_info::state_num::PREMIGRATED);
+                            FuseFS::mig_state_attr_t::state_num::PREMIGRATED);
                 } catch (const std::exception& e) {
                     MSG(LTFSDMF0056E, fusepath);
                 }
             }
             break;
-        case FuseFS::mig_info::state_num::IN_RECALL:
+        case FuseFS::mig_state_attr_t::state_num::IN_RECALL:
             MSG(LTFSDMF0015W, fusepath);
             try {
-                FuseFS::setMigInfoAt(fd, FuseFS::mig_info::state_num::MIGRATED);
+                FuseFS::setMigInfoAt(fd, FuseFS::mig_state_attr_t::state_num::MIGRATED);
             } catch (const std::exception& e) {
                 MSG(LTFSDMF0056E, fusepath);
             }
@@ -379,7 +379,7 @@ bool FuseFS::procIsLTFSDM(pid_t tid)
 int FuseFS::ltfsdm_getattr(const char *path, struct stat *statbuf)
 
 {
-    FuseFS::mig_info miginfo;
+    FuseFS::mig_state_attr_t miginfo;
     struct fuse_context *fc = fuse_get_context();
     pid_t pid = fc->pid;
     int fd;
@@ -455,7 +455,7 @@ int FuseFS::ltfsdm_getattr(const char *path, struct stat *statbuf)
         if (FuseFS::needsRecovery(miginfo) == true)
             FuseFS::recoverState(path, miginfo.state);
         close(fd);
-        if (miginfo.state != FuseFS::mig_info::state_num::RESIDENT) {
+        if (miginfo.state != FuseFS::mig_state_attr_t::state_num::RESIDENT) {
             statbuf->st_size = miginfo.size;
             statbuf->st_atim = miginfo.atime;
             statbuf->st_mtim = miginfo.mtime;
@@ -519,7 +519,7 @@ int FuseFS::ltfsdm_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 
 {
     struct stat statbuf;
-    FuseFS::mig_info miginfo;
+    FuseFS::mig_state_attr_t miginfo;
     off_t next;
     FuseFS::ltfsdm_dir_info *dirinfo = (FuseFS::ltfsdm_dir_info *) finfo->fh;
     int fd;
@@ -570,9 +570,9 @@ int FuseFS::ltfsdm_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
                 return (-1 * EIO);
             }
             close(fd);
-            if (miginfo.state != FuseFS::mig_info::state_num::RESIDENT
+            if (miginfo.state != FuseFS::mig_state_attr_t::state_num::RESIDENT
                     && miginfo.state
-                            != FuseFS::mig_info::state_num::IN_MIGRATION)
+                            != FuseFS::mig_state_attr_t::state_num::IN_MIGRATION)
                 statbuf.st_size = miginfo.size;
         }
 
@@ -703,7 +703,7 @@ int FuseFS::ltfsdm_chown(const char *path, uid_t uid, gid_t gid)
 int FuseFS::ltfsdm_truncate(const char *path, off_t size)
 
 {
-    FuseFS::mig_info migInfo;
+    FuseFS::mig_state_attr_t migInfo;
     ssize_t attrsize;
     FuseFS::ltfsdm_file_info linfo = (FuseFS::ltfsdm_file_info ) { 0, 0, "" };
 
@@ -715,7 +715,7 @@ int FuseFS::ltfsdm_truncate(const char *path, off_t size)
         return (-1 * errno);
     }
 
-    memset(&migInfo, 0, sizeof(FuseFS::mig_info));
+    memset(&migInfo, 0, sizeof(FuseFS::mig_state_attr_t));
 
     try {
         FuseLock main_lock(FuseFS::lockPath(path), FuseLock::main,
@@ -737,9 +737,9 @@ int FuseFS::ltfsdm_truncate(const char *path, off_t size)
         }
 
         if ((size > 0)
-                && ((migInfo.state == FuseFS::mig_info::state_num::MIGRATED)
+                && ((migInfo.state == FuseFS::mig_state_attr_t::state_num::MIGRATED)
                         || (migInfo.state
-                                == FuseFS::mig_info::state_num::IN_RECALL))) {
+                                == FuseFS::mig_state_attr_t::state_num::IN_RECALL))) {
             TRACE(Trace::full, path);
             mainlock.unlock();
             if (recall_file(&linfo, true) == -1) {
@@ -855,7 +855,7 @@ int FuseFS::ltfsdm_ftruncate(const char *path, off_t size,
         struct fuse_file_info *finfo)
 
 {
-    FuseFS::mig_info migInfo;
+    FuseFS::mig_state_attr_t migInfo;
     ssize_t attrsize;
     FuseFS::ltfsdm_file_info *linfo = (FuseFS::ltfsdm_file_info *) finfo->fh;
 
@@ -865,7 +865,7 @@ int FuseFS::ltfsdm_ftruncate(const char *path, off_t size,
     }
 
     if (FuseFS::procIsLTFSDM(fuse_get_context()->pid) == false) {
-        memset(&migInfo, 0, sizeof(FuseFS::mig_info));
+        memset(&migInfo, 0, sizeof(FuseFS::mig_state_attr_t));
 
         std::unique_lock<FuseLock> mainlock(*(linfo->main_lock));
 
@@ -882,9 +882,9 @@ int FuseFS::ltfsdm_ftruncate(const char *path, off_t size,
             }
 
             if ((size > 0)
-                    && ((migInfo.state == FuseFS::mig_info::state_num::MIGRATED)
+                    && ((migInfo.state == FuseFS::mig_state_attr_t::state_num::MIGRATED)
                             || (migInfo.state
-                                    == FuseFS::mig_info::state_num::IN_RECALL))) {
+                                    == FuseFS::mig_state_attr_t::state_num::IN_RECALL))) {
                 TRACE(Trace::full, linfo->fd);
                 mainlock.unlock();
                 if (recall_file(linfo, true) == -1) {
@@ -917,7 +917,7 @@ int FuseFS::ltfsdm_read_buf(const char *path, struct fuse_bufvec **bufferp,
 
 {
     struct fuse_bufvec *source;
-    FuseFS::mig_info migInfo;
+    FuseFS::mig_state_attr_t migInfo;
     ssize_t attrsize;
     FuseFS::ltfsdm_file_info *linfo = (FuseFS::ltfsdm_file_info *) finfo->fh;
 
@@ -928,7 +928,7 @@ int FuseFS::ltfsdm_read_buf(const char *path, struct fuse_bufvec **bufferp,
         return (-1 * EBADF);
     }
 
-    memset(&migInfo, 0, sizeof(FuseFS::mig_info));
+    memset(&migInfo, 0, sizeof(FuseFS::mig_state_attr_t));
 
     std::unique_lock<FuseLock> mainlock(*(linfo->main_lock));
 
@@ -945,8 +945,8 @@ int FuseFS::ltfsdm_read_buf(const char *path, struct fuse_bufvec **bufferp,
             }
         }
 
-        if (migInfo.state == FuseFS::mig_info::state_num::MIGRATED
-                || migInfo.state == FuseFS::mig_info::state_num::IN_RECALL) {
+        if (migInfo.state == FuseFS::mig_state_attr_t::state_num::MIGRATED
+                || migInfo.state == FuseFS::mig_state_attr_t::state_num::IN_RECALL) {
             TRACE(Trace::full, linfo->fd);
             mainlock.unlock();
             if (recall_file(linfo, false) == -1) {
@@ -977,7 +977,7 @@ int FuseFS::ltfsdm_write_buf(const char *path, struct fuse_bufvec *buf,
 
 {
     ssize_t wsize;
-    FuseFS::mig_info migInfo;
+    FuseFS::mig_state_attr_t migInfo;
     ssize_t attrsize;
     FuseFS::ltfsdm_file_info *linfo = (FuseFS::ltfsdm_file_info *) finfo->fh;
 
@@ -988,7 +988,7 @@ int FuseFS::ltfsdm_write_buf(const char *path, struct fuse_bufvec *buf,
     if (linfo == NULL)
         return (-1 * EBADF);
 
-    memset(&migInfo, 0, sizeof(FuseFS::mig_info));
+    memset(&migInfo, 0, sizeof(FuseFS::mig_state_attr_t));
 
     std::unique_lock<FuseLock> mainlock(*(linfo->main_lock));
 
@@ -1003,15 +1003,15 @@ int FuseFS::ltfsdm_write_buf(const char *path, struct fuse_bufvec *buf,
             }
         }
 
-        if (migInfo.state == FuseFS::mig_info::state_num::MIGRATED
-                || migInfo.state == FuseFS::mig_info::state_num::IN_RECALL) {
+        if (migInfo.state == FuseFS::mig_state_attr_t::state_num::MIGRATED
+                || migInfo.state == FuseFS::mig_state_attr_t::state_num::IN_RECALL) {
             TRACE(Trace::full, linfo->fd);
             mainlock.unlock();
             if (recall_file(linfo, true) == -1) {
                 return (-1 * EIO);
             }
             mainlock.lock();
-        } else if (migInfo.state == FuseFS::mig_info::state_num::PREMIGRATED) {
+        } else if (migInfo.state == FuseFS::mig_state_attr_t::state_num::PREMIGRATED) {
             if (fremovexattr(linfo->fd, Const::LTFSDM_EA_MIGSTATE.c_str())
                     == -1) {
                 TRACE(Trace::error, errno);

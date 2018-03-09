@@ -78,7 +78,8 @@
 class FuseFS
 {
 public:
-    struct mig_info
+    //! [migration state attribute]
+    struct mig_state_attr_t
     {
         unsigned long typeId;
         enum state_num
@@ -95,6 +96,7 @@ public:
         struct timespec mtime;
         struct timespec changed;
     };
+    //! [migration state attribute]
     struct FuseHandle
     {
         char fusepath[PATH_MAX];
@@ -178,9 +180,9 @@ private:
 
     static const char *relPath(const char *path);
     static std::string lockPath(std::string path);
-    static bool needsRecovery(FuseFS::mig_info miginfo);
+    static bool needsRecovery(FuseFS::mig_state_attr_t miginfo);
     static void recoverState(const char *path,
-            FuseFS::mig_info::state_num state);
+            FuseFS::mig_state_attr_t::state_num state);
     static int recall_file(FuseFS::ltfsdm_file_info *linfo, bool toresident);
     static bool procIsLTFSDM(pid_t tid);
 
@@ -241,11 +243,11 @@ private:
             std::string command);
 
 public:
-    static FuseFS::mig_info genMigInfoAt(int fd,
-            FuseFS::mig_info::state_num state);
-    static void setMigInfoAt(int fd, FuseFS::mig_info::state_num state);
+    static FuseFS::mig_state_attr_t genMigInfoAt(int fd,
+            FuseFS::mig_state_attr_t::state_num state);
+    static void setMigInfoAt(int fd, FuseFS::mig_state_attr_t::state_num state);
     static int remMigInfoAt(int fd);
-    static FuseFS::mig_info getMigInfoAt(int fd);
+    static FuseFS::mig_state_attr_t getMigInfoAt(int fd);
     static struct fuse_operations init_operations();
 
     std::string getMountPoint()

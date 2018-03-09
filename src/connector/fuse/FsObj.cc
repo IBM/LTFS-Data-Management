@@ -216,7 +216,7 @@ struct stat FsObj::stat()
 
 {
     struct stat statbuf;
-    FuseFS::mig_info miginfo;
+    FuseFS::mig_state_attr_t miginfo;
 
     FuseFS::FuseHandle *fh = (FuseFS::FuseHandle *) handle;
     std::string sourcemp = std::string(fh->mountpoint).append(
@@ -229,8 +229,8 @@ struct stat FsObj::stat()
         THROW(Error::GENERAL_ERROR, errno, fh->fusepath);
     }
 
-    if (miginfo.state != FuseFS::mig_info::state_num::RESIDENT
-            && miginfo.state != FuseFS::mig_info::state_num::IN_MIGRATION) {
+    if (miginfo.state != FuseFS::mig_state_attr_t::state_num::RESIDENT
+            && miginfo.state != FuseFS::mig_state_attr_t::state_num::IN_MIGRATION) {
         statbuf.st_size = miginfo.size;
         statbuf.st_atim = miginfo.atime;
         statbuf.st_mtim = miginfo.mtime;
@@ -360,7 +360,7 @@ long FsObj::write(long offset, unsigned long size, char *buffer)
 void FsObj::addTapeAttr(std::string tapeId, long startBlock)
 
 {
-    FsObj::mig_attr_t attr;
+    FsObj::mig_tape_attr_t attr;
     FuseFS::FuseHandle *fh = (FuseFS::FuseHandle *) handle;
     std::unique_lock<FsObj> fsolock(*this);
 
@@ -398,12 +398,12 @@ void FsObj::remAttribute()
     }
 }
 
-FsObj::mig_attr_t FsObj::getAttribute()
+FsObj::mig_tape_attr_t FsObj::getAttribute()
 
 {
     FuseFS::FuseHandle *fh = (FuseFS::FuseHandle *) handle;
-    FsObj::mig_attr_t value;
-    memset(&value, 0, sizeof(mig_attr_t));
+    FsObj::mig_tape_attr_t value;
+    memset(&value, 0, sizeof(mig_tape_attr_t));
 
     if (fgetxattr(fh->fd, Const::LTFSDM_EA_MIGINFO.c_str(), (void *) &value,
             sizeof(value)) == -1) {
@@ -430,7 +430,7 @@ void FsObj::preparePremigration()
 {
     FuseFS::FuseHandle *fh = (FuseFS::FuseHandle *) handle;
 
-    FuseFS::setMigInfoAt(fh->fd, FuseFS::mig_info::state_num::IN_MIGRATION);
+    FuseFS::setMigInfoAt(fh->fd, FuseFS::mig_state_attr_t::state_num::IN_MIGRATION);
 }
 
 void FsObj::finishPremigration()
@@ -438,7 +438,7 @@ void FsObj::finishPremigration()
 {
     FuseFS::FuseHandle *fh = (FuseFS::FuseHandle *) handle;
 
-    FuseFS::setMigInfoAt(fh->fd, FuseFS::mig_info::state_num::PREMIGRATED);
+    FuseFS::setMigInfoAt(fh->fd, FuseFS::mig_state_attr_t::state_num::PREMIGRATED);
 }
 
 void FsObj::prepareRecall()
@@ -446,17 +446,17 @@ void FsObj::prepareRecall()
 {
     FuseFS::FuseHandle *fh = (FuseFS::FuseHandle *) handle;
 
-    FuseFS::setMigInfoAt(fh->fd, FuseFS::mig_info::state_num::IN_RECALL);
+    FuseFS::setMigInfoAt(fh->fd, FuseFS::mig_state_attr_t::state_num::IN_RECALL);
 }
 
 void FsObj::finishRecall(FsObj::file_state fstate)
 
 {
-    FuseFS::mig_info miginfo;
+    FuseFS::mig_state_attr_t miginfo;
     FuseFS::FuseHandle *fh = (FuseFS::FuseHandle *) handle;
 
     if (fstate == FsObj::PREMIGRATED) {
-        FuseFS::setMigInfoAt(fh->fd, FuseFS::mig_info::state_num::PREMIGRATED);
+        FuseFS::setMigInfoAt(fh->fd, FuseFS::mig_state_attr_t::state_num::PREMIGRATED);
     } else {
         miginfo = FuseFS::getMigInfoAt(fh->fd);
         const timespec timestamp[2] = { miginfo.atime, miginfo.mtime };
@@ -464,7 +464,7 @@ void FsObj::finishRecall(FsObj::file_state fstate)
         if (futimens(fh->fd, timestamp) == -1)
             MSG(LTFSDMF0017E, fh->fusepath);
 
-        FuseFS::setMigInfoAt(fh->fd, FuseFS::mig_info::state_num::RESIDENT);
+        FuseFS::setMigInfoAt(fh->fd, FuseFS::mig_state_attr_t::state_num::RESIDENT);
     }
 }
 
@@ -473,7 +473,7 @@ void FsObj::prepareStubbing()
 {
     FuseFS::FuseHandle *fh = (FuseFS::FuseHandle *) handle;
 
-    FuseFS::setMigInfoAt(fh->fd, FuseFS::mig_info::state_num::STUBBING);
+    FuseFS::setMigInfoAt(fh->fd, FuseFS::mig_state_attr_t::state_num::STUBBING);
 }
 
 /*void FsObj::stub()
@@ -517,7 +517,7 @@ void FsObj::stub()
     if (ftruncate(fh->fd, 0) == -1) {
         TRACE(Trace::error, errno);
         MSG(LTFSDMF0016E, fh->fusepath);
-        FuseFS::setMigInfoAt(fh->fd, FuseFS::mig_info::state_num::PREMIGRATED);
+        FuseFS::setMigInfoAt(fh->fd, FuseFS::mig_state_attr_t::state_num::PREMIGRATED);
         THROW(Error::GENERAL_ERROR, errno, fh->fusepath);
     }
 
@@ -526,14 +526,14 @@ void FsObj::stub()
         close(fd);
     }
 
-    FuseFS::setMigInfoAt(fh->fd, FuseFS::mig_info::state_num::MIGRATED);
+    FuseFS::setMigInfoAt(fh->fd, FuseFS::mig_state_attr_t::state_num::MIGRATED);
 }
 
 FsObj::file_state FsObj::getMigState()
 {
     FuseFS::FuseHandle *fh = (FuseFS::FuseHandle *) handle;
     FsObj::file_state state = FsObj::RESIDENT;
-    FuseFS::mig_info miginfo;
+    FuseFS::mig_state_attr_t miginfo;
 
     try {
         miginfo = FuseFS::getMigInfoAt(fh->fd);
@@ -545,16 +545,16 @@ FsObj::file_state FsObj::getMigState()
     }
 
     switch (miginfo.state) {
-        case FuseFS::mig_info::state_num::RESIDENT:
-        case FuseFS::mig_info::state_num::IN_MIGRATION:
+        case FuseFS::mig_state_attr_t::state_num::RESIDENT:
+        case FuseFS::mig_state_attr_t::state_num::IN_MIGRATION:
             state = FsObj::RESIDENT;
             break;
-        case FuseFS::mig_info::state_num::MIGRATED:
-        case FuseFS::mig_info::state_num::IN_RECALL:
+        case FuseFS::mig_state_attr_t::state_num::MIGRATED:
+        case FuseFS::mig_state_attr_t::state_num::IN_RECALL:
             state = FsObj::MIGRATED;
             break;
-        case FuseFS::mig_info::state_num::PREMIGRATED:
-        case FuseFS::mig_info::state_num::STUBBING:
+        case FuseFS::mig_state_attr_t::state_num::PREMIGRATED:
+        case FuseFS::mig_state_attr_t::state_num::STUBBING:
             state = FsObj::PREMIGRATED;
     }
 

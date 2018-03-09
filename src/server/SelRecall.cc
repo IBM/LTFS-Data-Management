@@ -236,7 +236,7 @@ void SelRecall::addJob(std::string fileName)
     SQLStatement stmt;
     std::string tapeName;
     int state;
-    FsObj::mig_attr_t attr;
+    FsObj::mig_tape_attr_t attr;
     fuid_t fuid;
 
     try {
