@@ -166,6 +166,7 @@ SQLStatement& SQLStatement::operator()(std::string _fmtstr)
         fmt = boost::format(fmtstr);
     }
     catch (const std::exception& e) {
+        MSG(LTFSDMS0102E);
         THROW(Error::GENERAL_ERROR, e.what(), fmtstr);
     }
 
@@ -297,6 +298,7 @@ std::string SQLStatement::str()
         str = fmt.str();
     }
     catch (const std::exception& e) {
+        MSG(LTFSDMS0102E);
         THROW(Error::GENERAL_ERROR, e.what(), fmtstr);
     }
 

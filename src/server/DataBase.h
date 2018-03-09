@@ -117,6 +117,7 @@ public:
             fmt % static_cast<long>(llu);
         }
         catch (const std::exception& e) {
+            MSG(LTFSDMS0102E);
             THROW(Error::GENERAL_ERROR, e.what(), fmtstr);
         }
         return *this;
@@ -128,6 +129,7 @@ public:
             fmt % static_cast<long>(lu);
         }
         catch (const std::exception& e) {
+            MSG(LTFSDMS0102E);
             THROW(Error::GENERAL_ERROR, e.what(), fmtstr);
         }
 
@@ -140,6 +142,7 @@ public:
             fmt % encode(s);
         }
         catch (const std::exception& e) {
+            MSG(LTFSDMS0102E);
             THROW(Error::GENERAL_ERROR, e.what(), fmtstr);
         }
 
@@ -152,6 +155,7 @@ public:
             fmt % static_cast<int>(u);
         }
         catch (const std::exception& e) {
+            MSG(LTFSDMS0102E);
             THROW(Error::GENERAL_ERROR, e.what(), fmtstr);
         }
 
@@ -165,6 +169,7 @@ public:
             fmt % (s);
         }
         catch (const std::exception& e) {
+            MSG(LTFSDMS0102E);
             THROW(Error::GENERAL_ERROR, e.what(), fmtstr);
         }
 
