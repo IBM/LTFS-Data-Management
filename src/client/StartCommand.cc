@@ -212,7 +212,7 @@ void StartCommand::waitForResponse()
     bool success = false;
 
     MSG(LTFSDMC0100I);
-    while (retry < 120) {
+    while (retry < 720) {
         try {
             connect();
             success = true;
