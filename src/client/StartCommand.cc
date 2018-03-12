@@ -19,6 +19,8 @@
 #include <string.h>
 #include <limits.h>
 #include <libgen.h>
+#include <fcntl.h>
+#include <sys/file.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/resource.h>
@@ -210,6 +212,7 @@ void StartCommand::waitForResponse()
     int pid;
     int retry = 0;
     bool success = false;
+    int lockfd;
 
     MSG(LTFSDMC0100I);
     while (retry < Const::STARTUP_TIMEOUT) {
@@ -219,6 +222,17 @@ void StartCommand::waitForResponse()
             break;
         } catch (const std::exception& e) {
             INFO(LTFSDMC0103I);
+            if ((lockfd = open(Const::SERVER_LOCK_FILE.c_str(), O_RDWR | O_CREAT, 0600))
+                    == -1) {
+                INFO(LTFSDMC0104I);
+                MSG(LTFSDMC0033E);
+                return;
+            }
+            if (flock(lockfd, LOCK_EX | LOCK_NB) == 0) {
+                INFO(LTFSDMC0104I);
+                MSG(LTFSDMC0096E);
+                return;
+            }
             retry++;
             sleep(1);
         }
