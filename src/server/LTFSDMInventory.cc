@@ -470,6 +470,7 @@ void LTFSDMInventory::inventorize()
         for (std::shared_ptr<LTFSDMDrive> d : drives) {
             if (c->get_le()->get_slot() == d->get_le()->get_slot()) {
                 c->setState(LTFSDMCartridge::TAPE_MOUNTED);
+                c->get_le()->Mount(d->get_le()->GetObjectID());
                 break;
             }
         }
