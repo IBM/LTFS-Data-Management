@@ -73,4 +73,5 @@ const std::string TMP_DIR_TEMPLATE = "/tmp/ltfsdm.XXXXXX";
 const std::string LTFSLE_HOST = "127.0.0.1";
 const unsigned short int LTFSLE_PORT = 7600;
 const int WAIT_TAPE_MOUNT = 60;
+const int STARTUP_TIMEOUT = 720;
 }
