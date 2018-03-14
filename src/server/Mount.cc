@@ -26,6 +26,7 @@ void Mount::addRequest()
 
     std::unique_lock<std::mutex> lock(Scheduler::mtx);
 
+    inventory->getCartridge(tapeId)->setState(LTFSDMCartridge::TAPE_INUSE);
     stmt(Mount::ADD_REQUEST)
             << (op == Mount::MOUNT ? DataBase::MOUNT : DataBase::UNMOUNT)
             << reqNumber << Const::UNSET << tapeId << driveId << time(NULL) << DataBase::REQ_NEW;
