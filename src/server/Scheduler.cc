@@ -260,6 +260,10 @@ bool Scheduler::tapeResAvail()
             == LTFSDMCartridge::TAPE_MOVING)
         return false;
 
+    /*
+     * a tape is also changing its state to "TAPE_INUSE" when an
+     * un/mount request is added to the REQUEST_QUEUE
+     */
     if (inventory->getCartridge(tapeId)->getState()
             == LTFSDMCartridge::TAPE_INUSE) {
         found = false;
@@ -274,7 +278,6 @@ bool Scheduler::tapeResAvail()
                 break;
             }
         }
-        assert(found == true);
         return false;
     } else if (inventory->getCartridge(tapeId)->getState()
             == LTFSDMCartridge::TAPE_MOUNTED) {
