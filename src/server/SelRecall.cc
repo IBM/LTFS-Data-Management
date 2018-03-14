@@ -559,7 +559,7 @@ void SelRecall::execRequest(std::string driveId, std::string tapeId,
 
     mrStatus.add(reqNumber);
 
-    if (targetState == LTFSDmProtocol::LTFSDmSelRecRequest::PREMIGRATED)
+    if (targetState == FsObj::PREMIGRATED)
         suspended = processFiles(tapeId, FsObj::PREMIGRATED, needsTape);
     else
         suspended = processFiles(tapeId, FsObj::RESIDENT, needsTape);

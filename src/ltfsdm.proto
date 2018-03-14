@@ -45,11 +45,7 @@ message LTFSDmMigRequest {
 	required uint64 key = 1;
 	required int64 reqNumber = 2;
 	required uint64 pid = 3;
-	enum State {
-		PREMIGRATED = 0;
-		MIGRATED = 1;
-	}
-	required State state = 4;
+	required int64 state = 4;
 	required bytes pools = 5;
 }
 
@@ -63,11 +59,7 @@ message LTFSDmSelRecRequest {
 	required uint64 key = 1;
 	required int64 reqNumber = 2;
 	required uint64 pid = 3;
-	enum State {
-		PREMIGRATED = 0;
-		RESIDENT = 1;
-	}
-	required State state = 4;
+	required int64 state = 4;
 }
 
 message LTFSDmSelRecRequestResp {

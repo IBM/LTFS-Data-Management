@@ -45,7 +45,7 @@
     OPERATION | INT | operation: see DataBase::operation
     FILE_NAME | CHAR(4096) | file name
     REQ_NUM | INT | for each new request incremented by one
-    TARGET_STATE | INT | target state as defined within the protocol buffer definitions
+    TARGET_STATE | INT | target state for migration and recall: FsObj::state
     REPL_NUM | INT | 0, for migration 0,1,2 depending of the number of tape storage pools
     TAPE_POOL | VARCHAR | name of the tape storage pool
     FILE_SIZE | BIGINT | file size
@@ -67,7 +67,7 @@
     ---|---|---
     OPERATION | INT | operation: see DataBase::operation
     REQ_NUM | INT | for each new request incremented by one
-    TARGET_STATE | INT | target state as defined within the protocol buffer definitions
+    TARGET_STATE | INT |  target state for migration and recall: FsObj::state
     NUM_REPL | | number of replicas, only used for migration
     REPL_NUM | INT | 0, for migration 0,1,2 depending of the number of tape storage pools
     TAPE_POOL | VARCHAR | name of the tape storage pool
@@ -151,7 +151,7 @@ const std::string Migration::ADD_JOB =
         "INSERT INTO JOB_QUEUE (OPERATION, FILE_NAME, REQ_NUM, TARGET_STATE, REPL_NUM, TAPE_POOL,"
                 " FILE_SIZE, FS_ID_H, FS_ID_L, I_GEN, I_NUM, MTIME_SEC, MTIME_NSEC, LAST_UPD, TAPE_ID, FILE_STATE)"
                 " VALUES (" /* OPERATION */"%1%, " /* FILE_NAME */"'%2%', " /* REQ_NUM */"%3%, "
-                /* MIGRATION_STATE */"%4%, " /* REPL_NUM */"?, " /* TAPE_POOL */"?, "
+                /* TARGET_STATE */"%4%, " /* REPL_NUM */"?, " /* TAPE_POOL */"?, "
                 /* FILE_SIZE */"%5%, " /* FS_ID_H */"%6%, " /* FS_ID_L */"%7%, " /* I_GEN */"%8%,"
                 /* I_NUM */"%9%, "/* MTIME_SEC */"%10%, " /* MTIME_NSEC */"%11%, " /* LAST_UPD */"%12%, "
                 /* TAPE_ID */"'', " /* FILE_STATE */"%13%)";
@@ -231,7 +231,7 @@ const std::string SelRecall::ADD_JOB =
         "INSERT INTO JOB_QUEUE (OPERATION, FILE_NAME, REQ_NUM, TARGET_STATE, FILE_SIZE, FS_ID_H, FS_ID_L, I_GEN,"
                 " I_NUM, MTIME_SEC, MTIME_NSEC, LAST_UPD, FILE_STATE, TAPE_ID, START_BLOCK)"
                 " VALUES (" /* OPERATION */"%1%, " /* FILE_NAME */"'%2%', " /* REQ_NUM */"%3%, "
-                /* MIGRATION_STATE */"%4%, " /* FILE_SIZE */"%5%, " /* FS_ID_H */"%6%, " /* FS_ID_L */"%7%, "
+                /* TARGET_STATE */"%4%, " /* FILE_SIZE */"%5%, " /* FS_ID_H */"%6%, " /* FS_ID_L */"%7%, "
                 /* I_GEN */"%8%, " /* I_NUM */"%9%, " /* MTIME_SEC */"%10%, " /* MTIME_NSEC */"%11%, "
                 /* LAST_UPD */"%12%, " /* FILE_STATE */"%13%, " /* TAPE_ID */"'%14%', " /* START_BLOCK */"%15%)";
 
@@ -300,9 +300,9 @@ const std::string TransRecall::CHANGE_REQUEST_TO_NEW =
                 " WHERE REQ_NUM=%2% AND TAPE_ID='%3%'";
 
 const std::string TransRecall::ADD_REQUEST =
-        "INSERT INTO REQUEST_QUEUE (OPERATION, REQ_NUM, TAPE_ID, TIME_ADDED, STATE)"
-                " VALUES (" /* OPERATION */"%1%, " /* REQ_NUMR */"%2%, " /* TAPE_ID */"'%3%', "
-                /* TIME_ADDED */"%4%, " /* STATE */"%5%)";
+        "INSERT INTO REQUEST_QUEUE (OPERATION, REQ_NUM, TARGET_STATE, TAPE_ID, TIME_ADDED, STATE)"
+                " VALUES (" /* OPERATION */"%1%, " /* REQ_NUMR */"%2%, " /* TARGET_STATE */"'%3%', "
+                /* TAPE_ID */"'%4%', " /* TIME_ADDED */"%5%, " /* STATE */"%6%)";
 
 const std::string TransRecall::REMAINING_JOBS =
         "SELECT FS_ID_H, FS_ID_L, I_GEN, I_NUM, FILE_NAME, CONN_INFO  FROM JOB_QUEUE"
@@ -378,9 +378,9 @@ const std::string Status::STATUS =
 /* ======== Mount ======== */
 
 const std::string Mount::ADD_REQUEST =
-        "INSERT INTO REQUEST_QUEUE (OPERATION, REQ_NUM, TAPE_ID, TIME_ADDED, STATE)"
-                " VALUES (" /* OPERATION */"%1%, " /* REQ_NUMR */"%2%, " /* TAPE_ID */"'%3%', "
-                /* TIME_ADDED */"%4%, " /* STATE */"%5%)";
+        "INSERT INTO REQUEST_QUEUE (OPERATION, REQ_NUM, TARGET_STATE, TAPE_ID, TIME_ADDED, STATE)"
+                " VALUES (" /* OPERATION */"%1%, " /* REQ_NUMR */"%2%, " /* TARGET_STATE */" %3%, " /* TAPE_ID */"'%4%', "
+                /* TIME_ADDED */"%5%, " /* STATE */"%6%)";
 
 const std::string Mount::DELETE_REQUEST =
         "DELETE FROM REQUEST_QUEUE WHERE REQ_NUM=%1%";

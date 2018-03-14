@@ -16,6 +16,7 @@
  *******************************************************************************/
 #include <unistd.h>
 #include <sys/resource.h>
+#include <blkid/blkid.h>
 
 #include <string>
 #include <list>
@@ -29,6 +30,10 @@
 
 #include "src/common/comm/ltfsdm.pb.h"
 #include "src/common/comm/LTFSDmComm.h"
+#include "src/common/util/FileSystems.h"
+#include "src/common/configuration/Configuration.h"
+
+#include "src/connector/Connector.h"
 
 #include "LTFSDMCommand.h"
 #include "RecallCommand.h"
@@ -167,9 +172,9 @@ void RecallCommand::talkToBackend(std::stringstream *parmList)
     recreq->set_pid(getpid());
 
     if (recToResident == true)
-        recreq->set_state(LTFSDmProtocol::LTFSDmSelRecRequest::RESIDENT);
+        recreq->set_state(FsObj::RESIDENT);
     else
-        recreq->set_state(LTFSDmProtocol::LTFSDmSelRecRequest::PREMIGRATED);
+        recreq->set_state(FsObj::PREMIGRATED);
 
     try {
         commCommand.send();

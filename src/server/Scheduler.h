@@ -58,8 +58,7 @@ public:
     }
     Scheduler() :
             op(DataBase::NOOP), reqNum(Const::UNSET), numRepl(Const::UNSET), replNum(
-                    Const::UNSET), tgtState(
-                    LTFSDmProtocol::LTFSDmMigRequest::MIGRATED)
+                    Const::UNSET), tgtState(Const::UNSET)
     {
     }
     ~Scheduler()

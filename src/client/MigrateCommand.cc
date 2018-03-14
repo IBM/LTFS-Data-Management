@@ -16,6 +16,7 @@
  *******************************************************************************/
 #include <unistd.h>
 #include <sys/resource.h>
+#include <blkid/blkid.h>
 
 #include <string>
 #include <sstream>
@@ -29,6 +30,10 @@
 
 #include "src/common/comm/ltfsdm.pb.h"
 #include "src/common/comm/LTFSDmComm.h"
+#include "src/common/util/FileSystems.h"
+#include "src/common/configuration/Configuration.h"
+
+#include "src/connector/Connector.h"
 
 #include "LTFSDMCommand.h"
 #include "MigrateCommand.h"
@@ -175,9 +180,9 @@ void MigrateCommand::talkToBackend(std::stringstream *parmList)
     migreq->set_pools(poolNames);
 
     if (preMigrate == true)
-        migreq->set_state(LTFSDmProtocol::LTFSDmMigRequest::PREMIGRATED);
+        migreq->set_state(FsObj::PREMIGRATED);
     else
-        migreq->set_state(LTFSDmProtocol::LTFSDmMigRequest::MIGRATED);
+        migreq->set_state(FsObj::MIGRATED);
 
     try {
         commCommand.send();

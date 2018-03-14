@@ -923,7 +923,7 @@ void Migration::execRequest(int replNum, std::string driveId, std::string pool,
     }
 
     if (!failed) {
-        if (targetState == LTFSDmProtocol::LTFSDmMigRequest::MIGRATED) {
+        if (targetState == FsObj::MIGRATED) {
             if (needsTape)
                 processFiles(replNum, tapeId, FsObj::TRANSFERRED,
                         FsObj::MIGRATED);

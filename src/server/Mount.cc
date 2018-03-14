@@ -27,7 +27,7 @@ long Mount::addRequest()
 
     stmt(Mount::ADD_REQUEST)
             << (op == Mount::MOUNT ? DataBase::MOUNT : DataBase::UNMOUNT)
-            << reqNumber << tapeId << time(NULL) << DataBase::REQ_NEW;
+            << reqNumber << Const::UNSET << tapeId << time(NULL) << DataBase::REQ_NEW;
 
     TRACE(Trace::normal, stmt.str());
 

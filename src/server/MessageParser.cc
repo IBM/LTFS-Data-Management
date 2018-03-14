@@ -619,7 +619,7 @@ void MessageParser::infoRequestsMessage(long key, LTFSDmCommServer *command,
         inforeqsresp->set_operation(DataBase::opStr(op));
         inforeqsresp->set_reqnumber(reqNum);
         inforeqsresp->set_tapeid(tapeId);
-        inforeqsresp->set_targetstate(DataBase::reqStateStr(tgtstate));
+        inforeqsresp->set_targetstate(FsObj::migStateStr(tgtstate));
         inforeqsresp->set_state(DataBase::reqStateStr(state));
         inforeqsresp->set_pool(pool);
 

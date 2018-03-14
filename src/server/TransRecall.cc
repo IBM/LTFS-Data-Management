@@ -380,7 +380,8 @@ void TransRecall::addJob(Connector::rec_info_t recinfo, std::string tapeId,
         Scheduler::cond.notify_one();
     } else {
         stmt(TransRecall::ADD_REQUEST) << DataBase::TRARECALL << reqNum
-                << attr.tapeInfo[0].tapeId << time(NULL) << DataBase::REQ_NEW;
+                << Const::UNSET << attr.tapeInfo[0].tapeId << time(NULL)
+                << DataBase::REQ_NEW;
         TRACE(Trace::normal, stmt.str());
         stmt.doall();
         Scheduler::cond.notify_one();
