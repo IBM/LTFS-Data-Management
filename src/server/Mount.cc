@@ -18,22 +18,23 @@
 #include "ServerIncludes.h"
 
 
-long Mount::addRequest()
+void Mount::addRequest()
 
 {
     SQLStatement stmt;
     long reqNumber = ++globalReqNumber;
 
+    std::unique_lock<std::mutex> lock(Scheduler::mtx);
 
     stmt(Mount::ADD_REQUEST)
             << (op == Mount::MOUNT ? DataBase::MOUNT : DataBase::UNMOUNT)
-            << reqNumber << Const::UNSET << tapeId << time(NULL) << DataBase::REQ_NEW;
+            << reqNumber << Const::UNSET << tapeId << driveId << time(NULL) << DataBase::REQ_NEW;
 
     TRACE(Trace::normal, stmt.str());
 
     stmt.doall();
 
-    return reqNumber;
+    Scheduler::cond.notify_one();
 }
 
 void Mount::execRequest()

@@ -208,12 +208,11 @@ bool Scheduler::poolResAvail(unsigned long minFileSize)
                     TRACE(Trace::always, drive->get_le()->GetObjectID());
                     drive->setBusy();
                     drive->setUnmountReqNum(reqNum);
-                    Mount mnt(drive->get_le()->GetObjectID(), cartname, Mount::MOUNT);
-                    reqNum = mnt.addRequest();
-                    op = DataBase::MOUNT;
-                    tapeId = cartname;
-                    driveId = drive->get_le()->GetObjectID();
-                    return true;
+                    subs.enqueue(std::string("mnt:") + cartname,
+                            &Mount::addRequest,
+                            Mount(drive->get_le()->GetObjectID(),
+                                    cartname, Mount::MOUNT));
+                    return false;
                 }
             }
 
@@ -237,12 +236,12 @@ bool Scheduler::poolResAvail(unsigned long minFileSize)
                 TRACE(Trace::normal, drive->get_le()->GetObjectID());
                 drive->setBusy();
                 drive->setUnmountReqNum(reqNum);
-                Mount umnt(drive->get_le()->GetObjectID(), card->get_le()->GetObjectID(), Mount::UNMOUNT);
-                reqNum = umnt.addRequest();
-                op = DataBase::UNMOUNT;
-                tapeId = card->get_le()->GetObjectID();
-                driveId = drive->get_le()->GetObjectID();
-                return true;
+                subs.enqueue(std::string("unm:") + cart->get_le()->GetObjectID(),
+                        &Mount::addRequest,
+                        Mount(drive->get_le()->GetObjectID(),
+                                card->get_le()->GetObjectID(),
+                                Mount::UNMOUNT));
+                return false;
             }
         }
     }
@@ -315,11 +314,11 @@ bool Scheduler::tapeResAvail()
                 TRACE(Trace::always, drive->get_le()->GetObjectID());
                 drive->setBusy();
                 drive->setUnmountReqNum(reqNum);
-                Mount mnt(drive->get_le()->GetObjectID(), tapeId, Mount::MOUNT);
-                reqNum = mnt.addRequest();
-                op = DataBase::MOUNT;
-                driveId = drive->get_le()->GetObjectID();
-                return true;
+                subs.enqueue(std::string("mnt:") + tapeId,
+                        &Mount::addRequest,
+                        Mount(drive->get_le()->GetObjectID(),
+                                tapeId, Mount::MOUNT));
+                return false;
             }
         }
     }
@@ -335,12 +334,12 @@ bool Scheduler::tapeResAvail()
                 drive->setBusy();
                 drive->setUnmountReqNum(reqNum);
                 inventory->getCartridge(tapeId)->unsetRequested();
-                Mount umnt(drive->get_le()->GetObjectID(), card->get_le()->GetObjectID(), Mount::UNMOUNT);
-                reqNum = umnt.addRequest();
-                op = DataBase::UNMOUNT;
-                tapeId = card->get_le()->GetObjectID();
-                driveId = drive->get_le()->GetObjectID();
-                return true;
+                subs.enqueue(std::string("m:") + card->get_le()->GetObjectID(),
+                        &Mount::addRequest,
+                        Mount(drive->get_le()->GetObjectID(),
+                                card->get_le()->GetObjectID(),
+                                Mount::UNMOUNT));
+                return false;
             }
         }
     }
@@ -408,19 +407,18 @@ void Scheduler::run(long key)
 
         selstmt.prepare();
         while (selstmt.step(&op, &reqNum, &tgtState, &numRepl, &replNum, &pool,
-                &tapeId)) {
+                &tapeId, &driveId)) {
             std::lock_guard<std::recursive_mutex> lock(LTFSDMInventory::mtx);
 
-            TRACE(Trace::always, replNum);
-
-            driveId = "";
+            TRACE(Trace::always, op, replNum, tapeId, driveId);
 
             if (op == DataBase::MIGRATION)
                 minFileSize = smallestMigJob(reqNum, replNum);
             else
                 minFileSize = 0;
 
-            if (resAvail(minFileSize) == false)
+            if (op != DataBase::MOUNT && op != DataBase::UNMOUNT
+                    && resAvail(minFileSize) == false)
                 continue;
 
             TRACE(Trace::always, reqNum, tgtState, numRepl, replNum, pool);

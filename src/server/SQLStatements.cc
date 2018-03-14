@@ -72,6 +72,7 @@
     REPL_NUM | INT | 0, for migration 0,1,2 depending of the number of tape storage pools
     TAPE_POOL | VARCHAR | name of the tape storage pool
     TAPE_ID | CHAR(9) | id of the cartridge that is being used
+    DRIVE_ID | VARCHAR | id of the drive that is being used mount or unmount requests
     TIME_ADDED | INT | time the request has been added (need to check if really used)
     STATE | INT | request state, see DataBase::req_state
 
@@ -111,6 +112,7 @@ const std::string DataBase::CREATE_REQUEST_QUEUE =
                 " REPL_NUM INT,"
                 " TAPE_POOL VARCHAR,"
                 " TAPE_ID CHAR(9),"
+                " DRIVE_ID VARCHAR,"
                 " TIME_ADDED INT NOT NULL,"
                 " STATE INT NOT NULL,"
                 " CONSTRAINT REQUEST_QUEUE_UNIQUE UNIQUE(REQ_NUM, REPL_NUM, TAPE_POOL, TAPE_ID))";
@@ -119,7 +121,7 @@ const std::string DataBase::CREATE_REQUEST_QUEUE =
 
 const std::string Scheduler::SELECT_REQUEST =
         "SELECT OPERATION, REQ_NUM, TARGET_STATE, NUM_REPL,"
-                " REPL_NUM, TAPE_POOL, TAPE_ID"
+                " REPL_NUM, TAPE_POOL, TAPE_ID, DRIVE_ID"
                 " FROM REQUEST_QUEUE WHERE STATE=%1%"
                 " ORDER BY OPERATION,TIME_ADDED ASC";
 
@@ -378,9 +380,9 @@ const std::string Status::STATUS =
 /* ======== Mount ======== */
 
 const std::string Mount::ADD_REQUEST =
-        "INSERT INTO REQUEST_QUEUE (OPERATION, REQ_NUM, TARGET_STATE, TAPE_ID, TIME_ADDED, STATE)"
+        "INSERT INTO REQUEST_QUEUE (OPERATION, REQ_NUM, TARGET_STATE, TAPE_ID, DRIVE_ID, TIME_ADDED, STATE)"
                 " VALUES (" /* OPERATION */"%1%, " /* REQ_NUMR */"%2%, " /* TARGET_STATE */" %3%, " /* TAPE_ID */"'%4%', "
-                /* TIME_ADDED */"%5%, " /* STATE */"%6%)";
+                /* DRIVE_ID */"'%5%', " /* TIME_ADDED */"%6%, " /* STATE */"%7%)";
 
 const std::string Mount::DELETE_REQUEST =
         "DELETE FROM REQUEST_QUEUE WHERE REQ_NUM=%1%";

@@ -34,6 +34,6 @@ private:
 public:
     Mount(std::string _driveId, std::string _tapeId, int _reqNum, operation _op) : driveId(_driveId), tapeId(_tapeId), reqNum(_reqNum), op(_op) {}
     Mount(std::string _driveId, std::string _tapeId, operation _op) : driveId(_driveId), tapeId(_tapeId), reqNum(Const::UNSET), op(_op) {}
-    long addRequest();
+    void addRequest();
     void execRequest();
 };
