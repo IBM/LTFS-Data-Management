@@ -208,12 +208,12 @@ bool Scheduler::poolResAvail(unsigned long minFileSize)
                     TRACE(Trace::always, drive->get_le()->GetObjectID());
                     drive->setBusy();
                     drive->setUnmountReqNum(reqNum);
-                    cart->setState(LTFSDMCartridge::TAPE_MOVING);
-                    subs.enqueue(
-                            std::string("m:") + cart->get_le()->GetObjectID(),
-                            mount, drive->get_le()->GetObjectID(),
-                            cart->get_le()->GetObjectID());
-                    return false;
+                    Mount mnt(drive->get_le()->GetObjectID(), cartname, Mount::MOUNT);
+                    reqNum = mnt.addRequest();
+                    op = DataBase::MOUNT;
+                    tapeId = cartname;
+                    driveId = drive->get_le()->GetObjectID();
+                    return true;
                 }
             }
 
@@ -237,12 +237,12 @@ bool Scheduler::poolResAvail(unsigned long minFileSize)
                 TRACE(Trace::normal, drive->get_le()->GetObjectID());
                 drive->setBusy();
                 drive->setUnmountReqNum(reqNum);
-                card->setState(LTFSDMCartridge::TAPE_MOVING);
-                subs.enqueue(
-                        std::string("unm:") + card->get_le()->GetObjectID(),
-                        unmount, drive->get_le()->GetObjectID(),
-                        card->get_le()->GetObjectID());
-                return false;
+                Mount umnt(drive->get_le()->GetObjectID(), card->get_le()->GetObjectID(), Mount::UNMOUNT);
+                reqNum = umnt.addRequest();
+                op = DataBase::UNMOUNT;
+                tapeId = card->get_le()->GetObjectID();
+                driveId = drive->get_le()->GetObjectID();
+                return true;
             }
         }
     }
@@ -315,11 +315,11 @@ bool Scheduler::tapeResAvail()
                 TRACE(Trace::always, drive->get_le()->GetObjectID());
                 drive->setBusy();
                 drive->setUnmountReqNum(reqNum);
-                inventory->getCartridge(tapeId)->setState(
-                        LTFSDMCartridge::TAPE_MOVING);
-                subs.enqueue(std::string("m:") + tapeId, mount,
-                        drive->get_le()->GetObjectID(), tapeId);
-                return false;
+                Mount mnt(drive->get_le()->GetObjectID(), tapeId, Mount::MOUNT);
+                reqNum = mnt.addRequest();
+                op = DataBase::MOUNT;
+                driveId = drive->get_le()->GetObjectID();
+                return true;
             }
         }
     }
@@ -334,13 +334,13 @@ bool Scheduler::tapeResAvail()
                 TRACE(Trace::always, drive->get_le()->GetObjectID());
                 drive->setBusy();
                 drive->setUnmountReqNum(reqNum);
-                card->setState(LTFSDMCartridge::TAPE_MOVING);
                 inventory->getCartridge(tapeId)->unsetRequested();
-                subs.enqueue(
-                        std::string("unm:") + card->get_le()->GetObjectID(),
-                        unmount, drive->get_le()->GetObjectID(),
-                        card->get_le()->GetObjectID());
-                return false;
+                Mount umnt(drive->get_le()->GetObjectID(), card->get_le()->GetObjectID(), Mount::UNMOUNT);
+                reqNum = umnt.addRequest();
+                op = DataBase::UNMOUNT;
+                tapeId = card->get_le()->GetObjectID();
+                driveId = drive->get_le()->GetObjectID();
+                return true;
             }
         }
     }
@@ -411,6 +411,8 @@ void Scheduler::run(long key)
                 &tapeId)) {
             std::lock_guard<std::recursive_mutex> lock(LTFSDMInventory::mtx);
 
+            TRACE(Trace::always, replNum);
+
             driveId = "";
 
             if (op == DataBase::MIGRATION)
@@ -426,6 +428,20 @@ void Scheduler::run(long key)
             std::stringstream thrdinfo;
 
             switch (op) {
+                case DataBase::MOUNT:
+                case DataBase::UNMOUNT:
+                    updstmt(Scheduler::UPDATE_MNT_REQUEST)
+                            << DataBase::REQ_INPROGRESS << reqNum;
+                    updstmt.doall();
+
+                    if ( op == DataBase::MOUNT )
+                        thrdinfo << "MNT(" << tapeId << ")";
+                    else
+                        thrdinfo << "UMN(" << tapeId << ")";
+
+                    subs.enqueue(thrdinfo.str(), &Mount::execRequest,
+                            Mount(driveId, tapeId, reqNum, op == DataBase::MOUNT ? Mount::MOUNT : Mount::UNMOUNT));
+                    break;
                 case DataBase::MIGRATION:
                     updstmt(Scheduler::UPDATE_MIG_REQUEST)
                             << DataBase::REQ_INPROGRESS << tapeId << reqNum

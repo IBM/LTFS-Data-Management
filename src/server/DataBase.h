@@ -27,10 +27,12 @@ private:
 public:
     enum operation
     {
-        TRARECALL, /**@< 0 */
-        SELRECALL, /**@< 1 */
-        MIGRATION, /**@< 2 */
-        NOOP /**@< 3 */
+        MOUNT,     /**@< 0 */
+        UNMOUNT,   /**@< 1 */
+        TRARECALL, /**@< 2 */
+        SELRECALL, /**@< 3 */
+        MIGRATION, /**@< 4 */
+        NOOP       /**@< 5 */
     };
     enum req_state
     {

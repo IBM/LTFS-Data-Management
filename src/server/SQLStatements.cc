@@ -123,6 +123,11 @@ const std::string Scheduler::SELECT_REQUEST =
                 " FROM REQUEST_QUEUE WHERE STATE=%1%"
                 " ORDER BY OPERATION,TIME_ADDED ASC";
 
+
+const std::string Scheduler::UPDATE_MNT_REQUEST =
+        "UPDATE REQUEST_QUEUE SET STATE=%1%"
+                " WHERE REQ_NUM=%2%";
+
 const std::string Scheduler::UPDATE_MIG_REQUEST =
         "UPDATE REQUEST_QUEUE SET STATE=%1%,TAPE_ID='%2%'"
                 " WHERE REQ_NUM=%3%"
@@ -369,3 +374,14 @@ const std::string MessageParser::INFO_SEL_JOBS =
 const std::string Status::STATUS =
         "SELECT FILE_STATE, COUNT(*) FROM JOB_QUEUE WHERE REQ_NUM=%1%"
                 " GROUP BY FILE_STATE";
+
+/* ======== Mount ======== */
+
+const std::string Mount::ADD_REQUEST =
+        "INSERT INTO REQUEST_QUEUE (OPERATION, REQ_NUM, TAPE_ID, TIME_ADDED, STATE)"
+                " VALUES (" /* OPERATION */"%1%, " /* REQ_NUMR */"%2%, " /* TAPE_ID */"'%3%', "
+                /* TIME_ADDED */"%4%, " /* STATE */"%5%)";
+
+const std::string Mount::DELETE_REQUEST =
+        "DELETE FROM REQUEST_QUEUE WHERE REQ_NUM=%1%";
+

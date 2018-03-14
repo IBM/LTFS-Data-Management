@@ -36,6 +36,7 @@ private:
     unsigned long smallestMigJob(int reqNum, int replNum);
 
     static const std::string SELECT_REQUEST;
+    static const std::string UPDATE_MNT_REQUEST;
     static const std::string UPDATE_MIG_REQUEST;
     static const std::string UPDATE_REC_REQUEST;
     static const std::string SMALLEST_MIG_JOB;

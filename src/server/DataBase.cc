@@ -125,6 +125,10 @@ std::string DataBase::opStr(DataBase::operation op)
 
 {
     switch (op) {
+        case MOUNT:
+            return ltfsdm_messages[LTFSDMX0078I];
+        case UNMOUNT:
+            return ltfsdm_messages[LTFSDMX0079I];
         case TRARECALL:
             return ltfsdm_messages[LTFSDMX0015I];
         case SELRECALL:

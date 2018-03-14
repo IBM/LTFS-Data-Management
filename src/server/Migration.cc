@@ -918,6 +918,7 @@ void Migration::execRequest(int replNum, std::string driveId, std::string pool,
         inventory->getDrive(driveId)->setFree();
         inventory->getDrive(driveId)->clearToUnblock();
 
+        std::unique_lock<std::mutex> schedlock(Scheduler::mtx);
         Scheduler::cond.notify_one();
     }
 

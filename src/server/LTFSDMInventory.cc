@@ -762,9 +762,6 @@ void LTFSDMInventory::mount(std::string driveid, std::string cartridgeid)
             MSG(LTFSDMS0101E, e.what());
         }
     }
-
-    std::unique_lock<std::mutex> updlock(Scheduler::mtx);
-    Scheduler::cond.notify_one();
 }
 
 void LTFSDMInventory::unmount(std::string driveid, std::string cartridgeid)
@@ -817,9 +814,6 @@ void LTFSDMInventory::unmount(std::string driveid, std::string cartridgeid)
             MSG(LTFSDMS0101E, e.what());
         }
     }
-
-    std::unique_lock<std::mutex> updlock(Scheduler::mtx);
-    Scheduler::cond.notify_one();
 }
 
 void LTFSDMInventory::format(std::string cartridgeid)
