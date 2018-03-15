@@ -372,6 +372,8 @@ bool Scheduler::tapeResAvail()
 bool Scheduler::resAvail(unsigned long minFileSize)
 
 {
+    if (op == DataBase::MOUNT || op == DataBase::UNMOUNT)
+        return true;
     if (op == DataBase::MIGRATION && tapeId.compare("") == 0)
         return poolResAvail(minFileSize);
     else
@@ -425,8 +427,7 @@ void Scheduler::run(long key)
             else
                 minFileSize = 0;
 
-            if (op != DataBase::MOUNT && op != DataBase::UNMOUNT
-                    && resAvail(minFileSize) == false)
+            if (resAvail(minFileSize) == false)
                 continue;
 
             TRACE(Trace::always, reqNum, tgtState, numRepl, replNum, pool);
