@@ -67,6 +67,8 @@ void LTFSDMCartridge::setState(state_t _state)
     std::lock_guard<std::recursive_mutex> lock(LTFSDMInventory::mtx);
 
     state = _state;
+
+    TRACE(Trace::always, this->get_le()->GetObjectID(), state);
 }
 
 LTFSDMCartridge::state_t LTFSDMCartridge::getState()

@@ -24,9 +24,10 @@ void Mount::addRequest()
     SQLStatement stmt;
     long reqNumber = ++globalReqNumber;
 
+    TRACE(Trace::always, op, tapeId, driveId);
+
     std::unique_lock<std::mutex> lock(Scheduler::mtx);
 
-    inventory->getCartridge(tapeId)->setState(LTFSDMCartridge::TAPE_INUSE);
     stmt(Mount::ADD_REQUEST)
             << (op == Mount::MOUNT ? DataBase::MOUNT : DataBase::UNMOUNT)
             << reqNumber << Const::UNSET << tapeId << driveId << time(NULL) << DataBase::REQ_NEW;
@@ -43,6 +44,8 @@ void Mount::execRequest()
 {
     std::shared_ptr<LTFSDMCartridge> cart;
     SQLStatement stmt;
+
+    TRACE(Trace::always, op, tapeId, driveId);
 
     try {
         if ((cart = inventory->getCartridge(tapeId)) == nullptr) {
