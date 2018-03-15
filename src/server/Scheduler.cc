@@ -142,6 +142,17 @@ std::mutex Scheduler::updmtx;
 std::condition_variable Scheduler::updcond;
 std::map<int, std::atomic<bool>> Scheduler::updReq;
 
+void Scheduler::makeUse(std::string driveId, std::string tapeId)
+
+{
+    std::shared_ptr<LTFSDMCartridge> cart = inventory->getCartridge(tapeId);
+    std::shared_ptr<LTFSDMDrive> drive = inventory->getDrive(driveId);
+
+    TRACE(Trace::always, driveId, tapeId);
+    drive->setBusy();
+    cart->setState(LTFSDMCartridge::TAPE_INUSE);
+}
+
 void Scheduler::moveTape(std::string driveId, std::string tapeId, Mount::operation op)
 
 {
@@ -150,8 +161,7 @@ void Scheduler::moveTape(std::string driveId, std::string tapeId, Mount::operati
     std::string opstr(op == Mount::MOUNT ? "mnt:" : "umn:");
 
     TRACE(Trace::always, driveId, tapeId);
-    drive->setBusy();
-    cart->setState(LTFSDMCartridge::TAPE_INUSE);
+    Scheduler::makeUse(driveId, tapeId);
     drive->setUnmountReqNum(reqNum);
     subs.enqueue(std::string(opstr) + tapeId,
             &Mount::addRequest,
@@ -180,10 +190,9 @@ bool Scheduler::poolResAvail(unsigned long minFileSize)
                         && 1024 * 1024 * cart->get_le()->get_remaining_cap()
                                 >= minFileSize) {
                     assert(drive->isBusy() == false);
-                    cart->setState(LTFSDMCartridge::TAPE_INUSE);
                     TRACE(Trace::always, drive->get_le()->GetObjectID());
-                    drive->setBusy();
                     driveId = drive->get_le()->GetObjectID();
+                    Scheduler::makeUse(driveId, tapeId);
                     found = true;
                     break;
                 }
@@ -293,12 +302,10 @@ bool Scheduler::tapeResAvail()
         for (std::shared_ptr<LTFSDMDrive> drive : inventory->getDrives()) {
             if (drive->get_le()->get_slot()
                     == inventory->getCartridge(tapeId)->get_le()->get_slot()) {
-                inventory->getCartridge(tapeId)->setState(
-                        LTFSDMCartridge::TAPE_INUSE);
                 assert(drive->isBusy() == false);
                 TRACE(Trace::always, drive->get_le()->GetObjectID());
                 driveId = drive->get_le()->GetObjectID();
-                drive->setBusy();
+                Scheduler::makeUse(driveId, tapeId);
                 found = true;
                 break;
             }
