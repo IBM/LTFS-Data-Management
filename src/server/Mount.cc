@@ -26,8 +26,6 @@ void TapeMover::addRequest()
 
     TRACE(Trace::always, op, tapeId, driveId);
 
-    std::unique_lock<std::mutex> lock(Scheduler::mtx);
-
     stmt(TapeMover::ADD_REQUEST)
             << (op == TapeMover::MOUNT ? DataBase::MOUNT : DataBase::UNMOUNT)
             << reqNumber << Const::UNSET << tapeId << driveId << time(NULL) << DataBase::REQ_NEW;
@@ -36,7 +34,7 @@ void TapeMover::addRequest()
 
     stmt.doall();
 
-    Scheduler::cond.notify_one();
+    Scheduler::invoke();
 }
 
 void TapeMover::execRequest()
@@ -73,7 +71,6 @@ void TapeMover::execRequest()
 
     TRACE(Trace::always, driveId, tapeId);
 
-    std::unique_lock<std::mutex> lock(Scheduler::mtx);
-    Scheduler::cond.notify_one();
+    Scheduler::invoke();
 }
 

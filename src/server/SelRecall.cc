@@ -305,8 +305,6 @@ void SelRecall::addRequest()
     }
 
     while (gettapesstmt.step(&tapeId)) {
-        std::unique_lock<std::mutex> lock(Scheduler::mtx);
-
         if (tapeId.compare(Const::FAILED_TAPE_ID) == 0)
             state = DataBase::REQ_COMPLETED;
         else if (needsTape.count(tapeId) > 0)
@@ -324,7 +322,7 @@ void SelRecall::addRequest()
         TRACE(Trace::always, needsTape.count(tapeId), reqNumber, tapeId);
 
         if (needsTape.count(tapeId) > 0) {
-            Scheduler::cond.notify_one();
+            Scheduler::invoke();
         } else {
             thrdinfo << "SR(" << reqNumber << ")";
             subs.enqueue(thrdinfo.str(), &SelRecall::execRequest,
@@ -564,8 +562,6 @@ void SelRecall::execRequest(std::string driveId, std::string tapeId,
     else
         suspended = processFiles(tapeId, FsObj::RESIDENT, needsTape);
 
-    std::unique_lock<std::mutex> lock(Scheduler::mtx);
-
     TRACE(Trace::always, reqNumber, needsTape, tapeId);
 
     if (needsTape) {
@@ -589,5 +585,5 @@ void SelRecall::execRequest(std::string driveId, std::string tapeId,
 
     Scheduler::updReq[reqNumber] = true;
     Scheduler::updcond.notify_all();
-    Scheduler::cond.notify_one();
+    Scheduler::invoke();
 }

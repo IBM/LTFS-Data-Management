@@ -29,6 +29,8 @@ private:
     std::string driveId;
     std::string pool;
     SubServer subs;
+    static std::mutex mtx;
+    static std::condition_variable cond;
 
     void makeUse(std::string driveId, std::string tapeId);
     void moveTape(std::string driveId, std::string tapeId, TapeMover::operation op);
@@ -43,13 +45,12 @@ private:
     static const std::string UPDATE_REC_REQUEST;
     static const std::string SMALLEST_MIG_JOB;
 public:
-    static std::mutex mtx;
-    static std::condition_variable cond;
     static std::mutex updmtx;
     static std::condition_variable updcond;
     static std::map<int, std::atomic<bool>> updReq;
     static std::map<std::string, std::atomic<bool>> suspend_map;
 
+    static void invoke();
     static void mount(std::string driveid, std::string cartridgeid)
     {
         inventory->mount(driveid, cartridgeid);

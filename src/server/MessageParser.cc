@@ -484,9 +484,7 @@ void MessageParser::stopMessage(long key, LTFSDmCommServer *command,
 
     TRACE(Trace::always, numreqs);
 
-    std::unique_lock<std::mutex> lock(Scheduler::mtx);
-    Scheduler::cond.notify_one();
-    lock.unlock();
+    Scheduler::invoke();
 
     kill(getpid(), SIGUSR1);
 }

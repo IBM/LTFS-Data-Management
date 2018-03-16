@@ -394,6 +394,16 @@ unsigned long Scheduler::smallestMigJob(int reqNum, int replNum)
     return min;
 }
 
+void Scheduler::invoke()
+
+{
+    assert(LTFSDMInventory::mtx.native_handle()->__data.__owner != syscall(__NR_gettid));
+
+
+    std::unique_lock<std::mutex> lock(Scheduler::mtx);
+    Scheduler::cond.notify_one();
+}
+
 void Scheduler::run(long key)
 
 {

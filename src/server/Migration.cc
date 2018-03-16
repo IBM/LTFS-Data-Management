@@ -488,7 +488,6 @@ void Migration::addRequest()
 
     for (std::string pool : pools) {
         replNum++;
-        std::unique_lock<std::mutex> lock(Scheduler::mtx);
 
         stmt(Migration::ADD_REQUEST) << DataBase::MIGRATION << reqNumber
                 << targetState << numReplica << replNum << pool << time(NULL)
@@ -501,7 +500,7 @@ void Migration::addRequest()
         TRACE(Trace::always, needsTape, reqNumber, pool);
 
         if (needsTape) {
-            Scheduler::cond.notify_one();
+            Scheduler::invoke();
         } else {
             swq.enqueue(reqNumber,
                     Migration(getpid(), reqNumber, { }, numReplica,
@@ -907,19 +906,20 @@ void Migration::execRequest(int replNum, std::string driveId, std::string pool,
             failed = true;
         }
 
-        inventory->update(inventory->getCartridge(tapeId));
+        {
+            inventory->update(inventory->getCartridge(tapeId));
 
-        std::lock_guard<std::recursive_mutex> lock(LTFSDMInventory::mtx);
-        if (inventory->getCartridge(tapeId)->getState()
-                == LTFSDMCartridge::TAPE_INUSE)
-            inventory->getCartridge(tapeId)->setState(
-                    LTFSDMCartridge::TAPE_MOUNTED);
+            std::lock_guard<std::recursive_mutex> lock(LTFSDMInventory::mtx);
+            if (inventory->getCartridge(tapeId)->getState()
+                    == LTFSDMCartridge::TAPE_INUSE)
+                inventory->getCartridge(tapeId)->setState(
+                        LTFSDMCartridge::TAPE_MOUNTED);
 
-        inventory->getDrive(driveId)->setFree();
-        inventory->getDrive(driveId)->clearToUnblock();
+            inventory->getDrive(driveId)->setFree();
+            inventory->getDrive(driveId)->clearToUnblock();
+        }
 
-        std::unique_lock<std::mutex> schedlock(Scheduler::mtx);
-        Scheduler::cond.notify_one();
+        Scheduler::invoke();
     }
 
     if (!failed) {
@@ -960,8 +960,6 @@ void Migration::execRequest(int replNum, std::string driveId, std::string pool,
      * If there are still jobs to process the scheduler needs to be requested
      * to look for new requests (incl. this one) to schedule.
      */
-    if ( retval.suspended || retval.remaining) {
-        std::unique_lock<std::mutex> schedlock(Scheduler::mtx);
-        Scheduler::cond.notify_one();
-    }
+    if ( retval.suspended || retval.remaining)
+        Scheduler::invoke();
 }

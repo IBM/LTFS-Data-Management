@@ -364,8 +364,6 @@ void TransRecall::addJob(Connector::rec_info_t recinfo, std::string tapeId,
 
     TRACE(Trace::always, tapeId);
 
-    std::unique_lock<std::mutex> lock(Scheduler::mtx);
-
     stmt(TransRecall::CHECK_REQUEST_EXISTS) << reqNum;
     stmt.prepare();
     while (stmt.step())
@@ -377,14 +375,14 @@ void TransRecall::addJob(Connector::rec_info_t recinfo, std::string tapeId,
                 << tapeId;
         TRACE(Trace::normal, stmt.str());
         stmt.doall();
-        Scheduler::cond.notify_one();
+        Scheduler::invoke();
     } else {
         stmt(TransRecall::ADD_REQUEST) << DataBase::TRARECALL << reqNum
                 << Const::UNSET << attr.tapeInfo[0].tapeId << time(NULL)
                 << DataBase::REQ_NEW;
         TRACE(Trace::normal, stmt.str());
         stmt.doall();
-        Scheduler::cond.notify_one();
+        Scheduler::invoke();
     }
 }
 
@@ -698,8 +696,6 @@ void TransRecall::execRequest(int reqNum, std::string driveId,
 
     processFiles(reqNum, tapeId);
 
-    std::unique_lock<std::mutex> lock(Scheduler::mtx);
-
     {
         std::lock_guard<std::recursive_mutex> inventorylock(
                 LTFSDMInventory::mtx);
@@ -725,5 +721,5 @@ void TransRecall::execRequest(int reqNum, std::string driveId,
         stmt(TransRecall::DELETE_REQUEST) << reqNum << tapeId;
     TRACE(Trace::normal, stmt.str());
     stmt.doall();
-    Scheduler::cond.notify_one();
+    Scheduler::invoke();
 }
