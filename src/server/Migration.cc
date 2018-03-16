@@ -955,4 +955,13 @@ void Migration::execRequest(int replNum, std::string driveId, std::string pool,
 
     Scheduler::updReq[reqNumber] = true;
     Scheduler::updcond.notify_all();
+
+    /*
+     * If there are still jobs to process the scheduler needs to be requested
+     * to look for new requests (incl. this one) to schedule.
+     */
+    if ( retval.suspended || retval.remaining) {
+        std::unique_lock<std::mutex> schedlock(Scheduler::mtx);
+        Scheduler::cond.notify_one();
+    }
 }
