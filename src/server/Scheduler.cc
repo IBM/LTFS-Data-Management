@@ -153,19 +153,19 @@ void Scheduler::makeUse(std::string driveId, std::string tapeId)
     cart->setState(LTFSDMCartridge::TAPE_INUSE);
 }
 
-void Scheduler::moveTape(std::string driveId, std::string tapeId, Mount::operation op)
+void Scheduler::moveTape(std::string driveId, std::string tapeId, TapeMover::operation op)
 
 {
     std::shared_ptr<LTFSDMCartridge> cart = inventory->getCartridge(tapeId);
     std::shared_ptr<LTFSDMDrive> drive = inventory->getDrive(driveId);
-    std::string opstr(op == Mount::MOUNT ? "mnt:" : "umn:");
+    std::string opstr(op == TapeMover::MOUNT ? "mnt:" : "umn:");
 
     TRACE(Trace::always, driveId, tapeId);
     Scheduler::makeUse(driveId, tapeId);
     drive->setUnmountReqNum(reqNum);
     subs.enqueue(std::string(opstr) + tapeId,
-            &Mount::addRequest,
-            Mount(driveId, tapeId, op));
+            &TapeMover::addRequest,
+            TapeMover(driveId, tapeId, op));
 }
 
 bool Scheduler::poolResAvail(unsigned long minFileSize)
@@ -233,7 +233,7 @@ bool Scheduler::poolResAvail(unsigned long minFileSize)
                                 >= minFileSize) {
                     Scheduler::moveTape(drive->get_le()->GetObjectID(),
                             cartname,
-                            Mount::MOUNT);
+                            TapeMover::MOUNT);
                     return false;
                 }
             }
@@ -257,7 +257,7 @@ bool Scheduler::poolResAvail(unsigned long minFileSize)
                     && (cart->getState() == LTFSDMCartridge::TAPE_MOUNTED)) {
                 Scheduler::moveTape(drive->get_le()->GetObjectID(),
                         cart->get_le()->GetObjectID(),
-                        Mount::UNMOUNT);
+                        TapeMover::UNMOUNT);
                 return false;
             }
         }
@@ -330,7 +330,7 @@ bool Scheduler::tapeResAvail()
             if (inventory->getCartridge(tapeId)->getState()
                     == LTFSDMCartridge::TAPE_UNMOUNTED) {
                 Scheduler::moveTape(drive->get_le()->GetObjectID(),
-                        tapeId, Mount::MOUNT);
+                        tapeId, TapeMover::MOUNT);
                 return false;
             }
         }
@@ -345,7 +345,7 @@ bool Scheduler::tapeResAvail()
                     && (cart->getState() == LTFSDMCartridge::TAPE_MOUNTED)) {
                 Scheduler::moveTape(drive->get_le()->GetObjectID(),
                         cart->get_le()->GetObjectID(),
-                        Mount::UNMOUNT);
+                        TapeMover::UNMOUNT);
                 inventory->getCartridge(tapeId)->unsetRequested();
                 return false;
             }
@@ -446,8 +446,8 @@ void Scheduler::run(long key)
                     else
                         thrdinfo << "UMN(" << tapeId << ")";
 
-                    subs.enqueue(thrdinfo.str(), &Mount::execRequest,
-                            Mount(driveId, tapeId, reqNum, op == DataBase::MOUNT ? Mount::MOUNT : Mount::UNMOUNT));
+                    subs.enqueue(thrdinfo.str(), &TapeMover::execRequest,
+                            TapeMover(driveId, tapeId, reqNum, op == DataBase::MOUNT ? TapeMover::MOUNT : TapeMover::UNMOUNT));
                     break;
                 case DataBase::MIGRATION:
                     updstmt(Scheduler::UPDATE_MIG_REQUEST)

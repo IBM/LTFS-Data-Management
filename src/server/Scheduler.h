@@ -31,7 +31,7 @@ private:
     SubServer subs;
 
     void makeUse(std::string driveId, std::string tapeId);
-    void moveTape(std::string driveId, std::string tapeId, Mount::operation op);
+    void moveTape(std::string driveId, std::string tapeId, TapeMover::operation op);
     bool poolResAvail(unsigned long minFileSize);
     bool tapeResAvail();
     bool resAvail(unsigned long minFileSize);

@@ -379,11 +379,11 @@ const std::string Status::STATUS =
 
 /* ======== Mount ======== */
 
-const std::string Mount::ADD_REQUEST =
+const std::string TapeMover::ADD_REQUEST =
         "INSERT INTO REQUEST_QUEUE (OPERATION, REQ_NUM, TARGET_STATE, TAPE_ID, DRIVE_ID, TIME_ADDED, STATE)"
                 " VALUES (" /* OPERATION */"%1%, " /* REQ_NUMR */"%2%, " /* TARGET_STATE */" %3%, " /* TAPE_ID */"'%4%', "
                 /* DRIVE_ID */"'%5%', " /* TIME_ADDED */"%6%, " /* STATE */"%7%)";
 
-const std::string Mount::DELETE_REQUEST =
+const std::string TapeMover::DELETE_REQUEST =
         "DELETE FROM REQUEST_QUEUE WHERE REQ_NUM=%1%";
 

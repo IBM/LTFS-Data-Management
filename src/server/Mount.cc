@@ -18,7 +18,7 @@
 #include "ServerIncludes.h"
 
 
-void Mount::addRequest()
+void TapeMover::addRequest()
 
 {
     SQLStatement stmt;
@@ -28,8 +28,8 @@ void Mount::addRequest()
 
     std::unique_lock<std::mutex> lock(Scheduler::mtx);
 
-    stmt(Mount::ADD_REQUEST)
-            << (op == Mount::MOUNT ? DataBase::MOUNT : DataBase::UNMOUNT)
+    stmt(TapeMover::ADD_REQUEST)
+            << (op == TapeMover::MOUNT ? DataBase::MOUNT : DataBase::UNMOUNT)
             << reqNumber << Const::UNSET << tapeId << driveId << time(NULL) << DataBase::REQ_NEW;
 
     TRACE(Trace::normal, stmt.str());
@@ -39,7 +39,7 @@ void Mount::addRequest()
     Scheduler::cond.notify_one();
 }
 
-void Mount::execRequest()
+void TapeMover::execRequest()
 
 {
     std::shared_ptr<LTFSDMCartridge> cart;
@@ -55,14 +55,14 @@ void Mount::execRequest()
 
         cart->setState(LTFSDMCartridge::TAPE_MOVING);
 
-        if ( op == Mount::MOUNT) {
+        if ( op == TapeMover::MOUNT) {
             inventory->mount(driveId, tapeId);
         }
         else {
             inventory->unmount(driveId, tapeId);
         }
 
-        stmt(Mount::DELETE_REQUEST) << reqNum;
+        stmt(TapeMover::DELETE_REQUEST) << reqNum;
 
         TRACE(Trace::normal, stmt.str());
 

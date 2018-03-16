@@ -16,7 +16,7 @@
  *******************************************************************************/
 #pragma once
 
-class Mount {
+class TapeMover {
 private:
     std::string driveId;
     std::string tapeId;
@@ -32,8 +32,8 @@ public:
 private:
     operation op;
 public:
-    Mount(std::string _driveId, std::string _tapeId, int _reqNum, operation _op) : driveId(_driveId), tapeId(_tapeId), reqNum(_reqNum), op(_op) {}
-    Mount(std::string _driveId, std::string _tapeId, operation _op) : driveId(_driveId), tapeId(_tapeId), reqNum(Const::UNSET), op(_op) {}
+    TapeMover(std::string _driveId, std::string _tapeId, int _reqNum, operation _op) : driveId(_driveId), tapeId(_tapeId), reqNum(_reqNum), op(_op) {}
+    TapeMover(std::string _driveId, std::string _tapeId, operation _op) : driveId(_driveId), tapeId(_tapeId), reqNum(Const::UNSET), op(_op) {}
     void addRequest();
     void execRequest();
 };
