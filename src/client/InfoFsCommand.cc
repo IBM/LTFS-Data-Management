@@ -51,16 +51,22 @@
 
     <tt>@LTFSDMC0056I</tt>
 
-    parameters | description
-    ---|---
-    - | -
-
-    @bug Does not work currently. This command uses old code to determine the filesystems being managed.
-
     Example:
 
     @verbatim
+    [root@visp ~]# ltfsdm info fs
+    device              mount point         file system type    mount options
+    /dev/sdc1           /mnt/lxfs           xfs                 rw,relatime,attr2,inode64,noquota
     @endverbatim
+
+    The columns have the following meaning:
+
+    column | meaning
+    ---|---
+    device | device name of the file system managed with LTFS Data Management
+    mount point | mount point where the Fuse overlay file system is mounted
+    file system type | file system type of the file system managed with LTFS Data Management
+    mount options | mount options of the file system managed with LTFS Data Management
 
     The corresponding class is @ref InfoFsCommand.
  */
