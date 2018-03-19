@@ -78,30 +78,33 @@ void InfoFsCommand::talkToBackend(std::stringstream *parmList)
 void InfoFsCommand::doCommand(int argc, char **argv)
 {
     Connector connector(false);
+    Configuration conf;
 
     processOptions(argc, argv);
+
+    try {
+        conf.read();
+    } catch (const std::exception& e) {
+        MSG(LTFSDMX0038E);
+        TRACE(Trace::error, e.what());
+        THROW(Error::GENERAL_ERROR);
+    }
 
     if (argc > 1) {
         printUsage();
         THROW(Error::GENERAL_ERROR);
     }
 
+    INFO(LTFSDMC0105I);
+
     try {
         FileSystems fss;
-        for (FileSystems::fsinfo& fs : fss.getAll()) {
+        for (std::string mountpt : conf.getFss()) {
             try {
-                FsObj fileSystem(fs.target);
-                if (fileSystem.isFsManaged()) {
-                    INFO(LTFSDMC0057I, fs.target);
-                }
-            } catch (const LTFSDMException& e) {
-                if (e.getError() == Error::FS_CHECK_ERROR) {
-                    MSG(LTFSDMC0058E, fs.target);
-                    break;
-                }
+                FileSystems::fsinfo fs = conf.getFs(mountpt);
+                INFO(LTFSDMC0057I, fs.source, fs.target, fs.fstype, fs.options);
             } catch (const std::exception& e) {
-                TRACE(Trace::error, e.what());
-                THROW(Error::GENERAL_ERROR);
+                INFO(LTFSDMC0058E, mountpt);
             }
         }
     } catch (const std::exception& e) {

@@ -300,8 +300,9 @@ FileSystems::fsinfo Configuration::getFs(std::string target)
 
     fs.source = it->second.source;
     fs.target = it->first;
-    fs.options = it->second.options;
+    fs.fstype = it->second.fstype;
     fs.uuid = it->second.uuid;
+    fs.options = it->second.options;
 
     return fs;
 }

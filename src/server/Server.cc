@@ -407,7 +407,7 @@ void Server::run(sigset_t set)
     try {
         Server::conf.read();
     } catch (const std::exception& e) {
-        MSG(LTFSDMS0090E);
+        MSG(LTFSDMX0038E);
         goto end;
     }
     //! [read the configuration file]

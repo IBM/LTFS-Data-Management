@@ -53,7 +53,6 @@ public:
     };
     FileSystems();
     ~FileSystems();
-    std::vector<FileSystems::fsinfo> getAll();
     FileSystems::fsinfo getByTarget(std::string target);
     void mount(std::string source, std::string target, std::string options,
             mountflag flag);

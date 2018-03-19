@@ -101,43 +101,6 @@ FileSystems::fsinfo FileSystems::getContext(struct libmnt_fs *mntfs)
     return fs;
 }
 
-std::vector<FileSystems::fsinfo> FileSystems::getAll()
-
-{
-    std::vector<FileSystems::fsinfo> fslist;
-    fsinfo fs;
-    struct libmnt_fs *mntfs;
-    struct libmnt_iter *itr;
-
-    getTable();
-
-    if ((itr = mnt_new_iter(MNT_ITER_BACKWARD)) == NULL) {
-        TRACE(Trace::error, errno);
-        THROW(Error::GENERAL_ERROR, errno);
-    }
-
-    while (mnt_table_next_fs(tb, itr, &mntfs) == 0) {
-        try {
-            fs = getContext(mntfs);
-        } catch (const std::exception& e) {
-            mnt_free_iter(itr);
-            TRACE(Trace::error, e.what());
-            THROW(Error::GENERAL_ERROR);
-        }
-
-        if (fs.fstype.compare("xfs") == 0 || fs.fstype.compare("ext3") == 0
-                || fs.fstype.compare("ext4") == 0) {
-            TRACE(Trace::always, fs.source, fs.target, fs.fstype, fs.options,
-                    fs.uuid);
-            fslist.push_back(fs);
-        }
-    }
-
-    mnt_free_iter(itr);
-
-    return fslist;
-}
-
 FileSystems::fsinfo FileSystems::getByTarget(std::string target)
 
 {
