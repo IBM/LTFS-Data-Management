@@ -14,39 +14,59 @@
 
 include components.mk
 
-.PHONY: build clean fuse dmapi prepare
+.PHONY: builsrc buildtgt clean fuse dmapi prepare messages communication common connector client server
 
 # for executing code
 export PATH := $(PATH):$(CURDIR)/bin
 
 export ROOTDIR := $(CURDIR)
 
-export CONNECTOR := fuse
-fuse: CONNECTOR = fuse
+export CONNECTOR_TYPE := fuse
+fuse: CONNECTOR_TYPE = fuse
 fuse: build
-dmapi: CONNECTOR = dmapi
+dmapi: CONNECTOR_TYPE = dmapi
 dmapi: build
 
-ifeq ($(wildcard src/connector/$(CONNECTOR)),)
-    $(error connector $(CONNECTOR) does not exit)
+ifeq ($(wildcard src/connector/$(CONNECTOR_TYPE)),)
+    $(error connector $(CONNECTOR_TYPE) does not exit)
 endif
 
-SEP = >
-addtgtprefix = $(addprefix $(1)$(SEP), $(2))
-remtgtprefix = $(subst $(1)$(SEP),,$(2))
+all: buildsrc buildtgt
 
-all: build
+messages:
+	$(MAKE) -C $(MESSAGES) build
 
-BUILDDIRS := $(call addtgtprefix, build, $(COMMONDIRS) $(CONNECDIRS) $(CLIENTDIRS) $(SERVERDIRS))
-build: prepare $(BUILDDIRS)
-$(BUILDDIRS):
-	$(MAKE) -C $(call remtgtprefix, build, $@) build
+communication: messages
+	$(MAKE) -C $(COMMUNICATION) build
 
+common: messages communication
+	$(MAKE) -C $(COMMON) deps
+	$(MAKE) -j -C $(COMMON) buildsrc
+	$(MAKE) -C $(COMMON) buildtgt
+	
+connector: messages communication common
+	$(MAKE) -C $(CONNECTOR) deps
+	$(MAKE) -j -C $(CONNECTOR) buildsrc
+	$(MAKE) -C $(CONNECTOR) buildtgt
+	
+client: messages communication common connector
+	$(MAKE) -C $(CLIENT) deps
+	$(MAKE) -j -C $(CLIENT) buildsrc
+	$(MAKE) -C $(CLIENT) buildtgt
+	
+server: messages communication common connector
+	$(MAKE) -C $(SERVER) deps
+	$(MAKE) -j -C $(SERVER) buildsrc
+	$(MAKE) -C $(SERVER) buildtgt
+	
+build: prepare messages communication connector client server
 
-CLEANDIRS := $(call addtgtprefix, clean, $(COMMONDIRS) $(CONNECDIRS) $(CLIENTDIRS) $(SERVERDIRS))
-clean: $(CLEANDIRS)
-$(CLEANDIRS):
-	$(MAKE) -C $(call remtgtprefix, clean, $@) clean
+clean:
+	$(MAKE) -C $(MESSAGES) clean
+	$(MAKE) -C $(COMMUNICATION) clean
+	$(MAKE) -C $(CONNECTOR) clean
+	$(MAKE) -C $(CLIENT) clean
+	$(MAKE) -C $(SERVER) clean
 
 
 prepare:

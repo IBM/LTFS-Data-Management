@@ -12,18 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-COMMONDIRS := src/common/msgcompiler
-COMMONDIRS += src/common/util
-COMMONDIRS += src/common/messages
-COMMONDIRS += src/common/tracing
-COMMONDIRS += src/common/comm
-COMMONDIRS += src/common/configuration
+MESSAGES := src/messages
+COMMUNICATION := src/communication
+COMMON := src/common
+CLIENT := src/client
+SERVER := src/server
 
-CLIENTDIRS := src/client
-
-SERVERDIRS += src/server
-
-CONNECDIRS := src/connector/fuse
+CONNECTOR := src/connector/fuse
 ifneq ($(wildcard /usr/include/xfs/dmapi.h),)
-    CONNECDIRS += src/connector/dmapi
+    CONNECTOR += src/connector/dmapi
 endif

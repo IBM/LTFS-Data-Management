@@ -12,16 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-RELPATH = ../../..
+RELPATH = ../..
 
-LDFLAGS += -lprotobuf
-
-ARC_SRC_FILES := ltfsdm.pb.cc LTFSDmComm.cc
-CLEANUP_FILES := ltfsdm.pb.cc ltfsdm.pb.h
+ARC_SRC_FILES := Message.cc Trace.cc Configuration.cc util.cc FileSystems.cc
+CLEANUP_FILES := msgdefs.h
+BINARY :=
 POSTTARGET :=
 
-
 include $(RELPATH)/definitions.mk
-
-ltfsdm.pb.cc: $(RELPATH)/src/ltfsdm.proto
-	protoc --proto_path=$(RELPATH)/src --cpp_out=$(CURDIR) $(RELPATH)/src/ltfsdm.proto

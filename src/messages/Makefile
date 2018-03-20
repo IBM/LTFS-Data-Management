@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-RELPATH = ../../..
+RELPATH = ../..
 
-MSGDIR := ../messages
+MSGDIR := ../common
 
 ARC_SRC_FILES :=
 CLEANUP_FILES := msgcompiler msgdefs.h $(RELPATH)/messages.dox

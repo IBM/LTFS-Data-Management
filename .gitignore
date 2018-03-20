@@ -2,7 +2,7 @@ msgdefs.h
 messages.dox
 *~
 *.o
-src/common/comm/test
+src/communication/test
 bin/msgcompiler
 src/common/msgcompiler/msgcompiler
 ltfstest
@@ -20,8 +20,8 @@ TAGS.func
 cscope.files
 cscope.out
 *.dSYM/
-src/common/comm/client
-src/common/comm/server
+src/communication/client
+src/communication/server
 bin
 src/connector/fuse/ltfsdmd.ofs
 ~*.docx

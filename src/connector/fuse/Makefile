@@ -23,6 +23,6 @@ CLEANUP_FILES := $(SHAREDLIB) ltfsdmd.ofs
 BINARY := $(SHAREDLIB) ltfsdmd.ofs
 POSTTARGET :=
 
-ARCHIVES := $(RELPATH)/lib/connector.a $(RELPATH)/lib/common.a
+ARCHIVES := $(RELPATH)/lib/connector.a $(RELPATH)/lib/communication.a $(RELPATH)/lib/common.a
 
 include $(RELPATH)/definitions.mk

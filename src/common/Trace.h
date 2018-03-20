@@ -29,9 +29,9 @@
 #include <atomic>
 #include <mutex>
 
-#include "src/common/messages/Message.h"
-#include "src/common/exception/LTFSDMException.h"
-#include "src/common/errors/errors.h"
+#include "src/common/Message.h"
+#include "src/common/LTFSDMException.h"
+#include "src/common/errors.h"
 
 /**
     @page tracing_system Tracing

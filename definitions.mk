@@ -14,7 +14,7 @@
 
 # common definitions
 
-.PHONY: clean build libdir link
+.PHONY: clean buildsrc buildtgt build libdir link
 
 # for linking - no standard C required
 CC = g++
@@ -36,7 +36,7 @@ LDFLAGS += -L$(BINDIR) -L/opt/IBM/ltfs/lib64
 TARGETCOMP := $(shell perl -e "print '$(CURDIR)' =~ /.*$(subst /,\/,$(ROOTDIR))\/src\/([^\/]+)/")
 
 # to not set ARCHIVES (e.g. link w/o) set 'ARCHIVES :=' before
-ARCHIVES ?= $(RELPATH)/lib/$(TARGETCOMP).a $(RELPATH)/lib/common.a
+ARCHIVES ?= $(RELPATH)/lib/$(TARGETCOMP).a $(RELPATH)/lib/communication.a $(RELPATH)/lib/common.a
 
 # library source files will be added to the archives
 SOURCE_FILES := $(ARC_SRC_FILES) $(SO_SRC_FILES)
@@ -57,10 +57,10 @@ objfiles = $(patsubst %.cc,%.o, $(1))
 
 # build rules
 default: build
-link:
+mklink:
 
-ifeq ($(CONNECTOR),$(notdir $(CURDIR)))
-link:
+ifeq ($(CONNECTOR_TYPE),$(notdir $(CURDIR)))
+mklink:
 	ln -sf $(SHAREDLIB) $(BINDIR)/libconnector.so
 endif
 
@@ -87,11 +87,17 @@ $(BINARY): $(ARCHIVES)
 $(TARGET): $(BINARY) | $(BINDIR)
 	cp $(BINARY) $(BINDIR)
 
+deps: $(DEPS)
+
 clean:
 	rm -fr $(RELPATH)/lib/* *.o $(CLEANUP_FILES) $(BINARY) $(BINDIR)/* $(DEPDIR)
 
-build: $(DEPS) $(call objfiles, $(SOURCE_FILES)) $(TARGETLIB) $(TARGET) link $(POSTTARGET)
+buildsrc: deps $(call objfiles, $(SOURCE_FILES)) $(TARGETLIB) 
 
-ifeq ($(MAKECMDGOALS),build)
+buildtgt: buildsrc $(TARGET) mklink $(POSTTARGET)
+
+build: buildsrc buildtgt
+
+ifeq ($(MAKECMDGOALS),buildsrc)
     -include .d/deps.mk
 endif

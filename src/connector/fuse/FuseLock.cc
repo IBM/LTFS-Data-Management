@@ -25,10 +25,10 @@
 #include <string>
 #include <mutex>
 
-#include "src/common/errors/errors.h"
-#include "src/common/messages/Message.h"
-#include "src/common/tracing/Trace.h"
-#include "src/common/const/Const.h"
+#include "src/common/errors.h"
+#include "src/common/Message.h"
+#include "src/common/Trace.h"
+#include "src/common/Const.h"
 
 #include "src/connector/fuse/FuseLock.h"
 

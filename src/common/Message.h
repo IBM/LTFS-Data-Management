@@ -28,8 +28,8 @@
 #include "boost/format.hpp"
 
 #include "msgdefs.h"
-#include "src/common/errors/errors.h"
-#include "src/common/const/Const.h"
+#include "src/common/errors.h"
+#include "src/common/Const.h"
 
 /**
     @page messaging_system Messaging

@@ -26,17 +26,17 @@
 #include <vector>
 #include <thread>
 
-#include "src/common/errors/errors.h"
-#include "src/common/exception/LTFSDMException.h"
-#include "src/common/util/util.h"
-#include "src/common/util/FileSystems.h"
-#include "src/common/messages/Message.h"
-#include "src/common/tracing/Trace.h"
-#include "src/common/const/Const.h"
-#include "src/common/configuration/Configuration.h"
+#include "src/common/errors.h"
+#include "src/common/LTFSDMException.h"
+#include "src/common/util.h"
+#include "src/common/FileSystems.h"
+#include "src/common/Message.h"
+#include "src/common/Trace.h"
+#include "src/common/Const.h"
+#include "src/common/Configuration.h"
 
-#include "src/common/comm/ltfsdm.pb.h"
-#include "src/common/comm/LTFSDmComm.h"
+#include "src/communication/ltfsdm.pb.h"
+#include "src/communication/LTFSDmComm.h"
 
 #include "src/connector/fuse/FuseLock.h"
 #include "src/connector/fuse/FuseFS.h"

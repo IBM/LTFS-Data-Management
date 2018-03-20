@@ -25,11 +25,11 @@
 #include <sstream>
 #include <exception>
 
-#include "src/common/errors/errors.h"
-#include "src/common/exception/LTFSDMException.h"
-#include "src/common/tracing/Trace.h"
-
 #include "ltfsdm.pb.h"
+#include "src/common/errors.h"
+#include "src/common/LTFSDMException.h"
+#include "src/common/Trace.h"
+
 #include "LTFSDmComm.h"
 
 std::atomic<bool> exitClient(false);

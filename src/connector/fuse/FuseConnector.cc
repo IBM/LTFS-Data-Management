@@ -25,10 +25,10 @@
 #include <mutex>
 #include <thread>
 
-#include "src/common/const/Const.h"
+#include "src/common/Const.h"
 
-#include "src/common/comm/ltfsdm.pb.h"
-#include "src/common/comm/LTFSDmComm.h"
+#include "src/communication/ltfsdm.pb.h"
+#include "src/communication/LTFSDmComm.h"
 
 #include "src/connector/fuse/FuseLock.h"
 #include "src/connector/fuse/FuseFS.h"

@@ -28,10 +28,10 @@
 #include <set>
 #include <mutex>
 
-#include "src/common/const/Const.h"
-#include "src/common/errors/errors.h"
-#include "src/common/util/util.h"
-#include "src/common/exception/LTFSDMException.h"
+#include "src/common/Const.h"
+#include "src/common/errors.h"
+#include "src/common/util.h"
+#include "src/common/LTFSDMException.h"
 
 #include "Message.h"
 
