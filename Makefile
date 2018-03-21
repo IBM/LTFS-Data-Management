@@ -14,7 +14,7 @@
 
 include components.mk
 
-.PHONY: builsrc buildtgt clean fuse dmapi prepare messages communication common connector client server
+.PHONY: build buildsrc buildtgt clean fuse dmapi prepare messages communication common connector client server
 
 # for executing code
 export PATH := $(PATH):$(CURDIR)/bin
@@ -31,7 +31,7 @@ ifeq ($(wildcard src/connector/$(CONNECTOR_TYPE)),)
     $(error connector $(CONNECTOR_TYPE) does not exit)
 endif
 
-all: buildsrc buildtgt
+all: build
 
 messages:
 	$(MAKE) -C $(MESSAGES) build
