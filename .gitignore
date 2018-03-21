@@ -4,7 +4,7 @@ messages.dox
 *.o
 src/communication/test
 bin/msgcompiler
-src/common/msgcompiler/msgcompiler
+src/messages/msgcompiler
 ltfstest
 lib/*
 ltfsdm
