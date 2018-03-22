@@ -56,14 +56,14 @@ void getUUID(std::string fsName, uuid_t *uuid)
 
     if ((rc = blkid_get_cache(&cache, NULL)) != 0) {
         TRACE(Trace::error, rc, errno);
-        MSG(LTFSDMF0055E);
+        MSG(LTFSDMF0055E, fsName);
         THROW(Error::GENERAL_ERROR, errno);
     }
 
     if ((uuidstr = blkid_get_tag_value(cache, "UUID", fsName.c_str())) == NULL) {
         blkid_put_cache(cache);
         TRACE(Trace::error, errno);
-        MSG(LTFSDMF0055E);
+        MSG(LTFSDMF0055E, fsName);
         THROW(Error::GENERAL_ERROR, errno);
     }
 
@@ -71,7 +71,7 @@ void getUUID(std::string fsName, uuid_t *uuid)
         blkid_put_cache(cache);
         free(uuidstr);
         TRACE(Trace::error, rc, errno);
-        MSG(LTFSDMF0055E);
+        MSG(LTFSDMF0055E, fsName);
         THROW(Error::GENERAL_ERROR, errno);
     }
 
