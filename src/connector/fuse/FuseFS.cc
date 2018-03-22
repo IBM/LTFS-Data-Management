@@ -442,6 +442,8 @@ int FuseFS::ltfsdm_getattr(const char *path, struct stat *statbuf)
             return (-1 * errno);
         }
     } else {
+        if (!S_ISREG(statbuf->st_mode))
+            goto end;
         if ((fd = openat(getshrd()->rootFd, FuseFS::relPath(path), O_RDONLY))
                 == -1)
             goto end;
@@ -1184,6 +1186,7 @@ int FuseFS::ltfsdm_getxattr(const char *path, const char *name, char *value,
 {
     FuseFS::FuseHandle fh;
     ssize_t attrsize;
+    struct stat statbuf;
     int fd;
 
     if (Const::LTFSDM_EA_FSINFO.compare(name) == 0) {
@@ -1202,6 +1205,14 @@ int FuseFS::ltfsdm_getxattr(const char *path, const char *name, char *value,
 
     if (Const::LTFSDM_CACHE_DIR.compare(path) == 0)
         return (-1 * ENODATA);
+
+    if (fstatat(getshrd()->rootFd, FuseFS::relPath(path), &statbuf,
+            AT_SYMLINK_NOFOLLOW) == -1)
+        return (-1 * errno);
+
+    /* see no other way to fail if fifo since following open will block */
+    if (S_ISFIFO(statbuf.st_mode))
+        return (-1 * errno);
 
     if ((fd = openat(getshrd()->rootFd, FuseFS::relPath(path), O_RDONLY)) == -1)
         return (-1 * errno);
