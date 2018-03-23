@@ -117,6 +117,8 @@ int main(int argc, char **argv)
     int opt;
     opterr = 0;
 
+    umask(0);
+
     const struct fuse_operations ltfsdm_operations = FuseFS::init_operations();
     struct fuse_args fargs;
     std::stringstream options;
