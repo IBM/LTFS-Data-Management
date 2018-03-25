@@ -1208,14 +1208,14 @@ int FuseFS::ltfsdm_getxattr(const char *path, const char *name, char *value,
 
     if (fstatat(getshrd()->rootFd, FuseFS::relPath(path), &statbuf,
             AT_SYMLINK_NOFOLLOW) == -1)
-        return (-1 * errno);
+        return (-1 * ENOENT);
 
     /* see no other way to fail if fifo since following open will block */
     if (S_ISFIFO(statbuf.st_mode))
-        return (-1 * errno);
+        return (-1 * ENODATA);
 
     if ((fd = openat(getshrd()->rootFd, FuseFS::relPath(path), O_RDONLY)) == -1)
-        return (-1 * errno);
+        return (-1 * ENODATA);
 
     if ((attrsize = fgetxattr(fd, name, value, size)) == -1) {
         close(fd);
