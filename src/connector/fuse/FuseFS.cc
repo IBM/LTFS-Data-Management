@@ -657,10 +657,19 @@ int FuseFS::ltfsdm_rmdir(const char *path)
 int FuseFS::ltfsdm_symlink(const char *target, const char *linkpath)
 
 {
-    if (symlinkat(target, getshrd()->rootFd, FuseFS::relPath(linkpath)) == -1)
+    struct fuse_context *fc = fuse_get_context();
+
+    if (symlinkat(target, getshrd()->rootFd, FuseFS::relPath(linkpath)) == -1) {
         return (-1 * errno);
-    else
-        return 0;
+    }
+    else {
+        fc = fuse_get_context();
+        if (fchownat(getshrd()->rootFd, FuseFS::relPath(linkpath), fc->uid, fc->gid,
+        AT_EMPTY_PATH | AT_SYMLINK_NOFOLLOW) == -1)
+            return (-1 * errno);
+    }
+
+    return 0;
 }
 
 int FuseFS::ltfsdm_rename(const char *oldpath, const char *newpath)
