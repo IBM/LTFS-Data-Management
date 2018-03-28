@@ -291,7 +291,7 @@
     create Server object: ltfsdmd|see: @snippet server/ltfsdmd.cc define server object
     option processing|process options for the ltfsdmd command:  @snippet server/ltfsdmd.cc option processing
     setup signal handling|setup the signals for signal handling: @snippet server/ltfsdmd.cc setup signals
-    LTFSDM::init |initialize common items that are not server specific: @snippet common/util/util.cc init
+    LTFSDM::init |initialize common items that are not server specific: @snippet common/util.cc init
     LTFSDM::init -> make temporary directory|create temporary directory /var/run/ltfsdm, see: mkTmpDir()
     LTFSDM::init -> initialize tracing| see: Message::init
     LTFSDM::init -> initialize messaging| see: Trace::init

@@ -31,8 +31,8 @@ application. The code is structured within the following sub-directories:
 path | description
 ----|----
 [src/common](@ref src/common) | code that is used within multiple parts (client, server, connector, common)
-<a href="../messages.cfg">messages.cfg</a> | @subpage messaging_system
-[src/common/tracing](@ref src/common/tracing) | @subpage tracing_system
+[src/messages](@ref src/messages) | @subpage messaging_system
+[src/communication](@ref src/communication) | code for the communication between: client &larr;&rarr; server,server &larr;&rarr; Fuse overlay file system (transparent recalls)
 [src/client](@ref src/client) | @subpage client_code
 [src/connector](@ref src/connector) | code for the connector interface, see @subpage connector for more information
 [src/server](@ref src/server) | @subpage server_code
@@ -41,22 +41,21 @@ The common code consists of the following:
 
 path | description
 ----|----
-[src/common/comm](@ref src/common/comm) | code for the communication between: client &larr;&rarr; server,server &larr;&rarr; Fuse overlay file system (transparent recalls)
-[src/common/configuration](@ref src/common/configuration) | code to maintain the configuration information (storage pools, file systems)
-[src/common/const](@ref src/common/const) | internal constants of the code consolidated here
-[src/common/errors](@ref src/common/errors) | error values used within the code consolidated here
-[src/common/exception](@ref src/common/exception) | the LTFS Data Management exception class
-[src/common/messages](@ref src/common/messages) | the LTFS Data Management messaging system
-[src/common/msgcompiler](@ref src/common/msgcompiler) | the message compiler that transforms a text based message file into c++ code
-[src/common/tracing](@ref src/common/tracing) | the LTFS Data Management tracing facility
-[src/common/util](@ref src/common/util) | utility functions
+[src/common/Configuration.h](@ref src/common/Configuration.h) | code to maintain the configuration information (storage pools, file systems)
+[src/common/Const.h](@ref src/common/Const.h) | internal constants of the code consolidated here
+[src/common/errors.h](@ref src/common/errors.h) | error values used within the code consolidated here
+[src/common/FileSystems.h](@ref src/common/FileSystems.h) | file system information retrieval and mount operations
+[src/common/LTFSDMException.h](@ref src/common/LTFSDMException.h) | the LTFS Data Management exception class
+[src/common/Message.h](@ref src/common/Message.h) | @subpage messaging_system
+[src/common/Trace.h](@ref src/common/Trace.h) | the LTFS Data Management tracing facility
+[src/common/util.h](@ref src/common/util.h) | utility functions
 
 There are two files within the main directory that are used to generate c++ code:
 
 path |description
 ----|----
-ltfsdm.proto | protocol buffers definition file for the communication
-messages.cfg | the text based definition file for the messages
+src/ltfsdm.proto | protocol buffers definition file for the communication
+src/messages.cfg | the text based definition file for the messages
 
 ## Processes
 
@@ -67,7 +66,7 @@ path |description
 [src/client/ltfsdm.cc](@ref src/client/ltfsdm.cc) | client entry point
 [src/server/ltfsdmd.cc](@ref src/server/ltfsdmd.cc) | server entry point
 [src/connector/fuse/ltfsdmd.ofs.cc](@ref src/connector/fuse/ltfsdmd.ofs.cc) | Fuse overlay file system entry point
-[src/common/msgcompiler/msgcompiler.cc](@ref src/common/msgcompiler/msgcompiler.cc) | message compiler entry point
+[src/messages/msgcompiler.cc](@ref src/messages/msgcompiler.cc) | message compiler entry point
 
 There are four executables created that correspond to the list above. The
 message compiler only is used during the build. The other three executables
