@@ -62,6 +62,8 @@
 #include "src/connector/fuse/FuseLock.h"
 #include "src/connector/fuse/FuseFS.h"
 
+std::mutex FuseFS::mask_mutex;
+
 const char *FuseFS::relPath(const char *path)
 
 {
@@ -609,9 +611,15 @@ int FuseFS::ltfsdm_mknod(const char *path, mode_t mode, dev_t rdev)
 {
     struct fuse_context *fc = fuse_get_context();
 
+    std::lock_guard<std::mutex> lock(mask_mutex);
+
+    umask(fc->umask);
+
     if (mknodat(getshrd()->rootFd, FuseFS::relPath(path), mode, rdev) == -1) {
+        umask(0);
         return (-1 * errno);
     } else {
+        umask(0);
         fc = fuse_get_context();
         if (fchownat(getshrd()->rootFd, FuseFS::relPath(path), fc->uid, fc->gid,
         AT_SYMLINK_NOFOLLOW) == -1)
@@ -625,9 +633,15 @@ int FuseFS::ltfsdm_mkdir(const char *path, mode_t mode)
 {
     struct fuse_context *fc = fuse_get_context();
 
+    std::lock_guard<std::mutex> lock(mask_mutex);
+
+    umask(fc->umask);
+
     if (mkdirat(getshrd()->rootFd, FuseFS::relPath(path), mode) == -1) {
+        umask(0);
         return (-1 * errno);
     } else {
+        umask(0);
         fc = fuse_get_context();
         if (fchownat(getshrd()->rootFd, FuseFS::relPath(path), fc->uid, fc->gid,
         AT_EMPTY_PATH | AT_SYMLINK_NOFOLLOW) == -1)
@@ -695,10 +709,19 @@ int FuseFS::ltfsdm_link(const char *oldpath, const char *newpath)
 int FuseFS::ltfsdm_chmod(const char *path, mode_t mode)
 
 {
-    if (fchmodat(getshrd()->rootFd, FuseFS::relPath(path), mode, 0) == -1)
+    struct fuse_context *fc = fuse_get_context();
+
+    std::lock_guard<std::mutex> lock(mask_mutex);
+
+    umask(fc->umask);
+
+    if (fchmodat(getshrd()->rootFd, FuseFS::relPath(path), mode, 0) == -1) {
+        umask(0);
         return (-1 * errno);
-    else
+    } else {
+        umask(0);
         return 0;
+    }
 }
 
 int FuseFS::ltfsdm_chown(const char *path, uid_t uid, gid_t gid)
@@ -1155,13 +1178,22 @@ int FuseFS::ltfsdm_fallocate(const char *path, int mode, off_t offset,
 
     assert(path == NULL);
 
+    struct fuse_context *fc = fuse_get_context();
+
     if (linfo == NULL)
         return (-1 * EBADF);
 
-    if (fallocate(linfo->fd, mode, offset, length) == -1)
+    std::lock_guard<std::mutex> lock(mask_mutex);
+
+    umask(fc->umask);
+
+    if (fallocate(linfo->fd, mode, offset, length) == -1) {
+        umask(0);
         return (-1 * errno);
-    else
+    } else {
+        umask(0);
         return 0;
+    }
 }
 
 int FuseFS::ltfsdm_setxattr(const char *path, const char *name,
@@ -1356,6 +1388,8 @@ void *FuseFS::ltfsdm_init(struct fuse_conn_info *conn)
 
 {
     struct fuse_context *fc = fuse_get_context();
+
+    conn->want |= FUSE_CAP_DONT_MASK;
 
     return fc->private_data;
 }

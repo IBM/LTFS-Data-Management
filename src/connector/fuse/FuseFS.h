@@ -136,6 +136,7 @@ public:
         const unsigned long fsid_l;
         pid_t mainpid;
         std::string srcdir;
+        std::mutex mask_mutex;
     };
 
 private:
@@ -159,6 +160,7 @@ private:
     std::thread *thrd;
     int rootFd;
     int ioctlFd;
+    static std::mutex mask_mutex;
 
     struct
     {
