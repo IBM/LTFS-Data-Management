@@ -29,8 +29,5 @@ src/connector/fuse/ltfsdmd.ofs
 *.so
 src/common/Version.h
 .version
-.settings
-.cproject
-.project
 /latex/
 /html/
