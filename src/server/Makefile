@@ -31,7 +31,7 @@ ARC_SRC_FILES += Status.cc
 ARC_SRC_FILES += LTFSDMDrive.cc
 ARC_SRC_FILES += LTFSDMCartridge.cc
 ARC_SRC_FILES += LTFSDMInventory.cc
-ARC_SRC_FILES += Mount.cc
+ARC_SRC_FILES += TapeMover.cc
 
 CLEANUP_FILES := ltfsdmd
 BINARY := ltfsdmd
