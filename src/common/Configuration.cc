@@ -138,6 +138,7 @@ void Configuration::read()
             if (!std::getline(liness, token, ' '))
                 THROW(Error::CONFIG_FORMAT_ERROR);
             poolName = decode(token);
+            stgplisttmp[poolName] = {};
             while (std::getline(liness, token, ' '))
                 stgplisttmp[poolName].insert(token);
 
