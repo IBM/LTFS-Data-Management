@@ -31,7 +31,7 @@ application. The code is structured within the following sub-directories:
 path | description
 ----|----
 [src/common](@ref src/common) | code that is used within multiple parts (client, server, connector, common)
-[src/messages](@ref src/messages) | @subpage messaging_system
+[src/messages](@ref src/messages) | @ref messaging_system
 [src/communication](@ref src/communication) | code for the communication between: client &larr;&rarr; server,server &larr;&rarr; Fuse overlay file system (transparent recalls)
 [src/client](@ref src/client) | @subpage client_code
 [src/connector](@ref src/connector) | code for the connector interface, see @subpage connector for more information
@@ -46,7 +46,7 @@ path | description
 [src/common/errors.h](@ref src/common/errors.h) | error values used within the code consolidated here
 [src/common/FileSystems.h](@ref src/common/FileSystems.h) | file system information retrieval and mount operations
 [src/common/LTFSDMException.h](@ref src/common/LTFSDMException.h) | the LTFS Data Management exception class
-[src/common/Message.h](@ref src/common/Message.h) | @subpage messaging_system
+[src/common/Message.h](@ref src/common/Message.h) | the LTFS Data Management messaging facility
 [src/common/Trace.h](@ref src/common/Trace.h) | the LTFS Data Management tracing facility
 [src/common/util.h](@ref src/common/util.h) | utility functions
 
