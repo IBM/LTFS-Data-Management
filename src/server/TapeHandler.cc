@@ -29,7 +29,7 @@ void TapeHandler::addRequest()
 
     stmt(TapeHandler::ADD_REQUEST)
             << (op == TapeHandler::FORMAT ? DataBase::FORMAT : DataBase::CHECK)
-            << reqNumber << tapeId << poolName << time(NULL) << DataBase::REQ_NEW;
+            << reqNumber << Const::UNSET <<  tapeId << poolName << time(NULL) << DataBase::REQ_NEW;
 
     TRACE(Trace::normal, stmt.str());
 
