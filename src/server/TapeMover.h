@@ -26,8 +26,9 @@ private:
     static const std::string DELETE_REQUEST;
 public:
     enum operation {
-        MOUNT,
-        UNMOUNT
+        MOUNT = DataBase::MOUNT,
+        MOVE = DataBase::MOVE,
+        UNMOUNT = DataBase::UNMOUNT
     };
 private:
     operation op;

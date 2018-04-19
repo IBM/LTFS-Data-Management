@@ -432,7 +432,7 @@ void LTFSDMInventory::inventorize()
     for (std::shared_ptr<LTFSDMDrive> d : drives) {
         if (d->isBusy() == true) {
             MSG(LTFSDMS0103I, d->get_le()->GetObjectID());
-            THROW(Error::DRIVE_BUSY);
+            return;
         }
     }
 
@@ -472,7 +472,13 @@ void LTFSDMInventory::inventorize()
                 c->setState(LTFSDMCartridge::TAPE_MOUNTED);
                 if (c->get_le()->get_mount_node().compare("") == 0) {
                     MSG(LTFSDML0020E, c->get_le()->GetObjectID());
-                    c->get_le()->Mount(d->get_le()->GetObjectID());
+                    try {
+                        c->get_le()->Mount(d->get_le()->GetObjectID());
+                    } catch (AdminLibException& e) {
+                        MSG(LTFSDMS0100E, c->get_le()->GetObjectID(), e.what());
+                    } catch (const std::exception& e) {
+                        MSG(LTFSDMS0105E, c->get_le()->GetObjectID());
+                    }
                 }
                 break;
             }
@@ -700,20 +706,20 @@ void LTFSDMInventory::poolRemove(std::string poolname, std::string cartridgeid)
             THROW(Error::POOL_NOT_EXISTS);
         } else if (e.getError() == Error::CONFIG_TAPE_NOT_EXISTS) {
             MSG(LTFSDMX0022E, cartridgeid, poolname);
-            THROW(Error::TAPE_NOT_EXISTS);
+            THROW(Error::TAPE_NOT_EXISTS_IN_POOL);
         } else {
             MSG(LTFSDMX0036E, cartridgeid, poolname);
             THROW(Error::GENERAL_ERROR);
         }
     }
+
+    cartridge->setPool("");
 }
 
-void LTFSDMInventory::mount(std::string driveid, std::string cartridgeid)
+void LTFSDMInventory::mount(std::string driveid, std::string cartridgeid, TapeMover::operation op)
 
 {
     std::string error;
-
-    MSG(LTFSDMS0068I, cartridgeid, driveid);
 
     std::shared_ptr<LTFSDMDrive> drive = inventory->getDrive(driveid);
     std::shared_ptr<LTFSDMCartridge> cartridge = inventory->getCartridge(
@@ -726,7 +732,13 @@ void LTFSDMInventory::mount(std::string driveid, std::string cartridgeid)
     assert(cartridge->getState() == LTFSDMCartridge::TAPE_MOVING);
 
     try {
-        cartridge->get_le()->Mount(driveid);
+        if ( op == TapeMover::MOUNT ) {
+            MSG(LTFSDMS0068I, cartridgeid, driveid);
+            cartridge->get_le()->Mount(driveid);
+        } else {
+            MSG(LTFSDMS0090I, cartridgeid, driveid);
+            cartridge->get_le()->Move(SLOT_DRIVE, driveid);
+        }
 
         std::lock_guard<std::recursive_mutex> lock(LTFSDMInventory::mtx);
 
@@ -734,7 +746,7 @@ void LTFSDMInventory::mount(std::string driveid, std::string cartridgeid)
         cartridge->setState(LTFSDMCartridge::TAPE_MOUNTED);
         TRACE(Trace::always, drive->get_le()->GetObjectID());
         drive->setFree();
-        drive->unsetUnmountReqNum();
+        drive->unsetMoveReqNum();
         MSG(LTFSDMS0069I, cartridgeid, driveid);
     } catch (AdminLibException& e) {
         error = e.GetID();
@@ -752,7 +764,7 @@ void LTFSDMInventory::mount(std::string driveid, std::string cartridgeid)
             sleep(Const::WAIT_TAPE_MOUNT);
         }
     } catch (std::exception& e) {
-        MSG(LTFSDMS0100E, cartridgeid, e.what());
+        MSG(LTFSDMS0105E, cartridgeid);
         drive->setFree();
         try {
             inventorize();
@@ -789,7 +801,7 @@ void LTFSDMInventory::unmount(std::string driveid, std::string cartridgeid)
         cartridge->setState(LTFSDMCartridge::TAPE_UNMOUNTED);
         TRACE(Trace::always, drive->get_le()->GetObjectID());
         drive->setFree();
-        drive->unsetUnmountReqNum();
+        drive->unsetMoveReqNum();
         MSG(LTFSDMS0071I, cartridgeid);
     } catch (AdminLibException& e) {
         MSG(LTFSDMS0100E, cartridgeid, e.what());
@@ -803,7 +815,7 @@ void LTFSDMInventory::unmount(std::string driveid, std::string cartridgeid)
             MSG(LTFSDMS0101E, e.what());
         }
     } catch (std::exception& e) {
-        MSG(LTFSDMS0100E, cartridgeid, e.what());
+        MSG(LTFSDMS0105E, cartridgeid);
         sleep(1);
         drive->setFree();
         try {
@@ -841,6 +853,18 @@ LTFSDMInventory::~LTFSDMInventory()
         Server::forcedTerminate = true;
         kill(getpid(), SIGUSR1);
     }
+}
+
+bool LTFSDMInventory::requestExists(long reqNum)
+
+{
+    for ( std::shared_ptr<LTFSDMDrive> drive : drives ) {
+        TRACE(Trace::always, reqNum, drive->getMoveReqNum());
+        if (drive->getMoveReqNum() == reqNum )
+            return true;
+    }
+
+    return false;
 }
 
 std::string LTFSDMInventory::getMountPoint()

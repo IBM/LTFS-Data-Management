@@ -25,7 +25,7 @@ private:
     }
 public:
     PoolAddCommand() :
-            LTFSDMCommand("add", ":+hP:t:")
+            LTFSDMCommand("add", ":+hCFP:t:")
     {
     }
     ~PoolAddCommand()

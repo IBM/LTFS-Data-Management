@@ -69,6 +69,7 @@
 #include "SelRecall.h"
 #include "TransRecall.h"
 #include "Server.h"
-#include "LTFSDMInventory.h"
 #include "TapeMover.h"
+#include "TapeHandler.h"
+#include "LTFSDMInventory.h"
 #include "Scheduler.h"

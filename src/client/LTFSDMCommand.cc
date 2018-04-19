@@ -87,6 +87,12 @@ void LTFSDMCommand::processOptions(int argc, char **argv)
             case 'x':
                 forced = true;
                 break;
+            case 'F':
+                format = true;
+                break;
+            case 'C':
+                check = true;
+                break;
             case ':':
                 INFO(LTFSDMC0014E);
                 printUsage();
@@ -238,20 +244,26 @@ void LTFSDMCommand::sendObjects(std::stringstream *parmList)
         const LTFSDmProtocol::LTFSDmSendObjectsResp sendobjresp =
                 commCommand.sendobjectsresp();
 
-        if (sendobjresp.success() == true) {
-            if (getpid() != sendobjresp.pid()) {
-                MSG(LTFSDMC0036E);
-                TRACE(Trace::error, getpid(), sendobjresp.pid());
-                THROW(Error::GENERAL_ERROR);
-            }
-            if (requestNumber != sendobjresp.reqnumber()) {
-                MSG(LTFSDMC0037E);
-                TRACE(Trace::error, requestNumber, sendobjresp.reqnumber());
-                THROW(Error::GENERAL_ERROR);
-            }
-        } else {
-            MSG(LTFSDMC0029E);
+        if (getpid() != sendobjresp.pid()) {
+            MSG(LTFSDMC0036E);
+            TRACE(Trace::error, getpid(), sendobjresp.pid());
             THROW(Error::GENERAL_ERROR);
+        }
+        if (requestNumber != sendobjresp.reqnumber()) {
+            MSG(LTFSDMC0037E);
+            TRACE(Trace::error, requestNumber, sendobjresp.reqnumber());
+            THROW(Error::GENERAL_ERROR);
+        }
+
+        switch (sendobjresp.error()) {
+            case static_cast<long>(Error::POOL_TOO_SMALL):
+                MSG(LTFSDMC0015W);
+                break;
+            case static_cast<long>(Error::OK):
+                break;
+            default:
+                MSG(LTFSDMC0029E);
+                THROW(Error::GENERAL_ERROR);
         }
         INFO(LTFSDMC0050I, count);
     }

@@ -135,6 +135,12 @@ std::string DataBase::opStr(DataBase::operation op)
             return ltfsdm_messages[LTFSDMX0014I];
         case MIGRATION:
             return ltfsdm_messages[LTFSDMX0013I];
+        case FORMAT:
+            return ltfsdm_messages[LTFSDMX0081I];
+        case CHECK:
+            return ltfsdm_messages[LTFSDMX0082I];
+        case MOVE:
+            return ltfsdm_messages[LTFSDMX0087I];
         default:
             return "";
     }

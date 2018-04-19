@@ -27,8 +27,7 @@ void TapeMover::addRequest()
     TRACE(Trace::always, op, tapeId, driveId);
 
     stmt(TapeMover::ADD_REQUEST)
-            << (op == TapeMover::MOUNT ? DataBase::MOUNT : DataBase::UNMOUNT)
-            << reqNumber << Const::UNSET << tapeId << driveId << time(NULL) << DataBase::REQ_NEW;
+            << op << reqNumber << Const::UNSET << tapeId << driveId << time(NULL) << DataBase::REQ_NEW;
 
     TRACE(Trace::normal, stmt.str());
 
@@ -53,11 +52,11 @@ void TapeMover::execRequest()
 
         cart->setState(LTFSDMCartridge::TAPE_MOVING);
 
-        if ( op == TapeMover::MOUNT) {
-            inventory->mount(driveId, tapeId);
+        if ( op == TapeMover::UNMOUNT) {
+            inventory->unmount(driveId, tapeId);
         }
         else {
-            inventory->unmount(driveId, tapeId);
+            inventory->mount(driveId, tapeId, op);
         }
 
         stmt(TapeMover::DELETE_REQUEST) << reqNum;

@@ -36,7 +36,7 @@ message LTFSDmSendObjects {
 }
 
 message LTFSDmSendObjectsResp {
-	required bool success = 1;
+	required int64 error = 1;
 	required int64 reqNumber = 2;
 	required int64 pid = 3;
 }
@@ -190,8 +190,10 @@ message LTFSDmPoolDeleteRequest {
 
 message LTFSDmPoolAddRequest {
 	required uint64 key = 1;
-	required bytes poolname = 2;
-	repeated bytes tapeid = 3;
+	required bool format = 2;
+	required bool check = 3;
+	required bytes poolname = 4;
+	repeated bytes tapeid = 5;
 }
 
 message LTFSDmPoolRemoveRequest {

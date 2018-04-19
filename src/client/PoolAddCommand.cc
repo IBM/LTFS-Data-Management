@@ -44,6 +44,8 @@
 
     parameters | description
     ---|---
+    -F | format a cartridge before add to a tape storage pool
+    -C | check a cartridge before add to a tape storage pool
     -P \<pool name\> | pool name to which a cartridge should be added
     -t \<tape id\> | id of a cartridge to be added
 
@@ -76,6 +78,11 @@ void PoolAddCommand::doCommand(int argc, char **argv)
         THROW(Error::GENERAL_ERROR);
     }
 
+    if ( format && check ) {
+           printUsage();
+           THROW(Error::GENERAL_ERROR);
+    }
+
     try {
         connect();
     } catch (const std::exception& e) {
@@ -86,6 +93,8 @@ void PoolAddCommand::doCommand(int argc, char **argv)
     LTFSDmProtocol::LTFSDmPoolAddRequest *pooladdreq =
             commCommand.mutable_pooladdrequest();
     pooladdreq->set_key(key);
+    pooladdreq->set_format(format);
+    pooladdreq->set_check(check);
     pooladdreq->set_poolname(poolNames);
 
     for (std::string tapeid : tapeList)
@@ -124,6 +133,21 @@ void PoolAddCommand::doCommand(int argc, char **argv)
             case static_cast<long>(Error::TAPE_EXISTS_IN_POOL):
                 MSG(LTFSDMX0021E, tapeid);
                 break;
+            case static_cast<long>(Error::ALREADY_FORMATTED):
+                MSG(LTFSDMX0083E, tapeid);
+                break;
+            case static_cast<long>(Error::NOT_FORMATTED):
+                MSG(LTFSDMX0084E, tapeid);
+                break;
+            case static_cast<long>(Error::TAPE_NOT_WRITABLE):
+                MSG(LTFSDMX0085E, tapeid);
+                break;
+            case static_cast<long>(Error::UNKNOWN_FORMAT_STATUS):
+                MSG(LTFSDMX0086E, tapeid);
+                break;
+            case static_cast<long>(Error::CONFIG_POOL_NOT_EXISTS):
+                MSG(LTFSDMX0025E, poolNames);
+                return;
             default:
                 MSG(LTFSDMC0085E, tapeid, poolNames);
         }

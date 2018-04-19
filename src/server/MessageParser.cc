@@ -94,11 +94,12 @@
  */
 
 void MessageParser::getObjects(LTFSDmCommServer *command, long localReqNumber,
-        unsigned long pid, long requestNumber, FileOperation *fopt)
+        unsigned long pid, long requestNumber, FileOperation *fopt,
+        std::set<std::string> pools = {})
 
 {
     bool cont = true;
-    bool success = true;
+    int error = static_cast<int>(Error::OK);
 
     TRACE(Trace::full, __PRETTY_FUNCTION__);
 
@@ -149,10 +150,23 @@ void MessageParser::getObjects(LTFSDmCommServer *command, long localReqNumber,
             }
         }
 
+        if ( cont == false ) {
+            for ( std::string pool : pools ) {
+                unsigned long free = 0;
+                for (std::string cartridgeid : Server::conf.getPool(pool)) {
+                    std::shared_ptr<LTFSDMCartridge> cart = inventory->getCartridge(cartridgeid);
+                    if ( cart != nullptr )
+                        free += cart->get_le()->get_remaining_cap();
+                }
+                if (fopt->getRequestSize() > free)
+                    error = static_cast<int>(Error::POOL_TOO_SMALL);
+            }
+        }
+
         LTFSDmProtocol::LTFSDmSendObjectsResp *sendobjresp =
                 command->mutable_sendobjectsresp();
 
-        sendobjresp->set_success(success);
+        sendobjresp->set_error(error);
         sendobjresp->set_reqnumber(requestNumber);
         sendobjresp->set_pid(pid);
 
@@ -299,7 +313,7 @@ void MessageParser::migrationMessage(long key, LTFSDmCommServer *command,
     if (!error) {
         try {
             getObjects(command, localReqNumber, pid, requestNumber,
-                    dynamic_cast<FileOperation*>(mig));
+                    dynamic_cast<FileOperation*>(mig), pools);
         } catch (const std::exception& e) {
             SQLStatement stmt;
             stmt(FileOperation::DELETE_JOBS) << requestNumber;
@@ -953,8 +967,13 @@ void MessageParser::poolAddMessage(long key, LTFSDmCommServer *command)
     const LTFSDmProtocol::LTFSDmPoolAddRequest pooladd =
             command->pooladdrequest();
     long keySent = pooladd.key();
+    bool format;
+    bool check;
+    bool wait;
     std::string poolName;
     std::list<std::string> tapeids;
+    std::shared_ptr<LTFSDMCartridge> cartridge;
+    std::string tapeStatus;
     int response;
 
     TRACE(Trace::normal, keySent);
@@ -964,23 +983,114 @@ void MessageParser::poolAddMessage(long key, LTFSDmCommServer *command)
         return;
     }
 
+    format = pooladd.format();
+    check = pooladd.check();
     poolName = pooladd.poolname();
+
+    try {
+        Server::conf.getPool(poolName);
+    }
+    catch (const LTFSDMException& e) {
+        MSG(LTFSDMX0025E, poolName);
+        response = static_cast<int>(e.getError());
+        LTFSDmProtocol::LTFSDmPoolResp *poolresp = command->mutable_poolresp();
+        poolresp->set_tapeid("");
+        poolresp->set_response(response);
+
+        try {
+            command->send();
+        } catch (const std::exception& e) {
+            TRACE(Trace::error, e.what());
+            MSG(LTFSDMS0007E);
+        }
+    }
+
 
     for (int i = 0; i < pooladd.tapeid_size(); i++)
         tapeids.push_back(pooladd.tapeid(i));
 
     for (std::string tapeid : tapeids) {
         response = static_cast<int>(Error::OK);
+        wait = false;
 
-        {
-            std::lock_guard<std::recursive_mutex> lock(LTFSDMInventory::mtx);
-            try {
-                inventory->poolAdd(poolName, tapeid);
-            } catch (const LTFSDMException& e) {
-                response = static_cast<int>(e.getError());
-            } catch (const std::exception& e) {
-                response = static_cast<int>(Error::GENERAL_ERROR);
+        try {
+            std::unique_lock<std::recursive_mutex> lock(LTFSDMInventory::mtx);
+
+            if ((cartridge = inventory->getCartridge(tapeid)) == nullptr) {
+                MSG(LTFSDMX0034E, tapeid);
+                THROW(Error::TAPE_NOT_EXISTS);
             }
+
+            if (cartridge->getPool().compare("") != 0) {
+                MSG(LTFSDMX0021E, tapeid);
+                THROW(Error::TAPE_EXISTS_IN_POOL);
+            }
+
+            try {
+                tapeStatus = cartridge->get_le()->get_status();
+            }
+            catch (const std::exception& e) {
+                MSG(LTFSDMX0086E, tapeid);
+                THROW(Error::UNKNOWN_FORMAT_STATUS);
+            }
+
+            if ( format ) {
+                if ( tapeStatus.compare("WRITABLE") != 0 ) {
+                    MSG(LTFSDMC0106I, tapeid);
+                    TapeHandler th(poolName, tapeid, TapeHandler::FORMAT);
+                    th.addRequest();
+                    wait = true;
+                }
+                else {
+                    MSG(LTFSDMX0083E, tapeid);
+                    THROW(Error::ALREADY_FORMATTED);
+                }
+            }
+            else if ( check ) {
+                if ( tapeStatus.compare("NOT_MOUNTED_YET") == 0 ||
+                        tapeStatus.compare("WRITABLE") == 0 ) {
+                    MSG(LTFSDMC0107I, tapeid);
+                    TapeHandler th(poolName, tapeid, TapeHandler::CHECK);
+                    th.addRequest();
+                    wait = true;
+                }
+                else {
+                    MSG(LTFSDMX0084E, tapeid);
+                    response = static_cast<int>(Error::NOT_FORMATTED);
+                    THROW(Error::NOT_FORMATTED);
+                }
+            }
+            else {
+                if ( tapeStatus.compare("WRITABLE") == 0 ) {
+                    try {
+                        inventory->poolAdd(poolName, tapeid);
+                    } catch (const LTFSDMException& e) {
+                        response = static_cast<int>(e.getError());
+                    } catch (const std::exception& e) {
+                        THROW(Error::GENERAL_ERROR);
+                    }
+                }
+                else {
+                    MSG(LTFSDMS0110E, tapeid, tapeStatus);
+                    THROW(Error::TAPE_NOT_WRITABLE);
+                }
+            }
+        } catch (const LTFSDMException& e) {
+            response = static_cast<int>(e.getError());
+        } catch (const std::exception& e) {
+            response = static_cast<int>(Error::GENERAL_ERROR);
+        }
+
+        if (wait) {
+            if ((cartridge = inventory->getCartridge(tapeid)) == nullptr) {
+                MSG(LTFSDMX0034E, tapeid);
+                response = static_cast<int>(Error::TAPE_NOT_EXISTS);
+                break;
+            }
+            std::unique_lock<std::mutex> lock(cartridge->mtx);
+            Scheduler::invoke();
+            cartridge->cond.wait(lock);
+            response = static_cast<int>(cartridge->result);
         }
 
         LTFSDmProtocol::LTFSDmPoolResp *poolresp = command->mutable_poolresp();
@@ -995,6 +1105,8 @@ void MessageParser::poolAddMessage(long key, LTFSDmCommServer *command)
             MSG(LTFSDMS0007E);
         }
     }
+
+    Scheduler::invoke();
 }
 
 void MessageParser::poolRemoveMessage(long key, LTFSDmCommServer *command)

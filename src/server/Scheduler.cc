@@ -153,19 +153,59 @@ void Scheduler::makeUse(std::string driveId, std::string tapeId)
     cart->setState(LTFSDMCartridge::TAPE_INUSE);
 }
 
-void Scheduler::moveTape(std::string driveId, std::string tapeId, TapeMover::operation op)
+bool Scheduler::driveIsUsable(std::shared_ptr<LTFSDMDrive> drive)
+
+{
+    int rn = drive->getMoveReqNum();
+
+    if ( drive->isBusy() == true )
+        return false;
+
+    if ( rn != Const::UNSET && rn != reqNum )
+        return false;
+
+    return true;
+}
+
+void Scheduler::moveTape(std::string driveId, std::string tapeId, TapeMover::operation top)
 
 {
     std::shared_ptr<LTFSDMCartridge> cart = inventory->getCartridge(tapeId);
     std::shared_ptr<LTFSDMDrive> drive = inventory->getDrive(driveId);
-    std::string opstr(op == TapeMover::MOUNT ? "mnt:" : "umn:");
+    std::string opstr;
+
+    // already a mount, move, or unmount request
+    if ( op == DataBase::MOUNT
+            || op == DataBase::MOVE
+            || op == DataBase::UNMOUNT)
+        return;
+
+    if ( inventory->requestExists(reqNum) == true )
+        return;
+
+    switch (top) {
+        case TapeMover::MOUNT:
+            opstr = "mnt.";
+            MSG(LTFSDMS0111I, reqNum, tapeId);
+            break;
+        case TapeMover::MOVE:
+            opstr = "mov.";
+            MSG(LTFSDMS0112I, reqNum, tapeId);
+            break;
+        default:
+            opstr = "umn.";
+            MSG(LTFSDMS0113I, reqNum, tapeId);
+            break;
+    }
 
     TRACE(Trace::always, driveId, tapeId);
-    Scheduler::makeUse(driveId, tapeId);
-    drive->setUnmountReqNum(reqNum);
+    //Scheduler::makeUse(driveId, tapeId);
+    drive->setMoveReqNum(reqNum);
+    //drive->setBusy();
+
     subs.enqueue(std::string(opstr) + tapeId,
             &TapeMover::addRequest,
-            TapeMover(driveId, tapeId, op));
+            TapeMover(driveId, tapeId, top));
 }
 
 bool Scheduler::poolResAvail(unsigned long minFileSize)
@@ -210,7 +250,7 @@ bool Scheduler::poolResAvail(unsigned long minFileSize)
 
     // check if there is an empty drive to mount a tape
     for (std::shared_ptr<LTFSDMDrive> drive : inventory->getDrives()) {
-        if (drive->isBusy() == true)
+        if (driveIsUsable(drive) == false)
             continue;
         found = false;
         // check if there is a cartridge mounted in that drive:
@@ -233,7 +273,7 @@ bool Scheduler::poolResAvail(unsigned long minFileSize)
                                 >= minFileSize) {
                     Scheduler::moveTape(drive->get_le()->GetObjectID(),
                             cartname,
-                            TapeMover::MOUNT);
+                            Scheduler::mountTarget);
                     return false;
                 }
             }
@@ -245,12 +285,12 @@ bool Scheduler::poolResAvail(unsigned long minFileSize)
                for loop that is checking for a tape to mount
      */
     for (std::shared_ptr<LTFSDMDrive> drive : inventory->getDrives())
-        if (drive->getUnmountReqNum() == reqNum)
+        if (drive->getMoveReqNum() == reqNum)
             return false;
 
     // check if there is a tape to unmount
     for (std::shared_ptr<LTFSDMDrive> drive : inventory->getDrives()) {
-        if (drive->isBusy() == true)
+        if (driveIsUsable(drive) == false)
             continue;
         for (std::shared_ptr<LTFSDMCartridge> cart : inventory->getCartridges()) {
             if ((drive->get_le()->get_slot() == cart->get_le()->get_slot())
@@ -275,28 +315,9 @@ bool Scheduler::tapeResAvail()
 
     if (inventory->getCartridge(tapeId)->getState()
             == LTFSDMCartridge::TAPE_MOVING)
-        return false;
+        TRACE(Trace::always, op);
 
-    /*
-     * a tape is also changing its state to "TAPE_INUSE" when an
-     * un/mount request is added to the REQUEST_QUEUE
-     */
     if (inventory->getCartridge(tapeId)->getState()
-            == LTFSDMCartridge::TAPE_INUSE) {
-        found = false;
-        for (std::shared_ptr<LTFSDMDrive> drive : inventory->getDrives()) {
-            if (drive->get_le()->get_slot()
-                    == inventory->getCartridge(tapeId)->get_le()->get_slot()) {
-                TRACE(Trace::always, op, drive->getToUnblock(),
-                        drive->get_le()->GetObjectID());
-                if (op < drive->getToUnblock())
-                    drive->setToUnblock(op);
-                found = true;
-                break;
-            }
-        }
-        return false;
-    } else if (inventory->getCartridge(tapeId)->getState()
             == LTFSDMCartridge::TAPE_MOUNTED) {
         found = false;
         for (std::shared_ptr<LTFSDMDrive> drive : inventory->getDrives()) {
@@ -316,7 +337,7 @@ bool Scheduler::tapeResAvail()
 
     // looking for a free drive
     for (std::shared_ptr<LTFSDMDrive> drive : inventory->getDrives()) {
-        if (drive->isBusy() == true)
+        if (driveIsUsable(drive) == false)
             continue;
         found = false;
         for (std::shared_ptr<LTFSDMCartridge> card : inventory->getCartridges()) {
@@ -330,7 +351,7 @@ bool Scheduler::tapeResAvail()
             if (inventory->getCartridge(tapeId)->getState()
                     == LTFSDMCartridge::TAPE_UNMOUNTED) {
                 Scheduler::moveTape(drive->get_le()->GetObjectID(),
-                        tapeId, TapeMover::MOUNT);
+                        tapeId, Scheduler::mountTarget);
                 return false;
             }
         }
@@ -338,7 +359,7 @@ bool Scheduler::tapeResAvail()
 
     // looking for a tape to unmount
     for (std::shared_ptr<LTFSDMDrive> drive : inventory->getDrives()) {
-        if (drive->isBusy() == true)
+        if (driveIsUsable(drive) == false)
             continue;
         for (std::shared_ptr<LTFSDMCartridge> cart : inventory->getCartridges()) {
             if ((drive->get_le()->get_slot() == cart->get_le()->get_slot())
@@ -369,12 +390,44 @@ bool Scheduler::tapeResAvail()
     return false;
 }
 
+bool Scheduler::resAvailTapeMove()
+
+{
+    std::shared_ptr<LTFSDMDrive> drive = inventory->getDrive(driveId);
+    std::shared_ptr<LTFSDMCartridge> cart = inventory->getCartridge(tapeId);
+
+    TRACE(Trace::always, drive->get_le()->get_slot(), cart->get_le()->get_slot());
+
+    if (drive->isBusy() == true )
+        return false;
+
+    if ( op == DataBase::MOUNT || op == DataBase::MOVE) {
+        for (std::shared_ptr<LTFSDMCartridge> c : inventory->getCartridges()) {
+            if ((drive->get_le()->get_slot() == c->get_le()->get_slot())
+                    && (c->getState() == LTFSDMCartridge::TAPE_MOUNTED)) {
+                return false;
+            }
+        }
+    }
+    else {
+        if (drive->get_le()->get_slot() != cart->get_le()->get_slot()
+                || (cart->getState() != LTFSDMCartridge::TAPE_MOUNTED))
+            return false;
+    }
+
+    Scheduler::makeUse(driveId, tapeId);
+
+    return true;
+}
+
 bool Scheduler::resAvail(unsigned long minFileSize)
 
 {
-    if (op == DataBase::MOUNT || op == DataBase::UNMOUNT)
-        return true;
-    if (op == DataBase::MIGRATION && tapeId.compare("") == 0)
+    if ( op == DataBase::MOUNT
+            || op == DataBase::MOVE
+            || op == DataBase::UNMOUNT)
+        return resAvailTapeMove();
+    else if (op == DataBase::MIGRATION && tapeId.compare("") == 0)
         return poolResAvail(minFileSize);
     else
         return tapeResAvail();
@@ -399,6 +452,7 @@ void Scheduler::invoke()
 {
     assert(LTFSDMInventory::mtx.native_handle()->__data.__owner != syscall(__NR_gettid));
 
+    TRACE(Trace::always, "invoke scheduler");
 
     std::unique_lock<std::mutex> lock(Scheduler::mtx);
     Scheduler::cond.notify_one();
@@ -437,28 +491,55 @@ void Scheduler::run(long key)
             else
                 minFileSize = 0;
 
+            if (op == DataBase::FORMAT || op == DataBase::CHECK)
+                mountTarget = TapeMover::MOVE;
+            else
+                mountTarget = TapeMover::MOUNT;
+
             if (resAvail(minFileSize) == false)
                 continue;
 
-            TRACE(Trace::always, reqNum, tgtState, numRepl, replNum, pool);
+            TRACE(Trace::always, reqNum, tgtState, numRepl, replNum, pool, op);
 
             std::stringstream thrdinfo;
 
             switch (op) {
                 case DataBase::MOUNT:
+                case DataBase::MOVE:
                 case DataBase::UNMOUNT:
-                    updstmt(Scheduler::UPDATE_MNT_REQUEST)
+                    updstmt(Scheduler::UPDATE_REQUEST)
                             << DataBase::REQ_INPROGRESS << reqNum;
                     updstmt.doall();
 
-                    if ( op == DataBase::MOUNT )
-                        thrdinfo << "MNT(" << tapeId << ")";
-                    else
-                        thrdinfo << "UMN(" << tapeId << ")";
+                    switch (op) {
+                        case DataBase::MOUNT:
+                            thrdinfo << "MNT(" << tapeId << ")";
+                            break;
+                        case DataBase::MOVE:
+                            thrdinfo << "MOV(" << tapeId << ")";
+                            break;
+                        default:
+                            thrdinfo << "UMN(" << tapeId << ")";
+                    }
 
                     subs.enqueue(thrdinfo.str(), &TapeMover::execRequest,
-                            TapeMover(driveId, tapeId, reqNum, op == DataBase::MOUNT ? TapeMover::MOUNT : TapeMover::UNMOUNT));
+                            TapeMover(driveId, tapeId, reqNum, static_cast<TapeMover::operation>(op)));
                     break;
+                case DataBase::FORMAT:
+                case DataBase::CHECK:
+                    updstmt(Scheduler::UPDATE_REQUEST)
+                            << DataBase::REQ_INPROGRESS << reqNum;
+                    updstmt.doall();
+
+                    if ( op == DataBase::FORMAT )
+                        thrdinfo << "FMT(" << tapeId << ")";
+                    else
+                        thrdinfo << "CHK(" << tapeId << ")";
+
+                    subs.enqueue(thrdinfo.str(), &TapeHandler::execRequest,
+                            TapeHandler(pool, driveId, tapeId, reqNum, op == DataBase::FORMAT ? TapeHandler::FORMAT : TapeHandler::CHECK));
+                    break;
+
                 case DataBase::MIGRATION:
                     updstmt(Scheduler::UPDATE_MIG_REQUEST)
                             << DataBase::REQ_INPROGRESS << tapeId << reqNum
@@ -501,5 +582,9 @@ void Scheduler::run(long key)
     }
     MSG(LTFSDMS0081I);
     subs.waitAllRemaining();
+    for (std::shared_ptr<LTFSDMCartridge> cart : inventory->getCartridges()) {
+        std::unique_lock<std::mutex> lock(cart->mtx);
+        cart->cond.notify_one();
+    }
     MSG(LTFSDMS0082I);
 }

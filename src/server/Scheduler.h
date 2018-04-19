@@ -25,6 +25,7 @@ private:
     int numRepl;
     int replNum;
     int tgtState;
+    TapeMover::operation mountTarget;
     std::string tapeId;
     std::string driveId;
     std::string pool;
@@ -33,14 +34,16 @@ private:
     static std::condition_variable cond;
 
     void makeUse(std::string driveId, std::string tapeId);
+    bool driveIsUsable(std::shared_ptr<LTFSDMDrive> drive);
     void moveTape(std::string driveId, std::string tapeId, TapeMover::operation op);
     bool poolResAvail(unsigned long minFileSize);
     bool tapeResAvail();
     bool resAvail(unsigned long minFileSize);
+    bool resAvailTapeMove();
     unsigned long smallestMigJob(int reqNum, int replNum);
 
     static const std::string SELECT_REQUEST;
-    static const std::string UPDATE_MNT_REQUEST;
+    static const std::string UPDATE_REQUEST;
     static const std::string UPDATE_MIG_REQUEST;
     static const std::string UPDATE_REC_REQUEST;
     static const std::string SMALLEST_MIG_JOB;
@@ -51,17 +54,10 @@ public:
     static std::map<std::string, std::atomic<bool>> suspend_map;
 
     static void invoke();
-    static void mount(std::string driveid, std::string cartridgeid)
-    {
-        inventory->mount(driveid, cartridgeid);
-    }
-    static void unmount(std::string driveid, std::string cartridgeid)
-    {
-        inventory->unmount(driveid, cartridgeid);
-    }
+
     Scheduler() :
             op(DataBase::NOOP), reqNum(Const::UNSET), numRepl(Const::UNSET), replNum(
-                    Const::UNSET), tgtState(Const::UNSET)
+                    Const::UNSET), tgtState(Const::UNSET), mountTarget(TapeMover::MOUNT)
     {
     }
     ~Scheduler()

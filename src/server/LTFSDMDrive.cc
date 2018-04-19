@@ -63,7 +63,7 @@ void LTFSDMDrive::setFree()
     TRACE(Trace::always, this->get_le()->GetObjectID(), busy);
 }
 
-void LTFSDMDrive::setUnmountReqNum(int reqnum)
+void LTFSDMDrive::setMoveReqNum(int reqnum)
 
 {
     std::lock_guard<std::recursive_mutex> lock(LTFSDMInventory::mtx);
@@ -71,7 +71,7 @@ void LTFSDMDrive::setUnmountReqNum(int reqnum)
     umountReqNum = reqnum;
 }
 
-int LTFSDMDrive::getUnmountReqNum()
+int LTFSDMDrive::getMoveReqNum()
 
 {
     std::lock_guard<std::recursive_mutex> lock(LTFSDMInventory::mtx);
@@ -79,7 +79,7 @@ int LTFSDMDrive::getUnmountReqNum()
     return umountReqNum;
 }
 
-void LTFSDMDrive::unsetUnmountReqNum()
+void LTFSDMDrive::unsetMoveReqNum()
 
 {
     std::lock_guard<std::recursive_mutex> lock(LTFSDMInventory::mtx);

@@ -16,26 +16,26 @@
  *******************************************************************************/
 #pragma once
 
-class FileOperation
-{
-protected:
-    unsigned long requestSize;
-    static std::string genInumString(std::list<unsigned long> inumList);
+class TapeHandler {
+private:
+    std::string poolName;
+    std::string driveId;
+    std::string tapeId;
+    int reqNum;
+
+    static const std::string ADD_REQUEST;
+    static const std::string DELETE_REQUEST;
 public:
-    static const std::string REQUEST_STATE;
-    static const std::string DELETE_JOBS;
-    static const std::string DELETE_REQUESTS;
-    FileOperation() : requestSize(0)
-    {
-    }
-    virtual ~FileOperation() = default;
-    virtual void addJob(std::string fileName)
-    {
-    }
-    virtual void start()
-    {
-    }
-    bool queryResult(long reqNumber, long *resident, long *transferred,
-            long *premigrated, long *migrated, long *failed);
-    unsigned long getRequestSize() { return requestSize; }
+    enum operation {
+        FORMAT,
+        CHECK
+    };
+private:
+    operation op;
+public:
+    TapeHandler(std::string _poolName, std::string _driveId, std::string _tapeId, int _reqNum, operation _op) :
+        poolName(_poolName), driveId(_driveId), tapeId(_tapeId), reqNum(_reqNum), op(_op) {}
+    TapeHandler(std::string _poolName, std::string _tapeId, operation _op) : poolName(_poolName), driveId(""), tapeId(_tapeId), reqNum(Const::UNSET), op(_op) {}
+    void addRequest();
+    void execRequest();
 };

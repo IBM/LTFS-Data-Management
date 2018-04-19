@@ -431,6 +431,7 @@ void Migration::addJob(std::string fileName)
                 << targetState << statbuf.st_size << fuid.fsid_h << fuid.fsid_l
                 << fuid.igen << fuid.inum << statbuf.st_mtim.tv_sec
                 << statbuf.st_mtim.tv_nsec << time(NULL) << state;
+        requestSize += fso.stat().st_size;
     } catch (const std::exception& e) {
         MSG(LTFSDMS0077E, fileName);
         TRACE(Trace::error, e.what());

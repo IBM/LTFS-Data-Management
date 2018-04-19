@@ -46,9 +46,9 @@ public:
     bool isBusy();
     void setBusy();
     void setFree();
-    void setUnmountReqNum(int reqnum);
-    int getUnmountReqNum();
-    void unsetUnmountReqNum();
+    void setMoveReqNum(int reqnum);
+    int getMoveReqNum();
+    void unsetMoveReqNum();
     void setToUnblock(DataBase::operation op);
     DataBase::operation getToUnblock();
     void clearToUnblock();
@@ -86,6 +86,10 @@ public:
     bool isRequested();
     void setRequested();
     void unsetRequested();
+
+    std::mutex mtx;
+    std::condition_variable cond;
+    Error result;
 };
 
 class LTFSDMInventory
@@ -107,7 +111,7 @@ private:
     void addCartridge(std::string barcode, std::string drive_serial);
     void remCartridge(boost::shared_ptr<Cartridge> cartridge,
             bool keep_on_drive = false);
-    void lookupCartridges(bool assigned_only = true, bool force = false);
+    void lookupCartridges(bool assigned_only = false, bool force = false);
 public:
     LTFSDMInventory();
     ~LTFSDMInventory();
@@ -133,10 +137,12 @@ public:
     void poolAdd(std::string poolname, std::string cartridgeid);
     void poolRemove(std::string poolname, std::string cartridgeid);
 
-    void mount(std::string driveid, std::string cartridgeid);
+    void mount(std::string driveid, std::string cartridgeid, TapeMover::operation op);
     void unmount(std::string driveid, std::string cartridgeid);
     void format(std::string cartridgeid);
     void check(std::string cartridgeid);
+
+    bool requestExists(long reqNum);
 
     std::string getMountPoint();
 };
