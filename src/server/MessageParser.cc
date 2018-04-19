@@ -158,8 +158,11 @@ void MessageParser::getObjects(LTFSDmCommServer *command, long localReqNumber,
                     if ( cart != nullptr )
                         free += cart->get_le()->get_remaining_cap();
                 }
-                if (fopt->getRequestSize() > free)
+                free *= 1024;
+                if (fopt->getRequestSize() > free) {
+                    TRACE(Trace::always, fopt->getRequestSize(), free);
                     error = static_cast<int>(Error::POOL_TOO_SMALL);
+                }
             }
         }
 
