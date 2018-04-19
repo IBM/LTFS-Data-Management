@@ -17,8 +17,8 @@
 #include "ServerIncludes.h"
 
 LTFSDMDrive::LTFSDMDrive(boost::shared_ptr<Drive> d) :
-        drive(d), busy(false), umountReqNum(Const::UNSET), toUnBlock(
-                DataBase::NOOP), mtx(nullptr), wqp(nullptr)
+        drive(d), busy(false), umountReqNum(Const::UNSET), umountReqPool(""),
+        toUnBlock(DataBase::NOOP), mtx(nullptr), wqp(nullptr)
 {
 }
 
@@ -63,12 +63,13 @@ void LTFSDMDrive::setFree()
     TRACE(Trace::always, this->get_le()->GetObjectID(), busy);
 }
 
-void LTFSDMDrive::setMoveReqNum(int reqnum)
+void LTFSDMDrive::setMoveReq(int reqnum, std::string pool)
 
 {
     std::lock_guard<std::recursive_mutex> lock(LTFSDMInventory::mtx);
 
     umountReqNum = reqnum;
+    umountReqPool = pool;
 }
 
 int LTFSDMDrive::getMoveReqNum()
@@ -79,12 +80,21 @@ int LTFSDMDrive::getMoveReqNum()
     return umountReqNum;
 }
 
-void LTFSDMDrive::unsetMoveReqNum()
+std::string LTFSDMDrive::getMoveReqPool()
+
+{
+    std::lock_guard<std::recursive_mutex> lock(LTFSDMInventory::mtx);
+
+    return umountReqPool;
+}
+
+void LTFSDMDrive::unsetMoveReq()
 
 {
     std::lock_guard<std::recursive_mutex> lock(LTFSDMInventory::mtx);
 
     umountReqNum = Const::UNSET;
+    umountReqPool = "";
 }
 
 void LTFSDMDrive::setToUnblock(DataBase::operation op)

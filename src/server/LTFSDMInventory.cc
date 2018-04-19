@@ -746,7 +746,7 @@ void LTFSDMInventory::mount(std::string driveid, std::string cartridgeid, TapeMo
         cartridge->setState(LTFSDMCartridge::TAPE_MOUNTED);
         TRACE(Trace::always, drive->get_le()->GetObjectID());
         drive->setFree();
-        drive->unsetMoveReqNum();
+        drive->unsetMoveReq();
         MSG(LTFSDMS0069I, cartridgeid, driveid);
     } catch (AdminLibException& e) {
         error = e.GetID();
@@ -801,7 +801,7 @@ void LTFSDMInventory::unmount(std::string driveid, std::string cartridgeid)
         cartridge->setState(LTFSDMCartridge::TAPE_UNMOUNTED);
         TRACE(Trace::always, drive->get_le()->GetObjectID());
         drive->setFree();
-        drive->unsetMoveReqNum();
+        drive->unsetMoveReq();
         MSG(LTFSDMS0071I, cartridgeid);
     } catch (AdminLibException& e) {
         MSG(LTFSDMS0100E, cartridgeid, e.what());
@@ -855,12 +855,12 @@ LTFSDMInventory::~LTFSDMInventory()
     }
 }
 
-bool LTFSDMInventory::requestExists(long reqNum)
+bool LTFSDMInventory::requestExists(long reqNum, std::string pool)
 
 {
     for ( std::shared_ptr<LTFSDMDrive> drive : drives ) {
-        TRACE(Trace::always, reqNum, drive->getMoveReqNum());
-        if (drive->getMoveReqNum() == reqNum )
+        TRACE(Trace::always, reqNum, drive->getMoveReqNum(), drive->getMoveReqPool());
+        if (drive->getMoveReqNum() == reqNum && drive->getMoveReqPool().compare(pool) == 0)
             return true;
     }
 

@@ -31,6 +31,7 @@ private:
     boost::shared_ptr<Drive> drive;
     bool busy;
     int umountReqNum;
+    std::string umountReqPool;
     DataBase::operation toUnBlock;
 public:
     std::mutex *mtx;
@@ -46,9 +47,10 @@ public:
     bool isBusy();
     void setBusy();
     void setFree();
-    void setMoveReqNum(int reqnum);
+    void setMoveReq(int reqnum, std::string pool);
     int getMoveReqNum();
-    void unsetMoveReqNum();
+    std::string getMoveReqPool();
+    void unsetMoveReq();
     void setToUnblock(DataBase::operation op);
     DataBase::operation getToUnblock();
     void clearToUnblock();
@@ -142,7 +144,7 @@ public:
     void format(std::string cartridgeid);
     void check(std::string cartridgeid);
 
-    bool requestExists(long reqNum);
+    bool requestExists(long reqNum, std::string pool);
 
     std::string getMountPoint();
 };

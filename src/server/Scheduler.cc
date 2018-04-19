@@ -157,11 +157,12 @@ bool Scheduler::driveIsUsable(std::shared_ptr<LTFSDMDrive> drive)
 
 {
     int rn = drive->getMoveReqNum();
+    std::string p = drive->getMoveReqPool();
 
     if ( drive->isBusy() == true )
         return false;
 
-    if ( rn != Const::UNSET && rn != reqNum )
+    if ( rn != Const::UNSET && !(rn == reqNum && p.compare(pool) == 0))
         return false;
 
     return true;
@@ -180,7 +181,7 @@ void Scheduler::moveTape(std::string driveId, std::string tapeId, TapeMover::ope
             || op == DataBase::UNMOUNT)
         return;
 
-    if ( inventory->requestExists(reqNum) == true )
+    if ( inventory->requestExists(reqNum, pool) == true )
         return;
 
     switch (top) {
@@ -200,7 +201,7 @@ void Scheduler::moveTape(std::string driveId, std::string tapeId, TapeMover::ope
 
     TRACE(Trace::always, driveId, tapeId);
     //Scheduler::makeUse(driveId, tapeId);
-    drive->setMoveReqNum(reqNum);
+    drive->setMoveReq(reqNum, pool);
     //drive->setBusy();
 
     subs.enqueue(std::string(opstr) + tapeId,
@@ -285,7 +286,7 @@ bool Scheduler::poolResAvail(unsigned long minFileSize)
                for loop that is checking for a tape to mount
      */
     for (std::shared_ptr<LTFSDMDrive> drive : inventory->getDrives())
-        if (drive->getMoveReqNum() == reqNum)
+        if (drive->getMoveReqNum() == reqNum && drive->getMoveReqPool().compare(pool) == 0)
             return false;
 
     // check if there is a tape to unmount
