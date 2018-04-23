@@ -42,7 +42,7 @@ cat > /src/common/Version.h << EOF
  *******************************************************************************/
 EOF
 
-echo "#pragma once" > "$(git rev-parse --show-toplevel)"/src/common/Version.h
+echo "#pragma once" >> "$(git rev-parse --show-toplevel)"/src/common/Version.h
 echo "#define LTFSDM_VERSION \"${VERSION}\"" >> "$(git rev-parse --show-toplevel)"/src/common/Version.h
 
 git add -f "$(git rev-parse --show-toplevel)"/src/common/Version.h
