@@ -23,7 +23,7 @@ COMMIT_COUNT=$(git rev-list --count HEAD)
 VERSION="${MAJOR}.${MINOR}.${COMMIT_COUNT}-${BRANCH_NAME}.${COMMIT_TIME}"
 echo ${VERSION} > .version
 
-cat > /src/common/Version.h << EOF
+cat > "$(git rev-parse --show-toplevel)"/src/common/Version.h << EOF
 /*******************************************************************************
  * Copyright 2018 IBM Corp. All Rights Reserved.
  *
