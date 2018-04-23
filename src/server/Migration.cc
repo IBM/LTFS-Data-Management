@@ -537,7 +537,7 @@ unsigned long Migration::transferData(std::string tapeId, std::string driveId,
         Server::createDataDir(tapeId);
 
         fd = Server::openTapeRetry(tapeId, tapeName.c_str(),
-                O_RDWR | O_CREAT | O_TRUNC | O_CLOEXEC);
+        O_RDWR | O_CREAT | O_TRUNC | O_CLOEXEC);
 
         if (fd == -1) {
             TRACE(Trace::error, errno);
@@ -687,7 +687,7 @@ void Migration::changeFileState(Migration::mig_info_t mig_info,
         // if not all replicas are completed
         // mig_info.numRepl != 0 is necessary for premigrated files to migrate
         // without specifying tape storage pools
-        if ( mig_info.numRepl != 0 && attr.copies != mig_info.numRepl )
+        if (mig_info.numRepl != 0 && attr.copies != mig_info.numRepl)
             return;
 
         if (toState == FsObj::MIGRATED) {
@@ -961,6 +961,6 @@ void Migration::execRequest(int replNum, std::string driveId, std::string pool,
      * If there are still jobs to process the scheduler needs to be requested
      * to look for new requests (incl. this one) to schedule.
      */
-    if ( retval.suspended || retval.remaining)
+    if (retval.suspended || retval.remaining)
         Scheduler::invoke();
 }

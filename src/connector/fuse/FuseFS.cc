@@ -98,7 +98,8 @@ std::string FuseFS::lockPath(std::string path)
     return lpath.str();
 }
 
-FuseFS::mig_state_attr_t FuseFS::genMigInfoAt(int fd, FuseFS::mig_state_attr_t::state_num state)
+FuseFS::mig_state_attr_t FuseFS::genMigInfoAt(int fd,
+        FuseFS::mig_state_attr_t::state_num state)
 
 {
     FuseFS::mig_state_attr_t miginfo;
@@ -222,7 +223,8 @@ bool FuseFS::needsRecovery(FuseFS::mig_state_attr_t miginfo)
     return false;
 }
 
-void FuseFS::recoverState(const char *path, FuseFS::mig_state_attr_t::state_num state)
+void FuseFS::recoverState(const char *path,
+        FuseFS::mig_state_attr_t::state_num state)
 
 {
     int fd;
@@ -255,7 +257,8 @@ void FuseFS::recoverState(const char *path, FuseFS::mig_state_attr_t::state_num 
         case FuseFS::mig_state_attr_t::state_num::STUBBING:
             MSG(LTFSDMF0014W, fusepath);
             try {
-                FuseFS::setMigInfoAt(fd, FuseFS::mig_state_attr_t::state_num::MIGRATED);
+                FuseFS::setMigInfoAt(fd,
+                        FuseFS::mig_state_attr_t::state_num::MIGRATED);
             } catch (const std::exception& e) {
                 MSG(LTFSDMF0056E, fusepath);
             }
@@ -273,7 +276,8 @@ void FuseFS::recoverState(const char *path, FuseFS::mig_state_attr_t::state_num 
         case FuseFS::mig_state_attr_t::state_num::IN_RECALL:
             MSG(LTFSDMF0015W, fusepath);
             try {
-                FuseFS::setMigInfoAt(fd, FuseFS::mig_state_attr_t::state_num::MIGRATED);
+                FuseFS::setMigInfoAt(fd,
+                        FuseFS::mig_state_attr_t::state_num::MIGRATED);
             } catch (const std::exception& e) {
                 MSG(LTFSDMF0056E, fusepath);
             }
@@ -675,11 +679,11 @@ int FuseFS::ltfsdm_symlink(const char *target, const char *linkpath)
 
     if (symlinkat(target, getshrd()->rootFd, FuseFS::relPath(linkpath)) == -1) {
         return (-1 * errno);
-    }
-    else {
+    } else {
         fc = fuse_get_context();
-        if (fchownat(getshrd()->rootFd, FuseFS::relPath(linkpath), fc->uid, fc->gid,
-        AT_EMPTY_PATH | AT_SYMLINK_NOFOLLOW) == -1)
+        if (fchownat(getshrd()->rootFd, FuseFS::relPath(linkpath), fc->uid,
+                fc->gid,
+                AT_EMPTY_PATH | AT_SYMLINK_NOFOLLOW) == -1)
             return (-1 * errno);
     }
 
@@ -771,7 +775,8 @@ int FuseFS::ltfsdm_truncate(const char *path, off_t size)
         }
 
         if ((size > 0)
-                && ((migInfo.state == FuseFS::mig_state_attr_t::state_num::MIGRATED)
+                && ((migInfo.state
+                        == FuseFS::mig_state_attr_t::state_num::MIGRATED)
                         || (migInfo.state
                                 == FuseFS::mig_state_attr_t::state_num::IN_RECALL))) {
             TRACE(Trace::full, path);
@@ -916,7 +921,8 @@ int FuseFS::ltfsdm_ftruncate(const char *path, off_t size,
             }
 
             if ((size > 0)
-                    && ((migInfo.state == FuseFS::mig_state_attr_t::state_num::MIGRATED)
+                    && ((migInfo.state
+                            == FuseFS::mig_state_attr_t::state_num::MIGRATED)
                             || (migInfo.state
                                     == FuseFS::mig_state_attr_t::state_num::IN_RECALL))) {
                 TRACE(Trace::full, linfo->fd);
@@ -980,7 +986,8 @@ int FuseFS::ltfsdm_read_buf(const char *path, struct fuse_bufvec **bufferp,
         }
 
         if (migInfo.state == FuseFS::mig_state_attr_t::state_num::MIGRATED
-                || migInfo.state == FuseFS::mig_state_attr_t::state_num::IN_RECALL) {
+                || migInfo.state
+                        == FuseFS::mig_state_attr_t::state_num::IN_RECALL) {
             TRACE(Trace::full, linfo->fd);
             mainlock.unlock();
             if (recall_file(linfo, false) == -1) {
@@ -1038,14 +1045,16 @@ int FuseFS::ltfsdm_write_buf(const char *path, struct fuse_bufvec *buf,
         }
 
         if (migInfo.state == FuseFS::mig_state_attr_t::state_num::MIGRATED
-                || migInfo.state == FuseFS::mig_state_attr_t::state_num::IN_RECALL) {
+                || migInfo.state
+                        == FuseFS::mig_state_attr_t::state_num::IN_RECALL) {
             TRACE(Trace::full, linfo->fd);
             mainlock.unlock();
             if (recall_file(linfo, true) == -1) {
                 return (-1 * EIO);
             }
             mainlock.lock();
-        } else if (migInfo.state == FuseFS::mig_state_attr_t::state_num::PREMIGRATED) {
+        } else if (migInfo.state
+                == FuseFS::mig_state_attr_t::state_num::PREMIGRATED) {
             if (fremovexattr(linfo->fd, Const::LTFSDM_EA_MIGSTATE.c_str())
                     == -1) {
                 TRACE(Trace::error, errno);
@@ -1248,7 +1257,7 @@ int FuseFS::ltfsdm_getxattr(const char *path, const char *name, char *value,
         return (-1 * ENODATA);
 
     if (fstatat(getshrd()->rootFd, FuseFS::relPath(path), &statbuf,
-            AT_SYMLINK_NOFOLLOW) == -1)
+    AT_SYMLINK_NOFOLLOW) == -1)
         return (-1 * ENOENT);
 
     /* see no other way to fail if fifo since following open will block */

@@ -85,7 +85,7 @@ void LTFSDMInventory::getNode()
 }
 
 boost::shared_ptr<Drive> LTFSDMInventory::lookupDrive(std::string id,
-        bool force)
+bool force)
 {
     boost::shared_ptr<Drive> drive = boost::shared_ptr<Drive>();
 
@@ -232,7 +232,7 @@ void LTFSDMInventory::lookupDrives(bool assigned_only, bool force)
 }
 
 boost::shared_ptr<Cartridge> LTFSDMInventory::lookupCartridge(std::string id,
-        bool force)
+bool force)
 {
     boost::shared_ptr<Cartridge> cart = boost::shared_ptr<Cartridge>();
 
@@ -307,7 +307,7 @@ void LTFSDMInventory::addCartridge(std::string barcode,
 }
 
 void LTFSDMInventory::remCartridge(boost::shared_ptr<Cartridge> cart,
-        bool keep_on_drive)
+bool keep_on_drive)
 {
     if (cart) {
         if (sess && sess->is_alived()) {
@@ -716,7 +716,8 @@ void LTFSDMInventory::poolRemove(std::string poolname, std::string cartridgeid)
     cartridge->setPool("");
 }
 
-void LTFSDMInventory::mount(std::string driveid, std::string cartridgeid, TapeMover::operation op)
+void LTFSDMInventory::mount(std::string driveid, std::string cartridgeid,
+        TapeMover::operation op)
 
 {
     std::string error;
@@ -732,7 +733,7 @@ void LTFSDMInventory::mount(std::string driveid, std::string cartridgeid, TapeMo
     assert(cartridge->getState() == LTFSDMCartridge::TAPE_MOVING);
 
     try {
-        if ( op == TapeMover::MOUNT ) {
+        if (op == TapeMover::MOUNT) {
             MSG(LTFSDMS0068I, cartridgeid, driveid);
             cartridge->get_le()->Mount(driveid);
         } else {
@@ -858,9 +859,11 @@ LTFSDMInventory::~LTFSDMInventory()
 bool LTFSDMInventory::requestExists(long reqNum, std::string pool)
 
 {
-    for ( std::shared_ptr<LTFSDMDrive> drive : drives ) {
-        TRACE(Trace::always, reqNum, drive->getMoveReqNum(), drive->getMoveReqPool());
-        if (drive->getMoveReqNum() == reqNum && drive->getMoveReqPool().compare(pool) == 0)
+    for (std::shared_ptr<LTFSDMDrive> drive : drives) {
+        TRACE(Trace::always, reqNum, drive->getMoveReqNum(),
+                drive->getMoveReqPool());
+        if (drive->getMoveReqNum() == reqNum
+                && drive->getMoveReqPool().compare(pool) == 0)
             return true;
     }
 

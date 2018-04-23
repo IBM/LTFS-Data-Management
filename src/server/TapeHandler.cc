@@ -29,7 +29,8 @@ void TapeHandler::addRequest()
 
     stmt(TapeHandler::ADD_REQUEST)
             << (op == TapeHandler::FORMAT ? DataBase::FORMAT : DataBase::CHECK)
-            << reqNumber << Const::UNSET <<  tapeId << poolName << time(NULL) << DataBase::REQ_NEW;
+            << reqNumber << Const::UNSET << tapeId << poolName << time(NULL)
+            << DataBase::REQ_NEW;
 
     TRACE(Trace::normal, stmt.str());
 
@@ -52,22 +53,21 @@ void TapeHandler::execRequest()
 
         try {
             cart->get_le()->Remove(false, false, true);
-        } catch ( AdminLibException& e ) {
+        } catch (AdminLibException& e) {
             MSG(LTFSDMS0114W, tapeId, e.what());
         }
 
-        if ( op == TapeHandler::FORMAT) {
+        if (op == TapeHandler::FORMAT) {
             try {
                 cart->get_le()->Format(driveId, 0, true);
-            } catch ( AdminLibException& e ) {
+            } catch (AdminLibException& e) {
                 MSG(LTFSDMS0115E, tapeId, e.what());
                 THROW(Error::GENERAL_ERROR);
             }
-        }
-        else {
+        } else {
             try {
                 cart->get_le()->Check(driveId);
-            } catch ( AdminLibException& e ) {
+            } catch (AdminLibException& e) {
                 MSG(LTFSDMS0116E, tapeId, e.what());
                 THROW(Error::GENERAL_ERROR);
             }

@@ -17,7 +17,6 @@
 
 #include "ServerIncludes.h"
 
-
 void TapeMover::addRequest()
 
 {
@@ -26,8 +25,8 @@ void TapeMover::addRequest()
 
     TRACE(Trace::always, op, tapeId, driveId);
 
-    stmt(TapeMover::ADD_REQUEST)
-            << op << reqNumber << Const::UNSET << tapeId << driveId << time(NULL) << DataBase::REQ_NEW;
+    stmt(TapeMover::ADD_REQUEST) << op << reqNumber << Const::UNSET << tapeId
+            << driveId << time(NULL) << DataBase::REQ_NEW;
 
     TRACE(Trace::normal, stmt.str());
 
@@ -52,10 +51,9 @@ void TapeMover::execRequest()
 
         cart->setState(LTFSDMCartridge::TAPE_MOVING);
 
-        if ( op == TapeMover::UNMOUNT) {
+        if (op == TapeMover::UNMOUNT) {
             inventory->unmount(driveId, tapeId);
-        }
-        else {
+        } else {
             inventory->mount(driveId, tapeId, op);
         }
 

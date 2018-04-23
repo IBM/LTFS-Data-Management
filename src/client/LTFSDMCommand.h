@@ -123,9 +123,9 @@ protected:
             preMigrate(false), recToResident(false), requestNumber(
                     Const::UNSET), fileList(""), command(command_), optionStr(
                     optionStr_), fsName(""), mountPoint(""), startTime(
-                    time(NULL)), poolNames(""), tapeList( { }), forced(false),
-                    format(false), check(false), key(Const::UNSET),
-                    commCommand(Const::CLIENT_SOCKET_FILE)
+                    time(NULL)), poolNames(""), tapeList( { }), forced(false), format(
+                    false), check(false), key(Const::UNSET), commCommand(
+                    Const::CLIENT_SOCKET_FILE)
     {
     }
     bool preMigrate;

@@ -553,7 +553,7 @@ unsigned long TransRecall::recall(Connector::rec_info_t recinfo,
                     recinfo.fuid.fsid_l, recinfo.fuid.igen, recinfo.fuid.inum,
                     tapeId);
             fd = Server::openTapeRetry(tapeId, tapeName.c_str(),
-                    O_RDWR | O_CLOEXEC);
+            O_RDWR | O_CLOEXEC);
 
             if (fd == -1) {
                 TRACE(Trace::error, errno);

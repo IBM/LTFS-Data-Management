@@ -78,9 +78,9 @@ void PoolAddCommand::doCommand(int argc, char **argv)
         THROW(Error::GENERAL_ERROR);
     }
 
-    if ( format && check ) {
-           printUsage();
-           THROW(Error::GENERAL_ERROR);
+    if (format && check) {
+        printUsage();
+        THROW(Error::GENERAL_ERROR);
     }
 
     try {

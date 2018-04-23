@@ -25,7 +25,8 @@ public:
     static const std::string REQUEST_STATE;
     static const std::string DELETE_JOBS;
     static const std::string DELETE_REQUESTS;
-    FileOperation() : requestSize(0)
+    FileOperation() :
+            requestSize(0)
     {
     }
     virtual ~FileOperation() = default;
@@ -37,5 +38,8 @@ public:
     }
     bool queryResult(long reqNumber, long *resident, long *transferred,
             long *premigrated, long *migrated, long *failed);
-    unsigned long getRequestSize() { return requestSize; }
+    unsigned long getRequestSize()
+    {
+        return requestSize;
+    }
 };

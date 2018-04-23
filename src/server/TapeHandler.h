@@ -16,7 +16,8 @@
  *******************************************************************************/
 #pragma once
 
-class TapeHandler {
+class TapeHandler
+{
 private:
     std::string poolName;
     std::string driveId;
@@ -26,16 +27,24 @@ private:
     static const std::string ADD_REQUEST;
     static const std::string DELETE_REQUEST;
 public:
-    enum operation {
-        FORMAT,
-        CHECK
+    enum operation
+    {
+        FORMAT, CHECK
     };
 private:
     operation op;
 public:
-    TapeHandler(std::string _poolName, std::string _driveId, std::string _tapeId, int _reqNum, operation _op) :
-        poolName(_poolName), driveId(_driveId), tapeId(_tapeId), reqNum(_reqNum), op(_op) {}
-    TapeHandler(std::string _poolName, std::string _tapeId, operation _op) : poolName(_poolName), driveId(""), tapeId(_tapeId), reqNum(Const::UNSET), op(_op) {}
+    TapeHandler(std::string _poolName, std::string _driveId,
+            std::string _tapeId, int _reqNum, operation _op) :
+            poolName(_poolName), driveId(_driveId), tapeId(_tapeId), reqNum(
+                    _reqNum), op(_op)
+    {
+    }
+    TapeHandler(std::string _poolName, std::string _tapeId, operation _op) :
+            poolName(_poolName), driveId(""), tapeId(_tapeId), reqNum(
+                    Const::UNSET), op(_op)
+    {
+    }
     void addRequest();
     void execRequest();
 };

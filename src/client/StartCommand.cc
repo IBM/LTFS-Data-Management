@@ -222,8 +222,8 @@ void StartCommand::waitForResponse()
             break;
         } catch (const std::exception& e) {
             INFO(LTFSDMC0103I);
-            if ((lockfd = open(Const::SERVER_LOCK_FILE.c_str(), O_RDWR | O_CREAT, 0600))
-                    == -1) {
+            if ((lockfd = open(Const::SERVER_LOCK_FILE.c_str(),
+                    O_RDWR | O_CREAT, 0600)) == -1) {
                 INFO(LTFSDMC0104I);
                 MSG(LTFSDMC0033E);
                 return;

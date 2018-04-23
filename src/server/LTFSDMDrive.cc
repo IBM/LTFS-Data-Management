@@ -17,8 +17,8 @@
 #include "ServerIncludes.h"
 
 LTFSDMDrive::LTFSDMDrive(boost::shared_ptr<Drive> d) :
-        drive(d), busy(false), umountReqNum(Const::UNSET), umountReqPool(""),
-        toUnBlock(DataBase::NOOP), mtx(nullptr), wqp(nullptr)
+        drive(d), busy(false), umountReqNum(Const::UNSET), umountReqPool(""), toUnBlock(
+                DataBase::NOOP), mtx(nullptr), wqp(nullptr)
 {
 }
 

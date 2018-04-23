@@ -16,7 +16,8 @@
  *******************************************************************************/
 #pragma once
 
-class TapeMover {
+class TapeMover
+{
 private:
     std::string driveId;
     std::string tapeId;
@@ -25,7 +26,8 @@ private:
     static const std::string ADD_REQUEST;
     static const std::string DELETE_REQUEST;
 public:
-    enum operation {
+    enum operation
+    {
         MOUNT = DataBase::MOUNT,
         MOVE = DataBase::MOVE,
         UNMOUNT = DataBase::UNMOUNT
@@ -33,8 +35,15 @@ public:
 private:
     operation op;
 public:
-    TapeMover(std::string _driveId, std::string _tapeId, int _reqNum, operation _op) : driveId(_driveId), tapeId(_tapeId), reqNum(_reqNum), op(_op) {}
-    TapeMover(std::string _driveId, std::string _tapeId, operation _op) : driveId(_driveId), tapeId(_tapeId), reqNum(Const::UNSET), op(_op) {}
+    TapeMover(std::string _driveId, std::string _tapeId, int _reqNum,
+            operation _op) :
+            driveId(_driveId), tapeId(_tapeId), reqNum(_reqNum), op(_op)
+    {
+    }
+    TapeMover(std::string _driveId, std::string _tapeId, operation _op) :
+            driveId(_driveId), tapeId(_tapeId), reqNum(Const::UNSET), op(_op)
+    {
+    }
     void addRequest();
     void execRequest();
 };

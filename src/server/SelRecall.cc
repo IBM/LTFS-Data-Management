@@ -368,7 +368,7 @@ unsigned long SelRecall::recall(std::string fileName, std::string tapeId,
         } else if (state == FsObj::MIGRATED) {
             tapeName = Server::getTapeName(&target, tapeId);
             fd = Server::openTapeRetry(tapeId, tapeName.c_str(),
-                    O_RDWR | O_CLOEXEC);
+            O_RDWR | O_CLOEXEC);
 
             if (fd == -1) {
                 TRACE(Trace::error, errno);
@@ -549,7 +549,7 @@ bool needsTape)
 }
 
 void SelRecall::execRequest(std::string driveId, std::string tapeId,
-        bool needsTape)
+bool needsTape)
 
 {
     SQLStatement stmt;

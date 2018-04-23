@@ -139,7 +139,8 @@ public:
     void poolAdd(std::string poolname, std::string cartridgeid);
     void poolRemove(std::string poolname, std::string cartridgeid);
 
-    void mount(std::string driveid, std::string cartridgeid, TapeMover::operation op);
+    void mount(std::string driveid, std::string cartridgeid,
+            TapeMover::operation op);
     void unmount(std::string driveid, std::string cartridgeid);
     void format(std::string cartridgeid);
     void check(std::string cartridgeid);

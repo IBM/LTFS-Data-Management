@@ -95,7 +95,7 @@
 
 void MessageParser::getObjects(LTFSDmCommServer *command, long localReqNumber,
         unsigned long pid, long requestNumber, FileOperation *fopt,
-        std::set<std::string> pools = {})
+        std::set<std::string> pools = { })
 
 {
     bool cont = true;
@@ -150,12 +150,13 @@ void MessageParser::getObjects(LTFSDmCommServer *command, long localReqNumber,
             }
         }
 
-        if ( cont == false ) {
-            for ( std::string pool : pools ) {
+        if (cont == false) {
+            for (std::string pool : pools) {
                 unsigned long free = 0;
                 for (std::string cartridgeid : Server::conf.getPool(pool)) {
-                    std::shared_ptr<LTFSDMCartridge> cart = inventory->getCartridge(cartridgeid);
-                    if ( cart != nullptr )
+                    std::shared_ptr<LTFSDMCartridge> cart =
+                            inventory->getCartridge(cartridgeid);
+                    if (cart != nullptr)
                         free += cart->get_le()->get_remaining_cap();
                 }
                 free *= 1024;
@@ -992,8 +993,7 @@ void MessageParser::poolAddMessage(long key, LTFSDmCommServer *command)
 
     try {
         Server::conf.getPool(poolName);
-    }
-    catch (const LTFSDMException& e) {
+    } catch (const LTFSDMException& e) {
         MSG(LTFSDMX0025E, poolName);
         response = static_cast<int>(e.getError());
         LTFSDmProtocol::LTFSDmPoolResp *poolresp = command->mutable_poolresp();
@@ -1007,7 +1007,6 @@ void MessageParser::poolAddMessage(long key, LTFSDmCommServer *command)
             MSG(LTFSDMS0007E);
         }
     }
-
 
     for (int i = 0; i < pooladd.tapeid_size(); i++)
         tapeids.push_back(pooladd.tapeid(i));
@@ -1031,40 +1030,35 @@ void MessageParser::poolAddMessage(long key, LTFSDmCommServer *command)
 
             try {
                 tapeStatus = cartridge->get_le()->get_status();
-            }
-            catch (const std::exception& e) {
+            } catch (const std::exception& e) {
                 MSG(LTFSDMX0086E, tapeid);
                 THROW(Error::UNKNOWN_FORMAT_STATUS);
             }
 
-            if ( format ) {
-                if ( tapeStatus.compare("WRITABLE") != 0 ) {
+            if (format) {
+                if (tapeStatus.compare("WRITABLE") != 0) {
                     MSG(LTFSDMC0106I, tapeid);
                     TapeHandler th(poolName, tapeid, TapeHandler::FORMAT);
                     th.addRequest();
                     wait = true;
-                }
-                else {
+                } else {
                     MSG(LTFSDMX0083E, tapeid);
                     THROW(Error::ALREADY_FORMATTED);
                 }
-            }
-            else if ( check ) {
-                if ( tapeStatus.compare("NOT_MOUNTED_YET") == 0 ||
-                        tapeStatus.compare("WRITABLE") == 0 ) {
+            } else if (check) {
+                if (tapeStatus.compare("NOT_MOUNTED_YET") == 0
+                        || tapeStatus.compare("WRITABLE") == 0) {
                     MSG(LTFSDMC0107I, tapeid);
                     TapeHandler th(poolName, tapeid, TapeHandler::CHECK);
                     th.addRequest();
                     wait = true;
-                }
-                else {
+                } else {
                     MSG(LTFSDMX0084E, tapeid);
                     response = static_cast<int>(Error::NOT_FORMATTED);
                     THROW(Error::NOT_FORMATTED);
                 }
-            }
-            else {
-                if ( tapeStatus.compare("WRITABLE") == 0 ) {
+            } else {
+                if (tapeStatus.compare("WRITABLE") == 0) {
                     try {
                         inventory->poolAdd(poolName, tapeid);
                     } catch (const LTFSDMException& e) {
@@ -1072,8 +1066,7 @@ void MessageParser::poolAddMessage(long key, LTFSDmCommServer *command)
                     } catch (const std::exception& e) {
                         THROW(Error::GENERAL_ERROR);
                     }
-                }
-                else {
+                } else {
                     MSG(LTFSDMS0110E, tapeid, tapeStatus);
                     THROW(Error::TAPE_NOT_WRITABLE);
                 }

@@ -125,7 +125,6 @@ const std::string Scheduler::SELECT_REQUEST =
                 " FROM REQUEST_QUEUE WHERE STATE=%1%"
                 " ORDER BY OPERATION,TIME_ADDED ASC";
 
-
 const std::string Scheduler::UPDATE_REQUEST =
         "UPDATE REQUEST_QUEUE SET STATE=%1%"
                 " WHERE REQ_NUM=%2%";
@@ -391,7 +390,7 @@ const std::string TapeMover::DELETE_REQUEST =
 
 const std::string TapeHandler::ADD_REQUEST =
         "INSERT INTO REQUEST_QUEUE (OPERATION, REQ_NUM, TARGET_STATE, TAPE_ID, TAPE_POOL, TIME_ADDED, STATE)"
-                " VALUES (" /* OPERATION */"%1%, " /* REQ_NUMR */"%2%, " /* TARGET_STATE */" %3%, "  /* TAPE_ID */"'%4%', "
+                " VALUES (" /* OPERATION */"%1%, " /* REQ_NUMR */"%2%, " /* TARGET_STATE */" %3%, " /* TAPE_ID */"'%4%', "
                 /* TAPE_POOL */"'%5%', " /* TIME_ADDED */"%6%, " /* STATE */"%7%)";
 
 const std::string TapeHandler::DELETE_REQUEST =

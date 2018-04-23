@@ -35,7 +35,8 @@ private:
 
     void makeUse(std::string driveId, std::string tapeId);
     bool driveIsUsable(std::shared_ptr<LTFSDMDrive> drive);
-    void moveTape(std::string driveId, std::string tapeId, TapeMover::operation op);
+    void moveTape(std::string driveId, std::string tapeId,
+            TapeMover::operation op);
     bool poolResAvail(unsigned long minFileSize);
     bool tapeResAvail();
     bool resAvail(unsigned long minFileSize);
@@ -57,7 +58,8 @@ public:
 
     Scheduler() :
             op(DataBase::NOOP), reqNum(Const::UNSET), numRepl(Const::UNSET), replNum(
-                    Const::UNSET), tgtState(Const::UNSET), mountTarget(TapeMover::MOUNT)
+                    Const::UNSET), tgtState(Const::UNSET), mountTarget(
+                    TapeMover::MOUNT)
     {
     }
     ~Scheduler()
