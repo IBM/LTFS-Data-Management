@@ -180,10 +180,10 @@
 
     vex:~ # ps -fp $(pidof ltfsdmd) $(pidof ltfsdmd.ofs)
     UID          PID    PPID  C STIME TTY      STAT   TIME CMD
-    root     3987134       1  0 14:13 ?        Ssl    0:00 /root/OpenLTFS/bin/ltfsdmd
-    root     3987592 3987591  0 14:18 ?        Sl     0:00 /root/OpenLTFS/bin/ltfsdmd.ofs -m /mnt/loop0 -f /dev/loop0 -S 1516194824 -N 335150020 -l 1 -t 2 -p 3987134
-    root     3987610 3987609  0 14:18 ?        Sl     0:00 /root/OpenLTFS/bin/ltfsdmd.ofs -m /mnt/loop1 -f /dev/loop1 -S 1516194824 -N 335150020 -l 1 -t 2 -p 3987134
-    root     3987625 3987624  0 14:18 ?        Sl     0:00 /root/OpenLTFS/bin/ltfsdmd.ofs -m /mnt/loop2 -f /dev/loop2 -S 1516194824 -N 335150020 -l 1 -t 2 -p 3987134
+    root     3987134       1  0 14:13 ?        Ssl    0:00 /root/LTFS-Data-Management/bin/ltfsdmd
+    root     3987592 3987591  0 14:18 ?        Sl     0:00 /root/LTFS-Data-Management/bin/ltfsdmd.ofs -m /mnt/loop0 -f /dev/loop0 -S 1516194824 -N 335150020 -l 1 -t 2 -p 3987134
+    root     3987610 3987609  0 14:18 ?        Sl     0:00 /root/LTFS-Data-Management/bin/ltfsdmd.ofs -m /mnt/loop1 -f /dev/loop1 -S 1516194824 -N 335150020 -l 1 -t 2 -p 3987134
+    root     3987625 3987624  0 14:18 ?        Sl     0:00 /root/LTFS-Data-Management/bin/ltfsdmd.ofs -m /mnt/loop2 -f /dev/loop2 -S 1516194824 -N 335150020 -l 1 -t 2 -p 3987134
     @endverbatim
 
     Each of the ltfsdmd.ofs processes represent a different Fuse overlay file
