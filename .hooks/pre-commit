@@ -15,7 +15,7 @@
 # limitations under the License.
 
 MAJOR=0
-MINOR=0
+MINOR=4
 BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
 COMMIT_TIME=$(date +"%FT%H.%M.%S")
 COMMIT_COUNT=$(git rev-list --count HEAD)
