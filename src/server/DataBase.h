@@ -29,12 +29,12 @@ public:
     {
         MOUNT,     /**@< 0 */
         MOVE,      /**@< 1 */
-        UNMOUNT,   /**@< 2 */
-        TRARECALL, /**@< 3 */
-        SELRECALL, /**@< 4 */
-        MIGRATION, /**@< 5 */
-        FORMAT,    /**@< 6 */
-        CHECK,     /**@< 7 */
+        TRARECALL, /**@< 2 */
+        SELRECALL, /**@< 3 */
+        MIGRATION, /**@< 4 */
+        FORMAT,    /**@< 5 */
+        CHECK,     /**@< 6 */
+        UNMOUNT,   /**@< 7 */
         NOOP       /**@< 8 */
     };
     enum req_state

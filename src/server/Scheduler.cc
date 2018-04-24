@@ -313,8 +313,12 @@ bool Scheduler::tapeResAvail()
     assert(tapeId.compare("") != 0);
 
     if (inventory->getCartridge(tapeId)->getState()
-            == LTFSDMCartridge::TAPE_MOVING)
+            == LTFSDMCartridge::TAPE_MOVING
+            || inventory->getCartridge(tapeId)->getState()
+                    == LTFSDMCartridge::TAPE_INUSE) {
         TRACE(Trace::always, op);
+        return false;
+    }
 
     if (inventory->getCartridge(tapeId)->getState()
             == LTFSDMCartridge::TAPE_MOUNTED) {
