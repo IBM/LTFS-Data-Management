@@ -226,12 +226,12 @@ void StartCommand::waitForResponse()
                     O_RDWR | O_CREAT, 0600)) == -1) {
                 INFO(LTFSDMC0104I);
                 MSG(LTFSDMC0033E);
-                return;
+                THROW(Error::GENERAL_ERROR);
             }
             if (flock(lockfd, LOCK_EX | LOCK_NB) == 0) {
                 INFO(LTFSDMC0104I);
                 MSG(LTFSDMC0096E);
-                return;
+                THROW(Error::GENERAL_ERROR);
             }
             retry++;
             sleep(1);
@@ -242,7 +242,7 @@ void StartCommand::waitForResponse()
 
     if (success == false) {
         MSG(LTFSDMC0096E);
-        return;
+        THROW(Error::GENERAL_ERROR);
     }
 
     LTFSDmProtocol::LTFSDmStatusRequest *statusreq =
