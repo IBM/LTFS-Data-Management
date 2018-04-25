@@ -183,7 +183,7 @@ int main(int argc, char *argv[])
     try {
         LTFSDM::init();
     } catch (const std::exception& e) {
-        rc = static_cast<int>(Error::GENERAL_ERROR);
+        rc = Const::COMMAND_FAILED;
         goto end;
     }
 
@@ -192,7 +192,7 @@ int main(int argc, char *argv[])
     if (argc < 2) {
         ltfsdmCommand = std::unique_ptr<LTFSDMCommand>(new HelpCommand);
         ltfsdmCommand->doCommand(argc, argv);
-        rc = static_cast<int>(Error::GENERAL_ERROR);
+        rc = Const::COMMAND_FAILED;
         goto end;
     }
 
@@ -222,7 +222,7 @@ int main(int argc, char *argv[])
         if (argc < 3) {
             MSG(LTFSDMC0011E);
             InfoCommand().printUsage();
-            rc = static_cast<int>(Error::GENERAL_ERROR);
+            rc = Const::COMMAND_FAILED;
             goto end;
         }
         argc--;
@@ -251,14 +251,14 @@ int main(int argc, char *argv[])
         } else {
             MSG(LTFSDMC0012E, command.c_str());
             ltfsdmCommand = std::unique_ptr<LTFSDMCommand>(new HelpCommand);
-            rc = static_cast<int>(Error::GENERAL_ERROR);
+            rc = Const::COMMAND_FAILED;
             goto end;
         }
     } else if (PoolCommand().compare(command)) {
         if (argc < 3) {
             MSG(LTFSDMC0074E);
             PoolCommand().printUsage();
-            rc = static_cast<int>(Error::GENERAL_ERROR);
+            rc = Const::COMMAND_FAILED;
             goto end;
         }
         argc--;
@@ -279,13 +279,13 @@ int main(int argc, char *argv[])
         } else {
             MSG(LTFSDMC0012E, command.c_str());
             ltfsdmCommand = std::unique_ptr<LTFSDMCommand>(new HelpCommand);
-            rc = static_cast<int>(Error::GENERAL_ERROR);
+            rc = Const::COMMAND_FAILED;
             goto end;
         }
     } else {
         MSG(LTFSDMC0005E, command.c_str());
         ltfsdmCommand = std::unique_ptr<LTFSDMCommand>(new HelpCommand);
-        rc = static_cast<int>(Error::GENERAL_ERROR);
+        rc = Const::COMMAND_FAILED;
         goto end;
     }
 
@@ -302,8 +302,20 @@ int main(int argc, char *argv[])
         //! [call_do_command]
         ltfsdmCommand->doCommand(argc, argv);
     } catch (const LTFSDMException& e) {
-        rc = static_cast<int>(e.getError());
+        switch (e.getError()) {
+            case Error::OK:
+                break;
+            case Error::COMMAND_PARTIALLY_FAILED:
+                rc = Const::COMMAND_PARTIALLY_FAILED;
+                break;
+            case Error::COMMAND_FAILED:
+                rc = Const::COMMAND_FAILED;
+                break;
+            default:
+                rc = Const::COMMAND_FAILED;
+        }
     } catch (const std::exception& e) {
+        rc = 2;
     }
 
     end:

@@ -242,7 +242,7 @@ void MigrateCommand::doCommand(int argc, char **argv)
 
     if (argc == 1) {
         INFO(LTFSDMC0018E);
-        THROW(Error::GENERAL_ERROR);
+        THROW(Error::COMMAND_FAILED);
     }
 
     processOptions(argc, argv);
@@ -251,19 +251,31 @@ void MigrateCommand::doCommand(int argc, char **argv)
         checkOptions(argc, argv);
     } catch (const std::exception& e) {
         printUsage();
-        THROW(Error::GENERAL_ERROR);
+        THROW(Error::COMMAND_FAILED);
     }
 
     TRACE(Trace::normal, argc, optind);
     traceParms();
 
-    if (!fileList.compare("")) {
-        for (int i = optind; i < argc; i++) {
-            parmList << argv[i] << std::endl;
+    try {
+        if (!fileList.compare("")) {
+            for (int i = optind; i < argc; i++) {
+                parmList << argv[i] << std::endl;
+            }
         }
+
+        isValidRegularFile();
+
+        talkToBackend(&parmList);
+    } catch (const std::exception& e) {
+        MSG(LTFSDMC0023E);
     }
 
-    isValidRegularFile();
-
-    talkToBackend(&parmList);
+    if ((preMigrate == true && premigrated == 0)
+            || (preMigrate == false && migrated == 0)) {
+        if (not_all_exist == true || failed > 0)
+            THROW(Error::COMMAND_FAILED);
+    } else if (not_all_exist == true || failed > 0) {
+        THROW(Error::COMMAND_PARTIALLY_FAILED);
+    }
 }

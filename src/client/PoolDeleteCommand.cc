@@ -63,6 +63,8 @@ void PoolDeleteCommand::printUsage()
 
 void PoolDeleteCommand::doCommand(int argc, char **argv)
 {
+    int error;
+
     if (argc <= 2) {
         printUsage();
         THROW(Error::GENERAL_ERROR);
@@ -103,7 +105,9 @@ void PoolDeleteCommand::doCommand(int argc, char **argv)
 
     const LTFSDmProtocol::LTFSDmPoolResp poolresp = commCommand.poolresp();
 
-    switch (poolresp.response()) {
+    error = poolresp.response();
+
+    switch (error) {
         case static_cast<long>(Error::OK):
             INFO(LTFSDMC0082I, poolNames);
             break;
@@ -117,4 +121,6 @@ void PoolDeleteCommand::doCommand(int argc, char **argv)
             MSG(LTFSDMC0081E, poolNames);
     }
 
+    if (error != static_cast<long>(Error::OK))
+        THROW(Error::GENERAL_ERROR);
 }

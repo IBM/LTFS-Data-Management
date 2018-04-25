@@ -66,6 +66,9 @@ void PoolAddCommand::printUsage()
 
 void PoolAddCommand::doCommand(int argc, char **argv)
 {
+    bool failed = false;
+    int error;
+
     if (argc <= 2) {
         printUsage();
         THROW(Error::GENERAL_ERROR);
@@ -120,7 +123,9 @@ void PoolAddCommand::doCommand(int argc, char **argv)
 
         std::string tapeid = poolresp.tapeid();
 
-        switch (poolresp.response()) {
+        error = poolresp.response();
+
+        switch (error) {
             case static_cast<long>(Error::OK):
                 INFO(LTFSDMC0083I, tapeid, poolNames);
                 break;
@@ -147,9 +152,16 @@ void PoolAddCommand::doCommand(int argc, char **argv)
                 break;
             case static_cast<long>(Error::CONFIG_POOL_NOT_EXISTS):
                 MSG(LTFSDMX0025E, poolNames);
-                return;
+                THROW(Error::GENERAL_ERROR);
+                break;
             default:
                 MSG(LTFSDMC0085E, tapeid, poolNames);
         }
+
+        if (error != static_cast<long>(Error::OK))
+            failed = true;
     }
+
+    if (failed == true)
+        THROW(Error::GENERAL_ERROR);
 }

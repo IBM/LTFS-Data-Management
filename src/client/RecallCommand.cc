@@ -226,7 +226,7 @@ void RecallCommand::doCommand(int argc, char **argv)
 
     if (argc == 1) {
         INFO(LTFSDMC0018E);
-        THROW(Error::GENERAL_ERROR);
+        THROW(Error::COMMAND_FAILED);
 
     }
 
@@ -236,19 +236,31 @@ void RecallCommand::doCommand(int argc, char **argv)
         checkOptions(argc, argv);
     } catch (const std::exception& e) {
         printUsage();
-        THROW(Error::GENERAL_ERROR);
+        THROW(Error::COMMAND_FAILED);
     }
 
     TRACE(Trace::normal, argc, optind);
     traceParms();
 
-    if (!fileList.compare("")) {
-        for (int i = optind; i < argc; i++) {
-            parmList << argv[i] << std::endl;
+    try {
+        if (!fileList.compare("")) {
+            for (int i = optind; i < argc; i++) {
+                parmList << argv[i] << std::endl;
+            }
         }
+
+        isValidRegularFile();
+
+        talkToBackend(&parmList);
+    } catch (const std::exception& e) {
+        MSG(LTFSDMC0025E);
     }
 
-    isValidRegularFile();
-
-    talkToBackend(&parmList);
+    if ((recToResident == true && resident == 0)
+            || (recToResident == false && premigrated == 0)) {
+        if (not_all_exist == true || failed > 0)
+            THROW(Error::COMMAND_FAILED);
+    } else if (not_all_exist == true || failed > 0) {
+        THROW(Error::COMMAND_PARTIALLY_FAILED);
+    }
 }

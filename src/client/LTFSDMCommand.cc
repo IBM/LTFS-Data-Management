@@ -211,6 +211,7 @@ void LTFSDMCommand::sendObjects(std::stringstream *parmList)
                 count++;
             } else {
                 MSG(LTFSDMC0043E, line.c_str());
+                not_all_exist = true;
             }
             TRACE(Trace::full, line);
         }
@@ -273,11 +274,6 @@ void LTFSDMCommand::sendObjects(std::stringstream *parmList)
 void LTFSDMCommand::queryResults()
 
 {
-    long resident = 0;
-    long transferred = 0;
-    long premigrated = 0;
-    long migrated = 0;
-    long failed = 0;
     bool first = true;
     bool done = false;
     time_t duration;

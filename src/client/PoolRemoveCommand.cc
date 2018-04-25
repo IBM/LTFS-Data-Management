@@ -64,6 +64,9 @@ void PoolRemoveCommand::printUsage()
 
 void PoolRemoveCommand::doCommand(int argc, char **argv)
 {
+    bool failed = false;
+    int error;
+
     if (argc <= 2) {
         printUsage();
         THROW(Error::GENERAL_ERROR);
@@ -111,12 +114,15 @@ void PoolRemoveCommand::doCommand(int argc, char **argv)
 
         std::string tapeid = poolresp.tapeid();
 
-        switch (poolresp.response()) {
+        error = poolresp.response();
+
+        switch (error) {
             case static_cast<long>(Error::OK):
                 INFO(LTFSDMC0086I, tapeid, poolNames);
                 break;
             case static_cast<long>(Error::POOL_NOT_EXISTS):
                 MSG(LTFSDMX0025E, poolNames);
+                THROW(Error::GENERAL_ERROR);
                 break;
             case static_cast<long>(Error::TAPE_NOT_EXISTS):
                 MSG(LTFSDMC0084E, tapeid);
@@ -127,5 +133,11 @@ void PoolRemoveCommand::doCommand(int argc, char **argv)
             default:
                 MSG(LTFSDMC0085E, tapeid, poolNames);
         }
+
+        if (error != static_cast<long>(Error::OK))
+            failed = true;
     }
+
+    if (failed == true)
+        THROW(Error::GENERAL_ERROR);
 }

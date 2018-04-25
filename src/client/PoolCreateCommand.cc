@@ -64,6 +64,8 @@ void PoolCreateCommand::printUsage()
 
 void PoolCreateCommand::doCommand(int argc, char **argv)
 {
+    int error;
+
     if (argc <= 2) {
         printUsage();
         THROW(Error::GENERAL_ERROR);
@@ -114,7 +116,9 @@ void PoolCreateCommand::doCommand(int argc, char **argv)
 
     const LTFSDmProtocol::LTFSDmPoolResp poolresp = commCommand.poolresp();
 
-    switch (poolresp.response()) {
+    error = poolresp.response();
+
+    switch (error) {
         case static_cast<long>(Error::OK):
             INFO(LTFSDMC0079I, poolNames);
             break;
@@ -124,4 +128,7 @@ void PoolCreateCommand::doCommand(int argc, char **argv)
         default:
             MSG(LTFSDMC0080E, poolNames);
     }
+
+    if (error != static_cast<long>(Error::OK))
+        THROW(Error::GENERAL_ERROR);
 }

@@ -125,7 +125,8 @@ protected:
                     optionStr_), fsName(""), mountPoint(""), startTime(
                     time(NULL)), poolNames(""), tapeList( { }), forced(false), format(
                     false), check(false), key(Const::UNSET), commCommand(
-                    Const::CLIENT_SOCKET_FILE)
+                    Const::CLIENT_SOCKET_FILE), resident(0), transferred(0), premigrated(
+                    0), migrated(0), failed(0), not_all_exist(false)
     {
     }
     bool preMigrate;
@@ -145,6 +146,12 @@ protected:
     bool check;
     long key;
     LTFSDmCommClient commCommand;
+    long resident;
+    long transferred;
+    long premigrated;
+    long migrated;
+    long failed;
+    bool not_all_exist;
 
     void getRequestNumber();
     void queryResults();

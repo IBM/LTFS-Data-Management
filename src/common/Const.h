@@ -74,4 +74,6 @@ const std::string LTFSLE_HOST = "127.0.0.1";
 const unsigned short int LTFSLE_PORT = 7600;
 const int WAIT_TAPE_MOUNT = 60;
 const int STARTUP_TIMEOUT = 720;
+const int COMMAND_PARTIALLY_FAILED = 1;
+const int COMMAND_FAILED = 2;
 }
