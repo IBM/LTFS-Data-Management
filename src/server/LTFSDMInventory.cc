@@ -470,7 +470,7 @@ void LTFSDMInventory::inventorize()
         for (std::shared_ptr<LTFSDMDrive> d : drives) {
             if (c->get_le()->get_slot() == d->get_le()->get_slot()) {
                 c->setState(LTFSDMCartridge::TAPE_MOUNTED);
-                if (c->get_le()->get_mount_node().compare("") == 0) {
+                if (c->get_le()->get_handling().compare("UNMOUNTED") == 0) {
                     MSG(LTFSDML0020E, c->get_le()->GetObjectID());
                     try {
                         c->get_le()->Mount(d->get_le()->GetObjectID());
