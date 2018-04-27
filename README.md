@@ -26,12 +26,12 @@ Management code:
 
 - non RHEL 7 software:
   - IBM Tape Device Driver at:
-    ![Fix Central](https://www-945.ibm.com/support/fixcentral/swg/selectFixes?parent=ibm~ST~Tapedevicedriversandsoftware&product=ibm/Storage_Tape/Tape+device+drivers&release=1.0&platform=Linux&function=all&source=fc).
+    [Fix Central](https://www-945.ibm.com/support/fixcentral/swg/selectFixes?parent=ibm~ST~Tapedevicedriversandsoftware&product=ibm/Storage_Tape/Tape+device+drivers&release=1.0&platform=Linux&function=all&source=fc).
     Follow the documentation of this software for installation.
   - Spectrum Archive Library Edition version 2.4.0.X available at:
-    ![Fix Central](https://www-945.ibm.com/support/fixcentral/swg/selectFixes?parent=Tape%20drivers%20and%20software&product=ibm/Storage_Tape/LTFS+Library+Edition+(LE)&release=2.4&platform=All&function=all).
+    [Fix Central](https://www-945.ibm.com/support/fixcentral/swg/selectFixes?parent=Tape%20drivers%20and%20software&product=ibm/Storage_Tape/LTFS+Library+Edition+(LE)&release=2.4&platform=All&function=all).
     Follow the documentation of this software for installation.
-  - Google Protocol Buffers available at https://github.com/google/protobuf
+  - Google Protocol Buffers available at https://github.com/google/protobuf.
     The code needs to be downloaded, compiled, and installed.
     For LTFS Data Management commit 8e44a86 worked fine. Newer commits probably
     also will work but not have been tested.
@@ -88,7 +88,7 @@ browser and access the
 
 file.
 
-## Setting environment
+## Setting up the environment
 
 To run the code the following shell variables need to be extended by the
 following:
