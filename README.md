@@ -88,6 +88,10 @@ browser and access the
 
 file.
 
+A copy of the documentation is available. It might not correspond to the current code level:
+
+[LTFS Data Management documentation](https://ibm.box.com/s/z4ob2vdfjpar2jbn9hqgg4j911qu7dzu)
+
 ## Setting up the environment
 
 To run the code the following shell variables need to be extended by the
