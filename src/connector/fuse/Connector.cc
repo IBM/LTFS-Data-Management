@@ -75,11 +75,11 @@
     Nevertheless it is possible to access data and meta data from the original
     file system.
 
-    <table class="doxtable">
-    <tr><th></th><th>resident/<BR>premigrated</th><th>migrated</th></tr>
-    <tr>
-    <td>Fuse overlay file system</td>
-    <td>
+    In the following the it is shown how files appear (since the Fuse overlay
+    file system only is virtual) for the different migration stages:
+
+    - resident/premigrated
+      - Fuse overlay file system
         @dot digraph resident_1 {
             compound=true;
             fontname="courier";
@@ -88,8 +88,7 @@
             node [shape=record, fontname="courier", fontsize=11, fillcolor=white, style=filled];
             fuse [label="meta\ndata|------- data -------"];
         } @enddot
-    </td>
-    <td>
+      - original file system
         @dot digraph migrated_1 {
             compound=true;
             fontname="courier";
@@ -98,11 +97,8 @@
             node [shape=record, fontname="courier", fontsize=11, fillcolor=white, style=filled];
             fuse [label="meta\ndata|------- data -------"];
         } @enddot
-    </td>
-    </tr>
-    <tr>
-    <td>original file system</td>
-    <td>
+    - migrated
+      - Fuse overlay file system
         @dot digraph resident_2 {
             compound=true;
             fontname="courier";
@@ -111,8 +107,7 @@
             node [shape=record, fontname="courier", fontsize=11, fillcolor=white, style=filled];
             orig [label="meta\ndata|------- data -------"];
         } @enddot
-    </td>
-    <td>
+      - original file system
         @dot digraph migrated_2 {
             compound=true;
             fontname="courier";
@@ -121,9 +116,6 @@
             node [shape=record, fontname="courier", fontsize=11, fillcolor=white, style=filled];
             orig [label="meta\ndata"];
         } @enddot
-    </td>
-    </tr>
-    </table>
 
     Within the Fuse overlay file system the stat information of a migrated file
     looks as follows:

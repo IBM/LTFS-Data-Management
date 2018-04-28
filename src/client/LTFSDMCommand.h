@@ -37,6 +37,8 @@
  -P @<pool list@>      | a list of up to three tape storage pools (separated by commas)
  -t @<tape id@>        | the id of a cartridge
  -x                    | indicates a forced operation
+ -F                    | format a cartridge when added to a tape storage pool
+ -C                    | check a cartridge when added to a tape storage pool
 
  The LTFSDMCommand::checkOptions method checks if the number
  of arguments is correct and the request number is not set.
