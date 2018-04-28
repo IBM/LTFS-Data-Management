@@ -17,7 +17,7 @@
 MAJOR=0
 MINOR=4
 BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
-COMMIT_TIME=$(date +"%FT%H.%M.%S")
+COMMIT_TIME=$(date +"%FT%H:%M:%S")
 COMMIT_COUNT=$(git rev-list --count HEAD)
 
 VERSION="${MAJOR}.${MINOR}.${COMMIT_COUNT}-${BRANCH_NAME}.${COMMIT_TIME}"
@@ -45,4 +45,7 @@ EOF
 echo "#pragma once" >> "$(git rev-parse --show-toplevel)"/src/common/Version.h
 echo "#define LTFSDM_VERSION \"${VERSION}\"" >> "$(git rev-parse --show-toplevel)"/src/common/Version.h
 
+echo "PROJECT_NUMBER = ${VERSION}" > "$(git rev-parse --show-toplevel)"/.version
+
 git add -f "$(git rev-parse --show-toplevel)"/src/common/Version.h
+git add -f "$(git rev-parse --show-toplevel)"/.version
