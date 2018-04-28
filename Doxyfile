@@ -2349,4 +2349,4 @@ GENERATE_LEGEND        = YES
 DOT_CLEANUP            = YES
 
 @INCLUDE = messages.dox
-@INCLUDE = .version
+@INCLUDE = .doxy-version

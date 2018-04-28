@@ -41,6 +41,7 @@ src/connector/fuse/ltfsdmd.ofs
 ~*.pptx
 *.so
 src/common/Version.h
+.doxy-version
 .version
 .settings
 .cproject
