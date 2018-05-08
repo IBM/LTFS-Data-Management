@@ -70,6 +70,8 @@ located within the
 
 directory.
 
+## Design documentation
+
 The documentation is include within the source code in a Doxygen format. It
 has to be compiled after the code has been built. The doxygen RHEL 7 software
 package has to be installed prior to compile the documentation. The compilation
