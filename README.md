@@ -124,3 +124,7 @@ started in the following way:
 ```
 ltfsdm start
 ```
+
+## Contact information
+
+Martin Petermann (MAP@zurich.ibm.com)
