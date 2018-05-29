@@ -53,7 +53,8 @@
       can be used to mount a cartridge
 
     After that Scheduler::resAvail checks if there is a resource available
-    to schedule a request or to mount and unmount cartridges. For recall a
+    to schedule a request or to mount, move, or unmount cartridges
+    (Scheduler::resAvailTapeMove). For recall, format, or check operations a
     specific cartridge needs to be considered (Scheduler::tapeResAvail). For
     migration it needs to be a cartridge from a corresponding tape storage pool
     where at least one file will fit on it (Scheduler::poolResAvail).
@@ -87,19 +88,17 @@
     statements are performed in respect to the condition):
 
     -# If the corresponding cartridge is moving: <b>return false</b>.
-    -# If corresponding cartridge is in use (by another request) try to unblock
-       the cartridge. If e.g. the cartridge is used for migration recall
-       requests have a higher priority and can led the migration request to
-       suspend processing. Since there is no free resource: <b>return false</b>.
-    -# Else if the corresponding cartridge is mounted (but not in use) it
-       can be used for the current request: <b>return true</b>.
-    -# Thereafter it is checked for free (not in use) drives. If there is a
-       drive that has cartridge mounted that is not in use unmount this
-       cartridge: <b>return false</b>.
+    -# If the corresponding cartridge is mounted (but not in use) it can be
+       used for the current request: <b>return true</b>.
+    -# If there is a free (not in use) drive: <b>mount tape</b> and <b>return false</b>.
+    -# If there is a drive that has cartridge mounted that is not in use:
+       <b>unmount tape</b> and <b>return false</b>.
     -# Next it is checked if a operation with a lower priority can be
-       suspended. If an operation already has been suspended
-       (LTFSDMCartridge::isRequested is true): <b>return false</b>.
-    -# Now try to suspend an operation.
+       suspended. E.g. the cartridge is used for migration recall requests
+       have a higher priority and can led the migration request to suspend
+       processing. If an operation already has been suspended
+       (LTFSDMCartridge::isRequested is true): <b>return false.</b>
+    -# Now try to <b>suspend an operation</b>.
     -# <b>return false</b>
 
 
@@ -108,18 +107,17 @@
     A tape storage pool is checked for availability in the following way
     (return statements are performed in respect to the condition):
 
-    -# If a cartridge of the specified tape storage pool is mounted but not
-       in use and the remaining space is larger than the smallest file to
-       migrate: <b>return true</b>.
+    -# If a cartridge of the specified tape storage pool is mounted but not in
+       use and the remaining space is larger than the smallest file to migrate:
+       <b>return true</b>.
     -# If there is no cartridge that is not mounted there is no need to look
        for a cartridge from another pool to unmount: <b>return false</b>.
     -# Check if there is an empty drive to mount a tape which is part of the
-       specified pool. If this is the case: <b>return false</b>.
+       specified pool. If this is the case: <b>mount tape</b> and <b>return false</b>.
     -# Check if a for the current request there is a tape mount/unmount already
        in progress. If this is the case: <b>return false</b>.
-    -# Thereafter it is checked if there is a cartridge from another pool
-       that is mounted but not in use. Unmount this cartridge and:
-       <b>return false</b>.
+    -# Thereafter it is checked if there is a cartridge from another pool that
+       is mounted but not in use. <b>Unmount tape</b> and <b>return false</b>.
     -# <b>return false</b>
 
     ## Schedule request
