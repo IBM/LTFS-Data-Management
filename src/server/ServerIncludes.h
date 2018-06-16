@@ -28,6 +28,7 @@
 #include <sys/file.h>
 #include <libmount/libmount.h>
 #include <blkid/blkid.h>
+#include <sys/vfs.h>
 #include <errno.h>
 
 #include <string>

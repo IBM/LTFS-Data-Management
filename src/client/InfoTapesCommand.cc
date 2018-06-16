@@ -46,13 +46,15 @@
 
     @verbatim
     [root@visp ~]# ltfsdm info tapes
-    id              slot            total cap.      rem. cap.       status          in progress     pool            state
-    DV1462L6        257             2296532         2296328         writable        0               pool1           mounted
-    DV1463L6        256             2296532         2296300         writable        0               pool2           mounted
-    DV1464L6        4098            2296532         2296300         writable        0               pool3           not mounted
-    DV1465L6        4102            2296532         2296529         writable        0               pool4           not mounted
-    DV1466L6        4115            2296532         2296529         writable        0               pool5           not mounted
-    DV1467L6        4110            0               0               not mounted yet 0               n/a             not mounted
+    id              slot            total           remaining       reclaimable     in progress     status          pool            state
+                                    capacity (GiB)  capacity (GiB)  estimated (GiB) (GiB)
+    DV1462L6        4112            0               0               0               0               not mounted yet n/a             not mounted
+    DV1463L6        4096            0               0               0               0               not mounted yet n/a             not mounted
+    DV1464L6        257             2242            2222            1               0               writable        pool1           mounted
+    DV1465L6        4102            0               0               0               0               not mounted yet n/a             not mounted
+    DV1466L6        4115            0               0               0               0               not mounted yet n/a             not mounted
+    DV1467L6        4110            2242            2072            178             0               writable        pool2           not mounted
+    DV1468L6        256             2242            2238            2               0               writable        pool3           mounted
     @endverbatim
 
     The corresponding class is @ref InfoTapesCommand.
@@ -111,6 +113,7 @@ void InfoTapesCommand::doCommand(int argc, char **argv)
         unsigned long slot = infotapesresp.slot();
         unsigned long totalcap = infotapesresp.totalcap();
         unsigned long remaincap = infotapesresp.remaincap();
+        unsigned long reclaimable = infotapesresp.reclaimable();
         std::string status = infotapesresp.status();
         std::replace(status.begin(), status.end(), '_', ' ');
         std::transform(status.begin(), status.end(), status.begin(), ::tolower);
@@ -120,8 +123,8 @@ void InfoTapesCommand::doCommand(int argc, char **argv)
             pool = ltfsdm_messages[LTFSDMC0090I];
         std::string state = infotapesresp.state();
         if (id.compare("") != 0)
-            INFO(LTFSDMC0067I, id, slot, totalcap, remaincap, status,
-                    inprogress, pool, state);
+            INFO(LTFSDMC0067I, id, slot, totalcap, remaincap, reclaimable,
+                    inprogress, status, pool, state);
     } while (!exitClient && id.compare("") != 0);
 
     return;

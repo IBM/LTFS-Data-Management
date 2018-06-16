@@ -172,10 +172,11 @@ message LTFSDmInfoTapesResp {
 	required uint64 slot = 2;
 	required uint64 totalcap = 3;
 	required uint64 remaincap = 4;
-	required bytes status = 5;
-	required uint64 inprogress = 6;
-	required bytes pool = 7;
-	required bytes state = 8;
+	required uint64 reclaimable = 5;
+	required bytes status = 6;
+	required uint64 inprogress = 7;
+	required bytes pool = 8;
+	required bytes state = 9;
 }
 
 message LTFSDmPoolCreateRequest {

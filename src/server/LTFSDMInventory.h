@@ -102,6 +102,7 @@ private:
     boost::shared_ptr<LTFSAdminSession> sess;
     boost::shared_ptr<LTFSNode> node;
     std::string mountPoint;
+    unsigned long blockSize;
 
     void connect(std::string node_addr, unsigned short int port_num);
     void disconnect();
@@ -148,6 +149,7 @@ public:
     bool requestExists(long reqNum, std::string pool);
 
     std::string getMountPoint();
+    unsigned long getBlockSize();
 };
 
 extern LTFSDMInventory *inventory;

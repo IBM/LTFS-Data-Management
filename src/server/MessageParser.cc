@@ -820,8 +820,13 @@ void MessageParser::infoTapesMessage(long key, LTFSDmCommServer *command)
 
             infotapesresp->set_id(c->get_le()->GetObjectID());
             infotapesresp->set_slot(c->get_le()->get_slot());
-            infotapesresp->set_totalcap(c->get_le()->get_total_cap());
-            infotapesresp->set_remaincap(c->get_le()->get_remaining_cap());
+            infotapesresp->set_totalcap(c->get_le()->get_total_cap()/1024);
+            infotapesresp->set_remaincap(c->get_le()->get_remaining_cap()/1024);
+            // the size of the reclaimable space is an estimation
+            infotapesresp->set_reclaimable(
+                    (c->get_le()->get_total_blocks()
+                            - c->get_le()->get_valid_blocks())
+                            * inventory->getBlockSize() / (1024 * 1024 * 1024));
             infotapesresp->set_status(c->get_le()->get_status());
             infotapesresp->set_inprogress(c->getInProgress());
             infotapesresp->set_pool(c->getPool());
@@ -867,6 +872,7 @@ void MessageParser::infoTapesMessage(long key, LTFSDmCommServer *command)
     infotapesresp->set_slot(0);
     infotapesresp->set_totalcap(0);
     infotapesresp->set_remaincap(0);
+    infotapesresp->set_reclaimable(0);
     infotapesresp->set_status("");
     infotapesresp->set_inprogress(0);
     infotapesresp->set_pool("");

@@ -503,6 +503,7 @@ LTFSDMInventory::LTFSDMInventory()
 {
     std::lock_guard<std::recursive_mutex> lock(LTFSDMInventory::mtx);
     struct stat statbuf;
+    struct statfs statfsbuf;
 
     try {
         connect(Const::LTFSLE_HOST, Const::LTFSLE_PORT);
@@ -539,6 +540,13 @@ LTFSDMInventory::LTFSDMInventory()
         MSG(LTFSDMS0072E);
         THROW(Error::GENERAL_ERROR, errno);
     }
+
+    if (statfs(mountPoint.c_str(), &statfsbuf) == -1) {
+        MSG(LTFSDMS0072E);
+        THROW(Error::GENERAL_ERROR, errno);
+    }
+
+    blockSize = statfsbuf.f_bsize;
 
     if (node == nullptr) {
         MSG(LTFSDMS0072E);
@@ -874,4 +882,10 @@ std::string LTFSDMInventory::getMountPoint()
 
 {
     return mountPoint;
+}
+
+unsigned long LTFSDMInventory::getBlockSize()
+
+{
+    return blockSize;
 }
