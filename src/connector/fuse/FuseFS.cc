@@ -1398,6 +1398,7 @@ void *FuseFS::ltfsdm_init(struct fuse_conn_info *conn)
 {
     struct fuse_context *fc = fuse_get_context();
 
+    conn->want |= FUSE_CAP_BIG_WRITES;
     conn->want |= FUSE_CAP_DONT_MASK;
 
     return fc->private_data;
