@@ -95,7 +95,7 @@
 
 void MessageParser::getObjects(LTFSDmCommServer *command, long localReqNumber,
         unsigned long pid, long requestNumber, FileOperation *fopt,
-        std::set<std::string> pools = { })
+        std::set<std::string> pools)
 
 {
     bool cont = true;
@@ -1340,6 +1340,7 @@ void MessageParser::run(long key, LTFSDmCommServer command,
             }
             break;
         }
+        command.Clear();
     }
     command.closeAcc();
 }

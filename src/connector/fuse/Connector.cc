@@ -17,8 +17,10 @@
 #include <linux/fs.h>
 #include <dirent.h>
 #include <sys/resource.h>
+#include <sys/types.h>
 #include <libmount/libmount.h>
 #include <blkid/blkid.h>
+#include <signal.h>
 
 #include <sstream>
 #include <map>

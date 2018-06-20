@@ -76,6 +76,8 @@ void StatusCommand::doCommand(int argc, char **argv)
 
     TRACE(Trace::normal, requestNumber);
 
+    commCommand.Clear();
+
     LTFSDmProtocol::LTFSDmStatusRequest *statusreq =
             commCommand.mutable_statusrequest();
     statusreq->set_key(key);

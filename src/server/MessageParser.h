@@ -28,7 +28,7 @@ private:
 
     static void getObjects(LTFSDmCommServer *command, long localReqNumber,
             unsigned long pid, long requestNumber, FileOperation *fopt,
-            std::set<std::string> pools);
+            std::set<std::string> pools = {});
     static void reqStatusMessage(long key, LTFSDmCommServer *command,
             FileOperation *fopt);
     static void migrationMessage(long key, LTFSDmCommServer *command,
