@@ -414,6 +414,7 @@ void Connector::respondRecallEvent(rec_info_t recinfo, bool success)
 
     TRACE(Trace::always, recinfo.filename, success);
 
+    trecresp->Clear();
     recinfo.conn_info->reqrequest->closeAcc();
 
     delete (recinfo.conn_info->reqrequest);

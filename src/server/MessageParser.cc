@@ -167,6 +167,8 @@ void MessageParser::getObjects(LTFSDmCommServer *command, long localReqNumber,
             }
         }
 
+        command->Clear();
+
         LTFSDmProtocol::LTFSDmSendObjectsResp *sendobjresp =
                 command->mutable_sendobjectsresp();
 
@@ -181,6 +183,7 @@ void MessageParser::getObjects(LTFSDmCommServer *command, long localReqNumber,
             MSG(LTFSDMS0007E);
             return;
         }
+        sendobjresp->Clear();
     }
 }
 

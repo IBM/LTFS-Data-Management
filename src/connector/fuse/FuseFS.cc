@@ -346,6 +346,8 @@ int FuseFS::recall_file(FuseFS::ltfsdm_file_info *linfo, bool toresident)
         return -1;
     }
 
+    recrequest->Clear();
+
     try {
         recRequest.recv();
     } catch (const std::exception& e) {

@@ -232,6 +232,8 @@ void LTFSDMCommand::sendObjects(std::stringstream *parmList)
             THROW(Error::GENERAL_ERROR);
         }
 
+        sendobjects->Clear();
+
         try {
             commCommand.recv();
         } catch (const std::exception& e) {
