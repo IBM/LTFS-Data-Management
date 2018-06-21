@@ -20,6 +20,7 @@
 
 #include <string>
 #include <list>
+#include <set>
 #include <sstream>
 #include <exception>
 
@@ -214,6 +215,8 @@ void RecallCommand::talkToBackend(std::stringstream *parmList)
             MSG(LTFSDMC0029E);
             THROW(Error::GENERAL_ERROR);
     }
+
+    commCommand.Clear();
 
     sendObjects(parmList);
 

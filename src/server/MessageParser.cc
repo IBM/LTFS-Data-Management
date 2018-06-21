@@ -95,7 +95,7 @@
 
 void MessageParser::getObjects(LTFSDmCommServer *command, long localReqNumber,
         unsigned long pid, long requestNumber, FileOperation *fopt,
-        std::set<std::string> pools = { })
+        std::set<std::string> pools)
 
 {
     bool cont = true;
@@ -167,6 +167,8 @@ void MessageParser::getObjects(LTFSDmCommServer *command, long localReqNumber,
             }
         }
 
+        command->Clear();
+
         LTFSDmProtocol::LTFSDmSendObjectsResp *sendobjresp =
                 command->mutable_sendobjectsresp();
 
@@ -181,6 +183,7 @@ void MessageParser::getObjects(LTFSDmCommServer *command, long localReqNumber,
             MSG(LTFSDMS0007E);
             return;
         }
+        sendobjresp->Clear();
     }
 }
 
@@ -1340,6 +1343,7 @@ void MessageParser::run(long key, LTFSDmCommServer command,
             }
             break;
         }
+        command.Clear();
     }
     command.closeAcc();
 }

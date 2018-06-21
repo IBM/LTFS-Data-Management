@@ -158,6 +158,8 @@ void LTFSDMCommand::connect()
     if (requestNumber == Const::UNSET)
         getRequestNumber();
 
+    commCommand.Clear();
+
     TRACE(Trace::normal, requestNumber);
 }
 
@@ -230,6 +232,8 @@ void LTFSDMCommand::sendObjects(std::stringstream *parmList)
             THROW(Error::GENERAL_ERROR);
         }
 
+        sendobjects->Clear();
+
         try {
             commCommand.recv();
         } catch (const std::exception& e) {
@@ -269,6 +273,8 @@ void LTFSDMCommand::sendObjects(std::stringstream *parmList)
         INFO(LTFSDMC0050I, count);
     }
     INFO(LTFSDMC0051I, time(NULL) - startTime);
+
+    commCommand.Clear();
 }
 
 void LTFSDMCommand::queryResults()
@@ -338,6 +344,8 @@ void LTFSDMCommand::queryResults()
             THROW(Error::GENERAL_ERROR);
         }
     } while (!done);
+
+    commCommand.Clear();
 }
 
 void LTFSDMCommand::isValidRegularFile()

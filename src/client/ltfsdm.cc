@@ -14,6 +14,8 @@
  * limitations under the License.
  *
  *******************************************************************************/
+#include <sys/types.h>
+#include <signal.h>
 #include <sys/resource.h>
 
 #include <string>

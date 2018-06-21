@@ -17,8 +17,10 @@
 #include <linux/fs.h>
 #include <dirent.h>
 #include <sys/resource.h>
+#include <sys/types.h>
 #include <libmount/libmount.h>
 #include <blkid/blkid.h>
+#include <signal.h>
 
 #include <sstream>
 #include <map>
@@ -412,6 +414,7 @@ void Connector::respondRecallEvent(rec_info_t recinfo, bool success)
 
     TRACE(Trace::always, recinfo.filename, success);
 
+    trecresp->Clear();
     recinfo.conn_info->reqrequest->closeAcc();
 
     delete (recinfo.conn_info->reqrequest);

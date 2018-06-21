@@ -243,41 +243,39 @@ message LTFSDmTransRecResp {
 }
 
 message Command {
-	oneof commands {
-		LTFSDmReqNumber reqnum = 1;
-		LTFSDmReqNumberResp reqnumresp = 2;
-		LTFSDmStopRequest stoprequest = 3;
-		LTFSDmStopResp stopresp = 4;
-		LTFSDmStatusRequest statusrequest = 5;
-		LTFSDmStatusResp statusresp = 6;
-		LTFSDmSendObjects sendobjects = 7;
-		LTFSDmSendObjectsResp sendobjectsresp = 8;
-		LTFSDmMigRequest migrequest = 9;
-		LTFSDmMigRequestResp migrequestresp = 10;
-		LTFSDmSelRecRequest selrecrequest = 11;
-		LTFSDmSelRecRequestResp selrecrequestresp = 12;
-		LTFSDmReqStatusRequest reqstatusrequest = 13;
-		LTFSDmReqStatusResp reqstatusresp = 14;
-		LTFSDmAddRequest addrequest = 15;
-		LTFSDmAddResp addresp = 16;
-		LTFSDmInfoRequestsRequest inforequestsrequest = 17;
-		LTFSDmInfoRequestsResp inforequestsresp = 18;
-		LTFSDmInfoJobsRequest infojobsrequest = 19;
-		LTFSDmInfoJobsResp infojobsresp = 20;
-		LTFSDmInfoDrivesRequest infodrivesrequest = 21;
-		LTFSDmInfoDrivesResp infodrivesresp = 22;
-		LTFSDmInfoTapesRequest infotapesrequest = 23;
-		LTFSDmInfoTapesResp infotapesresp = 24;
-		LTFSDmPoolCreateRequest poolcreaterequest = 25;
-		LTFSDmPoolDeleteRequest pooldeleterequest = 26;
-		LTFSDmPoolAddRequest pooladdrequest = 27;
-		LTFSDmPoolRemoveRequest poolremoverequest = 28;
-		LTFSDmPoolResp poolresp = 29;
-		LTFSDmInfoPoolsRequest infopoolsrequest = 30;
-		LTFSDmInfoPoolsResp infopoolsresp = 31;
-		LTFSDmRetrieveRequest retrieverequest = 32;
-		LTFSDmRetrieveResp retrieveresp = 33;
-		LTFSDmTransRecRequest transrecrequest = 34;
-		LTFSDmTransRecResp transrecresp = 35;
-	}
+	optional LTFSDmReqNumber reqnum = 1;
+	optional LTFSDmReqNumberResp reqnumresp = 2;
+	optional LTFSDmStopRequest stoprequest = 3;
+	optional LTFSDmStopResp stopresp = 4;
+	optional LTFSDmStatusRequest statusrequest = 5;
+	optional LTFSDmStatusResp statusresp = 6;
+	optional LTFSDmSendObjects sendobjects = 7;
+	optional LTFSDmSendObjectsResp sendobjectsresp = 8;
+	optional LTFSDmMigRequest migrequest = 9;
+	optional LTFSDmMigRequestResp migrequestresp = 10;
+	optional LTFSDmSelRecRequest selrecrequest = 11;
+	optional LTFSDmSelRecRequestResp selrecrequestresp = 12;
+	optional LTFSDmReqStatusRequest reqstatusrequest = 13;
+	optional LTFSDmReqStatusResp reqstatusresp = 14;
+	optional LTFSDmAddRequest addrequest = 15;
+	optional LTFSDmAddResp addresp = 16;
+	optional LTFSDmInfoRequestsRequest inforequestsrequest = 17;
+	optional LTFSDmInfoRequestsResp inforequestsresp = 18;
+	optional LTFSDmInfoJobsRequest infojobsrequest = 19;
+	optional LTFSDmInfoJobsResp infojobsresp = 20;
+	optional LTFSDmInfoDrivesRequest infodrivesrequest = 21;
+	optional LTFSDmInfoDrivesResp infodrivesresp = 22;
+	optional LTFSDmInfoTapesRequest infotapesrequest = 23;
+	optional LTFSDmInfoTapesResp infotapesresp = 24;
+	optional LTFSDmPoolCreateRequest poolcreaterequest = 25;
+	optional LTFSDmPoolDeleteRequest pooldeleterequest = 26;
+	optional LTFSDmPoolAddRequest pooladdrequest = 27;
+	optional LTFSDmPoolRemoveRequest poolremoverequest = 28;
+	optional LTFSDmPoolResp poolresp = 29;
+	optional LTFSDmInfoPoolsRequest infopoolsrequest = 30;
+	optional LTFSDmInfoPoolsResp infopoolsresp = 31;
+	optional LTFSDmRetrieveRequest retrieverequest = 32;
+	optional LTFSDmRetrieveResp retrieveresp = 33;
+	optional LTFSDmTransRecRequest transrecrequest = 34;
+	optional LTFSDmTransRecResp transrecresp = 35;
 }

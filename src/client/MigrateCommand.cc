@@ -21,6 +21,7 @@
 #include <string>
 #include <sstream>
 #include <list>
+#include <set>
 #include <exception>
 
 #include "src/common/errors.h"
@@ -230,6 +231,8 @@ void MigrateCommand::talkToBackend(std::stringstream *parmList)
             MSG(LTFSDMC0029E);
             THROW(Error::GENERAL_ERROR);
     }
+
+    commCommand.Clear();
 
     sendObjects(parmList);
 
