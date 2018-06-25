@@ -30,7 +30,7 @@ Management code:
     Follow the documentation of this software for installation.
   - Spectrum Archive Library Edition version 2.4.0.X available at:
     [Fix Central](https://www-945.ibm.com/support/fixcentral/swg/selectFixes?parent=Tape%20drivers%20and%20software&product=ibm/Storage_Tape/LTFS+Library+Edition+(LE)&release=2.4&platform=All&function=all).
-    Follow the documentation of this software for installation.
+    This software will be installed in two steps. Follow the installation instructions specified within its documentation.
 - RHEL 7 packages:
   - protobuf
   - protobuf-compiler
