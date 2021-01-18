@@ -29,7 +29,7 @@ CXXFLAGS  := -std=c++11 -g2 -ggdb -fPIC -Wall -Werror -D_FILE_OFFSET_BITS=64 -D_
 BINDIR := $(RELPATH)/bin
 LIBDIR := $(RELPATH)/lib
 
-LDFLAGS += -L$(BINDIR) -L/opt/IBM/ltfs/lib64
+LDFLAGS += -L$(BINDIR) -L/opt/IBM/ltfs/lib64 -L/opt/ibm/ltfsle/lib64/
 
 # client, common, or server
 TARGETCOMP := $(shell perl -e "print '$(CURDIR)' =~ /.*$(subst /,\/,$(ROOTDIR))\/src\/([^\/]+)/")
