@@ -24,7 +24,7 @@ CXX = g++
 # use c++11 to build the code
 # CXXFLAGS  := -std=c++11 -g2 -ggdb -Wall -Werror -Wno-format-security -D_GNU_SOURCE -I$(RELPATH)
 CXXFLAGS  := -std=c++11 -g2 -ggdb -fPIC -Wall -Werror -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE \
-             -I$(RELPATH) -I/usr/include/libxml2 -I/opt/IBM/ltfs/include
+             -I$(RELPATH) -I/usr/include/libxml2 -I/opt/IBM/ltfs/include -I/opt/ibm/ltfsle/include
 
 BINDIR := $(RELPATH)/bin
 LIBDIR := $(RELPATH)/lib
