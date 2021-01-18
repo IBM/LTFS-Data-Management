@@ -16,12 +16,12 @@
  *******************************************************************************/
 #pragma once
 
-#include <ltfs/ltfsadminlib/LTFSAdminLog.h>
-#include <ltfs/ltfsadminlib/LTFSAdminSession.h>
-#include <ltfs/ltfsadminlib/InternalError.h>
-#include <ltfs/ltfsadminlib/Drive.h>
-#include <ltfs/ltfsadminlib/Cartridge.h>
-#include <ltfs/ltfsadminlib/LTFSNode.h>
+#include <ltfsle/ltfsadminlib/LTFSAdminLog.h>
+#include <ltfsle/ltfsadminlib/LTFSAdminSession.h>
+#include <ltfsle/ltfsadminlib/InternalError.h>
+#include <ltfsle/ltfsadminlib/Drive.h>
+#include <ltfsle/ltfsadminlib/Cartridge.h>
+#include <ltfsle/ltfsadminlib/LTFSNode.h>
 
 using namespace ltfsadmin;
 
