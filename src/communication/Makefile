@@ -25,3 +25,5 @@ include $(RELPATH)/definitions.mk
 
 ltfsdm.pb.cc: $(RELPATH)/src/ltfsdm.proto
 	protoc --proto_path=$(RELPATH)/src --cpp_out=$(CURDIR) $(RELPATH)/src/ltfsdm.proto
+	sed -i 's/class Command final/class Command/' ltfsdm.pb.h
+

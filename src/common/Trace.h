@@ -194,7 +194,7 @@ public:
                 std::lock_guard<std::mutex> lock(mtx);
                 rotate();
                 if (write(fd, stream.str().c_str(), stream.str().size())
-                        != stream.str().size())
+                        != (unsigned) stream.str().size())
                     THROW(Error::GENERAL_ERROR, errno, fd);
             } catch (const std::exception& e) {
                 MSG(LTFSDMX0002E, e.what());

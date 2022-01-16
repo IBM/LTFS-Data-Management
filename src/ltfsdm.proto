@@ -7,7 +7,7 @@
  *
  *  https://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
+ * Unless by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
@@ -15,102 +15,102 @@
  *
  *******************************************************************************/
 
-syntax = "proto2";
+syntax = "proto3";
 
 package LTFSDmProtocol;
 
 message LTFSDmReqNumber {
-	required uint64 key = 1;
+	uint64 key = 1;
 }
 
 message LTFSDmReqNumberResp {
-	required bool success = 1;
-	required int64 reqNumber = 2;
+	bool success = 1;
+	int64 reqNumber = 2;
 }
 
 message LTFSDmSendObjects {
 	message FileName {
-		required bytes filename = 1;
+		bytes filename = 1;
 	}
 	repeated FileName filenames = 1;
 }
 
 message LTFSDmSendObjectsResp {
-	required int64 error = 1;
-	required int64 reqNumber = 2;
-	required int64 pid = 3;
+	int64 error = 1;
+	int64 reqNumber = 2;
+	int64 pid = 3;
 }
 
 message LTFSDmMigRequest {
-	required uint64 key = 1;
-	required int64 reqNumber = 2;
-	required uint64 pid = 3;
-	required int64 state = 4;
-	required bytes pools = 5;
+	uint64 key = 1;
+	int64 reqNumber = 2;
+	uint64 pid = 3;
+	int64 state = 4;
+	bytes pools = 5;
 }
 
 message LTFSDmMigRequestResp {
-	required int64 error = 1;
-	required int64 reqNumber = 2;
-	required int64 pid = 3;
+	int64 error = 1;
+	int64 reqNumber = 2;
+	int64 pid = 3;
 }
 
 message LTFSDmSelRecRequest {
-	required uint64 key = 1;
-	required int64 reqNumber = 2;
-	required uint64 pid = 3;
-	required int64 state = 4;
+	uint64 key = 1;
+	int64 reqNumber = 2;
+	uint64 pid = 3;
+	int64 state = 4;
 }
 
 message LTFSDmSelRecRequestResp {
-	required int64 error = 1;
-	required int64 reqNumber = 2;
-	required int64 pid = 3;
+	int64 error = 1;
+	int64 reqNumber = 2;
+	int64 pid = 3;
 }
 
 message LTFSDmStopRequest {
-	required uint64 key = 1;
-	required int64 reqNumber = 2;
-	required bool forced = 3;
-	required bool finish = 4;
+	uint64 key = 1;
+	int64 reqNumber = 2;
+	bool forced = 3;
+	bool finish = 4;
 }
 
 message LTFSDmStopResp {
-	required bool success = 1;
+	bool success = 1;
 }
 
 message LTFSDmStatusRequest {
-	required uint64 key = 1;
-	required int64 reqNumber = 2;
+	uint64 key = 1;
+	int64 reqNumber = 2;
 }
 
 message LTFSDmStatusResp {
-	required bool success = 1;
-	required int64 pid = 2;
+	bool success = 1;
+	int64 pid = 2;
 }
 
 message LTFSDmReqStatusRequest {
-	required uint64 key = 1;
-	required int64 reqNumber = 2;
-	required int64 pid = 3;
+	uint64 key = 1;
+	int64 reqNumber = 2;
+	int64 pid = 3;
 }
 
 message LTFSDmReqStatusResp {
-	required bool success = 1;
-	required int64 reqNumber = 2;
-	required int64 pid = 3;
-	required int64 resident = 4;
-	required int64 transferred = 5;
-	required int64 premigrated = 6;
-	required int64 migrated = 7;
-	required int64 failed = 8;
-	required bool done = 9;
+	bool success = 1;
+	int64 reqNumber = 2;
+	int64 pid = 3;
+	int64 resident = 4;
+	int64 transferred = 5;
+	int64 premigrated = 6;
+	int64 migrated = 7;
+	int64 failed = 8;
+	bool done = 9;
 }
 
 message LTFSDmAddRequest {
-	required uint64 key = 1;
-	required int64 reqNumber = 2;
-	required bytes managedFs = 3;
+	uint64 key = 1;
+	int64 reqNumber = 2;
+	bytes managedFs = 3;
 }
 
 message LTFSDmAddResp {
@@ -119,127 +119,127 @@ message LTFSDmAddResp {
 		ALREADY_ADDED = 1;
 		FAILED = 2;
 	}
-	required AddResp response = 1;
+	AddResp response = 1;
 }
 
 message LTFSDmInfoRequestsRequest {
-	required uint64 key = 1;
-	required int64 reqNumber = 2;
+	uint64 key = 1;
+	int64 reqNumber = 2;
 }
 
 message LTFSDmInfoRequestsResp {
-	required bytes operation = 1;
-	required int64 reqnumber = 2;
-	required bytes tapeid = 3;
-	required bytes targetstate = 4;
-	required bytes state = 5;
-	required bytes pool = 6;
+	bytes operation = 1;
+	int64 reqnumber = 2;
+	bytes tapeid = 3;
+	bytes targetstate = 4;
+	bytes state = 5;
+	bytes pool = 6;
 }
 
 message LTFSDmInfoJobsRequest {
-	required uint64 key = 1;
-	required int64 reqNumber = 2;
+	uint64 key = 1;
+	int64 reqNumber = 2;
 }
 
 message LTFSDmInfoJobsResp {
-	required bytes operation = 1;
-	required bytes filename = 2;
-	required int64 reqnumber = 3;
-	required bytes pool = 4;
-	required int64 filesize = 5;
-	required bytes tapeid = 6;
-	required int64 state = 7;
+	bytes operation = 1;
+	bytes filename = 2;
+	int64 reqnumber = 3;
+	bytes pool = 4;
+	int64 filesize = 5;
+	bytes tapeid = 6;
+	int64 state = 7;
 }
 
 message LTFSDmInfoDrivesRequest {
-	required uint64 key = 1;
+	uint64 key = 1;
 }
 
 message LTFSDmInfoDrivesResp {
-	required bytes id = 1;
-	required bytes devname = 2;
-	required uint64 slot = 3;
-	required bytes status = 4;
-	required bool busy = 5;
+	bytes id = 1;
+	bytes devname = 2;
+	uint64 slot = 3;
+	bytes status = 4;
+	bool busy = 5;
 }
 
 message LTFSDmInfoTapesRequest {
-	required uint64 key = 1;
+	uint64 key = 1;
 }
 
 message LTFSDmInfoTapesResp {
-	required bytes id = 1;
-	required uint64 slot = 2;
-	required uint64 totalcap = 3;
-	required uint64 remaincap = 4;
-	required uint64 reclaimable = 5;
-	required bytes status = 6;
-	required uint64 inprogress = 7;
-	required bytes pool = 8;
-	required bytes state = 9;
+	bytes id = 1;
+	uint64 slot = 2;
+	uint64 totalcap = 3;
+	uint64 remaincap = 4;
+	uint64 reclaimable = 5;
+	bytes status = 6;
+	uint64 inprogress = 7;
+	bytes pool = 8;
+	bytes state = 9;
 }
 
 message LTFSDmPoolCreateRequest {
-	required uint64 key = 1;
-	required bytes poolname = 2;
+	uint64 key = 1;
+	bytes poolname = 2;
 }
 
 message LTFSDmPoolDeleteRequest {
-	required uint64 key = 1;
-	required bytes poolname = 2;
+	uint64 key = 1;
+	bytes poolname = 2;
 }
 
 message LTFSDmPoolAddRequest {
-	required uint64 key = 1;
-	required bool format = 2;
-	required bool check = 3;
-	required bytes poolname = 4;
+	uint64 key = 1;
+	bool format = 2;
+	bool check = 3;
+	bytes poolname = 4;
 	repeated bytes tapeid = 5;
 }
 
 message LTFSDmPoolRemoveRequest {
-	required uint64 key = 1;
-	required bytes poolname = 2;
+	uint64 key = 1;
+	bytes poolname = 2;
 	repeated bytes tapeid = 3;
 }
 
 message LTFSDmPoolResp {
-	required int64 response = 1;
+	int64 response = 1;
 	optional bytes tapeid = 2;
 }
 
 message LTFSDmInfoPoolsRequest {
-	required uint64 key = 1;
+	uint64 key = 1;
 }
 
 message LTFSDmInfoPoolsResp {
-	required bytes poolname = 1;
-	required uint64 total = 2;
-	required uint64 free = 3;
-	required uint64 unref = 4;
-	required uint64 numtapes = 5;
+	bytes poolname = 1;
+	uint64 total = 2;
+	uint64 free = 3;
+	uint64 unref = 4;
+	uint64 numtapes = 5;
 }
 
 message LTFSDmRetrieveRequest {
-	required uint64 key = 1;
+	uint64 key = 1;
 }
 
 message LTFSDmRetrieveResp {
-	required int64 error = 1;
+	int64 error = 1;
 }
 
 message LTFSDmTransRecRequest {
-	required int64 key = 1;
-    required bool toresident = 2;
-    required int64 fsidh = 3;
-    required int64 fsidl = 4;
-    required int32 igen = 5;
-    required int64 inum = 6;
-    required bytes filename = 7;
+	int64 key = 1;
+    bool toresident = 2;
+    int64 fsidh = 3;
+    int64 fsidl = 4;
+    int32 igen = 5;
+    int64 inum = 6;
+    bytes filename = 7;
 }
 
 message LTFSDmTransRecResp {
-	required bool success =1;
+	bool success =1;
 }
 
 message Command {

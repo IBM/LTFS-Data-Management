@@ -109,7 +109,7 @@ void LTFSDmComm::send(int fd)
         buffer = (char *) malloc(sizeof(long));
         memset(buffer, 0, sizeof(long));
     } else {
-        MessageSize = this->ByteSize();
+        MessageSize = this->ByteSizeLong();
 
         buffer = (char *) malloc(MessageSize + sizeof(long));
         memset(buffer, 0, MessageSize + sizeof(long));
