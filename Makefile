@@ -41,22 +41,22 @@ communication: messages
 
 common: messages communication
 	$(MAKE) -C $(COMMON) deps
-	$(MAKE) -j -C $(COMMON) buildsrc
+	$(MAKE) -C $(COMMON) buildsrc
 	$(MAKE) -C $(COMMON) buildtgt
 	
 connector: messages communication common
 	$(MAKE) -C $(CONNECTOR) deps
-	$(MAKE) -j -C $(CONNECTOR) buildsrc
+	$(MAKE) -C $(CONNECTOR) buildsrc
 	$(MAKE) -C $(CONNECTOR) buildtgt
 	
 client: messages communication common connector
 	$(MAKE) -C $(CLIENT) deps
-	$(MAKE) -j -C $(CLIENT) buildsrc
+	$(MAKE) -C $(CLIENT) buildsrc
 	$(MAKE) -C $(CLIENT) buildtgt
 	
 server: messages communication common connector
 	$(MAKE) -C $(SERVER) deps
-	$(MAKE) -j -C $(SERVER) buildsrc
+	$(MAKE) -C $(SERVER) buildsrc
 	$(MAKE) -C $(SERVER) buildtgt
 	
 build: prepare messages communication connector client server
