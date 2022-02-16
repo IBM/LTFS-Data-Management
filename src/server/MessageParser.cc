@@ -548,7 +548,10 @@ void MessageParser::addMessage(long key, LTFSDmCommServer *command,
     TRACE(Trace::always, __PRETTY_FUNCTION__);
     const LTFSDmProtocol::LTFSDmAddRequest addreq = command->addrequest();
     long keySent = addreq.key();
+	bool autoMig = addreq.automig();
+	std::string pool = addreq.pool();
     std::string managedFs = addreq.managedfs();
+	std::set<std::string> allpools;
     LTFSDmProtocol::LTFSDmAddResp_AddResp response =
             LTFSDmProtocol::LTFSDmAddResp::SUCCESS;
 
@@ -559,6 +562,15 @@ void MessageParser::addMessage(long key, LTFSDmCommServer *command,
         return;
     }
 
+	if (pool != "" ) {
+		std::lock_guard<std::recursive_mutex> lock(LTFSDMInventory::mtx);
+		allpools = Server::conf.getPools();
+		if (allpools.find(pool) == allpools.end()) {
+			response = LTFSDmProtocol::LTFSDmAddResp::POOL_DOES_NOT_EXIST;
+			goto end;
+		}
+	}
+
     try {
         FsObj fileSystem(managedFs);
 
@@ -567,7 +579,7 @@ void MessageParser::addMessage(long key, LTFSDmCommServer *command,
             response = LTFSDmProtocol::LTFSDmAddResp::ALREADY_ADDED;
         } else {
             MSG(LTFSDMS0042I, managedFs);
-            fileSystem.manageFs(true, connector->getStartTime());
+            fileSystem.manageFs(true, connector->getStartTime(), autoMig, pool);
         }
     } catch (const LTFSDMException& e) {
         response = LTFSDmProtocol::LTFSDmAddResp::FAILED;
@@ -585,6 +597,8 @@ void MessageParser::addMessage(long key, LTFSDmCommServer *command,
     } catch (const std::exception& e) {
         TRACE(Trace::error, e.what());
     }
+
+end:
 
     LTFSDmProtocol::LTFSDmAddResp *addresp = command->mutable_addresp();
 

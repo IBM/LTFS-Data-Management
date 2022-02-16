@@ -108,7 +108,7 @@ void InfoFsCommand::doCommand(int argc, char **argv)
         for (std::string mountpt : conf.getFss()) {
             try {
                 FileSystems::fsinfo fs = conf.getFs(mountpt);
-                INFO(LTFSDMC0057I, fs.source, fs.target, fs.fstype, fs.options);
+                INFO(LTFSDMC0057I, fs.source, fs.target, fs.fstype, fs.automig ? "true" : "false", fs.pool);
             } catch (const std::exception& e) {
                 INFO(LTFSDMC0058E, mountpt);
             }

@@ -131,6 +131,7 @@ protected:
                     0), migrated(0), failed(0), not_all_exist(false)
     {
     }
+       bool autoMig;
     bool preMigrate;
     bool recToResident;
     long requestNumber;

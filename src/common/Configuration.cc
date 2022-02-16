@@ -102,7 +102,9 @@ void Configuration::write()
         for (std::pair<std::string, fsinfo> fs : fslist) {
             conffiletmp << "fsys: " << encode(fs.first) << " "
                     << fs.second.source << " " << fs.second.fstype << " "
-                    << fs.second.options << " " << fs.second.uuid << std::endl;
+                    << fs.second.options << " " << fs.second.uuid << " "
+                                       << (fs.second.automig == true ? "true" : "false") << " "
+                               << (fs.second.pool == "" ? "-" : fs.second.pool ) << std::endl;
         }
     }
 
@@ -158,8 +160,18 @@ void Configuration::read()
             if (!std::getline(liness, token, ' '))
                 THROW(Error::CONFIG_FORMAT_ERROR);
             finfo.uuid = token;
-            if (std::getline(liness, token, ' '))
+            if (!std::getline(liness, token, ' '))
                 THROW(Error::CONFIG_FORMAT_ERROR);
+                       finfo.automig = (token == "true"? true : false);
+            if (!std::getline(liness, token, ' '))
+                               THROW(Error::CONFIG_FORMAT_ERROR);
+                       if (token == "-") {
+                               finfo.pool = "";
+                       } else {
+                               finfo.pool = token;
+                       }
+                       if (std::getline(liness, token, ' '))
+                               THROW(Error::CONFIG_FORMAT_ERROR);
             fslisttmp[fsName] = finfo;
         } else {
             THROW(Error::CONFIG_FORMAT_ERROR);
@@ -284,6 +296,8 @@ void Configuration::addFs(FileSystems::fsinfo newfs)
     fslist[newfs.target].fstype = newfs.fstype;
     fslist[newfs.target].options = newfs.options;
     fslist[newfs.target].uuid = newfs.uuid;
+       fslist[newfs.target].automig = newfs.automig;
+       fslist[newfs.target].pool = newfs.pool;
 
     write();
 }
@@ -304,6 +318,8 @@ FileSystems::fsinfo Configuration::getFs(std::string target)
     fs.fstype = it->second.fstype;
     fs.uuid = it->second.uuid;
     fs.options = it->second.options;
+       fs.automig = it->second.automig;
+       fs.pool = it->second.pool;
 
     return fs;
 }

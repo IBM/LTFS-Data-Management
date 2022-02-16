@@ -61,6 +61,9 @@ void LTFSDMCommand::processOptions(int argc, char **argv)
             case 'h':
                 printUsage();
                 THROW(Error::OK);
+                       case 'a':
+                               autoMig = true;
+                               break;
             case 'p':
                 preMigrate = true;
                 break;

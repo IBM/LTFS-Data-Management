@@ -1126,11 +1126,19 @@ int FuseFS::ltfsdm_release(const char *path, struct fuse_file_info *finfo)
     if (linfo->trec_lock != nullptr)
         delete (linfo->trec_lock);
 
-    if (linfo->fd != Const::UNSET && close(linfo->fd) == -1)
+    if (linfo->fd != Const::UNSET && close(linfo->fd) == -1) {
         failed = true;
+       }
 
-    if (linfo->lfd != Const::UNSET && close(linfo->lfd) == -1)
+    if (linfo->lfd != Const::UNSET && close(linfo->lfd) == -1) {
         failed = true;
+       }
+
+       if ( failed == false
+                && getshrd()->autoMig == true
+                && linfo->fusepath.substr(0, 8) != "/.cache/") {
+               MSG(LTFSDMF0064I, linfo->fusepath, getshrd()->pool);
+       }
 
     if (failed == true) {
         delete (linfo);
@@ -1652,7 +1660,8 @@ void FuseFS::init(struct timespec starttime)
             << " -m " << mask(mountpt) << " -f " << mask(fs.source) << " -S "
             << starttime.tv_sec << " -N " << starttime.tv_nsec << " -l "
             << messageObject.getLogType() << " -t " << traceObject.getTrclevel()
-            << " -p " << getpid() << " 2>&1";
+                   << " -p " << getpid() << (autoMig ? " -a " : "")
+            << (pool != "" ? " -P " : "" ) << pool << " 2>&1";
     TRACE(Trace::always, stream.str());
     thrd = new std::thread(&FuseFS::execute, (mountpt + Const::LTFSDM_CACHE_MP),
             mountpt, stream.str());
@@ -1726,8 +1735,11 @@ void FuseFS::init(struct timespec starttime)
     }
     init_status.CACHE_MOUNTED = false;
 
-    if (alreadyManaged == false)
+    if (alreadyManaged == false) {
+               fs.automig = autoMig;
+               fs.pool = pool;
         Connector::conf->addFs(fs);
+       }
 }
 
 FuseFS::~FuseFS()

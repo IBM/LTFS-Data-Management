@@ -25,6 +25,8 @@ private:
         std::string fstype;
         std::string uuid;
         std::string options;
+               bool automig;
+               std::string pool;
     };
     std::map<std::string, std::set<std::string>> stgplist;
     std::map<std::string, fsinfo> fslist;

@@ -34,6 +34,8 @@ public:
         std::string fstype;
         std::string uuid;
         std::string options;
+               bool automig;
+               std::string pool;
     };
 private:
     bool first;

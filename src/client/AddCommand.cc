@@ -75,6 +75,18 @@ void AddCommand::doCommand(int argc, char **argv)
 
     processOptions(argc, argv);
 
+       if (autoMig == true && poolNames == "") {
+               MSG(LTFSDMC0108E);
+               printUsage();
+               THROW(Error::GENERAL_ERROR);
+       }
+
+       if (autoMig == true && poolNames == "") {
+               MSG(LTFSDMC0108E);
+               printUsage();
+               THROW(Error::GENERAL_ERROR);
+       }
+
     pathName = canonicalize_file_name(argv[optind]);
 
     if (pathName == NULL) {
@@ -110,6 +122,8 @@ void AddCommand::doCommand(int argc, char **argv)
     LTFSDmProtocol::LTFSDmAddRequest *addreq = commCommand.mutable_addrequest();
     addreq->set_key(key);
     addreq->set_reqnumber(requestNumber);
+       addreq->set_automig(autoMig);
+       addreq->set_pool(poolNames);
     addreq->set_managedfs(managedFs);
 
     try {
@@ -134,5 +148,8 @@ void AddCommand::doCommand(int argc, char **argv)
     } else if (addresp.response()
             == LTFSDmProtocol::LTFSDmAddResp::ALREADY_ADDED) {
         MSG(LTFSDMC0054I, managedFs);
+    } else if (addresp.response()
+            == LTFSDmProtocol::LTFSDmAddResp::POOL_DOES_NOT_EXIST) {
+        MSG(LTFSDMX0025E, poolNames);
     }
 }

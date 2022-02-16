@@ -331,7 +331,7 @@ public:
     FsObj(Connector::rec_info_t recinfo);
     ~FsObj();
     bool isFsManaged();
-    void manageFs(bool setDispo, struct timespec starttime);
+    void manageFs(bool setDispo, struct timespec starttime, bool autoMig, std::string pool);
     struct stat stat();
     fuid_t getfuid();
     std::string getTapeId();

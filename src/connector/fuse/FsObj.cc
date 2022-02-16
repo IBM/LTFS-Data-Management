@@ -190,7 +190,7 @@ bool FsObj::isFsManaged()
         return true;
 }
 
-void FsObj::manageFs(bool setDispo, struct timespec starttime)
+void FsObj::manageFs(bool setDispo, struct timespec starttime, bool autoMig, std::string pool)
 
 {
     FuseFS::FuseHandle *fh = (FuseFS::FuseHandle *) handle;
@@ -198,7 +198,7 @@ void FsObj::manageFs(bool setDispo, struct timespec starttime)
     TRACE(Trace::always, fh->mountpoint);
 
     FuseConnector::managedFss.emplace(fh->mountpoint,
-            std::unique_ptr<FuseFS>(new FuseFS(fh->mountpoint)));
+        std::unique_ptr<FuseFS>(new FuseFS(fh->mountpoint, autoMig, pool)));
 
     try {
         FuseConnector::managedFss[fh->mountpoint]->init(starttime);

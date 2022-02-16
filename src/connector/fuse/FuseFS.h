@@ -130,6 +130,8 @@ public:
     {
         int rootFd;
         std::string mountpt;
+               bool autoMig;
+               std::string pool;
         struct timespec starttime;
         long ltfsdmKey;
         const unsigned long fsid_h;
@@ -157,6 +159,8 @@ private:
     };
 
     std::string mountpt;
+       bool autoMig;
+       std::string pool;
     std::thread *thrd;
     int rootFd;
     int ioctlFd;
@@ -269,8 +273,8 @@ public:
 
     ~FuseFS();
 
-    FuseFS(std::string _mountpt) :
-            mountpt(_mountpt), thrd(nullptr), rootFd(Const::UNSET), ioctlFd(
+    FuseFS(std::string _mountpt, bool _autoMig, std::string _pool) :
+               mountpt(_mountpt), autoMig(_autoMig), pool(_pool), thrd(nullptr), rootFd(Const::UNSET), ioctlFd(
                     Const::UNSET), init_status( { false, false, false })
     {
     }

@@ -110,14 +110,17 @@ message LTFSDmReqStatusResp {
 message LTFSDmAddRequest {
 	required uint64 key = 1;
 	required int64 reqNumber = 2;
-	required bytes managedFs = 3;
+	required bool autoMig = 3;
+	required bytes pool = 4;
+	required bytes managedFs = 5;
 }
 
 message LTFSDmAddResp {
 	enum AddResp {
 		SUCCESS = 0;
 		ALREADY_ADDED = 1;
-		FAILED = 2;
+		POOL_DOES_NOT_EXIST = 2;
+		FAILED = 3;
 	}
 	required AddResp response = 1;
 }

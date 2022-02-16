@@ -107,8 +107,10 @@ int main(int argc, char **argv)
 {
     std::string mountpt("");
     std::string fsName("");
+       bool autoMig = false;
+       std::string pool = "";
     struct timespec starttime = { 0, 0 };
-    pid_t mainpid;
+    pid_t mainpid = 0;
     uuid_t uuid;
     Message::LogType logType;
     Trace::traceLevel tl;
@@ -123,8 +125,14 @@ int main(int argc, char **argv)
     struct fuse_args fargs;
     std::stringstream options;
 
-    while ((opt = getopt(argc, argv, "m:f:S:N:l:t:p:")) != -1) {
+    while ((opt = getopt(argc, argv, "m:f:S:N:l:t:p:aP:")) != -1) {
         switch (opt) {
+                       case 'a':
+                               autoMig = true;
+                               break;
+                       case 'P':
+                               pool = optarg;
+                               break;
             case 'm':
                 if (mountpt.compare("") != 0)
                     return static_cast<int>(Error::GENERAL_ERROR);
@@ -168,7 +176,7 @@ int main(int argc, char **argv)
         }
     }
 
-    if (optind != 15) {
+    if (optind < 15) {
         MSG(LTFSDMF0004E);
         return static_cast<int>(Error::GENERAL_ERROR);
     }
@@ -212,6 +220,8 @@ int main(int argc, char **argv)
     FuseFS::shared_data sd {
         Const::UNSET,
         mountpt,
+               autoMig,
+               pool,
         starttime,
         LTFSDM::getkey(),
         be64toh(*(unsigned long *) &uuid[0]),

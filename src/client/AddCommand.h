@@ -25,7 +25,7 @@ private:
     }
 public:
     AddCommand() :
-            LTFSDMCommand("add", ":+")
+            LTFSDMCommand("add", ":+haP:")
     {
     }
     ~AddCommand()

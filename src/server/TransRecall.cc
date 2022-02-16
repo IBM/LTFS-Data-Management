@@ -426,9 +426,10 @@ void TransRecall::run(std::shared_ptr<Connector> connector)
         for (std::string fs : Server::conf.getFss()) {
             try {
                 FsObj fileSystem(fs);
+				FileSystems::fsinfo fsi = Server::conf.getFs(fs);
                 if (fileSystem.isFsManaged()) {
                     MSG(LTFSDMS0042I, fs);
-                    fileSystem.manageFs(true, connector->getStartTime());
+                    fileSystem.manageFs(true, connector->getStartTime(), fsi.automig, fsi.pool);
                 }
             } catch (const LTFSDMException& e) {
                 TRACE(Trace::error, e.what());
