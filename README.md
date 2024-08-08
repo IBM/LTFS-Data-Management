@@ -91,7 +91,7 @@ file.
 
 A copy of the documentation is available. It might not correspond to the current code level:
 
-[LTFS Data Management documentation](https://github.com/IBM/LTFS-Data-Management/docs/LTFS_Data_Management.pdf)
+[LTFS Data Management documentation](https://github.com/IBM/LTFS-Data-Management/blob/master/docs/LTFS_Data_Management.pdf)
 
 ## Setting up the environment
 
