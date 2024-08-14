@@ -1,5 +1,7 @@
 # LTFS Data Management
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.13269665.svg)](https://doi.org/10.5281/zenodo.13269665)
+
 ## Overview
 
 With LTFS Data Management it is possible to add tape within a storage hierarchy
